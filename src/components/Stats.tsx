@@ -1,29 +1,27 @@
 import { Users, MapPin, TrendingUp, Calendar } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
-const stats = [
-  {
-    icon: MapPin,
-    value: "50,000+",
-    label: "Machines Installed",
-  },
-  {
-    icon: Users,
-    value: "150+",
-    label: "Countries Operated In",
-  },
-  {
-    icon: TrendingUp,
-    value: "10M+",
-    label: "Daily Customers",
-  },
-  {
-    icon: Calendar,
-    value: "2028",
-    label: "Projected Mars Launch",
-  },
-];
+const iconMap: Record<string, any> = {
+  users: Users,
+  map_pin: MapPin,
+  trending_up: TrendingUp,
+  calendar: Calendar,
+};
 
 const Stats = () => {
+  const { data: metrics, isLoading } = useQuery({
+    queryKey: ["metrics"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("metrics")
+        .select("*")
+        .order("display_order", { ascending: true });
+      
+      if (error) throw error;
+      return data;
+    },
+  });
   return (
     <section className="py-24 relative">
       <div className="container mx-auto px-4">
@@ -41,25 +39,39 @@ const Stats = () => {
             </div>
 
             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-              {stats.map((stat, index) => (
-                <div
-                  key={index}
-                  className="text-center space-y-4 group"
-                >
-                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 border-2 border-primary group-hover:border-primary group-hover:shadow-[0_0_30px_rgba(26,124,255,0.6)] transition-smooth">
-                    <stat.icon className="w-8 h-8 text-primary" />
+              {isLoading ? (
+                Array.from({ length: 4 }).map((_, index) => (
+                  <div key={index} className="text-center space-y-4 animate-pulse">
+                    <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-muted" />
+                    <div className="h-12 bg-muted rounded w-24 mx-auto" />
+                    <div className="h-4 bg-muted rounded w-32 mx-auto" />
                   </div>
-                  
-                  <div>
-                    <div className="text-4xl lg:text-5xl font-bold glow-blue mb-2">
-                      {stat.value}
+                ))
+              ) : (
+                metrics?.map((metric, index) => {
+                  const Icon = iconMap[metric.metric_type] || MapPin;
+                  return (
+                    <div
+                      key={metric.id}
+                      className="text-center space-y-4 group"
+                    >
+                      <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 border-2 border-primary group-hover:border-primary group-hover:shadow-[0_0_30px_rgba(26,124,255,0.6)] transition-smooth">
+                        <Icon className="w-8 h-8 text-primary" />
+                      </div>
+                      
+                      <div>
+                        <div className="text-4xl lg:text-5xl font-bold glow-blue mb-2">
+                          {metric.metric_value.toLocaleString()}
+                          {metric.metric_label.includes("Countries") && "+"}
+                        </div>
+                        <div className="text-muted-foreground font-medium">
+                          {metric.metric_label}
+                        </div>
+                      </div>
                     </div>
-                    <div className="text-muted-foreground font-medium">
-                      {stat.label}
-                    </div>
-                  </div>
-                </div>
-              ))}
+                  );
+                })
+              )}
             </div>
           </div>
         </div>

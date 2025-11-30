@@ -1,4 +1,43 @@
+import { useState } from "react";
+import { Card } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
+import { useToast } from "@/hooks/use-toast";
+
+interface Task {
+  id: string;
+  task: string;
+  status: "Pending" | "Completed";
+  priority: "High" | "Medium" | "Low";
+  machine?: string;
+}
+
 const DailyTasks = () => {
+  const { toast } = useToast();
+  const [tasks, setTasks] = useState<Task[]>([
+    { id: "1", task: "Refill machine #2847 - Downtown", status: "Pending", priority: "High", machine: "#2847" },
+    { id: "2", task: "Routine maintenance - Machine #1234", status: "Pending", priority: "Medium", machine: "#1234" },
+    { id: "3", task: "Update pricing on Machine #5678", status: "Completed", priority: "Low", machine: "#5678" },
+    { id: "4", task: "Clean display screens - Location A", status: "Pending", priority: "Medium" },
+    { id: "5", task: "Check temperature sensors - Fresh units", status: "Pending", priority: "High" },
+    { id: "6", task: "Software update - Digital machines", status: "Pending", priority: "Medium" },
+  ]);
+
+  const toggleTask = (id: string) => {
+    setTasks(prev => prev.map(task => 
+      task.id === id 
+        ? { ...task, status: task.status === "Completed" ? "Pending" : "Completed" }
+        : task
+    ));
+    
+    toast({
+      title: "Task Updated",
+      description: "Task status has been changed",
+    });
+  };
+
+  const completedCount = tasks.filter(t => t.status === "Completed").length;
+  const overdueCount = tasks.filter(t => t.status === "Pending" && t.priority === "High").length;
+
   return (
     <div className="space-y-6">
       <div>
@@ -9,41 +48,34 @@ const DailyTasks = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-card border border-border rounded-lg p-6">
+        <Card className="p-6">
           <h3 className="text-sm font-medium text-muted-foreground mb-2">Tasks Today</h3>
-          <p className="text-3xl font-bold text-foreground">24</p>
-        </div>
-        <div className="bg-card border border-border rounded-lg p-6">
+          <p className="text-3xl font-bold text-foreground">{tasks.length}</p>
+        </Card>
+        <Card className="p-6">
           <h3 className="text-sm font-medium text-muted-foreground mb-2">Completed</h3>
-          <p className="text-3xl font-bold text-primary">18</p>
-        </div>
-        <div className="bg-card border border-border rounded-lg p-6">
-          <h3 className="text-sm font-medium text-muted-foreground mb-2">Overdue</h3>
-          <p className="text-3xl font-bold text-destructive">2</p>
-        </div>
+          <p className="text-3xl font-bold text-primary">{completedCount}</p>
+        </Card>
+        <Card className="p-6">
+          <h3 className="text-sm font-medium text-muted-foreground mb-2">High Priority</h3>
+          <p className="text-3xl font-bold text-destructive">{overdueCount}</p>
+        </Card>
       </div>
 
-      <div className="bg-card border border-border rounded-lg p-6">
+      <Card className="p-6">
         <h3 className="text-lg font-semibold text-foreground mb-4">Task List</h3>
         <div className="space-y-3">
-          {[
-            { task: "Refill machine #2847 - Downtown", status: "Pending", priority: "High" },
-            { task: "Routine maintenance - Machine #1234", status: "Pending", priority: "Medium" },
-            { task: "Update pricing on Machine #5678", status: "Completed", priority: "Low" },
-            { task: "Clean display screens - Location A", status: "Pending", priority: "Medium" },
-          ].map((item, idx) => (
+          {tasks.map((item) => (
             <div
-              key={idx}
+              key={item.id}
               className="flex items-center justify-between border-b border-border pb-3"
             >
-              <div className="flex items-center gap-3">
-                <input
-                  type="checkbox"
+              <div className="flex items-center gap-3 flex-1">
+                <Checkbox
                   checked={item.status === "Completed"}
-                  className="w-4 h-4"
-                  readOnly
+                  onCheckedChange={() => toggleTask(item.id)}
                 />
-                <div>
+                <div className="flex-1">
                   <p className={`font-medium ${item.status === "Completed" ? "line-through text-muted-foreground" : "text-foreground"}`}>
                     {item.task}
                   </p>
@@ -64,6 +96,48 @@ const DailyTasks = () => {
             </div>
           ))}
         </div>
+      </Card>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <Card className="p-6">
+          <h3 className="text-lg font-semibold text-foreground mb-4">Scheduled for Tomorrow</h3>
+          <div className="space-y-3">
+            {[
+              { task: "Quarterly inspection - VendX Max units", priority: "Medium" },
+              { task: "Inventory audit - Warehouse A", priority: "High" },
+              { task: "Network maintenance - All locations", priority: "Low" },
+            ].map((future, idx) => (
+              <div key={idx} className="text-sm">
+                <p className="font-medium text-foreground">{future.task}</p>
+                <span className={`text-xs ${
+                  future.priority === "High" ? "text-destructive" : "text-muted-foreground"
+                }`}>
+                  {future.priority} priority
+                </span>
+              </div>
+            ))}
+          </div>
+        </Card>
+
+        <Card className="p-6">
+          <h3 className="text-lg font-semibold text-foreground mb-4">Quick Stats</h3>
+          <div className="space-y-3 text-sm">
+            <div className="flex items-center justify-between">
+              <span className="text-muted-foreground">Completion Rate Today</span>
+              <span className="text-foreground font-medium">
+                {Math.round((completedCount / tasks.length) * 100)}%
+              </span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-muted-foreground">Average Task Duration</span>
+              <span className="text-foreground font-medium">1.2 hours</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-muted-foreground">Tasks This Week</span>
+              <span className="text-foreground font-medium">42</span>
+            </div>
+          </div>
+        </Card>
       </div>
     </div>
   );

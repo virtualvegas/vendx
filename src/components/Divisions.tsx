@@ -1,59 +1,31 @@
 import { Link } from "react-router-dom";
 import { Smartphone, Maximize2, Apple, Monitor, Truck, Bot, Rocket } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
-const divisions = [
-  {
-    icon: Smartphone,
-    name: "VendX Mini",
-    slug: "mini",
-    description: "Compact solutions for tight spaces",
-    status: "active",
-  },
-  {
-    icon: Maximize2,
-    name: "VendX Max",
-    slug: "max",
-    description: "Large-scale retail automation",
-    status: "active",
-  },
-  {
-    icon: Apple,
-    name: "VendX Fresh",
-    slug: "fresh",
-    description: "Temperature-controlled food & beverage",
-    status: "active",
-  },
-  {
-    icon: Monitor,
-    name: "VendX Digital",
-    slug: "digital",
-    description: "Interactive touchscreen experiences",
-    status: "active",
-  },
-  {
-    icon: Truck,
-    name: "VendX Logistics",
-    slug: "logistics",
-    description: "Supply chain & distribution network",
-    status: "active",
-  },
-  {
-    icon: Bot,
-    name: "VendX Robotics",
-    slug: "robotics",
-    description: "Autonomous maintenance & restocking",
-    status: "active",
-  },
-  {
-    icon: Rocket,
-    name: "VendX Mars Division",
-    slug: "mars",
-    description: "Off-world retail solutions",
-    status: "coming-soon",
-  },
-];
+const iconMap: Record<string, any> = {
+  smartphone: Smartphone,
+  maximize2: Maximize2,
+  apple: Apple,
+  monitor: Monitor,
+  truck: Truck,
+  bot: Bot,
+  rocket: Rocket,
+};
 
 const Divisions = () => {
+  const { data: divisions, isLoading } = useQuery({
+    queryKey: ["divisions"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("divisions")
+        .select("*")
+        .order("created_at", { ascending: true });
+      
+      if (error) throw error;
+      return data;
+    },
+  });
   return (
     <section className="py-24 relative">
       <div className="container mx-auto px-4">
@@ -67,28 +39,41 @@ const Divisions = () => {
         </div>
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 max-w-7xl mx-auto">
-          {divisions.map((division, index) => (
-            <Link
-              key={index}
-              to={`/divisions/${division.slug}`}
-              className="group relative bg-card/40 backdrop-blur-sm border border-border hover:border-accent/50 rounded-2xl p-6 transition-smooth hover:shadow-[0_0_30px_rgba(57,255,136,0.2)] hover:-translate-y-2 block"
-            >
-              {division.status === "coming-soon" && (
-                <div className="absolute top-4 right-4">
-                  <span className="text-xs font-bold text-accent border border-accent px-2 py-1 rounded-full bg-accent/10 animate-glow-pulse">
-                    SOON
-                  </span>
-                </div>
-              )}
-              
-              <div className="inline-flex items-center justify-center w-14 h-14 rounded-xl bg-accent/10 border border-accent/30 group-hover:border-accent group-hover:shadow-[0_0_20px_rgba(57,255,136,0.4)] transition-smooth mb-4">
-                <division.icon className="w-7 h-7 text-accent" />
+          {isLoading ? (
+            Array.from({ length: 7 }).map((_, index) => (
+              <div key={index} className="bg-card/40 backdrop-blur-sm border border-border rounded-2xl p-6 animate-pulse">
+                <div className="w-14 h-14 rounded-xl bg-muted mb-4" />
+                <div className="h-6 bg-muted rounded w-3/4 mb-2" />
+                <div className="h-4 bg-muted rounded w-full" />
               </div>
-              
-              <h3 className="text-xl font-bold mb-2">{division.name}</h3>
-              <p className="text-muted-foreground text-sm leading-relaxed">{division.description}</p>
-            </Link>
-          ))}
+            ))
+          ) : (
+            divisions?.map((division, index) => {
+              const Icon = iconMap[division.icon || "smartphone"] || Smartphone;
+              return (
+                <Link
+                  key={division.id}
+                  to={`/divisions/${division.slug}`}
+                  className="group relative bg-card/40 backdrop-blur-sm border border-border hover:border-accent/50 rounded-2xl p-6 transition-smooth hover:shadow-[0_0_30px_rgba(57,255,136,0.2)] hover:-translate-y-2 block"
+                >
+                  {division.status === "coming-soon" && (
+                    <div className="absolute top-4 right-4">
+                      <span className="text-xs font-bold text-accent border border-accent px-2 py-1 rounded-full bg-accent/10 animate-glow-pulse">
+                        SOON
+                      </span>
+                    </div>
+                  )}
+                  
+                  <div className="inline-flex items-center justify-center w-14 h-14 rounded-xl bg-accent/10 border border-accent/30 group-hover:border-accent group-hover:shadow-[0_0_20px_rgba(57,255,136,0.4)] transition-smooth mb-4">
+                    <Icon className="w-7 h-7 text-accent" />
+                  </div>
+                  
+                  <h3 className="text-xl font-bold mb-2">{division.name}</h3>
+                  <p className="text-muted-foreground text-sm leading-relaxed">{division.description}</p>
+                </Link>
+              );
+            })
+          )}
         </div>
       </div>
     </section>
