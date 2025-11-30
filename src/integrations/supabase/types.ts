@@ -14,6 +14,48 @@ export type Database = {
   }
   public: {
     Tables: {
+      daily_tasks: {
+        Row: {
+          assigned_to: string | null
+          completed_at: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          due_date: string
+          id: string
+          priority: string
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          due_date: string
+          id?: string
+          priority?: string
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_to?: string | null
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          due_date?: string
+          id?: string
+          priority?: string
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       divisions: {
         Row: {
           created_at: string
@@ -44,6 +86,191 @@ export type Database = {
           name?: string
           slug?: string
           status?: string | null
+        }
+        Relationships: []
+      }
+      events: {
+        Row: {
+          contact_email: string | null
+          contact_phone: string | null
+          created_at: string
+          created_by: string | null
+          end_date: string
+          id: string
+          location: string
+          machines_deployed: number
+          name: string
+          notes: string | null
+          revenue: number | null
+          start_date: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          contact_email?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          created_by?: string | null
+          end_date: string
+          id?: string
+          location: string
+          machines_deployed?: number
+          name: string
+          notes?: string | null
+          revenue?: number | null
+          start_date: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          contact_email?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          created_by?: string | null
+          end_date?: string
+          id?: string
+          location?: string
+          machines_deployed?: number
+          name?: string
+          notes?: string | null
+          revenue?: number | null
+          start_date?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      financial_transactions: {
+        Row: {
+          amount: number
+          category: string
+          created_at: string
+          description: string | null
+          division_id: string | null
+          id: string
+          transaction_date: string
+          transaction_type: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          category: string
+          created_at?: string
+          description?: string | null
+          division_id?: string | null
+          id?: string
+          transaction_date: string
+          transaction_type: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          category?: string
+          created_at?: string
+          description?: string | null
+          division_id?: string | null
+          id?: string
+          transaction_date?: string
+          transaction_type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "financial_transactions_division_id_fkey"
+            columns: ["division_id"]
+            isOneToOne: false
+            referencedRelation: "divisions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      inventory_items: {
+        Row: {
+          category: string
+          created_at: string
+          id: string
+          last_restocked: string | null
+          location: string
+          min_stock_level: number
+          product_name: string
+          quantity: number
+          sku: string
+          supplier: string | null
+          unit_cost: number
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          id?: string
+          last_restocked?: string | null
+          location: string
+          min_stock_level?: number
+          product_name: string
+          quantity?: number
+          sku: string
+          supplier?: string | null
+          unit_cost: number
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          id?: string
+          last_restocked?: string | null
+          location?: string
+          min_stock_level?: number
+          product_name?: string
+          quantity?: number
+          sku?: string
+          supplier?: string | null
+          unit_cost?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      marketing_campaigns: {
+        Row: {
+          budget: number
+          conversions: number
+          created_at: string
+          end_date: string | null
+          id: string
+          impressions: number
+          name: string
+          spend: number
+          start_date: string
+          status: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          budget?: number
+          conversions?: number
+          created_at?: string
+          end_date?: string | null
+          id?: string
+          impressions?: number
+          name: string
+          spend?: number
+          start_date: string
+          status?: string
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          budget?: number
+          conversions?: number
+          created_at?: string
+          end_date?: string | null
+          id?: string
+          impressions?: number
+          name?: string
+          spend?: number
+          start_date?: string
+          status?: string
+          type?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -94,6 +321,93 @@ export type Database = {
           email?: string
           full_name?: string | null
           id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      regions: {
+        Row: {
+          active_machines: number
+          country: string
+          created_at: string
+          growth_rate: number
+          id: string
+          manager_id: string | null
+          monthly_revenue: number
+          monthly_transactions: number
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          active_machines?: number
+          country: string
+          created_at?: string
+          growth_rate?: number
+          id?: string
+          manager_id?: string | null
+          monthly_revenue?: number
+          monthly_transactions?: number
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          active_machines?: number
+          country?: string
+          created_at?: string
+          growth_rate?: number
+          id?: string
+          manager_id?: string | null
+          monthly_revenue?: number
+          monthly_transactions?: number
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      support_tickets: {
+        Row: {
+          assigned_to: string | null
+          created_at: string
+          description: string
+          id: string
+          issue_type: string
+          location: string
+          machine_id: string
+          priority: string
+          resolution: string | null
+          resolved_at: string | null
+          status: string
+          ticket_number: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          created_at?: string
+          description: string
+          id?: string
+          issue_type: string
+          location: string
+          machine_id: string
+          priority?: string
+          resolution?: string | null
+          resolved_at?: string | null
+          status?: string
+          ticket_number: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_to?: string | null
+          created_at?: string
+          description?: string
+          id?: string
+          issue_type?: string
+          location?: string
+          machine_id?: string
+          priority?: string
+          resolution?: string | null
+          resolved_at?: string | null
+          status?: string
+          ticket_number?: string
           updated_at?: string
         }
         Relationships: []
