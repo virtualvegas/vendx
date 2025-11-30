@@ -1,4 +1,5 @@
 import { Twitter, Linkedin, Youtube, Mail } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const Footer = () => {
   return (
@@ -16,20 +17,20 @@ const Footer = () => {
           <div className="space-y-3">
             <h4 className="font-semibold text-lg">Divisions</h4>
             <ul className="space-y-2 text-sm text-muted-foreground">
-              <li className="hover:text-primary transition-smooth cursor-pointer">VendX Mini</li>
-              <li className="hover:text-primary transition-smooth cursor-pointer">VendX Max</li>
-              <li className="hover:text-primary transition-smooth cursor-pointer">VendX Fresh</li>
-              <li className="hover:text-primary transition-smooth cursor-pointer">VendX Digital</li>
+              <li><Link to="/divisions/mini" className="hover:text-primary transition-smooth">VendX Mini</Link></li>
+              <li><Link to="/divisions/max" className="hover:text-primary transition-smooth">VendX Max</Link></li>
+              <li><Link to="/divisions/fresh" className="hover:text-primary transition-smooth">VendX Fresh</Link></li>
+              <li><Link to="/divisions/digital" className="hover:text-primary transition-smooth">VendX Digital</Link></li>
             </ul>
           </div>
 
           <div className="space-y-3">
             <h4 className="font-semibold text-lg">Company</h4>
             <ul className="space-y-2 text-sm text-muted-foreground">
-              <li className="hover:text-primary transition-smooth cursor-pointer">About Us</li>
-              <li className="hover:text-primary transition-smooth cursor-pointer">Careers</li>
-              <li className="hover:text-primary transition-smooth cursor-pointer">Press Kit</li>
-              <li className="hover:text-accent transition-smooth cursor-pointer">Mars Division</li>
+              <li><Link to="/about" className="hover:text-primary transition-smooth">About Us</Link></li>
+              <li><Link to="/careers" className="hover:text-primary transition-smooth">Careers</Link></li>
+              <li><Link to="/divisions" className="hover:text-primary transition-smooth">Press Kit</Link></li>
+              <li><Link to="/divisions/mars" className="hover:text-accent transition-smooth">Mars Division</Link></li>
             </ul>
           </div>
 
