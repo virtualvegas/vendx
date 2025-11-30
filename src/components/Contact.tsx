@@ -12,9 +12,7 @@ const Contact = () => {
             <h2 className="text-5xl lg:text-6xl font-bold">
               Partner with <span className="glow-blue">VendX</span>
             </h2>
-            <p className="text-xl text-muted-foreground">
-              Join the automated retail revolution
-            </p>
+            <p className="text-xl text-muted-foreground">Join the automated retail revolution</p>
           </div>
 
           <div className="grid md:grid-cols-2 gap-8 mb-12">
@@ -25,7 +23,7 @@ const Contact = () => {
                 Place a VendX machine at your location and earn passive revenue 24/7
               </p>
               <p className="text-sm text-muted-foreground">
-                Contact: <span className="text-primary">business@vendx.space</span>
+                Contact: <span className="text-primary">sales@vendx.space</span>
               </p>
             </div>
 
@@ -36,7 +34,7 @@ const Contact = () => {
                 Reach out to our global partnerships team for large-scale deployments
               </p>
               <p className="text-sm text-muted-foreground">
-                Contact: <span className="text-accent">global@vendx.space</span>
+                Contact: <span className="text-accent">info@vendx.space</span>
               </p>
             </div>
           </div>
@@ -46,15 +44,15 @@ const Contact = () => {
               <div className="grid md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Name</label>
-                  <Input 
+                  <Input
                     placeholder="Your name"
                     className="bg-background/50 border-border focus:border-primary transition-smooth"
                   />
                 </div>
-                
+
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Email</label>
-                  <Input 
+                  <Input
                     type="email"
                     placeholder="you@company.com"
                     className="bg-background/50 border-border focus:border-primary transition-smooth"
@@ -64,7 +62,7 @@ const Contact = () => {
 
               <div className="space-y-2">
                 <label className="text-sm font-medium">Company</label>
-                <Input 
+                <Input
                   placeholder="Your company"
                   className="bg-background/50 border-border focus:border-primary transition-smooth"
                 />
@@ -72,14 +70,14 @@ const Contact = () => {
 
               <div className="space-y-2">
                 <label className="text-sm font-medium">Message</label>
-                <Textarea 
+                <Textarea
                   placeholder="Tell us about your interest in VendX..."
                   rows={5}
                   className="bg-background/50 border-border focus:border-primary transition-smooth resize-none"
                 />
               </div>
 
-              <Button 
+              <Button
                 type="submit"
                 size="lg"
                 className="w-full bg-primary hover:bg-primary/90 text-primary-foreground border-2 border-primary shadow-[0_0_20px_rgba(26,124,255,0.5)] hover:shadow-[0_0_30px_rgba(26,124,255,0.8)] transition-smooth text-lg group"
