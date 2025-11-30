@@ -14,6 +14,7 @@ const Navigation = () => {
     { name: "Divisions", path: "/divisions" },
     { name: "Careers", path: "/careers" },
     { name: "Contact", path: "/contact" },
+    { name: "Dashboard", path: "/dashboard" },
   ];
 
   const isActive = (path: string) => location.pathname === path;
@@ -44,11 +45,13 @@ const Navigation = () => {
                 {link.name}
               </Link>
             ))}
-            <Button 
-              className="bg-accent hover:bg-accent/90 text-accent-foreground border border-accent shadow-[0_0_15px_rgba(57,255,136,0.3)] hover:shadow-[0_0_25px_rgba(57,255,136,0.5)] transition-smooth"
-            >
-              Get Started
-            </Button>
+            <Link to="/auth">
+              <Button 
+                className="bg-accent hover:bg-accent/90 text-accent-foreground border border-accent shadow-[0_0_15px_rgba(57,255,136,0.3)] hover:shadow-[0_0_25px_rgba(57,255,136,0.5)] transition-smooth"
+              >
+                Get Started
+              </Button>
+            </Link>
           </div>
 
           {/* Mobile Menu Button */}
@@ -79,9 +82,11 @@ const Navigation = () => {
                 {link.name}
               </Link>
             ))}
-            <Button className="w-full bg-accent hover:bg-accent/90 text-accent-foreground">
-              Get Started
-            </Button>
+            <Link to="/auth" className="w-full">
+              <Button className="w-full bg-accent hover:bg-accent/90 text-accent-foreground">
+                Get Started
+              </Button>
+            </Link>
           </div>
         )}
       </div>
