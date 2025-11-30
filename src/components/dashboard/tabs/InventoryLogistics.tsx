@@ -1,157 +1,350 @@
-import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Card } from "@/components/ui/card";
-import { AlertCircle } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { useToast } from "@/hooks/use-toast";
+import { Plus, Package, AlertTriangle, Trash2, Edit } from "lucide-react";
+
+interface InventoryItem {
+  id: string;
+  product_name: string;
+  sku: string;
+  category: string;
+  quantity: number;
+  min_stock_level: number;
+  location: string;
+  unit_cost: number;
+  supplier: string | null;
+}
 
 const InventoryLogistics = () => {
-  const { data: divisions } = useQuery({
-    queryKey: ["inventory-divisions"],
+  const [open, setOpen] = useState(false);
+  const [editingItem, setEditingItem] = useState<InventoryItem | null>(null);
+  const [formData, setFormData] = useState({
+    product_name: "",
+    sku: "",
+    category: "",
+    quantity: 0,
+    min_stock_level: 0,
+    location: "",
+    unit_cost: 0,
+    supplier: "",
+  });
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  const { data: items, isLoading } = useQuery({
+    queryKey: ["inventory-items"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("divisions")
+        .from("inventory_items")
         .select("*")
-        .eq("status", "active");
-      
+        .order("product_name");
       if (error) throw error;
-      return data;
+      return data as InventoryItem[];
     },
   });
 
-  const warehouses = [
-    { name: "Main Warehouse - USA", capacity: 85, items: 12400, region: "North America" },
-    { name: "Distribution Center - EU", capacity: 72, items: 8900, region: "Europe" },
-    { name: "Regional Hub - APAC", capacity: 64, items: 6200, region: "Asia Pacific" },
-  ];
+  const createMutation = useMutation({
+    mutationFn: async (data: typeof formData) => {
+      const { error } = await supabase.from("inventory_items").insert([data]);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["inventory-items"] });
+      toast({ title: "Success", description: "Item added successfully" });
+      setOpen(false);
+      resetForm();
+    },
+    onError: (error: any) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    },
+  });
 
-  const lowStockItems = [
-    { sku: "VXMINI-001", name: "VendX Mini Unit", quantity: 12, reorder: 50 },
-    { sku: "VXFRESH-045", name: "Fresh Cooling Module", quantity: 8, reorder: 30 },
-    { sku: "VXMAX-312", name: "Max Display Panel", quantity: 15, reorder: 40 },
-  ];
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: Partial<typeof formData> }) => {
+      const { error } = await supabase.from("inventory_items").update(data).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["inventory-items"] });
+      toast({ title: "Success", description: "Item updated successfully" });
+      setOpen(false);
+      resetForm();
+    },
+    onError: (error: any) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("inventory_items").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["inventory-items"] });
+      toast({ title: "Success", description: "Item deleted successfully" });
+    },
+    onError: (error: any) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const resetForm = () => {
+    setFormData({
+      product_name: "",
+      sku: "",
+      category: "",
+      quantity: 0,
+      min_stock_level: 0,
+      location: "",
+      unit_cost: 0,
+      supplier: "",
+    });
+    setEditingItem(null);
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (editingItem) {
+      updateMutation.mutate({ id: editingItem.id, data: formData });
+    } else {
+      createMutation.mutate(formData);
+    }
+  };
+
+  const handleEdit = (item: InventoryItem) => {
+    setEditingItem(item);
+    setFormData({
+      product_name: item.product_name,
+      sku: item.sku,
+      category: item.category,
+      quantity: item.quantity,
+      min_stock_level: item.min_stock_level,
+      location: item.location,
+      unit_cost: item.unit_cost,
+      supplier: item.supplier || "",
+    });
+    setOpen(true);
+  };
+
+  const lowStockItems = items?.filter((item) => item.quantity <= item.min_stock_level) || [];
+  const totalValue = items?.reduce((sum, item) => sum + (item.quantity * item.unit_cost), 0) || 0;
+
+  if (isLoading) {
+    return <div className="flex items-center justify-center h-64"><p className="text-muted-foreground">Loading...</p></div>;
+  }
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-3xl font-bold text-foreground mb-2">Inventory & Logistics</h2>
-        <p className="text-muted-foreground">
-          Manage stock levels, shipments, and warehouse operations
-        </p>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card className="p-6">
-          <h3 className="text-sm font-medium text-muted-foreground mb-2">Total SKUs</h3>
-          <p className="text-3xl font-bold text-foreground">2,847</p>
-        </Card>
-        <Card className="p-6">
-          <h3 className="text-sm font-medium text-muted-foreground mb-2">Active Shipments</h3>
-          <p className="text-3xl font-bold text-foreground">156</p>
-        </Card>
-        <Card className="p-6">
-          <h3 className="text-sm font-medium text-muted-foreground mb-2">Low Stock Items</h3>
-          <p className="text-3xl font-bold text-destructive">{lowStockItems.length}</p>
-        </Card>
-      </div>
-
-      <Card className="p-6">
-        <h3 className="text-lg font-semibold text-foreground mb-4">Warehouse Status</h3>
-        <div className="space-y-4">
-          {warehouses.map((warehouse) => (
-            <div key={warehouse.name} className="space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-foreground font-medium">{warehouse.name}</span>
-                <span className="text-sm text-muted-foreground">{warehouse.capacity}% capacity</span>
-              </div>
-              <div className="w-full bg-muted rounded-full h-2">
-                <div
-                  className={`h-2 rounded-full ${
-                    warehouse.capacity > 80 ? "bg-destructive" : "bg-primary"
-                  }`}
-                  style={{ width: `${warehouse.capacity}%` }}
-                />
-              </div>
-              <div className="flex items-center justify-between text-sm">
-                <p className="text-muted-foreground">{warehouse.items.toLocaleString()} items</p>
-                <p className="text-muted-foreground">{warehouse.region}</p>
-              </div>
-            </div>
-          ))}
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-3xl font-bold text-foreground mb-2">Inventory & Logistics</h2>
+          <p className="text-muted-foreground">Manage stock levels and warehouse operations</p>
         </div>
-      </Card>
-
-      <Card className="p-6 border-destructive/50">
-        <div className="flex items-center gap-2 mb-4">
-          <AlertCircle className="w-5 h-5 text-destructive" />
-          <h3 className="text-lg font-semibold text-foreground">Low Stock Alert</h3>
-        </div>
-        <div className="space-y-3">
-          {lowStockItems.map((item) => (
-            <div key={item.sku} className="flex items-center justify-between py-2 border-b border-border">
-              <div>
-                <p className="font-medium text-foreground">{item.name}</p>
-                <p className="text-sm text-muted-foreground">SKU: {item.sku}</p>
-              </div>
-              <div className="text-right">
-                <p className="text-destructive font-bold">{item.quantity} units</p>
-                <p className="text-sm text-muted-foreground">Reorder at {item.reorder}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </Card>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card className="p-6">
-          <h3 className="text-lg font-semibold text-foreground mb-4">Recent Shipments</h3>
-          <div className="space-y-3">
-            {[
-              { id: "SH-2024-001", destination: "New York", status: "In Transit", eta: "2 days" },
-              { id: "SH-2024-002", destination: "London", status: "Delivered", eta: "-" },
-              { id: "SH-2024-003", destination: "Tokyo", status: "Processing", eta: "5 days" },
-            ].map((shipment) => (
-              <div key={shipment.id} className="flex items-center justify-between text-sm">
+        <Dialog open={open} onOpenChange={setOpen}>
+          <DialogTrigger asChild>
+            <Button onClick={resetForm}>
+              <Plus className="w-4 h-4 mr-2" />
+              Add Item
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>{editingItem ? "Edit Item" : "Add New Item"}</DialogTitle>
+            </DialogHeader>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <p className="font-medium text-foreground">{shipment.id}</p>
-                  <p className="text-muted-foreground">{shipment.destination}</p>
+                  <Label htmlFor="product_name">Product Name</Label>
+                  <Input
+                    id="product_name"
+                    value={formData.product_name}
+                    onChange={(e) => setFormData({ ...formData, product_name: e.target.value })}
+                    required
+                  />
                 </div>
-                <div className="text-right">
-                  <span className={`text-xs px-2 py-1 rounded-full ${
-                    shipment.status === "Delivered" 
-                      ? "bg-primary/10 text-primary"
-                      : shipment.status === "In Transit"
-                      ? "bg-accent/10 text-accent"
-                      : "bg-muted text-muted-foreground"
-                  }`}>
-                    {shipment.status}
-                  </span>
-                  {shipment.eta !== "-" && (
-                    <p className="text-muted-foreground mt-1">ETA: {shipment.eta}</p>
-                  )}
+                <div>
+                  <Label htmlFor="sku">SKU</Label>
+                  <Input
+                    id="sku"
+                    value={formData.sku}
+                    onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
+                    required
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="category">Category</Label>
+                  <Input
+                    id="category"
+                    value={formData.category}
+                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                    required
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="quantity">Quantity</Label>
+                  <Input
+                    id="quantity"
+                    type="number"
+                    value={formData.quantity}
+                    onChange={(e) => setFormData({ ...formData, quantity: parseInt(e.target.value) })}
+                    required
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="min_stock_level">Min Stock Level</Label>
+                  <Input
+                    id="min_stock_level"
+                    type="number"
+                    value={formData.min_stock_level}
+                    onChange={(e) => setFormData({ ...formData, min_stock_level: parseInt(e.target.value) })}
+                    required
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="location">Location</Label>
+                  <Input
+                    id="location"
+                    value={formData.location}
+                    onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                    required
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="unit_cost">Unit Cost ($)</Label>
+                  <Input
+                    id="unit_cost"
+                    type="number"
+                    step="0.01"
+                    value={formData.unit_cost}
+                    onChange={(e) => setFormData({ ...formData, unit_cost: parseFloat(e.target.value) })}
+                    required
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="supplier">Supplier</Label>
+                  <Input
+                    id="supplier"
+                    value={formData.supplier}
+                    onChange={(e) => setFormData({ ...formData, supplier: e.target.value })}
+                  />
                 </div>
               </div>
-            ))}
-          </div>
-        </Card>
+              <div className="flex justify-end gap-2">
+                <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
+                <Button type="submit">{editingItem ? "Update" : "Add"} Item</Button>
+              </div>
+            </form>
+          </DialogContent>
+        </Dialog>
+      </div>
 
-        <Card className="p-6">
-          <h3 className="text-lg font-semibold text-foreground mb-4">Division Stock Levels</h3>
-          <div className="space-y-3">
-            {divisions?.slice(0, 5).map((division) => {
-              const stock = Math.floor(Math.random() * 100) + 20;
-              return (
-                <div key={division.id} className="flex items-center justify-between text-sm">
-                  <span className="text-foreground">{division.name}</span>
-                  <span className={`font-medium ${
-                    stock < 40 ? "text-destructive" : "text-foreground"
-                  }`}>
-                    {stock}%
-                  </span>
-                </div>
-              );
-            })}
-          </div>
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+              <Package className="w-4 h-4" />
+              Total Items
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-3xl font-bold text-foreground">{items?.length || 0}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+              <AlertTriangle className="w-4 h-4" />
+              Low Stock
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-3xl font-bold text-destructive">{lowStockItems.length}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Total Units</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-3xl font-bold text-foreground">
+              {items?.reduce((sum, item) => sum + item.quantity, 0) || 0}
+            </p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Inventory Value</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-3xl font-bold text-foreground">${totalValue.toLocaleString()}</p>
+          </CardContent>
         </Card>
       </div>
+
+      {lowStockItems.length > 0 && (
+        <Card className="border-destructive/50">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5 text-destructive" />
+              Low Stock Alerts
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {lowStockItems.map((item) => (
+                <div key={item.id} className="flex items-center justify-between border-b border-border pb-3">
+                  <div>
+                    <p className="font-medium text-foreground">{item.product_name}</p>
+                    <p className="text-sm text-muted-foreground">
+                      SKU: {item.sku} • Location: {item.location} • Stock: {item.quantity}/{item.min_stock_level}
+                    </p>
+                  </div>
+                  <Button size="sm" onClick={() => handleEdit(item)}>Restock</Button>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      <Card>
+        <CardHeader>
+          <CardTitle>All Inventory Items</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3">
+            {items?.length === 0 ? (
+              <p className="text-center text-muted-foreground py-8">No items in inventory</p>
+            ) : (
+              items?.map((item) => (
+                <div key={item.id} className="flex items-center justify-between border-b border-border pb-3">
+                  <div className="flex-1">
+                    <h3 className="font-medium text-foreground">{item.product_name}</h3>
+                    <p className="text-sm text-muted-foreground">
+                      SKU: {item.sku} • Category: {item.category} • Location: {item.location} • Qty: {item.quantity} • ${item.unit_cost}/unit
+                    </p>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button variant="outline" size="sm" onClick={() => handleEdit(item)}>
+                      <Edit className="w-4 h-4" />
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={() => deleteMutation.mutate(item.id)}>
+                      <Trash2 className="w-4 h-4 text-destructive" />
+                    </Button>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };
