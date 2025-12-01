@@ -2,45 +2,9 @@ import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Rocket, Code, Wrench, Users, TrendingUp, Heart } from "lucide-react";
-
-const positions = [
-  {
-    title: "Senior Robotics Engineer",
-    department: "VendX Robotics",
-    location: "Remote / San Francisco",
-    type: "Full-time",
-  },
-  {
-    title: "AI/ML Research Scientist",
-    department: "VendX Robotics",
-    location: "Remote / Boston",
-    type: "Full-time",
-  },
-  {
-    title: "Supply Chain Optimization Lead",
-    department: "VendX Logistics",
-    location: "Remote / Chicago",
-    type: "Full-time",
-  },
-  {
-    title: "Mars Systems Engineer",
-    department: "VendX Mars Division",
-    location: "Cape Canaveral, FL",
-    type: "Full-time",
-  },
-  {
-    title: "Full Stack Developer",
-    department: "VendX Digital",
-    location: "Remote",
-    type: "Full-time",
-  },
-  {
-    title: "Field Service Technician",
-    department: "Operations",
-    location: "Multiple Locations",
-    type: "Full-time",
-  },
-];
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { Link } from "react-router-dom";
 
 const benefits = [
   {
@@ -76,6 +40,19 @@ const benefits = [
 ];
 
 const CareersPage = () => {
+  const { data: jobs, isLoading } = useQuery({
+    queryKey: ["active-jobs"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("jobs")
+        .select("*")
+        .eq("status", "active")
+        .order("posted_at", { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+  });
+
   return (
     <div className="min-h-screen bg-background">
       <Navigation />
@@ -117,42 +94,50 @@ const CareersPage = () => {
               Open <span className="glow-blue">Positions</span>
             </h2>
             
-            <div className="space-y-6">
-              {positions.map((position, idx) => (
-                <div
-                  key={idx}
-                  className="bg-card/50 backdrop-blur-sm border border-border hover:border-accent/50 rounded-2xl p-8 transition-smooth hover:shadow-[0_0_20px_rgba(57,255,136,0.2)] group"
-                >
-                  <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                    <div className="space-y-2">
-                      <h3 className="text-2xl font-bold group-hover:text-accent transition-smooth">
-                        {position.title}
-                      </h3>
-                      <div className="flex flex-wrap gap-3 text-sm text-muted-foreground">
-                        <span className="flex items-center gap-1">
-                          <div className="w-1.5 h-1.5 rounded-full bg-primary" />
-                          {position.department}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <div className="w-1.5 h-1.5 rounded-full bg-accent" />
-                          {position.location}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <div className="w-1.5 h-1.5 rounded-full bg-foreground" />
-                          {position.type}
-                        </span>
+            {isLoading ? (
+              <p className="text-center text-muted-foreground">Loading positions...</p>
+            ) : jobs && jobs.length > 0 ? (
+              <div className="space-y-6">
+                {jobs.map((job) => (
+                  <div
+                    key={job.id}
+                    className="bg-card/50 backdrop-blur-sm border border-border hover:border-accent/50 rounded-2xl p-8 transition-smooth hover:shadow-[0_0_20px_rgba(57,255,136,0.2)] group"
+                  >
+                    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                      <div className="space-y-2">
+                        <h3 className="text-2xl font-bold group-hover:text-accent transition-smooth">
+                          {job.title}
+                        </h3>
+                        <div className="flex flex-wrap gap-3 text-sm text-muted-foreground">
+                          <span className="flex items-center gap-1">
+                            <div className="w-1.5 h-1.5 rounded-full bg-primary" />
+                            {job.department}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <div className="w-1.5 h-1.5 rounded-full bg-accent" />
+                            {job.location}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <div className="w-1.5 h-1.5 rounded-full bg-foreground" />
+                            {job.type}
+                          </span>
+                        </div>
                       </div>
+                      
+                      <Link to={`/careers/${job.id}`}>
+                        <Button 
+                          className="bg-accent hover:bg-accent/90 text-accent-foreground border border-accent shadow-[0_0_15px_rgba(57,255,136,0.3)] hover:shadow-[0_0_25px_rgba(57,255,136,0.5)] transition-smooth"
+                        >
+                          View & Apply
+                        </Button>
+                      </Link>
                     </div>
-                    
-                    <Button 
-                      className="bg-accent hover:bg-accent/90 text-accent-foreground border border-accent shadow-[0_0_15px_rgba(57,255,136,0.3)] hover:shadow-[0_0_25px_rgba(57,255,136,0.5)] transition-smooth"
-                    >
-                      Apply Now
-                    </Button>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-center text-muted-foreground">No open positions at the moment. Check back soon!</p>
+            )}
 
             <div className="mt-12 text-center bg-gradient-space border border-primary/30 rounded-2xl p-12">
               <h3 className="text-3xl font-bold mb-4">

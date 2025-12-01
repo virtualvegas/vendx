@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Menu, X } from "lucide-react";
+import { Menu, X, Facebook, Instagram } from "lucide-react";
 import vendxLogo from "@/assets/vendx-logo.png";
+import { SiTiktok, SiX } from "react-icons/si";
 
 const Navigation = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -45,6 +46,43 @@ const Navigation = () => {
                 {link.name}
               </Link>
             ))}
+
+            {/* Social Media Icons */}
+            <div className="flex items-center gap-3">
+              <a
+                href="https://www.facebook.com/VendXGlobal"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-9 h-9 rounded-full bg-primary/10 border border-primary/30 flex items-center justify-center hover:border-primary hover:shadow-[0_0_15px_rgba(26,124,255,0.4)] transition-smooth"
+              >
+                <Facebook className="w-4 h-4 text-primary" />
+              </a>
+              <a
+                href="https://www.tiktok.com/@vendxglobal"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-9 h-9 rounded-full bg-primary/10 border border-primary/30 flex items-center justify-center hover:border-primary hover:shadow-[0_0_15px_rgba(26,124,255,0.4)] transition-smooth"
+              >
+                <SiTiktok className="w-4 h-4 text-primary" />
+              </a>
+              <a
+                href="https://www.instagram.com/vendx_global/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-9 h-9 rounded-full bg-primary/10 border border-primary/30 flex items-center justify-center hover:border-primary hover:shadow-[0_0_15px_rgba(26,124,255,0.4)] transition-smooth"
+              >
+                <Instagram className="w-4 h-4 text-primary" />
+              </a>
+              <a
+                href="https://x.com/VendXglobal"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-9 h-9 rounded-full bg-primary/10 border border-primary/30 flex items-center justify-center hover:border-primary hover:shadow-[0_0_15px_rgba(26,124,255,0.4)] transition-smooth"
+              >
+                <SiX className="w-4 h-4 text-primary" />
+              </a>
+            </div>
+
             <Link to="/auth">
               <Button 
                 className="bg-accent hover:bg-accent/90 text-accent-foreground border border-accent shadow-[0_0_15px_rgba(57,255,136,0.3)] hover:shadow-[0_0_25px_rgba(57,255,136,0.5)] transition-smooth"
