@@ -25,12 +25,7 @@ const Navigation = () => {
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-20">
           <Link to="/" className="flex items-center space-x-3 group">
-            <img 
-              src={vendxLogo} 
-              alt="VendX Logo" 
-              className="h-10 w-auto transition-smooth group-hover:scale-110"
-            />
-            <span className="text-sm text-primary font-semibold">VendX.space</span>
+            <img src={vendxLogo} alt="VendX Logo" className="h-10 w-auto transition-smooth group-hover:scale-110" />
           </Link>
 
           {/* Desktop Navigation */}
@@ -84,9 +79,7 @@ const Navigation = () => {
             </div>
 
             <Link to="/auth">
-              <Button 
-                className="bg-accent hover:bg-accent/90 text-accent-foreground border border-accent shadow-[0_0_15px_rgba(57,255,136,0.3)] hover:shadow-[0_0_25px_rgba(57,255,136,0.5)] transition-smooth"
-              >
+              <Button className="bg-accent hover:bg-accent/90 text-accent-foreground border border-accent shadow-[0_0_15px_rgba(57,255,136,0.3)] hover:shadow-[0_0_25px_rgba(57,255,136,0.5)] transition-smooth">
                 Get Started
               </Button>
             </Link>
@@ -97,11 +90,7 @@ const Navigation = () => {
             onClick={() => setIsOpen(!isOpen)}
             className="md:hidden p-2 rounded-lg border border-primary/30 hover:border-primary hover:shadow-[0_0_15px_rgba(26,124,255,0.3)] transition-smooth"
           >
-            {isOpen ? (
-              <X className="w-6 h-6 text-primary" />
-            ) : (
-              <Menu className="w-6 h-6 text-primary" />
-            )}
+            {isOpen ? <X className="w-6 h-6 text-primary" /> : <Menu className="w-6 h-6 text-primary" />}
           </button>
         </div>
 
@@ -121,9 +110,7 @@ const Navigation = () => {
               </Link>
             ))}
             <Link to="/auth" className="w-full">
-              <Button className="w-full bg-accent hover:bg-accent/90 text-accent-foreground">
-                Get Started
-              </Button>
+              <Button className="w-full bg-accent hover:bg-accent/90 text-accent-foreground">Get Started</Button>
             </Link>
           </div>
         )}
