@@ -13,6 +13,8 @@ import InventoryLogistics from "@/components/dashboard/tabs/InventoryLogistics";
 import RegionalReports from "@/components/dashboard/tabs/RegionalReports";
 import DailyTasks from "@/components/dashboard/tabs/DailyTasks";
 import AdminSettings from "@/components/dashboard/tabs/AdminSettings";
+import CareersManager from "@/components/dashboard/tabs/CareersManager";
+import GlobalLocations from "@/components/dashboard/tabs/GlobalLocations";
 
 export type AppRole =
   | "super_admin"
@@ -110,6 +112,10 @@ const DashboardPage = () => {
         return <DailyTasks />;
       case "admin-settings":
         return <AdminSettings />;
+      case "careers":
+        return <CareersManager />;
+      case "locations":
+        return <GlobalLocations />;
       default:
         return <GlobalOperations />;
     }

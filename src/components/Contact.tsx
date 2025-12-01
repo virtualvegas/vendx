@@ -1,9 +1,56 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Building2, Mail, Send } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 const Contact = () => {
+  const { toast } = useToast();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    company: "",
+    message: "",
+  });
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+
+    try {
+      const ticketNumber = `TKT-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+      
+      const { error } = await supabase.from("support_tickets").insert({
+        ticket_number: ticketNumber,
+        machine_id: "CONTACT_FORM",
+        location: formData.company || "Not specified",
+        issue_type: "Contact Form Inquiry",
+        priority: "medium",
+        description: `Name: ${formData.name}\nEmail: ${formData.email}\nCompany: ${formData.company}\n\nMessage:\n${formData.message}`,
+        status: "open",
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Message Sent!",
+        description: `We've received your inquiry. Ticket: ${ticketNumber}`,
+      });
+
+      setFormData({ name: "", email: "", company: "", message: "" });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
   return (
     <section className="py-24 relative">
       <div className="container mx-auto px-4">
@@ -40,12 +87,15 @@ const Contact = () => {
           </div>
 
           <div className="bg-card/50 backdrop-blur-sm border border-border rounded-2xl p-8 lg:p-12">
-            <form className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Name</label>
                   <Input
+                    required
                     placeholder="Your name"
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     className="bg-background/50 border-border focus:border-primary transition-smooth"
                   />
                 </div>
@@ -53,8 +103,11 @@ const Contact = () => {
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Email</label>
                   <Input
+                    required
                     type="email"
                     placeholder="you@company.com"
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                     className="bg-background/50 border-border focus:border-primary transition-smooth"
                   />
                 </div>
@@ -64,6 +117,8 @@ const Contact = () => {
                 <label className="text-sm font-medium">Company</label>
                 <Input
                   placeholder="Your company"
+                  value={formData.company}
+                  onChange={(e) => setFormData({ ...formData, company: e.target.value })}
                   className="bg-background/50 border-border focus:border-primary transition-smooth"
                 />
               </div>
@@ -71,8 +126,11 @@ const Contact = () => {
               <div className="space-y-2">
                 <label className="text-sm font-medium">Message</label>
                 <Textarea
+                  required
                   placeholder="Tell us about your interest in VendX..."
                   rows={5}
+                  value={formData.message}
+                  onChange={(e) => setFormData({ ...formData, message: e.target.value })}
                   className="bg-background/50 border-border focus:border-primary transition-smooth resize-none"
                 />
               </div>
@@ -80,9 +138,10 @@ const Contact = () => {
               <Button
                 type="submit"
                 size="lg"
+                disabled={isSubmitting}
                 className="w-full bg-primary hover:bg-primary/90 text-primary-foreground border-2 border-primary shadow-[0_0_20px_rgba(26,124,255,0.5)] hover:shadow-[0_0_30px_rgba(26,124,255,0.8)] transition-smooth text-lg group"
               >
-                Send Message
+                {isSubmitting ? "Sending..." : "Send Message"}
                 <Send className="ml-2 group-hover:translate-x-1 transition-transform" />
               </Button>
             </form>

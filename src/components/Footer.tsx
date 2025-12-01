@@ -1,5 +1,6 @@
-import { Twitter, Linkedin, Youtube, Mail } from "lucide-react";
+import { Linkedin, Youtube, Mail, Facebook, Instagram } from "lucide-react";
 import { Link } from "react-router-dom";
+import { SiTiktok, SiX } from "react-icons/si";
 
 const Footer = () => {
   return (
@@ -68,21 +69,51 @@ const Footer = () => {
 
           <div className="space-y-3">
             <h4 className="font-semibold text-lg">Connect</h4>
-            <div className="flex gap-4">
+            <div className="flex flex-wrap gap-4">
               <a
-                href="#"
+                href="https://www.facebook.com/VendXGlobal"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="w-10 h-10 rounded-full bg-primary/10 border border-primary/30 flex items-center justify-center hover:border-primary hover:shadow-[0_0_20px_rgba(26,124,255,0.5)] transition-smooth"
               >
-                <Twitter className="w-5 h-5 text-primary" />
+                <Facebook className="w-5 h-5 text-primary" />
               </a>
               <a
-                href="#"
+                href="https://www.tiktok.com/@vendxglobal"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-10 h-10 rounded-full bg-primary/10 border border-primary/30 flex items-center justify-center hover:border-primary hover:shadow-[0_0_20px_rgba(26,124,255,0.5)] transition-smooth"
+              >
+                <SiTiktok className="w-5 h-5 text-primary" />
+              </a>
+              <a
+                href="https://www.instagram.com/vendx_global/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-10 h-10 rounded-full bg-primary/10 border border-primary/30 flex items-center justify-center hover:border-primary hover:shadow-[0_0_20px_rgba(26,124,255,0.5)] transition-smooth"
+              >
+                <Instagram className="w-5 h-5 text-primary" />
+              </a>
+              <a
+                href="https://x.com/VendXglobal"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-10 h-10 rounded-full bg-primary/10 border border-primary/30 flex items-center justify-center hover:border-primary hover:shadow-[0_0_20px_rgba(26,124,255,0.5)] transition-smooth"
+              >
+                <SiX className="w-5 h-5 text-primary" />
+              </a>
+              <a
+                href="https://www.linkedin.com/company/vendxglobal"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="w-10 h-10 rounded-full bg-primary/10 border border-primary/30 flex items-center justify-center hover:border-primary hover:shadow-[0_0_20px_rgba(26,124,255,0.5)] transition-smooth"
               >
                 <Linkedin className="w-5 h-5 text-primary" />
               </a>
               <a
-                href="#"
+                href="https://www.youtube.com/@VendXGlobal"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="w-10 h-10 rounded-full bg-primary/10 border border-primary/30 flex items-center justify-center hover:border-primary hover:shadow-[0_0_20px_rgba(26,124,255,0.5)] transition-smooth"
               >
                 <Youtube className="w-5 h-5 text-primary" />

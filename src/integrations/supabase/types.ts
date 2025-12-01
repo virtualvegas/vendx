@@ -229,6 +229,146 @@ export type Database = {
         }
         Relationships: []
       }
+      job_applications: {
+        Row: {
+          applicant_name: string
+          applied_at: string
+          cover_letter: string | null
+          created_at: string
+          email: string
+          id: string
+          job_id: string | null
+          notes: string | null
+          phone: string | null
+          resume_url: string | null
+          reviewed_by: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          applicant_name: string
+          applied_at?: string
+          cover_letter?: string | null
+          created_at?: string
+          email: string
+          id?: string
+          job_id?: string | null
+          notes?: string | null
+          phone?: string | null
+          resume_url?: string | null
+          reviewed_by?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          applicant_name?: string
+          applied_at?: string
+          cover_letter?: string | null
+          created_at?: string
+          email?: string
+          id?: string
+          job_id?: string | null
+          notes?: string | null
+          phone?: string | null
+          resume_url?: string | null
+          reviewed_by?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "job_applications_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      jobs: {
+        Row: {
+          created_at: string
+          department: string
+          description: string
+          id: string
+          location: string
+          posted_at: string
+          requirements: string | null
+          status: string
+          title: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          department: string
+          description: string
+          id?: string
+          location: string
+          posted_at?: string
+          requirements?: string | null
+          status?: string
+          title: string
+          type?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          department?: string
+          description?: string
+          id?: string
+          location?: string
+          posted_at?: string
+          requirements?: string | null
+          status?: string
+          title?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      locations: {
+        Row: {
+          address: string | null
+          city: string
+          country: string
+          created_at: string
+          id: string
+          is_visible: boolean
+          latitude: number | null
+          longitude: number | null
+          machine_count: number
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          city: string
+          country: string
+          created_at?: string
+          id?: string
+          is_visible?: boolean
+          latitude?: number | null
+          longitude?: number | null
+          machine_count?: number
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          city?: string
+          country?: string
+          created_at?: string
+          id?: string
+          is_visible?: boolean
+          latitude?: number | null
+          longitude?: number | null
+          machine_count?: number
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       marketing_campaigns: {
         Row: {
           budget: number

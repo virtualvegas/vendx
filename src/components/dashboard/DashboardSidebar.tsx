@@ -8,6 +8,8 @@ import {
   MapPin,
   CheckSquare,
   Settings,
+  Briefcase,
+  Map,
 } from "lucide-react";
 import { AppRole } from "@/pages/DashboardPage";
 import { cn } from "@/lib/utils";
@@ -72,6 +74,18 @@ const tabs: TabConfig[] = [
     id: "admin-settings",
     label: "Admin Settings",
     icon: Settings,
+    requiredRoles: ["super_admin"],
+  },
+  {
+    id: "careers",
+    label: "Careers Manager",
+    icon: Briefcase,
+    requiredRoles: ["super_admin"],
+  },
+  {
+    id: "locations",
+    label: "Global Locations",
+    icon: Map,
     requiredRoles: ["super_admin"],
   },
 ];
