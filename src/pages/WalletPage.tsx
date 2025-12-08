@@ -1,0 +1,346 @@
+import { useEffect, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { User } from "@supabase/supabase-js";
+import { useToast } from "@/hooks/use-toast";
+import Navigation from "@/components/Navigation";
+import Footer from "@/components/Footer";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Wallet, Plus, History, Gift, QrCode, Star, TrendingUp, ArrowUpRight, ArrowDownRight } from "lucide-react";
+import WalletLoadDialog from "@/components/vendx-pay/WalletLoadDialog";
+import QRCodeGenerator from "@/components/vendx-pay/QRCodeGenerator";
+
+interface WalletData {
+  balance: number;
+  last_loaded: string | null;
+}
+
+interface RewardsData {
+  balance: number;
+  lifetime_points: number;
+  tier: string;
+}
+
+interface Transaction {
+  id: string;
+  amount: number;
+  transaction_type: string;
+  description: string | null;
+  created_at: string;
+}
+
+const TIER_INFO = {
+  bronze: { color: "bg-amber-700", label: "Bronze", nextTier: "Silver", pointsNeeded: 5000 },
+  silver: { color: "bg-slate-400", label: "Silver", nextTier: "Gold", pointsNeeded: 25000 },
+  gold: { color: "bg-yellow-500", label: "Gold", nextTier: "Platinum", pointsNeeded: 100000 },
+  platinum: { color: "bg-gradient-to-r from-purple-500 to-pink-500", label: "Platinum", nextTier: null, pointsNeeded: null },
+};
+
+const WalletPage = () => {
+  const [user, setUser] = useState<User | null>(null);
+  const [wallet, setWallet] = useState<WalletData | null>(null);
+  const [rewards, setRewards] = useState<RewardsData | null>(null);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showLoadDialog, setShowLoadDialog] = useState(false);
+  const [showQRCode, setShowQRCode] = useState(false);
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const [searchParams] = useSearchParams();
+
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        setUser(session?.user ?? null);
+        if (!session) {
+          navigate("/auth");
+        }
+      }
+    );
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+      if (!session) {
+        navigate("/auth");
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [navigate]);
+
+  useEffect(() => {
+    if (searchParams.get("success") === "true") {
+      const amount = searchParams.get("amount");
+      toast({
+        title: "Wallet Loaded!",
+        description: `Successfully added $${amount} to your VendX wallet.`,
+      });
+      window.history.replaceState({}, "", "/wallet");
+    } else if (searchParams.get("canceled") === "true") {
+      toast({
+        title: "Payment Canceled",
+        description: "Your wallet load was canceled.",
+        variant: "destructive",
+      });
+      window.history.replaceState({}, "", "/wallet");
+    }
+  }, [searchParams, toast]);
+
+  useEffect(() => {
+    const fetchWalletData = async () => {
+      if (!user) return;
+
+      try {
+        // Fetch wallet
+        const { data: walletData, error: walletError } = await supabase
+          .from("wallets")
+          .select("balance, last_loaded")
+          .eq("user_id", user.id)
+          .maybeSingle();
+
+        if (walletError) throw walletError;
+        setWallet(walletData);
+
+        // Fetch rewards
+        const { data: rewardsData, error: rewardsError } = await supabase
+          .from("rewards_points")
+          .select("balance, lifetime_points, tier")
+          .eq("user_id", user.id)
+          .maybeSingle();
+
+        if (rewardsError) throw rewardsError;
+        setRewards(rewardsData);
+
+        // Fetch transactions
+        if (walletData) {
+          const { data: walletRecord } = await supabase
+            .from("wallets")
+            .select("id")
+            .eq("user_id", user.id)
+            .single();
+
+          if (walletRecord) {
+            const { data: txData } = await supabase
+              .from("wallet_transactions")
+              .select("id, amount, transaction_type, description, created_at")
+              .eq("wallet_id", walletRecord.id)
+              .order("created_at", { ascending: false })
+              .limit(10);
+
+            setTransactions(txData || []);
+          }
+        }
+      } catch (error: unknown) {
+        console.error("Error fetching wallet data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchWalletData();
+  }, [user]);
+
+  const tierInfo = TIER_INFO[rewards?.tier as keyof typeof TIER_INFO] || TIER_INFO.bronze;
+  const progressToNextTier = tierInfo.pointsNeeded 
+    ? Math.min(100, ((rewards?.lifetime_points || 0) / tierInfo.pointsNeeded) * 100)
+    : 100;
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <p className="text-muted-foreground">Loading wallet...</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-background">
+      <Navigation />
+      
+      <main className="container mx-auto px-4 py-24">
+        <div className="max-w-4xl mx-auto space-y-8">
+          {/* Header */}
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-foreground flex items-center gap-3">
+                <Wallet className="w-8 h-8 text-primary" />
+                VendX Pay
+              </h1>
+              <p className="text-muted-foreground mt-1">Your digital wallet for all VendX machines</p>
+            </div>
+            <Badge className={`${tierInfo.color} text-white`}>
+              <Star className="w-4 h-4 mr-1" />
+              {tierInfo.label}
+            </Badge>
+          </div>
+
+          {/* Balance Card */}
+          <Card className="bg-gradient-to-br from-primary/20 to-accent/10 border-primary/30">
+            <CardContent className="p-8">
+              <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+                <div className="text-center md:text-left">
+                  <p className="text-muted-foreground text-sm">Available Balance</p>
+                  <p className="text-5xl font-bold text-foreground mt-2">
+                    ${(wallet?.balance || 0).toFixed(2)}
+                  </p>
+                  {wallet?.last_loaded && (
+                    <p className="text-xs text-muted-foreground mt-2">
+                      Last loaded: {new Date(wallet.last_loaded).toLocaleDateString()}
+                    </p>
+                  )}
+                </div>
+                <div className="flex gap-3">
+                  <Button onClick={() => setShowLoadDialog(true)} className="gap-2">
+                    <Plus className="w-4 h-4" />
+                    Add Funds
+                  </Button>
+                  <Button variant="outline" onClick={() => setShowQRCode(true)} className="gap-2">
+                    <QrCode className="w-4 h-4" />
+                    Pay at Machine
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Stats Row */}
+          <div className="grid md:grid-cols-3 gap-4">
+            {/* Points Balance */}
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center gap-3">
+                  <div className="p-3 rounded-full bg-accent/20">
+                    <Gift className="w-5 h-5 text-accent" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Points Balance</p>
+                    <p className="text-2xl font-bold">{(rewards?.balance || 0).toLocaleString()}</p>
+                  </div>
+                </div>
+                <Button 
+                  variant="link" 
+                  className="mt-3 p-0 h-auto text-accent"
+                  onClick={() => navigate("/rewards")}
+                >
+                  Redeem Points →
+                </Button>
+              </CardContent>
+            </Card>
+
+            {/* Lifetime Points */}
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center gap-3">
+                  <div className="p-3 rounded-full bg-primary/20">
+                    <TrendingUp className="w-5 h-5 text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Lifetime Points</p>
+                    <p className="text-2xl font-bold">{(rewards?.lifetime_points || 0).toLocaleString()}</p>
+                  </div>
+                </div>
+                {tierInfo.nextTier && (
+                  <div className="mt-3">
+                    <div className="flex justify-between text-xs text-muted-foreground mb-1">
+                      <span>Progress to {tierInfo.nextTier}</span>
+                      <span>{progressToNextTier.toFixed(0)}%</span>
+                    </div>
+                    <div className="h-2 bg-muted rounded-full overflow-hidden">
+                      <div 
+                        className="h-full bg-primary transition-all"
+                        style={{ width: `${progressToNextTier}%` }}
+                      />
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Earn Rate */}
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center gap-3">
+                  <div className="p-3 rounded-full bg-green-500/20">
+                    <Star className="w-5 h-5 text-green-500" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Earn Rate</p>
+                    <p className="text-2xl font-bold">
+                      {rewards?.tier === "platinum" ? "20" : rewards?.tier === "gold" ? "15" : rewards?.tier === "silver" ? "12" : "10"}x
+                    </p>
+                  </div>
+                </div>
+                <p className="text-xs text-muted-foreground mt-3">
+                  Points per $1 spent
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Recent Transactions */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <History className="w-5 h-5" />
+                Recent Transactions
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {transactions.length === 0 ? (
+                <p className="text-center text-muted-foreground py-8">
+                  No transactions yet. Add funds to get started!
+                </p>
+              ) : (
+                <div className="space-y-3">
+                  {transactions.map((tx) => (
+                    <div key={tx.id} className="flex items-center justify-between py-3 border-b border-border last:border-0">
+                      <div className="flex items-center gap-3">
+                        <div className={`p-2 rounded-full ${tx.amount > 0 ? "bg-green-500/20" : "bg-red-500/20"}`}>
+                          {tx.amount > 0 ? (
+                            <ArrowUpRight className="w-4 h-4 text-green-500" />
+                          ) : (
+                            <ArrowDownRight className="w-4 h-4 text-red-500" />
+                          )}
+                        </div>
+                        <div>
+                          <p className="font-medium capitalize">{tx.transaction_type}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {tx.description || "VendX transaction"}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className={`font-bold ${tx.amount > 0 ? "text-green-500" : "text-red-500"}`}>
+                          {tx.amount > 0 ? "+" : ""}${Math.abs(tx.amount).toFixed(2)}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {new Date(tx.created_at).toLocaleDateString()}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      </main>
+
+      <Footer />
+
+      <WalletLoadDialog 
+        open={showLoadDialog} 
+        onOpenChange={setShowLoadDialog} 
+      />
+      
+      <QRCodeGenerator
+        open={showQRCode}
+        onOpenChange={setShowQRCode}
+      />
+    </div>
+  );
+};
+
+export default WalletPage;

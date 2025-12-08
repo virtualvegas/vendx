@@ -369,6 +369,108 @@ export type Database = {
         }
         Relationships: []
       }
+      machine_sessions: {
+        Row: {
+          created_at: string
+          expires_at: string
+          id: string
+          machine_id: string
+          session_code: string
+          session_type: string
+          status: string
+          user_id: string | null
+          verified_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          expires_at: string
+          id?: string
+          machine_id: string
+          session_code: string
+          session_type: string
+          status?: string
+          user_id?: string | null
+          verified_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          machine_id?: string
+          session_code?: string
+          session_type?: string
+          status?: string
+          user_id?: string | null
+          verified_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "machine_sessions_machine_id_fkey"
+            columns: ["machine_id"]
+            isOneToOne: false
+            referencedRelation: "vendx_machines"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      machine_transactions: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          item_name: string | null
+          machine_id: string
+          points_earned: number
+          session_id: string | null
+          user_id: string | null
+          wallet_transaction_id: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          id?: string
+          item_name?: string | null
+          machine_id: string
+          points_earned?: number
+          session_id?: string | null
+          user_id?: string | null
+          wallet_transaction_id?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          item_name?: string | null
+          machine_id?: string
+          points_earned?: number
+          session_id?: string | null
+          user_id?: string | null
+          wallet_transaction_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "machine_transactions_machine_id_fkey"
+            columns: ["machine_id"]
+            isOneToOne: false
+            referencedRelation: "vendx_machines"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "machine_transactions_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "machine_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "machine_transactions_wallet_transaction_id_fkey"
+            columns: ["wallet_transaction_id"]
+            isOneToOne: false
+            referencedRelation: "wallet_transactions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       marketing_campaigns: {
         Row: {
           budget: number
@@ -441,12 +543,100 @@ export type Database = {
         }
         Relationships: []
       }
+      partner_offers: {
+        Row: {
+          created_at: string
+          current_redemptions: number
+          description: string | null
+          discount_code: string
+          discount_type: string
+          discount_value: number
+          id: string
+          is_active: boolean
+          max_redemptions: number | null
+          offer_name: string
+          partner_name: string
+          points_cost: number
+          updated_at: string
+          valid_from: string
+          valid_until: string | null
+        }
+        Insert: {
+          created_at?: string
+          current_redemptions?: number
+          description?: string | null
+          discount_code: string
+          discount_type: string
+          discount_value: number
+          id?: string
+          is_active?: boolean
+          max_redemptions?: number | null
+          offer_name: string
+          partner_name: string
+          points_cost: number
+          updated_at?: string
+          valid_from?: string
+          valid_until?: string | null
+        }
+        Update: {
+          created_at?: string
+          current_redemptions?: number
+          description?: string | null
+          discount_code?: string
+          discount_type?: string
+          discount_value?: number
+          id?: string
+          is_active?: boolean
+          max_redemptions?: number | null
+          offer_name?: string
+          partner_name?: string
+          points_cost?: number
+          updated_at?: string
+          valid_from?: string
+          valid_until?: string | null
+        }
+        Relationships: []
+      }
+      point_transactions: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          points: number
+          reference_id: string | null
+          transaction_type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          points: number
+          reference_id?: string | null
+          transaction_type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          points?: number
+          reference_id?: string | null
+          transaction_type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
           email: string
           full_name: string | null
           id: string
+          phone: string | null
+          pin_code: string | null
+          stripe_customer_id: string | null
+          tier_level: string
           updated_at: string
         }
         Insert: {
@@ -454,6 +644,10 @@ export type Database = {
           email: string
           full_name?: string | null
           id: string
+          phone?: string | null
+          pin_code?: string | null
+          stripe_customer_id?: string | null
+          tier_level?: string
           updated_at?: string
         }
         Update: {
@@ -461,9 +655,70 @@ export type Database = {
           email?: string
           full_name?: string | null
           id?: string
+          phone?: string | null
+          pin_code?: string | null
+          stripe_customer_id?: string | null
+          tier_level?: string
           updated_at?: string
         }
         Relationships: []
+      }
+      redemptions: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          id: string
+          notes: string | null
+          points_spent: number
+          reward_id: string
+          shipping_address_id: string | null
+          status: string
+          tracking_number: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          points_spent: number
+          reward_id: string
+          shipping_address_id?: string | null
+          status?: string
+          tracking_number?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          points_spent?: number
+          reward_id?: string
+          shipping_address_id?: string | null
+          status?: string
+          tracking_number?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "redemptions_reward_id_fkey"
+            columns: ["reward_id"]
+            isOneToOne: false
+            referencedRelation: "reward_catalog"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "redemptions_shipping_address_id_fkey"
+            columns: ["shipping_address_id"]
+            isOneToOne: false
+            referencedRelation: "shipping_addresses"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       regions: {
         Row: {
@@ -501,6 +756,126 @@ export type Database = {
           monthly_transactions?: number
           name?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      reward_catalog: {
+        Row: {
+          created_at: string
+          credit_amount: number | null
+          description: string | null
+          id: string
+          image_url: string | null
+          is_active: boolean
+          name: string
+          points_cost: number
+          requires_shipping: boolean
+          reward_type: string
+          stock: number | null
+          tier_required: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          credit_amount?: number | null
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          name: string
+          points_cost: number
+          requires_shipping?: boolean
+          reward_type: string
+          stock?: number | null
+          tier_required?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          credit_amount?: number | null
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          name?: string
+          points_cost?: number
+          requires_shipping?: boolean
+          reward_type?: string
+          stock?: number | null
+          tier_required?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      rewards_points: {
+        Row: {
+          balance: number
+          created_at: string
+          id: string
+          lifetime_points: number
+          tier: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          balance?: number
+          created_at?: string
+          id?: string
+          lifetime_points?: number
+          tier?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          balance?: number
+          created_at?: string
+          id?: string
+          lifetime_points?: number
+          tier?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      shipping_addresses: {
+        Row: {
+          address_line1: string
+          address_line2: string | null
+          city: string
+          country: string
+          created_at: string
+          id: string
+          is_default: boolean
+          state: string
+          updated_at: string
+          user_id: string
+          zip_code: string
+        }
+        Insert: {
+          address_line1: string
+          address_line2?: string | null
+          city: string
+          country?: string
+          created_at?: string
+          id?: string
+          is_default?: boolean
+          state: string
+          updated_at?: string
+          user_id: string
+          zip_code: string
+        }
+        Update: {
+          address_line1?: string
+          address_line2?: string | null
+          city?: string
+          country?: string
+          created_at?: string
+          id?: string
+          is_default?: boolean
+          state?: string
+          updated_at?: string
+          user_id?: string
+          zip_code?: string
         }
         Relationships: []
       }
@@ -569,6 +944,127 @@ export type Database = {
           created_at?: string
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      vendx_machines: {
+        Row: {
+          api_key: string
+          created_at: string
+          id: string
+          last_seen: string | null
+          location_id: string | null
+          machine_code: string
+          machine_type: string
+          name: string
+          status: string
+          updated_at: string
+          vendx_pay_enabled: boolean
+        }
+        Insert: {
+          api_key: string
+          created_at?: string
+          id?: string
+          last_seen?: string | null
+          location_id?: string | null
+          machine_code: string
+          machine_type: string
+          name: string
+          status?: string
+          updated_at?: string
+          vendx_pay_enabled?: boolean
+        }
+        Update: {
+          api_key?: string
+          created_at?: string
+          id?: string
+          last_seen?: string | null
+          location_id?: string | null
+          machine_code?: string
+          machine_type?: string
+          name?: string
+          status?: string
+          updated_at?: string
+          vendx_pay_enabled?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendx_machines_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      wallet_transactions: {
+        Row: {
+          amount: number
+          created_at: string
+          description: string | null
+          id: string
+          machine_id: string | null
+          stripe_payment_intent_id: string | null
+          transaction_type: string
+          wallet_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          machine_id?: string | null
+          stripe_payment_intent_id?: string | null
+          transaction_type: string
+          wallet_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          machine_id?: string | null
+          stripe_payment_intent_id?: string | null
+          transaction_type?: string
+          wallet_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wallet_transactions_wallet_id_fkey"
+            columns: ["wallet_id"]
+            isOneToOne: false
+            referencedRelation: "wallets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      wallets: {
+        Row: {
+          balance: number
+          created_at: string
+          id: string
+          last_loaded: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          balance?: number
+          created_at?: string
+          id?: string
+          last_loaded?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          balance?: number
+          created_at?: string
+          id?: string
+          last_loaded?: string | null
+          status?: string
+          updated_at?: string
           user_id?: string
         }
         Relationships: []

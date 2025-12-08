@@ -1,1 +1,19 @@
 project_id = "xbbnodpvfvxtbffziuvr"
+
+[functions.vendx-pay-create-checkout]
+verify_jwt = true
+
+[functions.vendx-pay-webhook]
+verify_jwt = false
+
+[functions.vendx-pay-machine-auth]
+verify_jwt = false
+
+[functions.vendx-pay-session]
+verify_jwt = false
+
+[functions.vendx-pay-process]
+verify_jwt = false
+
+[functions.vendx-pay-balance]
+verify_jwt = false
