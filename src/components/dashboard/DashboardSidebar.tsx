@@ -10,6 +10,10 @@ import {
   Settings,
   Briefcase,
   Map,
+  Wallet,
+  Gift,
+  Monitor,
+  Percent,
 } from "lucide-react";
 import { AppRole } from "@/pages/DashboardPage";
 import { cn } from "@/lib/utils";
@@ -87,6 +91,30 @@ const tabs: TabConfig[] = [
     label: "Global Locations",
     icon: Map,
     requiredRoles: ["super_admin"],
+  },
+  {
+    id: "vendx-pay",
+    label: "VendX Pay",
+    icon: Wallet,
+    requiredRoles: ["super_admin", "finance_accounting"],
+  },
+  {
+    id: "rewards-manager",
+    label: "Rewards Manager",
+    icon: Gift,
+    requiredRoles: ["super_admin", "marketing_sales"],
+  },
+  {
+    id: "machine-registry",
+    label: "Machine Registry",
+    icon: Monitor,
+    requiredRoles: ["super_admin", "tech_support_lead"],
+  },
+  {
+    id: "partner-offers",
+    label: "Partner Offers",
+    icon: Percent,
+    requiredRoles: ["super_admin", "marketing_sales"],
   },
 ];
 
