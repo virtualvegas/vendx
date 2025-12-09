@@ -15,6 +15,10 @@ import DailyTasks from "@/components/dashboard/tabs/DailyTasks";
 import AdminSettings from "@/components/dashboard/tabs/AdminSettings";
 import CareersManager from "@/components/dashboard/tabs/CareersManager";
 import GlobalLocations from "@/components/dashboard/tabs/GlobalLocations";
+import VendXPayManager from "@/components/dashboard/tabs/VendXPayManager";
+import RewardsManager from "@/components/dashboard/tabs/RewardsManager";
+import MachineRegistry from "@/components/dashboard/tabs/MachineRegistry";
+import PartnerOffersManager from "@/components/dashboard/tabs/PartnerOffersManager";
 
 export type AppRole =
   | "super_admin"
@@ -116,6 +120,14 @@ const DashboardPage = () => {
         return <CareersManager />;
       case "locations":
         return <GlobalLocations />;
+      case "vendx-pay":
+        return <VendXPayManager />;
+      case "rewards-manager":
+        return <RewardsManager />;
+      case "machine-registry":
+        return <MachineRegistry />;
+      case "partner-offers":
+        return <PartnerOffersManager />;
       default:
         return <GlobalOperations />;
     }
