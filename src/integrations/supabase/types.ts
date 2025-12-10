@@ -634,9 +634,9 @@ export type Database = {
           full_name: string | null
           id: string
           phone: string | null
-          pin_code: string | null
           stripe_customer_id: string | null
           tier_level: string
+          totp_secret: string | null
           updated_at: string
         }
         Insert: {
@@ -645,9 +645,9 @@ export type Database = {
           full_name?: string | null
           id: string
           phone?: string | null
-          pin_code?: string | null
           stripe_customer_id?: string | null
           tier_level?: string
+          totp_secret?: string | null
           updated_at?: string
         }
         Update: {
@@ -656,9 +656,9 @@ export type Database = {
           full_name?: string | null
           id?: string
           phone?: string | null
-          pin_code?: string | null
           stripe_customer_id?: string | null
           tier_level?: string
+          totp_secret?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -1074,6 +1074,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      generate_totp_secret: { Args: never; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
