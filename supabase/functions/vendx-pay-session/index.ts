@@ -15,6 +15,72 @@ function generateSessionCode(): string {
   return code;
 }
 
+// TOTP verification utilities
+function base32ToBytes(base32: string): Uint8Array {
+  const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+  let bits = '';
+  
+  for (const char of base32.toUpperCase()) {
+    const val = alphabet.indexOf(char);
+    if (val === -1) continue;
+    bits += val.toString(2).padStart(5, '0');
+  }
+  
+  const bytes = new Uint8Array(Math.floor(bits.length / 8));
+  for (let i = 0; i < bytes.length; i++) {
+    bytes[i] = parseInt(bits.slice(i * 8, (i + 1) * 8), 2);
+  }
+  
+  return bytes;
+}
+
+async function hmacSha1(key: Uint8Array, message: Uint8Array): Promise<Uint8Array> {
+  const cryptoKey = await crypto.subtle.importKey(
+    'raw',
+    key.buffer as ArrayBuffer,
+    { name: 'HMAC', hash: 'SHA-1' },
+    false,
+    ['sign']
+  );
+  const signature = await crypto.subtle.sign('HMAC', cryptoKey, message.buffer as ArrayBuffer);
+  return new Uint8Array(signature);
+}
+
+async function generateTOTP(secret: string, timeStep: number = 60, offset: number = 0): Promise<string> {
+  const counter = Math.floor(Date.now() / 1000 / timeStep) + offset;
+  const counterBytes = new Uint8Array(8);
+  let temp = counter;
+  for (let i = 7; i >= 0; i--) {
+    counterBytes[i] = temp & 0xff;
+    temp = Math.floor(temp / 256);
+  }
+  
+  const key = base32ToBytes(secret);
+  const hmac = await hmacSha1(key, counterBytes);
+  
+  const off = hmac[19] & 0xf;
+  const code = (
+    ((hmac[off] & 0x7f) << 24) |
+    ((hmac[off + 1] & 0xff) << 16) |
+    ((hmac[off + 2] & 0xff) << 8) |
+    (hmac[off + 3] & 0xff)
+  ) % 1000000;
+  
+  return code.toString().padStart(6, '0');
+}
+
+// Verify TOTP code, allowing for time drift (current and previous window)
+async function verifyTOTP(secret: string, code: string, timeStep: number = 60): Promise<boolean> {
+  // Check current window and previous window to handle clock skew
+  for (let offset = 0; offset >= -1; offset--) {
+    const expectedCode = await generateTOTP(secret, timeStep, offset);
+    if (expectedCode === code) {
+      return true;
+    }
+  }
+  return false;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -26,7 +92,7 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
 
-    const { action, session_code, user_id, machine_id, pin } = await req.json();
+    const { action, session_code, user_id, machine_id, totp_code } = await req.json();
 
     // For machine-side operations (create session, verify)
     if (action === "create") {
@@ -86,7 +152,7 @@ serve(async (req) => {
       );
     }
 
-    // User scans QR or machine verifies PIN
+    // User scans QR or machine verifies TOTP
     if (action === "verify_qr") {
       // User is scanning QR code to link their wallet
       const authHeader = req.headers.get("Authorization");
@@ -157,13 +223,20 @@ serve(async (req) => {
       );
     }
 
-    // Verify PIN at machine
-    if (action === "verify_pin") {
+    // Verify TOTP code at machine (replaces verify_pin)
+    if (action === "verify_totp") {
       const apiKey = req.headers.get("x-machine-api-key");
       
       if (!apiKey) {
         return new Response(JSON.stringify({ error: "Machine API key required" }), {
           status: 401,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      if (!totp_code || totp_code.length !== 6) {
+        return new Response(JSON.stringify({ error: "Invalid code format" }), {
+          status: 400,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
@@ -182,15 +255,34 @@ serve(async (req) => {
         });
       }
 
-      // Find user by PIN
-      const { data: profile } = await supabase
+      // Get all users with TOTP secrets and check each one
+      // In production, you'd want to limit this or use a more efficient lookup
+      const { data: profiles, error: profilesError } = await supabase
         .from("profiles")
-        .select("id")
-        .eq("pin_code", pin)
-        .maybeSingle();
+        .select("id, totp_secret")
+        .not("totp_secret", "is", null);
 
-      if (!profile) {
-        return new Response(JSON.stringify({ error: "Invalid PIN" }), {
+      if (profilesError) {
+        console.error("Error fetching profiles:", profilesError);
+        throw profilesError;
+      }
+
+      let matchedUserId: string | null = null;
+
+      // Check the TOTP code against all users
+      for (const profile of profiles || []) {
+        if (profile.totp_secret) {
+          const isValid = await verifyTOTP(profile.totp_secret, totp_code);
+          if (isValid) {
+            matchedUserId = profile.id;
+            break;
+          }
+        }
+      }
+
+      if (!matchedUserId) {
+        console.log("Invalid TOTP code attempted:", totp_code);
+        return new Response(JSON.stringify({ error: "Invalid code" }), {
           status: 400,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
@@ -204,9 +296,9 @@ serve(async (req) => {
         .from("machine_sessions")
         .insert({
           machine_id: machine.id,
-          user_id: profile.id,
+          user_id: matchedUserId,
           session_code: sessionCode,
-          session_type: "pin",
+          session_type: "totp",
           status: "verified",
           expires_at: expiresAt.toISOString(),
           verified_at: new Date().toISOString(),
@@ -218,10 +310,10 @@ serve(async (req) => {
       const { data: wallet } = await supabase
         .from("wallets")
         .select("balance")
-        .eq("user_id", profile.id)
+        .eq("user_id", matchedUserId)
         .maybeSingle();
 
-      console.log("PIN verified for user:", profile.id);
+      console.log("TOTP verified for user:", matchedUserId);
 
       return new Response(
         JSON.stringify({
