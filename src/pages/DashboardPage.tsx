@@ -22,6 +22,8 @@ import PartnerOffersManager from "@/components/dashboard/tabs/PartnerOffersManag
 import CustomerOrders from "@/components/dashboard/tabs/CustomerOrders";
 import CustomerWallet from "@/components/dashboard/tabs/CustomerWallet";
 import CustomerRewards from "@/components/dashboard/tabs/CustomerRewards";
+import MyRoute from "@/components/dashboard/tabs/MyRoute";
+import RouteManager from "@/components/dashboard/tabs/RouteManager";
 
 export type AppRole =
   | "super_admin"
@@ -138,6 +140,10 @@ const DashboardPage = () => {
         return <MachineRegistry />;
       case "partner-offers":
         return <PartnerOffersManager />;
+      case "my-route":
+        return <MyRoute />;
+      case "route-manager":
+        return <RouteManager />;
       default:
         return <CustomerOrders />;
     }
