@@ -65,26 +65,56 @@ serve(async (req) => {
       });
     }
 
-    // Verify session
-    const { data: session } = await supabase
-      .from("machine_sessions")
-      .select("id, user_id, status")
-      .eq("session_code", session_code)
-      .eq("status", "verified")
-      .maybeSingle();
+    let userId: string;
+    let sessionId: string | null = null;
 
-    if (!session || !session.user_id) {
-      return new Response(JSON.stringify({ error: "Invalid or unverified session" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    // Demo mode: get user from JWT token
+    if (isDemoMode && session_code === "DEMO") {
+      const authHeader = req.headers.get("authorization");
+      if (!authHeader) {
+        return new Response(JSON.stringify({ error: "Authorization required" }), {
+          status: 401,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const token = authHeader.replace("Bearer ", "");
+      const { data: { user }, error: userError } = await supabase.auth.getUser(token);
+
+      if (userError || !user) {
+        return new Response(JSON.stringify({ error: "Invalid authorization" }), {
+          status: 401,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      userId = user.id;
+      console.log("Demo mode purchase for user:", userId);
+    } else {
+      // Production mode: verify session from database
+      const { data: session } = await supabase
+        .from("machine_sessions")
+        .select("id, user_id, status")
+        .eq("session_code", session_code)
+        .eq("status", "verified")
+        .maybeSingle();
+
+      if (!session || !session.user_id) {
+        return new Response(JSON.stringify({ error: "Invalid or unverified session" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      userId = session.user_id;
+      sessionId = session.id;
     }
 
     // Get user's wallet
     const { data: wallet } = await supabase
       .from("wallets")
       .select("id, balance")
-      .eq("user_id", session.user_id)
+      .eq("user_id", userId)
       .maybeSingle();
 
     if (!wallet) {
@@ -109,7 +139,7 @@ serve(async (req) => {
     const { data: rewardsRecord } = await supabase
       .from("rewards_points")
       .select("id, balance, lifetime_points, tier")
-      .eq("user_id", session.user_id)
+      .eq("user_id", userId)
       .maybeSingle();
 
     const tier = rewardsRecord?.tier || "bronze";
@@ -125,33 +155,39 @@ serve(async (req) => {
 
     if (walletError) throw walletError;
 
-    // Create wallet transaction
+    // Create wallet transaction (skip machine_id for demo)
+    const walletTxData: Record<string, unknown> = {
+      wallet_id: wallet.id,
+      amount: -amount,
+      transaction_type: "purchase",
+      description: item_name ? `Purchase: ${item_name}` : "Machine purchase",
+    };
+    if (!isDemoMode) {
+      walletTxData.machine_id = machine.id;
+    }
+    
     const { data: walletTx, error: txError } = await supabase
       .from("wallet_transactions")
-      .insert({
-        wallet_id: wallet.id,
-        amount: -amount,
-        transaction_type: "purchase",
-        description: item_name ? `Purchase: ${item_name}` : "Machine purchase",
-        machine_id: machine.id,
-      })
+      .insert(walletTxData)
       .select("id")
       .single();
 
     if (txError) throw txError;
 
-    // Create machine transaction
-    await supabase
-      .from("machine_transactions")
-      .insert({
-        machine_id: machine.id,
-        user_id: session.user_id,
-        wallet_transaction_id: walletTx.id,
-        amount: amount,
-        item_name: item_name,
-        points_earned: pointsEarned,
-        session_id: session.id,
-      });
+    // Create machine transaction (skip for demo mode)
+    if (!isDemoMode && sessionId) {
+      await supabase
+        .from("machine_transactions")
+        .insert({
+          machine_id: machine.id,
+          user_id: userId,
+          wallet_transaction_id: walletTx.id,
+          amount: amount,
+          item_name: item_name,
+          points_earned: pointsEarned,
+          session_id: sessionId,
+        });
+    }
 
     // Award points
     if (rewardsRecord) {
@@ -170,7 +206,7 @@ serve(async (req) => {
       await supabase
         .from("point_transactions")
         .insert({
-          user_id: session.user_id,
+          user_id: userId,
           points: pointsEarned,
           transaction_type: "earn",
           description: `Earned from purchase at ${machine.name}`,
@@ -178,11 +214,13 @@ serve(async (req) => {
         });
     }
 
-    // Mark session as used
-    await supabase
-      .from("machine_sessions")
-      .update({ status: "used" })
-      .eq("id", session.id);
+    // Mark session as used (skip for demo mode)
+    if (!isDemoMode && sessionId) {
+      await supabase
+        .from("machine_sessions")
+        .update({ status: "used" })
+        .eq("id", sessionId);
+    }
 
     console.log("Transaction processed:", {
       machine: machine.machine_code,
