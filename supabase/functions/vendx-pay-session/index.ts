@@ -227,30 +227,37 @@ serve(async (req) => {
     if (action === "verify_totp") {
       const apiKey = req.headers.get("x-machine-api-key");
       
-      if (!apiKey) {
-        return new Response(JSON.stringify({ error: "Machine API key required" }), {
-          status: 401,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+      // Demo mode for testing - skip machine validation
+      const isDemoMode = apiKey === "demo-api-key";
+      let machineDbId: string | null = null;
+
+      if (!isDemoMode) {
+        if (!apiKey) {
+          return new Response(JSON.stringify({ error: "Machine API key required" }), {
+            status: 401,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+
+        // Verify machine
+        const { data: machine } = await supabase
+          .from("vendx_machines")
+          .select("id")
+          .eq("api_key", apiKey)
+          .maybeSingle();
+
+        if (!machine) {
+          return new Response(JSON.stringify({ error: "Invalid machine" }), {
+            status: 403,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        machineDbId = machine.id;
       }
 
       if (!totp_code || totp_code.length !== 6) {
         return new Response(JSON.stringify({ error: "Invalid code format" }), {
           status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-
-      // Verify machine
-      const { data: machine } = await supabase
-        .from("vendx_machines")
-        .select("id")
-        .eq("api_key", apiKey)
-        .maybeSingle();
-
-      if (!machine) {
-        return new Response(JSON.stringify({ error: "Invalid machine" }), {
-          status: 403,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
@@ -288,14 +295,35 @@ serve(async (req) => {
         });
       }
 
-      // Create verified session
+      // In demo mode, skip session creation if no machine
+      if (isDemoMode && !machineDbId) {
+        // Get wallet balance without creating session
+        const { data: wallet } = await supabase
+          .from("wallets")
+          .select("balance")
+          .eq("user_id", matchedUserId)
+          .maybeSingle();
+
+        console.log("Demo TOTP verified for user:", matchedUserId);
+
+        return new Response(
+          JSON.stringify({
+            success: true,
+            session_code: "DEMO",
+            balance: wallet?.balance || 0,
+          }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // Create verified session for real machines
       const sessionCode = generateSessionCode();
       const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
 
       const { data: session } = await supabase
         .from("machine_sessions")
         .insert({
-          machine_id: machine.id,
+          machine_id: machineDbId!,
           user_id: matchedUserId,
           session_code: sessionCode,
           session_type: "totp",
