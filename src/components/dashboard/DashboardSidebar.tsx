@@ -14,6 +14,8 @@ import {
   Gift,
   Monitor,
   Percent,
+  Route,
+  Navigation,
 } from "lucide-react";
 import { AppRole } from "@/pages/DashboardPage";
 import { cn } from "@/lib/utils";
@@ -93,6 +95,18 @@ const tabs: TabConfig[] = [
     label: "Daily Tasks",
     icon: CheckSquare,
     requiredRoles: ["super_admin", "employee_operator"],
+  },
+  {
+    id: "my-route",
+    label: "My Route",
+    icon: Navigation,
+    requiredRoles: ["employee_operator"],
+  },
+  {
+    id: "route-manager",
+    label: "Route Manager",
+    icon: Route,
+    requiredRoles: ["super_admin", "global_operations_manager"],
   },
   {
     id: "admin-settings",

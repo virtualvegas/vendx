@@ -837,6 +837,109 @@ export type Database = {
         }
         Relationships: []
       }
+      route_stops: {
+        Row: {
+          address: string | null
+          completed_at: string | null
+          created_at: string
+          estimated_duration_minutes: number | null
+          id: string
+          location_id: string | null
+          machine_id: string | null
+          notes: string | null
+          route_id: string
+          status: string
+          stop_name: string
+          stop_order: number
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          completed_at?: string | null
+          created_at?: string
+          estimated_duration_minutes?: number | null
+          id?: string
+          location_id?: string | null
+          machine_id?: string | null
+          notes?: string | null
+          route_id: string
+          status?: string
+          stop_name: string
+          stop_order?: number
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          completed_at?: string | null
+          created_at?: string
+          estimated_duration_minutes?: number | null
+          id?: string
+          location_id?: string | null
+          machine_id?: string | null
+          notes?: string | null
+          route_id?: string
+          status?: string
+          stop_name?: string
+          stop_order?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "route_stops_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "route_stops_machine_id_fkey"
+            columns: ["machine_id"]
+            isOneToOne: false
+            referencedRelation: "vendx_machines"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "route_stops_route_id_fkey"
+            columns: ["route_id"]
+            isOneToOne: false
+            referencedRelation: "service_routes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      service_routes: {
+        Row: {
+          assigned_to: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          name: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          name: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_to?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          name?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       shipping_addresses: {
         Row: {
           address_line1: string
