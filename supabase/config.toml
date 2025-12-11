@@ -17,3 +17,9 @@ verify_jwt = false
 
 [functions.vendx-pay-balance]
 verify_jwt = false
+
+[functions.store-create-checkout]
+verify_jwt = true
+
+[functions.store-webhook]
+verify_jwt = false

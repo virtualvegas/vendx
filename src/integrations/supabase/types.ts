@@ -982,6 +982,358 @@ export type Database = {
         }
         Relationships: []
       }
+      store_cart_items: {
+        Row: {
+          addon_ids: string[] | null
+          cart_id: string | null
+          created_at: string | null
+          id: string
+          product_id: string | null
+          quantity: number
+        }
+        Insert: {
+          addon_ids?: string[] | null
+          cart_id?: string | null
+          created_at?: string | null
+          id?: string
+          product_id?: string | null
+          quantity?: number
+        }
+        Update: {
+          addon_ids?: string[] | null
+          cart_id?: string | null
+          created_at?: string | null
+          id?: string
+          product_id?: string | null
+          quantity?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "store_cart_items_cart_id_fkey"
+            columns: ["cart_id"]
+            isOneToOne: false
+            referencedRelation: "store_carts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "store_cart_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "store_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      store_carts: {
+        Row: {
+          created_at: string | null
+          id: string
+          session_id: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          session_id?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          session_id?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      store_order_items: {
+        Row: {
+          addon_details: Json | null
+          created_at: string | null
+          id: string
+          order_id: string | null
+          product_id: string | null
+          product_name: string
+          product_price: number
+          quantity: number
+          total: number
+        }
+        Insert: {
+          addon_details?: Json | null
+          created_at?: string | null
+          id?: string
+          order_id?: string | null
+          product_id?: string | null
+          product_name: string
+          product_price: number
+          quantity?: number
+          total: number
+        }
+        Update: {
+          addon_details?: Json | null
+          created_at?: string | null
+          id?: string
+          order_id?: string | null
+          product_id?: string | null
+          product_name?: string
+          product_price?: number
+          quantity?: number
+          total?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "store_order_items_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "store_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "store_order_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "store_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      store_orders: {
+        Row: {
+          created_at: string | null
+          id: string
+          notes: string | null
+          order_number: string
+          shipping_address_id: string | null
+          shipping_cost: number | null
+          status: string
+          stripe_checkout_session_id: string | null
+          stripe_payment_intent_id: string | null
+          subtotal: number
+          tax: number | null
+          total: number
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          order_number: string
+          shipping_address_id?: string | null
+          shipping_cost?: number | null
+          status?: string
+          stripe_checkout_session_id?: string | null
+          stripe_payment_intent_id?: string | null
+          subtotal?: number
+          tax?: number | null
+          total?: number
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          order_number?: string
+          shipping_address_id?: string | null
+          shipping_cost?: number | null
+          status?: string
+          stripe_checkout_session_id?: string | null
+          stripe_payment_intent_id?: string | null
+          subtotal?: number
+          tax?: number | null
+          total?: number
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "store_orders_shipping_address_id_fkey"
+            columns: ["shipping_address_id"]
+            isOneToOne: false
+            referencedRelation: "shipping_addresses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      store_product_addons: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          price: number
+          product_id: string | null
+          stripe_price_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          price?: number
+          product_id?: string | null
+          stripe_price_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          price?: number
+          product_id?: string | null
+          stripe_price_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "store_product_addons_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "store_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      store_products: {
+        Row: {
+          category: string
+          compare_at_price: number | null
+          created_at: string | null
+          description: string | null
+          id: string
+          images: string[] | null
+          is_active: boolean | null
+          is_featured: boolean | null
+          is_subscription: boolean | null
+          metadata: Json | null
+          name: string
+          price: number
+          short_description: string | null
+          slug: string
+          stock: number | null
+          stripe_price_id: string | null
+          stripe_product_id: string | null
+          subcategory: string | null
+          subscription_interval: string | null
+          subscription_price: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          category: string
+          compare_at_price?: number | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          images?: string[] | null
+          is_active?: boolean | null
+          is_featured?: boolean | null
+          is_subscription?: boolean | null
+          metadata?: Json | null
+          name: string
+          price?: number
+          short_description?: string | null
+          slug: string
+          stock?: number | null
+          stripe_price_id?: string | null
+          stripe_product_id?: string | null
+          subcategory?: string | null
+          subscription_interval?: string | null
+          subscription_price?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          category?: string
+          compare_at_price?: number | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          images?: string[] | null
+          is_active?: boolean | null
+          is_featured?: boolean | null
+          is_subscription?: boolean | null
+          metadata?: Json | null
+          name?: string
+          price?: number
+          short_description?: string | null
+          slug?: string
+          stock?: number | null
+          stripe_price_id?: string | null
+          stripe_product_id?: string | null
+          subcategory?: string | null
+          subscription_interval?: string | null
+          subscription_price?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      store_subscriptions: {
+        Row: {
+          addon_ids: string[] | null
+          canceled_at: string | null
+          created_at: string | null
+          current_period_end: string | null
+          current_period_start: string | null
+          id: string
+          product_id: string | null
+          shipping_address_id: string | null
+          status: string
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          addon_ids?: string[] | null
+          canceled_at?: string | null
+          created_at?: string | null
+          current_period_end?: string | null
+          current_period_start?: string | null
+          id?: string
+          product_id?: string | null
+          shipping_address_id?: string | null
+          status?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          addon_ids?: string[] | null
+          canceled_at?: string | null
+          created_at?: string | null
+          current_period_end?: string | null
+          current_period_start?: string | null
+          id?: string
+          product_id?: string | null
+          shipping_address_id?: string | null
+          status?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "store_subscriptions_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "store_products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "store_subscriptions_shipping_address_id_fkey"
+            columns: ["shipping_address_id"]
+            isOneToOne: false
+            referencedRelation: "shipping_addresses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       support_tickets: {
         Row: {
           assigned_to: string | null
