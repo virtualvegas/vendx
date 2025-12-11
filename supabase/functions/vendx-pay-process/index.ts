@@ -34,19 +34,26 @@ serve(async (req) => {
       });
     }
 
-    // Verify machine
-    const { data: machine } = await supabase
-      .from("vendx_machines")
-      .select("id, machine_code, name")
-      .eq("api_key", apiKey)
-      .eq("status", "active")
-      .maybeSingle();
+    // Demo mode support
+    const isDemoMode = apiKey === "demo-api-key";
+    let machine = { id: "demo", machine_code: "DEMO", name: "Demo Machine" };
 
-    if (!machine) {
-      return new Response(JSON.stringify({ error: "Invalid or inactive machine" }), {
-        status: 403,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    if (!isDemoMode) {
+      // Verify machine
+      const { data: realMachine } = await supabase
+        .from("vendx_machines")
+        .select("id, machine_code, name")
+        .eq("api_key", apiKey)
+        .eq("status", "active")
+        .maybeSingle();
+
+      if (!realMachine) {
+        return new Response(JSON.stringify({ error: "Invalid or inactive machine" }), {
+          status: 403,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      machine = realMachine;
     }
 
     const { session_code, amount, item_name } = await req.json();
