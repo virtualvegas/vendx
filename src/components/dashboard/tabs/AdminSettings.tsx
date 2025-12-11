@@ -48,6 +48,7 @@ const roleLabels: Record<AppRole, string> = {
   warehouse_logistics: "Warehouse & Logistics",
   regional_manager: "Regional Manager",
   employee_operator: "Employee / Operator",
+  customer: "Customer",
 };
 
 const roleDescriptions: Record<AppRole, string> = {
@@ -60,6 +61,7 @@ const roleDescriptions: Record<AppRole, string> = {
   warehouse_logistics: "Control inventory and shipments",
   regional_manager: "Regional performance oversight",
   employee_operator: "Daily operational tasks",
+  customer: "Standard customer access with wallet and rewards",
 };
 
 const AdminSettings = () => {
