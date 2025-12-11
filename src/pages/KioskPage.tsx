@@ -90,9 +90,12 @@ const KioskPage = () => {
     try {
       const { data, error } = await supabase.functions.invoke("vendx-pay-process", {
         body: {
-          session_id: session.sessionId,
+          session_code: session.sessionId,
           amount,
           item_name: itemName
+        },
+        headers: {
+          "x-machine-api-key": "demo-api-key"
         }
       });
 
