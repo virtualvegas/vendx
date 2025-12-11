@@ -28,28 +28,48 @@ const KioskPage = () => {
     setState("verifying");
     
     try {
-      const { data, error } = await supabase.functions.invoke("vendx-pay-session", {
-        body: {
-          action: "verify",
-          machine_id: machineId,
-          totp_code: submittedCode
+      // For demo mode, we'll simulate the verification on client side
+      // In production, the kiosk would call the edge function with its API key
+      if (machineId === "demo") {
+        // Demo mode: verify locally by calling the session endpoint
+        const { data, error } = await supabase.functions.invoke("vendx-pay-session", {
+          body: {
+            action: "verify_totp",
+            totp_code: submittedCode
+          },
+          headers: {
+            // Demo API key - in production this would be a real machine API key
+            "x-machine-api-key": "demo-api-key"
+          }
+        });
+
+        if (error) {
+          console.error("Session error:", error);
+          setError("Connection error. Please try again.");
+          setState("error");
+          return;
         }
-      });
 
-      if (error || !data?.success) {
-        setError(data?.error || "Invalid code. Please try again.");
+        if (!data?.success) {
+          setError(data?.error || "Invalid code. Please try again.");
+          setState("error");
+          return;
+        }
+
+        setSession({
+          sessionId: data.session_code || "",
+          userId: "",
+          userName: "Customer",
+          walletBalance: data.balance || 0
+        });
+        setState("welcome");
+      } else {
+        // Production mode would use the real machine API key
+        setError("Machine not configured. Please contact support.");
         setState("error");
-        return;
       }
-
-      setSession({
-        sessionId: data.session_id,
-        userId: data.user_id,
-        userName: data.user_name || "Customer",
-        walletBalance: data.wallet_balance || 0
-      });
-      setState("welcome");
     } catch (err) {
+      console.error("Kiosk error:", err);
       setError("Connection error. Please try again.");
       setState("error");
     }
