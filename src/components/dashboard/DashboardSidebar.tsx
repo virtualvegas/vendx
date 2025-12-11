@@ -26,6 +26,26 @@ interface TabConfig {
 }
 
 const tabs: TabConfig[] = [
+  // Customer tabs (shown first for customers)
+  {
+    id: "my-orders",
+    label: "My Orders",
+    icon: Package,
+    requiredRoles: ["customer"],
+  },
+  {
+    id: "my-wallet",
+    label: "My Wallet",
+    icon: Wallet,
+    requiredRoles: ["customer"],
+  },
+  {
+    id: "my-rewards",
+    label: "My Rewards",
+    icon: Gift,
+    requiredRoles: ["customer"],
+  },
+  // Admin/Staff tabs
   {
     id: "global-operations",
     label: "Global Operations",

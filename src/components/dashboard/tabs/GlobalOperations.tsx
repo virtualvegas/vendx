@@ -45,12 +45,21 @@ const GlobalOperations = () => {
     },
   });
 
-  const regions = [
-    { name: "North America", performance: 87 },
-    { name: "Europe", performance: 72 },
-    { name: "Asia Pacific", performance: 91 },
-    { name: "Latin America", performance: 64 },
-  ];
+  const { data: regions, isLoading: regionsLoading } = useQuery({
+    queryKey: ["regions-performance"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("regions")
+        .select("*")
+        .order("monthly_revenue", { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  // Calculate total transactions and revenue from regions
+  const totalTransactions = regions?.reduce((sum, r) => sum + (r.monthly_transactions || 0), 0) || 0;
+  const totalRevenue = regions?.reduce((sum, r) => sum + Number(r.monthly_revenue || 0), 0) || 0;
 
   return (
     <div className="space-y-6">
@@ -78,12 +87,12 @@ const GlobalOperations = () => {
               </p>
             </Card>
             <Card className="p-6">
-              <h3 className="text-sm font-medium text-muted-foreground mb-2">Daily Transactions</h3>
-              <p className="text-3xl font-bold text-foreground">245,892</p>
+              <h3 className="text-sm font-medium text-muted-foreground mb-2">Monthly Transactions</h3>
+              <p className="text-3xl font-bold text-foreground">{totalTransactions.toLocaleString()}</p>
             </Card>
             <Card className="p-6">
-              <h3 className="text-sm font-medium text-muted-foreground mb-2">Global Revenue</h3>
-              <p className="text-3xl font-bold text-foreground">$2.4M</p>
+              <h3 className="text-sm font-medium text-muted-foreground mb-2">Monthly Revenue</h3>
+              <p className="text-3xl font-bold text-foreground">${(totalRevenue / 1000000).toFixed(2)}M</p>
             </Card>
           </>
         )}
@@ -92,22 +101,35 @@ const GlobalOperations = () => {
       <Card className="p-6">
         <h3 className="text-lg font-semibold text-foreground mb-4">Regional Performance</h3>
         <div className="space-y-3">
-          {regions.map((region) => (
-            <div key={region.name} className="flex items-center justify-between">
-              <span className="text-foreground">{region.name}</span>
-              <div className="flex items-center gap-4">
-                <div className="w-32 bg-muted rounded-full h-2">
-                  <div
-                    className="bg-primary h-2 rounded-full"
-                    style={{ width: `${region.performance}%` }}
-                  />
+          {regionsLoading ? (
+            <p className="text-sm text-muted-foreground">Loading regions...</p>
+          ) : regions && regions.length > 0 ? (
+            regions.map((region) => {
+              const maxRevenue = Math.max(...(regions?.map(r => Number(r.monthly_revenue)) || [1]));
+              const performance = maxRevenue > 0 ? (Number(region.monthly_revenue) / maxRevenue) * 100 : 0;
+              return (
+                <div key={region.id} className="flex items-center justify-between">
+                  <div className="flex flex-col">
+                    <span className="text-foreground font-medium">{region.name}</span>
+                    <span className="text-xs text-muted-foreground">{region.country}</span>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <div className="w-32 bg-muted rounded-full h-2">
+                      <div
+                        className="bg-primary h-2 rounded-full"
+                        style={{ width: `${performance}%` }}
+                      />
+                    </div>
+                    <span className="text-muted-foreground text-sm w-20 text-right">
+                      ${Number(region.monthly_revenue).toLocaleString()}
+                    </span>
+                  </div>
                 </div>
-                <span className="text-muted-foreground text-sm w-12 text-right">
-                  {region.performance}%
-                </span>
-              </div>
-            </div>
-          ))}
+              );
+            })
+          ) : (
+            <p className="text-sm text-muted-foreground">No regional data available</p>
+          )}
         </div>
       </Card>
 

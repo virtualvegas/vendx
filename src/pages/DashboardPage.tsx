@@ -19,6 +19,9 @@ import VendXPayManager from "@/components/dashboard/tabs/VendXPayManager";
 import RewardsManager from "@/components/dashboard/tabs/RewardsManager";
 import MachineRegistry from "@/components/dashboard/tabs/MachineRegistry";
 import PartnerOffersManager from "@/components/dashboard/tabs/PartnerOffersManager";
+import CustomerOrders from "@/components/dashboard/tabs/CustomerOrders";
+import CustomerWallet from "@/components/dashboard/tabs/CustomerWallet";
+import CustomerRewards from "@/components/dashboard/tabs/CustomerRewards";
 
 export type AppRole =
   | "super_admin"
@@ -29,14 +32,15 @@ export type AppRole =
   | "marketing_sales"
   | "warehouse_logistics"
   | "regional_manager"
-  | "employee_operator";
+  | "employee_operator"
+  | "customer";
 
 const DashboardPage = () => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [roles, setRoles] = useState<AppRole[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState("global-operations");
+  const [activeTab, setActiveTab] = useState("my-orders");
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -98,6 +102,12 @@ const DashboardPage = () => {
 
   const renderTabContent = () => {
     switch (activeTab) {
+      case "my-orders":
+        return <CustomerOrders />;
+      case "my-wallet":
+        return <CustomerWallet />;
+      case "my-rewards":
+        return <CustomerRewards />;
       case "global-operations":
         return <GlobalOperations />;
       case "events-rentals":
@@ -129,7 +139,7 @@ const DashboardPage = () => {
       case "partner-offers":
         return <PartnerOffersManager />;
       default:
-        return <GlobalOperations />;
+        return <CustomerOrders />;
     }
   };
 
