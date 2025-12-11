@@ -290,15 +290,15 @@ const RouteManager = () => {
               </div>
               <div>
                 <Label htmlFor="assigned_to">Assign To</Label>
-                <Select 
-                  value={routeForm.assigned_to} 
-                  onValueChange={(v) => setRouteForm({ ...routeForm, assigned_to: v })}
+              <Select 
+                  value={routeForm.assigned_to || "unassigned"} 
+                  onValueChange={(v) => setRouteForm({ ...routeForm, assigned_to: v === "unassigned" ? "" : v })}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select an operator" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Unassigned</SelectItem>
+                    <SelectItem value="unassigned">Unassigned</SelectItem>
                     {employees?.map((emp) => (
                       <SelectItem key={emp.id} value={emp.id}>
                         {emp.full_name || emp.email}
