@@ -331,43 +331,108 @@ export type Database = {
         Row: {
           address: string | null
           city: string
+          contact_email: string | null
+          contact_name: string | null
+          contact_phone: string | null
           country: string
           created_at: string
           id: string
           is_visible: boolean
           latitude: number | null
+          location_type: string | null
           longitude: number | null
           machine_count: number
+          name: string | null
           status: string
           updated_at: string
         }
         Insert: {
           address?: string | null
           city: string
+          contact_email?: string | null
+          contact_name?: string | null
+          contact_phone?: string | null
           country: string
           created_at?: string
           id?: string
           is_visible?: boolean
           latitude?: number | null
+          location_type?: string | null
           longitude?: number | null
           machine_count?: number
+          name?: string | null
           status?: string
           updated_at?: string
         }
         Update: {
           address?: string | null
           city?: string
+          contact_email?: string | null
+          contact_name?: string | null
+          contact_phone?: string | null
           country?: string
           created_at?: string
           id?: string
           is_visible?: boolean
           latitude?: number | null
+          location_type?: string | null
           longitude?: number | null
           machine_count?: number
+          name?: string | null
           status?: string
           updated_at?: string
         }
         Relationships: []
+      }
+      machine_inventory: {
+        Row: {
+          created_at: string
+          id: string
+          last_restocked: string | null
+          machine_id: string
+          max_capacity: number
+          product_name: string
+          quantity: number
+          sku: string
+          slot_number: string | null
+          unit_price: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          last_restocked?: string | null
+          machine_id: string
+          max_capacity?: number
+          product_name: string
+          quantity?: number
+          sku: string
+          slot_number?: string | null
+          unit_price?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          last_restocked?: string | null
+          machine_id?: string
+          max_capacity?: number
+          product_name?: string
+          quantity?: number
+          sku?: string
+          slot_number?: string | null
+          unit_price?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "machine_inventory_machine_id_fkey"
+            columns: ["machine_id"]
+            isOneToOne: false
+            referencedRelation: "vendx_machines"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       machine_sessions: {
         Row: {
@@ -758,6 +823,41 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      restock_logs: {
+        Row: {
+          created_at: string
+          id: string
+          items_restocked: Json
+          machine_id: string
+          notes: string | null
+          performed_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          items_restocked?: Json
+          machine_id: string
+          notes?: string | null
+          performed_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          items_restocked?: Json
+          machine_id?: string
+          notes?: string | null
+          performed_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "restock_logs_machine_id_fkey"
+            columns: ["machine_id"]
+            isOneToOne: false
+            referencedRelation: "vendx_machines"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       reward_catalog: {
         Row: {
@@ -1408,11 +1508,13 @@ export type Database = {
           api_key: string
           created_at: string
           id: string
+          installed_at: string | null
           last_seen: string | null
           location_id: string | null
           machine_code: string
           machine_type: string
           name: string
+          notes: string | null
           status: string
           updated_at: string
           vendx_pay_enabled: boolean
@@ -1421,11 +1523,13 @@ export type Database = {
           api_key: string
           created_at?: string
           id?: string
+          installed_at?: string | null
           last_seen?: string | null
           location_id?: string | null
           machine_code: string
           machine_type: string
           name: string
+          notes?: string | null
           status?: string
           updated_at?: string
           vendx_pay_enabled?: boolean
@@ -1434,11 +1538,13 @@ export type Database = {
           api_key?: string
           created_at?: string
           id?: string
+          installed_at?: string | null
           last_seen?: string | null
           location_id?: string | null
           machine_code?: string
           machine_type?: string
           name?: string
+          notes?: string | null
           status?: string
           updated_at?: string
           vendx_pay_enabled?: boolean
