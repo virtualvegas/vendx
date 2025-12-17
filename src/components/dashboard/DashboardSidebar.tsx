@@ -101,7 +101,7 @@ const tabs: TabConfig[] = [
     id: "my-route",
     label: "My Route",
     icon: Navigation,
-    requiredRoles: ["employee_operator"],
+    requiredRoles: ["super_admin", "global_operations_manager", "regional_manager", "employee_operator"],
   },
   {
     id: "route-manager",
