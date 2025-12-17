@@ -16,6 +16,7 @@ import {
   Percent,
   Route,
   Navigation,
+  ShoppingCart,
 } from "lucide-react";
 import { AppRole } from "@/pages/DashboardPage";
 import { cn } from "@/lib/utils";
@@ -143,6 +144,12 @@ const tabs: TabConfig[] = [
     label: "Machine Registry",
     icon: Monitor,
     requiredRoles: ["super_admin", "tech_support_lead"],
+  },
+  {
+    id: "store-manager",
+    label: "Store Manager",
+    icon: ShoppingCart,
+    requiredRoles: ["super_admin"],
   },
   {
     id: "partner-offers",

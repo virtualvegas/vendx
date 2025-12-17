@@ -24,6 +24,7 @@ import CustomerWallet from "@/components/dashboard/tabs/CustomerWallet";
 import CustomerRewards from "@/components/dashboard/tabs/CustomerRewards";
 import MyRoute from "@/components/dashboard/tabs/MyRoute";
 import RouteManager from "@/components/dashboard/tabs/RouteManager";
+import StoreManager from "@/components/dashboard/tabs/StoreManager";
 
 export type AppRole =
   | "super_admin"
@@ -144,6 +145,8 @@ const DashboardPage = () => {
         return <MyRoute />;
       case "route-manager":
         return <RouteManager />;
+      case "store-manager":
+        return <StoreManager />;
       default:
         return <CustomerOrders />;
     }

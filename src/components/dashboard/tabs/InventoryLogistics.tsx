@@ -12,7 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Package, AlertTriangle, Trash2, Edit, Search, RefreshCw, Warehouse, TrendingDown, DollarSign, BarChart3 } from "lucide-react";
+import { Plus, Package, AlertTriangle, Trash2, Edit, Search, RefreshCw, Warehouse, TrendingDown, DollarSign, BarChart3, Monitor } from "lucide-react";
 
 interface InventoryItem {
   id: string;
@@ -47,6 +47,12 @@ interface MachineInventoryItem {
   };
 }
 
+interface Machine {
+  id: string;
+  name: string;
+  machine_code: string;
+}
+
 const CATEGORIES = [
   "Snacks",
   "Beverages",
@@ -63,10 +69,13 @@ const InventoryLogistics = () => {
   const [showDialog, setShowDialog] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [editingItem, setEditingItem] = useState<InventoryItem | null>(null);
+  const [editingMachineItem, setEditingMachineItem] = useState<MachineInventoryItem | null>(null);
   const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null);
+  const [selectedMachineItem, setSelectedMachineItem] = useState<MachineInventoryItem | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterCategory, setFilterCategory] = useState<string>("all");
   const [filterLowStock, setFilterLowStock] = useState(false);
+  const [inventoryType, setInventoryType] = useState<"warehouse" | "machine">("warehouse");
 
   const [formData, setFormData] = useState({
     product_name: "",
@@ -77,6 +86,16 @@ const InventoryLogistics = () => {
     location: "Main Warehouse",
     unit_cost: 0,
     supplier: "",
+  });
+
+  const [machineFormData, setMachineFormData] = useState({
+    machine_id: "",
+    product_name: "",
+    sku: "",
+    slot_number: "",
+    quantity: 0,
+    max_capacity: 10,
+    unit_price: 0,
   });
 
   const { toast } = useToast();
@@ -115,6 +134,21 @@ const InventoryLogistics = () => {
     },
   });
 
+  // Fetch machines for selection
+  const { data: machines } = useQuery({
+    queryKey: ["machines-list"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("vendx_machines")
+        .select("id, name, machine_code")
+        .eq("status", "active")
+        .order("name");
+      if (error) throw error;
+      return data as Machine[];
+    },
+  });
+
+  // Warehouse inventory mutations
   const createMutation = useMutation({
     mutationFn: async (data: typeof formData) => {
       const { error } = await supabase.from("inventory_items").insert([data]);
@@ -122,7 +156,7 @@ const InventoryLogistics = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["inventory-items"] });
-      toast({ title: "Item added successfully" });
+      toast({ title: "Warehouse item added successfully" });
       setShowDialog(false);
       resetForm();
     },
@@ -163,6 +197,55 @@ const InventoryLogistics = () => {
     },
   });
 
+  // Machine inventory mutations
+  const createMachineItemMutation = useMutation({
+    mutationFn: async (data: typeof machineFormData) => {
+      const { error } = await supabase.from("machine_inventory").insert([data]);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["machine-inventory"] });
+      toast({ title: "Machine inventory item added successfully" });
+      setShowDialog(false);
+      resetMachineForm();
+    },
+    onError: (error: any) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const updateMachineItemMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: Partial<typeof machineFormData> }) => {
+      const { error } = await supabase.from("machine_inventory").update(data).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["machine-inventory"] });
+      toast({ title: "Machine item updated successfully" });
+      setShowDialog(false);
+      resetMachineForm();
+    },
+    onError: (error: any) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const deleteMachineItemMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("machine_inventory").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["machine-inventory"] });
+      toast({ title: "Machine item deleted" });
+      setShowDeleteConfirm(false);
+      setSelectedMachineItem(null);
+    },
+    onError: (error: any) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    },
+  });
+
   const resetForm = () => {
     setFormData({
       product_name: "",
@@ -177,17 +260,39 @@ const InventoryLogistics = () => {
     setEditingItem(null);
   };
 
+  const resetMachineForm = () => {
+    setMachineFormData({
+      machine_id: "",
+      product_name: "",
+      sku: "",
+      slot_number: "",
+      quantity: 0,
+      max_capacity: 10,
+      unit_price: 0,
+    });
+    setEditingMachineItem(null);
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (editingItem) {
-      updateMutation.mutate({ id: editingItem.id, data: formData });
+    if (inventoryType === "warehouse") {
+      if (editingItem) {
+        updateMutation.mutate({ id: editingItem.id, data: formData });
+      } else {
+        createMutation.mutate(formData);
+      }
     } else {
-      createMutation.mutate(formData);
+      if (editingMachineItem) {
+        updateMachineItemMutation.mutate({ id: editingMachineItem.id, data: machineFormData });
+      } else {
+        createMachineItemMutation.mutate(machineFormData);
+      }
     }
   };
 
   const handleEdit = (item: InventoryItem) => {
     setEditingItem(item);
+    setInventoryType("warehouse");
     setFormData({
       product_name: item.product_name,
       sku: item.sku,
@@ -201,6 +306,21 @@ const InventoryLogistics = () => {
     setShowDialog(true);
   };
 
+  const handleEditMachineItem = (item: MachineInventoryItem) => {
+    setEditingMachineItem(item);
+    setInventoryType("machine");
+    setMachineFormData({
+      machine_id: item.machine_id,
+      product_name: item.product_name,
+      sku: item.sku,
+      slot_number: item.slot_number || "",
+      quantity: item.quantity,
+      max_capacity: item.max_capacity,
+      unit_price: item.unit_price,
+    });
+    setShowDialog(true);
+  };
+
   const handleRestock = async (item: InventoryItem, addQty: number) => {
     const newQty = item.quantity + addQty;
     await supabase
@@ -209,6 +329,13 @@ const InventoryLogistics = () => {
       .eq("id", item.id);
     queryClient.invalidateQueries({ queryKey: ["inventory-items"] });
     toast({ title: `Added ${addQty} units to ${item.product_name}` });
+  };
+
+  const openAddDialog = (type: "warehouse" | "machine") => {
+    setInventoryType(type);
+    resetForm();
+    resetMachineForm();
+    setShowDialog(true);
   };
 
   // Filtered warehouse items
@@ -273,10 +400,6 @@ const InventoryLogistics = () => {
           <Button variant="outline" size="sm" onClick={() => queryClient.invalidateQueries({ queryKey: ["inventory-items", "machine-inventory"] })}>
             <RefreshCw className="w-4 h-4 mr-2" />
             Refresh
-          </Button>
-          <Button onClick={() => { resetForm(); setShowDialog(true); }}>
-            <Plus className="w-4 h-4 mr-2" />
-            Add Item
           </Button>
         </div>
       </div>
@@ -382,6 +505,10 @@ const InventoryLogistics = () => {
                   <AlertTriangle className="w-4 h-4 mr-2" />
                   Low Stock Only
                 </Button>
+                <Button onClick={() => openAddDialog("warehouse")}>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Warehouse Item
+                </Button>
               </div>
             </CardContent>
           </Card>
@@ -431,7 +558,7 @@ const InventoryLogistics = () => {
                             <Button size="icon" variant="ghost" onClick={() => handleEdit(item)}>
                               <Edit className="w-4 h-4" />
                             </Button>
-                            <Button size="icon" variant="ghost" onClick={() => { setSelectedItem(item); setShowDeleteConfirm(true); }}>
+                            <Button size="icon" variant="ghost" onClick={() => { setSelectedItem(item); setSelectedMachineItem(null); setShowDeleteConfirm(true); }}>
                               <Trash2 className="w-4 h-4 text-destructive" />
                             </Button>
                           </div>
@@ -481,14 +608,22 @@ const InventoryLogistics = () => {
           {/* Filters */}
           <Card>
             <CardContent className="p-4">
-              <div className="relative max-w-md">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search products or machines..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
+              <div className="flex flex-wrap gap-4">
+                <div className="flex-1 min-w-[200px]">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Search products or machines..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
+                </div>
+                <Button onClick={() => openAddDialog("machine")}>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Machine Item
+                </Button>
               </div>
             </CardContent>
           </Card>
@@ -509,6 +644,7 @@ const InventoryLogistics = () => {
                       <TableHead>Product</TableHead>
                       <TableHead>Qty</TableHead>
                       <TableHead>Price</TableHead>
+                      <TableHead>Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -533,6 +669,16 @@ const InventoryLogistics = () => {
                           <span className="text-muted-foreground">/{item.max_capacity}</span>
                         </TableCell>
                         <TableCell className="font-medium">${item.unit_price.toFixed(2)}</TableCell>
+                        <TableCell>
+                          <div className="flex gap-1">
+                            <Button size="icon" variant="ghost" onClick={() => handleEditMachineItem(item)}>
+                              <Edit className="w-4 h-4" />
+                            </Button>
+                            <Button size="icon" variant="ghost" onClick={() => { setSelectedMachineItem(item); setSelectedItem(null); setShowDeleteConfirm(true); }}>
+                              <Trash2 className="w-4 h-4 text-destructive" />
+                            </Button>
+                          </div>
+                        </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -547,90 +693,180 @@ const InventoryLogistics = () => {
       <Dialog open={showDialog} onOpenChange={setShowDialog}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>{editingItem ? "Edit Inventory Item" : "Add New Inventory Item"}</DialogTitle>
+            <DialogTitle>
+              {inventoryType === "warehouse" 
+                ? (editingItem ? "Edit Warehouse Item" : "Add Warehouse Item")
+                : (editingMachineItem ? "Edit Machine Item" : "Add Machine Item")
+              }
+            </DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Product Name *</Label>
-                <Input
-                  value={formData.product_name}
-                  onChange={(e) => setFormData({ ...formData, product_name: e.target.value })}
-                  placeholder="Coca-Cola 12oz Can"
-                  required
-                />
+            {inventoryType === "warehouse" ? (
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Product Name *</Label>
+                  <Input
+                    value={formData.product_name}
+                    onChange={(e) => setFormData({ ...formData, product_name: e.target.value })}
+                    placeholder="Coca-Cola 12oz Can"
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>SKU *</Label>
+                  <Input
+                    value={formData.sku}
+                    onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
+                    placeholder="COK-12OZ-001"
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Category *</Label>
+                  <Select value={formData.category} onValueChange={(v) => setFormData({ ...formData, category: v })}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {CATEGORIES.map(c => (
+                        <SelectItem key={c} value={c}>{c}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Location *</Label>
+                  <Input
+                    value={formData.location}
+                    onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                    placeholder="Main Warehouse"
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Quantity *</Label>
+                  <Input
+                    type="number"
+                    value={formData.quantity}
+                    onChange={(e) => setFormData({ ...formData, quantity: parseInt(e.target.value) || 0 })}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Min Stock Level *</Label>
+                  <Input
+                    type="number"
+                    value={formData.min_stock_level}
+                    onChange={(e) => setFormData({ ...formData, min_stock_level: parseInt(e.target.value) || 0 })}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Unit Cost ($) *</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={formData.unit_cost}
+                    onChange={(e) => setFormData({ ...formData, unit_cost: parseFloat(e.target.value) || 0 })}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Supplier</Label>
+                  <Input
+                    value={formData.supplier}
+                    onChange={(e) => setFormData({ ...formData, supplier: e.target.value })}
+                    placeholder="ABC Distributors"
+                  />
+                </div>
               </div>
-              <div className="space-y-2">
-                <Label>SKU *</Label>
-                <Input
-                  value={formData.sku}
-                  onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
-                  placeholder="COK-12OZ-001"
-                  required
-                />
+            ) : (
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2 col-span-2">
+                  <Label>Machine *</Label>
+                  <Select 
+                    value={machineFormData.machine_id} 
+                    onValueChange={(v) => setMachineFormData({ ...machineFormData, machine_id: v })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a machine" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {machines?.map(m => (
+                        <SelectItem key={m.id} value={m.id}>
+                          <div className="flex items-center gap-2">
+                            <Monitor className="w-4 h-4" />
+                            {m.name} ({m.machine_code})
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Product Name *</Label>
+                  <Input
+                    value={machineFormData.product_name}
+                    onChange={(e) => setMachineFormData({ ...machineFormData, product_name: e.target.value })}
+                    placeholder="Coca-Cola 12oz Can"
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>SKU *</Label>
+                  <Input
+                    value={machineFormData.sku}
+                    onChange={(e) => setMachineFormData({ ...machineFormData, sku: e.target.value })}
+                    placeholder="COK-12OZ-001"
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Slot Number</Label>
+                  <Input
+                    value={machineFormData.slot_number}
+                    onChange={(e) => setMachineFormData({ ...machineFormData, slot_number: e.target.value })}
+                    placeholder="A1"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Quantity *</Label>
+                  <Input
+                    type="number"
+                    value={machineFormData.quantity}
+                    onChange={(e) => setMachineFormData({ ...machineFormData, quantity: parseInt(e.target.value) || 0 })}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Max Capacity *</Label>
+                  <Input
+                    type="number"
+                    value={machineFormData.max_capacity}
+                    onChange={(e) => setMachineFormData({ ...machineFormData, max_capacity: parseInt(e.target.value) || 10 })}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Unit Price ($) *</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={machineFormData.unit_price}
+                    onChange={(e) => setMachineFormData({ ...machineFormData, unit_price: parseFloat(e.target.value) || 0 })}
+                    required
+                  />
+                </div>
               </div>
-              <div className="space-y-2">
-                <Label>Category *</Label>
-                <Select value={formData.category} onValueChange={(v) => setFormData({ ...formData, category: v })}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {CATEGORIES.map(c => (
-                      <SelectItem key={c} value={c}>{c}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Location *</Label>
-                <Input
-                  value={formData.location}
-                  onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                  placeholder="Main Warehouse"
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Quantity *</Label>
-                <Input
-                  type="number"
-                  value={formData.quantity}
-                  onChange={(e) => setFormData({ ...formData, quantity: parseInt(e.target.value) || 0 })}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Min Stock Level *</Label>
-                <Input
-                  type="number"
-                  value={formData.min_stock_level}
-                  onChange={(e) => setFormData({ ...formData, min_stock_level: parseInt(e.target.value) || 0 })}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Unit Cost ($) *</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={formData.unit_cost}
-                  onChange={(e) => setFormData({ ...formData, unit_cost: parseFloat(e.target.value) || 0 })}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Supplier</Label>
-                <Input
-                  value={formData.supplier}
-                  onChange={(e) => setFormData({ ...formData, supplier: e.target.value })}
-                  placeholder="ABC Distributors"
-                />
-              </div>
-            </div>
+            )}
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setShowDialog(false)}>Cancel</Button>
-              <Button type="submit">{editingItem ? "Update" : "Add"} Item</Button>
+              <Button type="submit">
+                {inventoryType === "warehouse" 
+                  ? (editingItem ? "Update" : "Add") 
+                  : (editingMachineItem ? "Update" : "Add")
+                } Item
+              </Button>
             </DialogFooter>
           </form>
         </DialogContent>
@@ -642,12 +878,18 @@ const InventoryLogistics = () => {
           <DialogHeader>
             <DialogTitle>Delete Item</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete "{selectedItem?.product_name}"? This action cannot be undone.
+              Are you sure you want to delete "{selectedItem?.product_name || selectedMachineItem?.product_name}"? This action cannot be undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowDeleteConfirm(false)}>Cancel</Button>
-            <Button variant="destructive" onClick={() => selectedItem && deleteMutation.mutate(selectedItem.id)}>
+            <Button 
+              variant="destructive" 
+              onClick={() => {
+                if (selectedItem) deleteMutation.mutate(selectedItem.id);
+                if (selectedMachineItem) deleteMachineItemMutation.mutate(selectedMachineItem.id);
+              }}
+            >
               Delete Item
             </Button>
           </DialogFooter>
