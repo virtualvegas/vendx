@@ -152,6 +152,12 @@ const tabs: TabConfig[] = [
     requiredRoles: ["super_admin"],
   },
   {
+    id: "products-manager",
+    label: "Products Manager",
+    icon: Package,
+    requiredRoles: ["super_admin"],
+  },
+  {
     id: "partner-offers",
     label: "Partner Offers",
     icon: Percent,
