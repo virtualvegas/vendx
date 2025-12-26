@@ -402,6 +402,41 @@ export type Database = {
           },
         ]
       }
+      location_assignments: {
+        Row: {
+          assigned_at: string
+          business_owner_id: string
+          created_at: string
+          id: string
+          is_active: boolean
+          location_id: string
+        }
+        Insert: {
+          assigned_at?: string
+          business_owner_id: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          location_id: string
+        }
+        Update: {
+          assigned_at?: string
+          business_owner_id?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          location_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "location_assignments_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       locations: {
         Row: {
           address: string | null
@@ -526,6 +561,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      machine_profit_splits: {
+        Row: {
+          business_owner_percentage: number
+          created_at: string
+          effective_from: string
+          effective_to: string | null
+          id: string
+          machine_id: string
+          updated_at: string
+          vendx_percentage: number
+        }
+        Insert: {
+          business_owner_percentage?: number
+          created_at?: string
+          effective_from?: string
+          effective_to?: string | null
+          id?: string
+          machine_id: string
+          updated_at?: string
+          vendx_percentage?: number
+        }
+        Update: {
+          business_owner_percentage?: number
+          created_at?: string
+          effective_from?: string
+          effective_to?: string | null
+          id?: string
+          machine_id?: string
+          updated_at?: string
+          vendx_percentage?: number
+        }
+        Relationships: []
       }
       machine_sessions: {
         Row: {
@@ -752,6 +820,143 @@ export type Database = {
           updated_at?: string
           valid_from?: string
           valid_until?: string | null
+        }
+        Relationships: []
+      }
+      payout_line_items: {
+        Row: {
+          created_at: string
+          gross_revenue: number
+          id: string
+          location_id: string
+          machine_id: string
+          owner_share: number
+          payout_id: string
+          transaction_count: number
+          vendx_percentage: number
+          vendx_share: number
+        }
+        Insert: {
+          created_at?: string
+          gross_revenue: number
+          id?: string
+          location_id: string
+          machine_id: string
+          owner_share: number
+          payout_id: string
+          transaction_count?: number
+          vendx_percentage: number
+          vendx_share: number
+        }
+        Update: {
+          created_at?: string
+          gross_revenue?: number
+          id?: string
+          location_id?: string
+          machine_id?: string
+          owner_share?: number
+          payout_id?: string
+          transaction_count?: number
+          vendx_percentage?: number
+          vendx_share?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payout_line_items_payout_id_fkey"
+            columns: ["payout_id"]
+            isOneToOne: false
+            referencedRelation: "payouts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payout_settings: {
+        Row: {
+          bank_account_last4: string | null
+          bank_name: string | null
+          bank_routing_last4: string | null
+          created_at: string
+          id: string
+          minimum_payout_amount: number
+          payment_method: string
+          payout_frequency: string
+          stripe_account_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          bank_account_last4?: string | null
+          bank_name?: string | null
+          bank_routing_last4?: string | null
+          created_at?: string
+          id?: string
+          minimum_payout_amount?: number
+          payment_method?: string
+          payout_frequency?: string
+          stripe_account_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          bank_account_last4?: string | null
+          bank_name?: string | null
+          bank_routing_last4?: string | null
+          created_at?: string
+          id?: string
+          minimum_payout_amount?: number
+          payment_method?: string
+          payout_frequency?: string
+          stripe_account_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      payouts: {
+        Row: {
+          amount: number
+          business_owner_id: string
+          created_at: string
+          gross_revenue: number
+          id: string
+          notes: string | null
+          paid_at: string | null
+          payment_reference: string | null
+          period_end: string
+          period_start: string
+          status: string
+          updated_at: string
+          vendx_share: number
+        }
+        Insert: {
+          amount: number
+          business_owner_id: string
+          created_at?: string
+          gross_revenue: number
+          id?: string
+          notes?: string | null
+          paid_at?: string | null
+          payment_reference?: string | null
+          period_end: string
+          period_start: string
+          status?: string
+          updated_at?: string
+          vendx_share: number
+        }
+        Update: {
+          amount?: number
+          business_owner_id?: string
+          created_at?: string
+          gross_revenue?: number
+          id?: string
+          notes?: string | null
+          paid_at?: string | null
+          payment_reference?: string | null
+          period_end?: string
+          period_start?: string
+          status?: string
+          updated_at?: string
+          vendx_share?: number
         }
         Relationships: []
       }
@@ -1600,9 +1805,12 @@ export type Database = {
         Row: {
           api_key: string
           created_at: string
+          current_period_revenue: number | null
           id: string
           installed_at: string | null
+          last_revenue_sync: string | null
           last_seen: string | null
+          lifetime_revenue: number | null
           location_id: string | null
           machine_code: string
           machine_type: string
@@ -1615,9 +1823,12 @@ export type Database = {
         Insert: {
           api_key: string
           created_at?: string
+          current_period_revenue?: number | null
           id?: string
           installed_at?: string | null
+          last_revenue_sync?: string | null
           last_seen?: string | null
+          lifetime_revenue?: number | null
           location_id?: string | null
           machine_code: string
           machine_type: string
@@ -1630,9 +1841,12 @@ export type Database = {
         Update: {
           api_key?: string
           created_at?: string
+          current_period_revenue?: number | null
           id?: string
           installed_at?: string | null
+          last_revenue_sync?: string | null
           last_seen?: string | null
+          lifetime_revenue?: number | null
           location_id?: string | null
           machine_code?: string
           machine_type?: string
@@ -1819,6 +2033,7 @@ export type Database = {
         | "regional_manager"
         | "employee_operator"
         | "customer"
+        | "business_owner"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1957,6 +2172,7 @@ export const Constants = {
         "regional_manager",
         "employee_operator",
         "customer",
+        "business_owner",
       ],
     },
   },

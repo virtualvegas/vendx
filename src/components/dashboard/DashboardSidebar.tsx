@@ -18,6 +18,8 @@ import {
   Navigation,
   ShoppingCart,
   Gamepad2,
+  LayoutDashboard,
+  Building2,
 } from "lucide-react";
 import { AppRole } from "@/pages/DashboardPage";
 import { cn } from "@/lib/utils";
@@ -30,6 +32,20 @@ interface TabConfig {
 }
 
 const tabs: TabConfig[] = [
+  // Dashboard Overview (all roles)
+  {
+    id: "overview",
+    label: "Dashboard",
+    icon: LayoutDashboard,
+    requiredRoles: ["super_admin", "global_operations_manager", "finance_accounting", "regional_manager"],
+  },
+  // Business Owner Dashboard
+  {
+    id: "business-owner",
+    label: "My Business",
+    icon: Building2,
+    requiredRoles: ["business_owner"],
+  },
   // Customer tabs (shown first for customers)
   {
     id: "my-orders",
@@ -132,6 +148,18 @@ const tabs: TabConfig[] = [
     id: "vendx-pay",
     label: "VendX Pay",
     icon: Wallet,
+    requiredRoles: ["super_admin", "finance_accounting"],
+  },
+  {
+    id: "payouts",
+    label: "Payouts",
+    icon: DollarSign,
+    requiredRoles: ["super_admin", "finance_accounting"],
+  },
+  {
+    id: "profit-splits",
+    label: "Profit Splits",
+    icon: Percent,
     requiredRoles: ["super_admin", "finance_accounting"],
   },
   {

@@ -27,6 +27,10 @@ import RouteManager from "@/components/dashboard/tabs/RouteManager";
 import StoreManager from "@/components/dashboard/tabs/StoreManager";
 import ProductsManager from "@/components/dashboard/tabs/ProductsManager";
 import VideoGamesManager from "@/components/dashboard/tabs/VideoGamesManager";
+import DashboardOverview from "@/components/dashboard/tabs/DashboardOverview";
+import BusinessOwnerDashboard from "@/components/dashboard/tabs/BusinessOwnerDashboard";
+import PayoutsManager from "@/components/dashboard/tabs/PayoutsManager";
+import ProfitSplitsManager from "@/components/dashboard/tabs/ProfitSplitsManager";
 
 export type AppRole =
   | "super_admin"
@@ -38,7 +42,8 @@ export type AppRole =
   | "warehouse_logistics"
   | "regional_manager"
   | "employee_operator"
-  | "customer";
+  | "customer"
+  | "business_owner";
 
 const DashboardPage = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -107,6 +112,10 @@ const DashboardPage = () => {
 
   const renderTabContent = () => {
     switch (activeTab) {
+      case "overview":
+        return <DashboardOverview />;
+      case "business-owner":
+        return <BusinessOwnerDashboard />;
       case "my-orders":
         return <CustomerOrders />;
       case "my-wallet":
@@ -153,6 +162,10 @@ const DashboardPage = () => {
         return <ProductsManager />;
       case "video-games":
         return <VideoGamesManager />;
+      case "payouts":
+        return <PayoutsManager />;
+      case "profit-splits":
+        return <ProfitSplitsManager />;
       default:
         return <CustomerOrders />;
     }
