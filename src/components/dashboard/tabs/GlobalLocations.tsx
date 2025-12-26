@@ -26,9 +26,15 @@ interface Location {
   status: string;
   is_visible: boolean;
   location_type: string | null;
+  location_category: string | null;
   contact_name: string | null;
   contact_phone: string | null;
   contact_email: string | null;
+  snack_machine_count: number | null;
+  drink_machine_count: number | null;
+  combo_machine_count: number | null;
+  specialty_machine_count: number | null;
+  arcade_machine_count: number | null;
 }
 
 interface Machine {
@@ -53,6 +59,12 @@ const LOCATION_TYPES = [
   { value: "other", label: "Other" },
 ];
 
+const LOCATION_CATEGORIES = [
+  { value: "vending", label: "Vending Only" },
+  { value: "arcade", label: "Arcade Only" },
+  { value: "mixed", label: "Mixed (Vending + Arcade)" },
+];
+
 const GlobalLocations = () => {
   const [showDialog, setShowDialog] = useState(false);
   const [showMachinesDialog, setShowMachinesDialog] = useState(false);
@@ -72,9 +84,15 @@ const GlobalLocations = () => {
     status: "active",
     is_visible: true,
     location_type: "office",
+    location_category: "vending",
     contact_name: "",
     contact_phone: "",
     contact_email: "",
+    snack_machine_count: 0,
+    drink_machine_count: 0,
+    combo_machine_count: 0,
+    specialty_machine_count: 0,
+    arcade_machine_count: 0,
   });
 
   const { toast } = useToast();
@@ -91,6 +109,9 @@ const GlobalLocations = () => {
 
   const locationMutation = useMutation({
     mutationFn: async (data: typeof formData) => {
+      const totalMachines = (data.snack_machine_count || 0) + (data.drink_machine_count || 0) + 
+        (data.combo_machine_count || 0) + (data.specialty_machine_count || 0) + (data.arcade_machine_count || 0);
+
       const payload = {
         name: data.name || null,
         country: data.country,
@@ -101,9 +122,16 @@ const GlobalLocations = () => {
         status: data.status,
         is_visible: data.is_visible,
         location_type: data.location_type,
+        location_category: data.location_category,
         contact_name: data.contact_name || null,
         contact_phone: data.contact_phone || null,
         contact_email: data.contact_email || null,
+        snack_machine_count: data.snack_machine_count || 0,
+        drink_machine_count: data.drink_machine_count || 0,
+        combo_machine_count: data.combo_machine_count || 0,
+        specialty_machine_count: data.specialty_machine_count || 0,
+        arcade_machine_count: data.arcade_machine_count || 0,
+        machine_count: totalMachines,
       };
 
       if (editingLocation) {
@@ -144,7 +172,13 @@ const GlobalLocations = () => {
   };
 
   const resetForm = () => {
-    setFormData({ name: "", country: "", city: "", address: "", latitude: "", longitude: "", status: "active", is_visible: true, location_type: "office", contact_name: "", contact_phone: "", contact_email: "" });
+    setFormData({ 
+      name: "", country: "", city: "", address: "", latitude: "", longitude: "", 
+      status: "active", is_visible: true, location_type: "office", location_category: "vending",
+      contact_name: "", contact_phone: "", contact_email: "",
+      snack_machine_count: 0, drink_machine_count: 0, combo_machine_count: 0, 
+      specialty_machine_count: 0, arcade_machine_count: 0 
+    });
     setEditingLocation(null);
   };
 
@@ -160,9 +194,15 @@ const GlobalLocations = () => {
       status: location.status,
       is_visible: location.is_visible,
       location_type: location.location_type || "office",
+      location_category: location.location_category || "vending",
       contact_name: location.contact_name || "",
       contact_phone: location.contact_phone || "",
       contact_email: location.contact_email || "",
+      snack_machine_count: location.snack_machine_count || 0,
+      drink_machine_count: location.drink_machine_count || 0,
+      combo_machine_count: location.combo_machine_count || 0,
+      specialty_machine_count: location.specialty_machine_count || 0,
+      arcade_machine_count: location.arcade_machine_count || 0,
     });
     setShowDialog(true);
   };
@@ -212,12 +252,13 @@ const GlobalLocations = () => {
         <CardContent>
           <ScrollArea className="h-[500px]">
             <Table>
-              <TableHeader><TableRow><TableHead>Location</TableHead><TableHead>Type</TableHead><TableHead>Machines</TableHead><TableHead>Status</TableHead><TableHead>Visible</TableHead><TableHead>Actions</TableHead></TableRow></TableHeader>
+              <TableHeader><TableRow><TableHead>Location</TableHead><TableHead>Type</TableHead><TableHead>Category</TableHead><TableHead>Machines</TableHead><TableHead>Status</TableHead><TableHead>Visible</TableHead><TableHead>Actions</TableHead></TableRow></TableHeader>
               <TableBody>
                 {filteredLocations.map((loc) => (
                   <TableRow key={loc.id}>
                     <TableCell><p className="font-medium">{loc.name || `${loc.city}, ${loc.country}`}</p>{loc.address && <p className="text-xs text-muted-foreground">{loc.address}</p>}</TableCell>
                     <TableCell><Badge variant="outline">{LOCATION_TYPES.find(t => t.value === loc.location_type)?.label || loc.location_type}</Badge></TableCell>
+                    <TableCell><Badge variant={loc.location_category === "mixed" ? "default" : "secondary"}>{LOCATION_CATEGORIES.find(c => c.value === loc.location_category)?.label || loc.location_category || "Vending"}</Badge></TableCell>
                     <TableCell><Button variant="ghost" size="sm" onClick={() => openMachinesDialog(loc)} className="gap-1"><Monitor className="w-4 h-4" />{loc.machine_count}</Button></TableCell>
                     <TableCell><Badge variant={loc.status === "active" ? "default" : "secondary"}>{loc.status}</Badge></TableCell>
                     <TableCell>{loc.is_visible ? <Eye className="w-4 h-4 text-green-500" /> : <EyeOff className="w-4 h-4 text-muted-foreground" />}</TableCell>
@@ -240,8 +281,30 @@ const GlobalLocations = () => {
               <div className="space-y-2"><Label>City *</Label><Input value={formData.city} onChange={(e) => setFormData({ ...formData, city: e.target.value })} required /></div>
               <div className="col-span-2 space-y-2"><Label>Address</Label><Input value={formData.address} onChange={(e) => setFormData({ ...formData, address: e.target.value })} /></div>
               <div className="space-y-2"><Label>Type</Label><Select value={formData.location_type} onValueChange={(v) => setFormData({ ...formData, location_type: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{LOCATION_TYPES.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}</SelectContent></Select></div>
-              <div className="space-y-2"><Label>Status</Label><Select value={formData.status} onValueChange={(v) => setFormData({ ...formData, status: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="active">Active</SelectItem><SelectItem value="inactive">Inactive</SelectItem></SelectContent></Select></div>
+              <div className="space-y-2"><Label>Category</Label><Select value={formData.location_category} onValueChange={(v) => setFormData({ ...formData, location_category: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{LOCATION_CATEGORIES.map(c => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}</SelectContent></Select></div>
+              <div className="space-y-2"><Label>Status</Label><Select value={formData.status} onValueChange={(v) => setFormData({ ...formData, status: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="active">Active</SelectItem><SelectItem value="inactive">Inactive</SelectItem><SelectItem value="coming_soon">Coming Soon</SelectItem><SelectItem value="seasonal">Seasonal</SelectItem></SelectContent></Select></div>
+              <div className="space-y-2"><Label>Latitude</Label><Input value={formData.latitude} onChange={(e) => setFormData({ ...formData, latitude: e.target.value })} placeholder="e.g. 40.7128" /></div>
+              <div className="space-y-2"><Label>Longitude</Label><Input value={formData.longitude} onChange={(e) => setFormData({ ...formData, longitude: e.target.value })} placeholder="e.g. -74.0060" /></div>
             </div>
+            
+            {(formData.location_category === "vending" || formData.location_category === "mixed") && (
+              <div className="border rounded-lg p-4 space-y-3">
+                <h3 className="font-semibold">Vending Machines</h3>
+                <div className="grid grid-cols-4 gap-4">
+                  <div className="space-y-2"><Label>Snack</Label><Input type="number" min="0" value={formData.snack_machine_count} onChange={(e) => setFormData({ ...formData, snack_machine_count: parseInt(e.target.value) || 0 })} /></div>
+                  <div className="space-y-2"><Label>Drink</Label><Input type="number" min="0" value={formData.drink_machine_count} onChange={(e) => setFormData({ ...formData, drink_machine_count: parseInt(e.target.value) || 0 })} /></div>
+                  <div className="space-y-2"><Label>Combo</Label><Input type="number" min="0" value={formData.combo_machine_count} onChange={(e) => setFormData({ ...formData, combo_machine_count: parseInt(e.target.value) || 0 })} /></div>
+                  <div className="space-y-2"><Label>Specialty</Label><Input type="number" min="0" value={formData.specialty_machine_count} onChange={(e) => setFormData({ ...formData, specialty_machine_count: parseInt(e.target.value) || 0 })} /></div>
+                </div>
+              </div>
+            )}
+
+            {(formData.location_category === "arcade" || formData.location_category === "mixed") && (
+              <div className="border rounded-lg p-4 space-y-3">
+                <h3 className="font-semibold">Arcade Machines</h3>
+                <div className="space-y-2"><Label>Total Arcade Machines</Label><Input type="number" min="0" value={formData.arcade_machine_count} onChange={(e) => setFormData({ ...formData, arcade_machine_count: parseInt(e.target.value) || 0 })} /></div>
+              </div>
+            )}
             <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg"><Label>Public Visibility</Label><Switch checked={formData.is_visible} onCheckedChange={(v) => setFormData({ ...formData, is_visible: v })} /></div>
             <DialogFooter><Button type="button" variant="outline" onClick={() => setShowDialog(false)}>Cancel</Button><Button type="submit">{editingLocation ? "Update" : "Add"}</Button></DialogFooter>
           </form>
