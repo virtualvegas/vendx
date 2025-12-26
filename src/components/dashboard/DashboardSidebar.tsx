@@ -20,6 +20,7 @@ import {
   Gamepad2,
   LayoutDashboard,
   Building2,
+  Layers,
 } from "lucide-react";
 import { AppRole } from "@/pages/DashboardPage";
 import { cn } from "@/lib/utils";
@@ -197,6 +198,12 @@ const tabs: TabConfig[] = [
     label: "Video Games",
     icon: Gamepad2,
     requiredRoles: ["super_admin"],
+  },
+  {
+    id: "kiosk-categories",
+    label: "Kiosk Categories",
+    icon: Layers,
+    requiredRoles: ["super_admin", "tech_support_lead"],
   },
 ];
 

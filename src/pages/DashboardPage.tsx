@@ -31,6 +31,7 @@ import DashboardOverview from "@/components/dashboard/tabs/DashboardOverview";
 import BusinessOwnerDashboard from "@/components/dashboard/tabs/BusinessOwnerDashboard";
 import PayoutsManager from "@/components/dashboard/tabs/PayoutsManager";
 import ProfitSplitsManager from "@/components/dashboard/tabs/ProfitSplitsManager";
+import KioskCategoriesManager from "@/components/dashboard/tabs/KioskCategoriesManager";
 
 export type AppRole =
   | "super_admin"
@@ -166,6 +167,8 @@ const DashboardPage = () => {
         return <PayoutsManager />;
       case "profit-splits":
         return <ProfitSplitsManager />;
+      case "kiosk-categories":
+        return <KioskCategoriesManager />;
       default:
         return <CustomerOrders />;
     }
