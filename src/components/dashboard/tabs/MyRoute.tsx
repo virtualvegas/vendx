@@ -355,63 +355,61 @@ const MyRoute = () => {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-3xl font-bold text-foreground mb-2">My Route</h2>
-          <p className="text-muted-foreground">
-            {isManager ? "View and manage all service routes" : "View and manage your assigned service route"}
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={() => { refetchRoutes(); refetchStops(); }}>
-            <RefreshCw className="w-4 h-4 mr-2" />
-            Refresh
+    <div className="space-y-4 lg:space-y-6">
+      {/* Header */}
+      <div className="flex flex-col gap-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-2xl lg:text-3xl font-bold text-foreground">My Route</h2>
+            <p className="text-sm text-muted-foreground">
+              {isManager ? "Manage all service routes" : "Your assigned route"}
+            </p>
+          </div>
+          <Button variant="ghost" size="icon" onClick={() => { refetchRoutes(); refetchStops(); }}>
+            <RefreshCw className="w-4 h-4" />
           </Button>
         </div>
-      </div>
 
-      {/* Manager view toggle */}
-      {isManager && (
-        <Tabs value={activeView} onValueChange={(v) => setActiveView(v as "my-route" | "all-routes")}>
-          <TabsList>
-            <TabsTrigger value="my-route">Active Routes</TabsTrigger>
-            <TabsTrigger value="all-routes">All Routes</TabsTrigger>
-          </TabsList>
-        </Tabs>
-      )}
+        {/* Manager view toggle */}
+        {isManager && (
+          <Tabs value={activeView} onValueChange={(v) => setActiveView(v as "my-route" | "all-routes")} className="w-full">
+            <TabsList className="w-full grid grid-cols-2">
+              <TabsTrigger value="my-route">Active Routes</TabsTrigger>
+              <TabsTrigger value="all-routes">All Routes</TabsTrigger>
+            </TabsList>
+          </Tabs>
+        )}
+      </div>
 
       {/* Route Selector */}
       {routesWithAssignees && routesWithAssignees.length > 0 && (
         <Card>
-          <CardContent className="p-4">
-            <div className="flex flex-wrap gap-4 items-end">
-              <div className="flex-1 min-w-[250px]">
-                <Label className="mb-2 block">Select Route</Label>
-                <Select value={selectedRouteId || ""} onValueChange={setSelectedRouteId}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a route" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {routesWithAssignees.map(route => (
-                      <SelectItem key={route.id} value={route.id}>
-                        <div className="flex items-center gap-2">
-                          <span>{route.name}</span>
-                          <Badge variant={route.status === "active" ? "default" : "secondary"} className="text-xs">
-                            {route.status}
-                          </Badge>
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+          <CardContent className="p-3 lg:p-4">
+            <div className="space-y-3">
+              <Select value={selectedRouteId || ""} onValueChange={setSelectedRouteId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a route" />
+                </SelectTrigger>
+                <SelectContent>
+                  {routesWithAssignees.map(route => (
+                    <SelectItem key={route.id} value={route.id}>
+                      <div className="flex items-center gap-2">
+                        <span>{route.name}</span>
+                        <Badge variant={route.status === "active" ? "default" : "secondary"} className="text-xs">
+                          {route.status}
+                        </Badge>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               {selectedRoute && isManager && (
-                <div className="flex gap-2">
+                <div className="flex gap-2 flex-wrap">
                   {selectedRoute.status === "active" ? (
                     <Button 
                       variant="outline" 
                       size="sm"
+                      className="flex-1"
                       onClick={() => updateRouteStatusMutation.mutate({ routeId: selectedRoute.id, status: "paused" })}
                     >
                       <Pause className="w-4 h-4 mr-2" />
@@ -421,6 +419,7 @@ const MyRoute = () => {
                     <Button 
                       variant="outline" 
                       size="sm"
+                      className="flex-1"
                       onClick={() => updateRouteStatusMutation.mutate({ routeId: selectedRoute.id, status: "active" })}
                     >
                       <Play className="w-4 h-4 mr-2" />
@@ -430,10 +429,11 @@ const MyRoute = () => {
                   <Button 
                     variant="outline" 
                     size="sm"
+                    className="flex-1"
                     onClick={() => resetRouteMutation.mutate(selectedRoute.id)}
                   >
                     <RotateCcw className="w-4 h-4 mr-2" />
-                    Reset Route
+                    Reset
                   </Button>
                 </div>
               )}
@@ -458,162 +458,161 @@ const MyRoute = () => {
 
       {selectedRoute && (
         <>
-          {/* Route Info */}
+          {/* Route Progress - Mobile Optimized */}
           <Card>
-            <CardHeader className="pb-3">
+            <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle className="flex items-center gap-2">
-                    <Truck className="w-5 h-5 text-primary" />
-                    {selectedRoute.name}
-                  </CardTitle>
-                  {selectedRoute.description && (
-                    <CardDescription>{selectedRoute.description}</CardDescription>
-                  )}
-                </div>
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <Truck className="w-5 h-5 text-primary" />
+                  {selectedRoute.name}
+                </CardTitle>
                 <Badge variant={selectedRoute.status === "active" ? "default" : "secondary"}>
                   {selectedRoute.status}
                 </Badge>
               </div>
+              {selectedRoute.description && (
+                <CardDescription className="text-sm">{selectedRoute.description}</CardDescription>
+              )}
             </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-                <div className="text-center p-3 bg-muted/50 rounded-lg">
-                  <p className="text-2xl font-bold">{stops?.length || 0}</p>
-                  <p className="text-xs text-muted-foreground">Total Stops</p>
+            <CardContent className="space-y-3">
+              <div className="grid grid-cols-4 gap-2 text-center">
+                <div className="p-2 bg-muted/50 rounded-lg">
+                  <p className="text-xl lg:text-2xl font-bold">{stops?.length || 0}</p>
+                  <p className="text-[10px] lg:text-xs text-muted-foreground">Total</p>
                 </div>
-                <div className="text-center p-3 bg-muted/50 rounded-lg">
-                  <p className="text-2xl font-bold text-green-500">{completedStops.length}</p>
-                  <p className="text-xs text-muted-foreground">Completed</p>
+                <div className="p-2 bg-green-500/10 rounded-lg">
+                  <p className="text-xl lg:text-2xl font-bold text-green-500">{completedStops.length}</p>
+                  <p className="text-[10px] lg:text-xs text-muted-foreground">Done</p>
                 </div>
-                <div className="text-center p-3 bg-muted/50 rounded-lg">
-                  <p className="text-2xl font-bold text-yellow-500">{pendingStops.length}</p>
-                  <p className="text-xs text-muted-foreground">Remaining</p>
+                <div className="p-2 bg-yellow-500/10 rounded-lg">
+                  <p className="text-xl lg:text-2xl font-bold text-yellow-500">{pendingStops.length}</p>
+                  <p className="text-[10px] lg:text-xs text-muted-foreground">Left</p>
                 </div>
-                <div className="text-center p-3 bg-muted/50 rounded-lg">
-                  <p className="text-2xl font-bold text-primary">{progress}%</p>
-                  <p className="text-xs text-muted-foreground">Progress</p>
+                <div className="p-2 bg-primary/10 rounded-lg">
+                  <p className="text-xl lg:text-2xl font-bold text-primary">{progress}%</p>
+                  <p className="text-[10px] lg:text-xs text-muted-foreground">Progress</p>
                 </div>
-                {selectedRoute.assignee && (
-                  <div className="text-center p-3 bg-muted/50 rounded-lg">
-                    <p className="text-sm font-medium truncate">{selectedRoute.assignee.full_name || selectedRoute.assignee.email}</p>
-                    <p className="text-xs text-muted-foreground">Assigned To</p>
-                  </div>
-                )}
               </div>
-              <Progress value={progress} className="mt-4 h-2" />
+              <Progress value={progress} className="h-2" />
+              {selectedRoute.assignee && (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <User className="w-4 h-4" />
+                  <span>{selectedRoute.assignee.full_name || selectedRoute.assignee.email}</span>
+                </div>
+              )}
             </CardContent>
           </Card>
 
-          {/* Current Stop */}
+          {/* Current Stop - Mobile Optimized */}
           {currentStop && (
-            <Card className="border-primary border-2">
-              <CardHeader>
+            <Card className="border-primary border-2 bg-primary/5">
+              <CardHeader className="pb-2">
                 <div className="flex items-center justify-between">
-                  <CardTitle className="flex items-center gap-2">
-                    <Navigation className="w-5 h-5 text-primary animate-pulse" />
-                    Current Stop
-                  </CardTitle>
                   <Badge className="bg-primary">
+                    <Navigation className="w-3 h-3 mr-1 animate-pulse" />
                     Stop {currentStop.stop_order + 1} of {stops?.length}
                   </Badge>
+                  <span className="text-xs text-muted-foreground flex items-center gap-1">
+                    <Clock className="w-3 h-3" />
+                    ~{currentStop.estimated_duration_minutes || 15} min
+                  </span>
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
-                  <h3 className="text-2xl font-bold text-foreground">{currentStop.stop_name}</h3>
+                  <h3 className="text-xl lg:text-2xl font-bold text-foreground">{currentStop.stop_name}</h3>
                   {(currentStop.address || currentStop.location?.address) && (
-                    <p className="text-muted-foreground flex items-center gap-2 mt-1">
-                      <MapPin className="w-4 h-4" />
-                      {currentStop.address || currentStop.location?.address}
+                    <p className="text-sm text-muted-foreground flex items-center gap-2 mt-1">
+                      <MapPin className="w-4 h-4 flex-shrink-0" />
+                      <span className="line-clamp-2">{currentStop.address || currentStop.location?.address}</span>
                     </p>
                   )}
                 </div>
 
                 {/* Machine Info */}
                 {currentStop.machine && (
-                  <div className="flex items-center gap-3 p-3 bg-accent/10 rounded-lg">
-                    <Monitor className="w-5 h-5 text-accent" />
-                    <div>
-                      <p className="font-medium">{currentStop.machine.name}</p>
+                  <div className="flex items-center gap-3 p-3 bg-card rounded-lg border border-border">
+                    <Monitor className="w-5 h-5 text-primary flex-shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium truncate">{currentStop.machine.name}</p>
                       <p className="text-xs text-muted-foreground font-mono">{currentStop.machine.machine_code}</p>
                     </div>
-                    <Badge variant={currentStop.machine.status === "active" ? "outline" : "destructive"} className="ml-auto">
+                    <Badge variant={currentStop.machine.status === "active" ? "outline" : "destructive"}>
                       {currentStop.machine.status}
                     </Badge>
                   </div>
                 )}
 
-                {/* Location Contact */}
+                {/* Location Contact - Mobile Friendly */}
                 {currentStop.location && (currentStop.location.contact_name || currentStop.location.contact_phone) && (
-                  <div className="flex flex-wrap gap-4 text-sm">
+                  <div className="space-y-2">
                     {currentStop.location.contact_name && (
-                      <span className="flex items-center gap-1">
+                      <div className="flex items-center gap-2 text-sm">
                         <User className="w-4 h-4 text-muted-foreground" />
-                        {currentStop.location.contact_name}
-                      </span>
+                        <span>{currentStop.location.contact_name}</span>
+                      </div>
                     )}
-                    {currentStop.location.contact_phone && (
-                      <a href={`tel:${currentStop.location.contact_phone}`} className="flex items-center gap-1 text-primary hover:underline">
-                        <Phone className="w-4 h-4" />
-                        {currentStop.location.contact_phone}
-                      </a>
-                    )}
-                    {currentStop.location.contact_email && (
-                      <a href={`mailto:${currentStop.location.contact_email}`} className="flex items-center gap-1 text-primary hover:underline">
-                        <Mail className="w-4 h-4" />
-                        {currentStop.location.contact_email}
-                      </a>
-                    )}
+                    <div className="flex gap-2">
+                      {currentStop.location.contact_phone && (
+                        <Button variant="outline" size="sm" asChild className="flex-1">
+                          <a href={`tel:${currentStop.location.contact_phone}`}>
+                            <Phone className="w-4 h-4 mr-2" />
+                            Call
+                          </a>
+                        </Button>
+                      )}
+                      {currentStop.location.contact_email && (
+                        <Button variant="outline" size="sm" asChild className="flex-1">
+                          <a href={`mailto:${currentStop.location.contact_email}`}>
+                            <Mail className="w-4 h-4 mr-2" />
+                            Email
+                          </a>
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 )}
                 
                 {currentStop.notes && (
                   <div className="bg-muted/50 p-3 rounded-lg">
                     <p className="text-sm text-muted-foreground flex items-start gap-2">
-                      <FileText className="w-4 h-4 mt-0.5" />
-                      {currentStop.notes}
+                      <FileText className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                      <span>{currentStop.notes}</span>
                     </p>
                   </div>
                 )}
                 
-                <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                  <span className="flex items-center gap-1">
-                    <Clock className="w-4 h-4" />
-                    Est. {currentStop.estimated_duration_minutes || 15} min
-                  </span>
-                </div>
-                
-                <div className="flex flex-wrap gap-3">
+                {/* Action Buttons - Stacked on Mobile */}
+                <div className="grid grid-cols-2 gap-2">
                   <Button 
-                    className="flex-1"
+                    className="col-span-2"
+                    size="lg"
                     onClick={() => completeStopMutation.mutate(currentStop.id)}
                     disabled={completeStopMutation.isPending}
                   >
-                    <CheckCircle className="w-4 h-4 mr-2" />
+                    <CheckCircle className="w-5 h-5 mr-2" />
                     Complete Stop
                   </Button>
                   {currentStop.machine && (
                     <Button 
                       variant="secondary"
+                      size="sm"
                       onClick={() => { setSelectedStop(currentStop); openRestockDialog(); }}
                     >
                       <Package className="w-4 h-4 mr-2" />
-                      Log Restock
+                      Restock
                     </Button>
                   )}
                   {(currentStop.address || currentStop.location?.address) && (
                     <Button 
                       variant="outline"
+                      size="sm"
                       onClick={() => window.open(`https://maps.google.com/?q=${encodeURIComponent(currentStop.address || currentStop.location?.address || '')}`, '_blank')}
                     >
                       <Navigation className="w-4 h-4 mr-2" />
                       Navigate
                     </Button>
                   )}
-                  <Button variant="ghost" onClick={() => openStopDetails(currentStop)}>
-                    Details
-                  </Button>
                 </div>
               </CardContent>
             </Card>
@@ -622,36 +621,36 @@ const MyRoute = () => {
           {/* Upcoming Stops */}
           {pendingStops.length > 1 && (
             <Card>
-              <CardHeader>
-                <CardTitle className="text-yellow-500">Upcoming Stops ({pendingStops.length - 1})</CardTitle>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-yellow-500 text-base flex items-center gap-2">
+                  <Clock className="w-4 h-4" />
+                  Upcoming ({pendingStops.length - 1})
+                </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-3">
+                <div className="space-y-2">
                   {pendingStops.slice(1).map((stop) => (
                     <div 
                       key={stop.id} 
-                      className="flex items-center gap-3 p-3 border border-border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors"
+                      className="flex items-center gap-3 p-3 border border-border rounded-lg active:bg-muted/50 transition-colors"
                       onClick={() => openStopDetails(stop)}
                     >
-                      <div className="w-8 h-8 rounded-full bg-yellow-500/20 text-yellow-500 flex items-center justify-center text-sm font-medium">
+                      <div className="w-7 h-7 rounded-full bg-yellow-500/20 text-yellow-500 flex items-center justify-center text-sm font-medium flex-shrink-0">
                         {stop.stop_order + 1}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <h4 className="font-medium text-foreground truncate">{stop.stop_name}</h4>
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <h4 className="font-medium text-foreground text-sm truncate">{stop.stop_name}</h4>
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
                           {stop.machine && (
-                            <span className="flex items-center gap-1">
+                            <span className="flex items-center gap-1 font-mono">
                               <Monitor className="w-3 h-3" />
                               {stop.machine.machine_code}
                             </span>
                           )}
-                          {(stop.address || stop.location?.city) && (
-                            <span className="truncate">{stop.address || stop.location?.city}</span>
-                          )}
                         </div>
                       </div>
-                      <span className="text-sm text-muted-foreground whitespace-nowrap">
-                        {stop.estimated_duration_minutes || 15} min
+                      <span className="text-xs text-muted-foreground whitespace-nowrap">
+                        {stop.estimated_duration_minutes || 15}m
                       </span>
                     </div>
                   ))}
@@ -663,30 +662,34 @@ const MyRoute = () => {
           {/* Completed Stops */}
           {completedStops.length > 0 && (
             <Card>
-              <CardHeader>
-                <CardTitle className="text-green-500">Completed Stops ({completedStops.length})</CardTitle>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-green-500 text-base flex items-center gap-2">
+                  <CheckCircle className="w-4 h-4" />
+                  Completed ({completedStops.length})
+                </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-3">
+                <div className="space-y-2">
                   {completedStops.map((stop) => (
                     <div 
                       key={stop.id} 
-                      className="flex items-center gap-3 p-3 border border-border rounded-lg opacity-70 hover:opacity-100 cursor-pointer transition-opacity"
+                      className="flex items-center gap-3 p-3 border border-border rounded-lg opacity-60"
                       onClick={() => openStopDetails(stop)}
                     >
-                      <CheckCircle className="w-6 h-6 text-green-500 flex-shrink-0" />
+                      <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
                       <div className="flex-1 min-w-0">
-                        <h4 className="font-medium text-foreground truncate">{stop.stop_name}</h4>
+                        <h4 className="font-medium text-foreground text-sm truncate">{stop.stop_name}</h4>
                         {stop.completed_at && (
-                          <p className="text-sm text-muted-foreground">
-                            Completed at {new Date(stop.completed_at).toLocaleTimeString()}
+                          <p className="text-xs text-muted-foreground">
+                            {new Date(stop.completed_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                           </p>
                         )}
                       </div>
                       {isManager && (
                         <Button 
-                          size="sm" 
+                          size="icon" 
                           variant="ghost"
+                          className="h-8 w-8"
                           onClick={(e) => { e.stopPropagation(); resetStopMutation.mutate(stop.id); }}
                         >
                           <RotateCcw className="w-4 h-4" />
@@ -720,7 +723,7 @@ const MyRoute = () => {
 
       {/* Stop Details Dialog */}
       <Dialog open={showStopDetailsDialog} onOpenChange={setShowStopDetailsDialog}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <MapPin className="w-5 h-5 text-primary" />
