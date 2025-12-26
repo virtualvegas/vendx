@@ -36,6 +36,8 @@ interface MachineInventoryItem {
   quantity: number;
   max_capacity: number;
   unit_price: number;
+  cost_of_goods: number;
+  category: string;
   last_restocked: string | null;
   machine?: {
     name: string;
@@ -96,6 +98,8 @@ const InventoryLogistics = () => {
     quantity: 0,
     max_capacity: 10,
     unit_price: 0,
+    cost_of_goods: 0,
+    category: "Snacks",
   });
 
   const { toast } = useToast();
@@ -269,6 +273,8 @@ const InventoryLogistics = () => {
       quantity: 0,
       max_capacity: 10,
       unit_price: 0,
+      cost_of_goods: 0,
+      category: "Snacks",
     });
     setEditingMachineItem(null);
   };
@@ -317,6 +323,8 @@ const InventoryLogistics = () => {
       quantity: item.quantity,
       max_capacity: item.max_capacity,
       unit_price: item.unit_price,
+      cost_of_goods: item.cost_of_goods || 0,
+      category: item.category || "Snacks",
     });
     setShowDialog(true);
   };
@@ -642,33 +650,48 @@ const InventoryLogistics = () => {
                       <TableHead>Location</TableHead>
                       <TableHead>Slot</TableHead>
                       <TableHead>Product</TableHead>
+                      <TableHead>Category</TableHead>
                       <TableHead>Qty</TableHead>
-                      <TableHead>Price</TableHead>
+                      <TableHead>COGS</TableHead>
+                      <TableHead>Retail</TableHead>
+                      <TableHead>Margin</TableHead>
                       <TableHead>Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredMachineItems.map(item => (
-                      <TableRow key={item.id} className={item.quantity === 0 ? "bg-destructive/5" : item.quantity <= 2 ? "bg-yellow-500/5" : ""}>
-                        <TableCell>
-                          <p className="font-medium">{item.machine?.name || "Unknown"}</p>
-                          <p className="text-xs text-muted-foreground font-mono">{item.machine?.machine_code}</p>
-                        </TableCell>
-                        <TableCell className="text-sm">
-                          {item.machine?.location?.name || item.machine?.location?.city || "-"}
-                        </TableCell>
-                        <TableCell className="font-mono">{item.slot_number || "-"}</TableCell>
-                        <TableCell>
-                          <p>{item.product_name}</p>
-                          <p className="text-xs text-muted-foreground">{item.sku}</p>
-                        </TableCell>
-                        <TableCell>
-                          <span className={item.quantity === 0 ? "text-destructive font-medium" : item.quantity <= 2 ? "text-yellow-500 font-medium" : ""}>
-                            {item.quantity}
-                          </span>
-                          <span className="text-muted-foreground">/{item.max_capacity}</span>
-                        </TableCell>
-                        <TableCell className="font-medium">${item.unit_price.toFixed(2)}</TableCell>
+                    {filteredMachineItems.map(item => {
+                      const margin = item.unit_price - (item.cost_of_goods || 0);
+                      const marginPct = item.unit_price > 0 ? (margin / item.unit_price * 100) : 0;
+                      return (
+                        <TableRow key={item.id} className={item.quantity === 0 ? "bg-destructive/5" : item.quantity <= 2 ? "bg-yellow-500/5" : ""}>
+                          <TableCell>
+                            <p className="font-medium">{item.machine?.name || "Unknown"}</p>
+                            <p className="text-xs text-muted-foreground font-mono">{item.machine?.machine_code}</p>
+                          </TableCell>
+                          <TableCell className="text-sm">
+                            {item.machine?.location?.name || item.machine?.location?.city || "-"}
+                          </TableCell>
+                          <TableCell className="font-mono">{item.slot_number || "-"}</TableCell>
+                          <TableCell>
+                            <p>{item.product_name}</p>
+                            <p className="text-xs text-muted-foreground">{item.sku}</p>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="outline">{item.category || "General"}</Badge>
+                          </TableCell>
+                          <TableCell>
+                            <span className={item.quantity === 0 ? "text-destructive font-medium" : item.quantity <= 2 ? "text-yellow-500 font-medium" : ""}>
+                              {item.quantity}
+                            </span>
+                            <span className="text-muted-foreground">/{item.max_capacity}</span>
+                          </TableCell>
+                          <TableCell className="text-muted-foreground">${(item.cost_of_goods || 0).toFixed(2)}</TableCell>
+                          <TableCell className="font-medium text-green-500">${item.unit_price.toFixed(2)}</TableCell>
+                          <TableCell>
+                            <span className={marginPct >= 30 ? "text-green-500" : marginPct >= 15 ? "text-yellow-500" : "text-red-500"}>
+                              {marginPct.toFixed(0)}%
+                            </span>
+                          </TableCell>
                         <TableCell>
                           <div className="flex gap-1">
                             <Button size="icon" variant="ghost" onClick={() => handleEditMachineItem(item)}>
@@ -680,7 +703,8 @@ const InventoryLogistics = () => {
                           </div>
                         </TableCell>
                       </TableRow>
-                    ))}
+                      );
+                    })}
                   </TableBody>
                 </Table>
               </ScrollArea>
@@ -848,7 +872,17 @@ const InventoryLogistics = () => {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Unit Price ($) *</Label>
+                  <Label>Cost of Goods ($) *</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={machineFormData.cost_of_goods}
+                    onChange={(e) => setMachineFormData({ ...machineFormData, cost_of_goods: parseFloat(e.target.value) || 0 })}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Retail Price ($) *</Label>
                   <Input
                     type="number"
                     step="0.01"
@@ -856,6 +890,19 @@ const InventoryLogistics = () => {
                     onChange={(e) => setMachineFormData({ ...machineFormData, unit_price: parseFloat(e.target.value) || 0 })}
                     required
                   />
+                </div>
+                <div className="space-y-2 col-span-2">
+                  <Label>Category *</Label>
+                  <Select value={machineFormData.category} onValueChange={(v) => setMachineFormData({ ...machineFormData, category: v })}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {CATEGORIES.map(c => (
+                        <SelectItem key={c} value={c}>{c}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
             )}

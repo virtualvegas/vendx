@@ -1,13 +1,23 @@
-import { Wallet, X, DollarSign, User } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { Wallet, X, DollarSign, User, Loader2 } from "lucide-react";
 
 interface KioskWelcomeProps {
   userName: string;
   balance: number;
+  machineId: string;
   onPurchase: (amount: number, itemName: string) => void;
   onCancel: () => void;
 }
 
-// Demo items - in production, these would come from the machine's inventory
+interface KioskCategory {
+  id: string;
+  category_name: string;
+  base_price: number;
+  display_order: number;
+}
+
+// Fallback demo items when no categories are configured
 const DEMO_ITEMS = [
   { name: "Snack", price: 1.50 },
   { name: "Drink", price: 2.00 },
@@ -15,7 +25,34 @@ const DEMO_ITEMS = [
   { name: "Chips", price: 1.75 },
 ];
 
-export const KioskWelcome = ({ userName, balance, onPurchase, onCancel }: KioskWelcomeProps) => {
+export const KioskWelcome = ({ userName, balance, machineId, onPurchase, onCancel }: KioskWelcomeProps) => {
+  // Fetch machine-specific categories
+  const { data: categories, isLoading } = useQuery({
+    queryKey: ["kiosk-categories", machineId],
+    queryFn: async () => {
+      if (machineId === "demo") return null;
+      
+      const { data, error } = await supabase
+        .from("machine_kiosk_categories")
+        .select("id, category_name, base_price, display_order")
+        .eq("machine_id", machineId)
+        .eq("is_active", true)
+        .order("display_order");
+      
+      if (error) {
+        console.error("Error fetching categories:", error);
+        return null;
+      }
+      return data as KioskCategory[];
+    },
+    enabled: machineId !== "demo",
+  });
+
+  // Use DB categories if available, otherwise fall back to demo items
+  const displayItems = categories && categories.length > 0
+    ? categories.map(cat => ({ name: cat.category_name, price: cat.base_price }))
+    : DEMO_ITEMS;
+
   return (
     <div className="flex-1 flex flex-col p-3 sm:p-4">
       {/* Header */}
@@ -56,26 +93,32 @@ export const KioskWelcome = ({ userName, balance, onPurchase, onCancel }: KioskW
         Select item or use machine keypad
       </p>
       
-      <div className="flex-1 grid grid-cols-2 gap-3 sm:gap-4">
-        {DEMO_ITEMS.map((item) => (
-          <button
-            key={item.name}
-            onClick={() => onPurchase(item.price, item.name)}
-            disabled={balance < item.price}
-            className={`flex flex-col items-center justify-center rounded-2xl p-4 transition-all touch-manipulation border ${
-              balance >= item.price
-                ? "bg-gray-800 hover:bg-gray-700 active:bg-gray-600 border-gray-700"
-                : "bg-gray-900 border-gray-800 opacity-50 cursor-not-allowed"
-            }`}
-          >
-            <DollarSign className="w-8 h-8 sm:w-10 sm:h-10 text-green-400 mb-2" />
-            <span className="text-lg sm:text-xl font-bold">{item.name}</span>
-            <span className="text-xl sm:text-2xl font-bold text-green-400">
-              ${item.price.toFixed(2)}
-            </span>
-          </button>
-        ))}
-      </div>
+      {isLoading ? (
+        <div className="flex-1 flex items-center justify-center">
+          <Loader2 className="w-8 h-8 animate-spin text-cyan-400" />
+        </div>
+      ) : (
+        <div className="flex-1 grid grid-cols-2 gap-3 sm:gap-4">
+          {displayItems.map((item) => (
+            <button
+              key={item.name}
+              onClick={() => onPurchase(item.price, item.name)}
+              disabled={balance < item.price}
+              className={`flex flex-col items-center justify-center rounded-2xl p-4 transition-all touch-manipulation border ${
+                balance >= item.price
+                  ? "bg-gray-800 hover:bg-gray-700 active:bg-gray-600 border-gray-700"
+                  : "bg-gray-900 border-gray-800 opacity-50 cursor-not-allowed"
+              }`}
+            >
+              <DollarSign className="w-8 h-8 sm:w-10 sm:h-10 text-green-400 mb-2" />
+              <span className="text-lg sm:text-xl font-bold">{item.name}</span>
+              <span className="text-xl sm:text-2xl font-bold text-green-400">
+                ${item.price.toFixed(2)}
+              </span>
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Cancel Button */}
       <button

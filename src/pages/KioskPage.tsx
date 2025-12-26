@@ -137,6 +137,7 @@ const KioskPage = () => {
         <KioskWelcome 
           userName={session.userName}
           balance={session.walletBalance}
+          machineId={machineId}
           onPurchase={handlePurchase}
           onCancel={handleStartOver}
         />

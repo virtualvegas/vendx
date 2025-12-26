@@ -514,6 +514,8 @@ export type Database = {
       }
       machine_inventory: {
         Row: {
+          category: string | null
+          cost_of_goods: number | null
           created_at: string
           id: string
           last_restocked: string | null
@@ -527,6 +529,8 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          category?: string | null
+          cost_of_goods?: number | null
           created_at?: string
           id?: string
           last_restocked?: string | null
@@ -540,6 +544,8 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          category?: string | null
+          cost_of_goods?: number | null
           created_at?: string
           id?: string
           last_restocked?: string | null
@@ -555,6 +561,47 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "machine_inventory_machine_id_fkey"
+            columns: ["machine_id"]
+            isOneToOne: false
+            referencedRelation: "vendx_machines"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      machine_kiosk_categories: {
+        Row: {
+          base_price: number
+          category_name: string
+          created_at: string
+          display_order: number | null
+          id: string
+          is_active: boolean | null
+          machine_id: string
+          updated_at: string
+        }
+        Insert: {
+          base_price?: number
+          category_name: string
+          created_at?: string
+          display_order?: number | null
+          id?: string
+          is_active?: boolean | null
+          machine_id: string
+          updated_at?: string
+        }
+        Update: {
+          base_price?: number
+          category_name?: string
+          created_at?: string
+          display_order?: number | null
+          id?: string
+          is_active?: boolean | null
+          machine_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "machine_kiosk_categories_machine_id_fkey"
             columns: ["machine_id"]
             isOneToOne: false
             referencedRelation: "vendx_machines"
