@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      arcade_game_titles: {
+        Row: {
+          created_at: string
+          description: string | null
+          game_type: string
+          id: string
+          image_url: string | null
+          is_active: boolean | null
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          game_type: string
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          game_type?: string
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       daily_tasks: {
         Row: {
           assigned_to: string | null
@@ -327,58 +360,118 @@ export type Database = {
         }
         Relationships: []
       }
+      location_arcade_games: {
+        Row: {
+          arcade_game_id: string
+          created_at: string
+          id: string
+          is_active: boolean | null
+          location_id: string
+          machine_count: number | null
+        }
+        Insert: {
+          arcade_game_id: string
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          location_id: string
+          machine_count?: number | null
+        }
+        Update: {
+          arcade_game_id?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          location_id?: string
+          machine_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "location_arcade_games_arcade_game_id_fkey"
+            columns: ["arcade_game_id"]
+            isOneToOne: false
+            referencedRelation: "arcade_game_titles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "location_arcade_games_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       locations: {
         Row: {
           address: string | null
+          arcade_machine_count: number | null
           city: string
+          combo_machine_count: number | null
           contact_email: string | null
           contact_name: string | null
           contact_phone: string | null
           country: string
           created_at: string
+          drink_machine_count: number | null
           id: string
           is_visible: boolean
           latitude: number | null
+          location_category: string | null
           location_type: string | null
           longitude: number | null
           machine_count: number
           name: string | null
+          snack_machine_count: number | null
+          specialty_machine_count: number | null
           status: string
           updated_at: string
         }
         Insert: {
           address?: string | null
+          arcade_machine_count?: number | null
           city: string
+          combo_machine_count?: number | null
           contact_email?: string | null
           contact_name?: string | null
           contact_phone?: string | null
           country: string
           created_at?: string
+          drink_machine_count?: number | null
           id?: string
           is_visible?: boolean
           latitude?: number | null
+          location_category?: string | null
           location_type?: string | null
           longitude?: number | null
           machine_count?: number
           name?: string | null
+          snack_machine_count?: number | null
+          specialty_machine_count?: number | null
           status?: string
           updated_at?: string
         }
         Update: {
           address?: string | null
+          arcade_machine_count?: number | null
           city?: string
+          combo_machine_count?: number | null
           contact_email?: string | null
           contact_name?: string | null
           contact_phone?: string | null
           country?: string
           created_at?: string
+          drink_machine_count?: number | null
           id?: string
           is_visible?: boolean
           latitude?: number | null
+          location_category?: string | null
           location_type?: string | null
           longitude?: number | null
           machine_count?: number
           name?: string | null
+          snack_machine_count?: number | null
+          specialty_machine_count?: number | null
           status?: string
           updated_at?: string
         }
@@ -1558,6 +1651,75 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      video_games: {
+        Row: {
+          apple_store_url: string | null
+          cover_image_url: string | null
+          created_at: string
+          display_order: number | null
+          full_description: string | null
+          google_play_url: string | null
+          id: string
+          is_active: boolean | null
+          is_featured: boolean | null
+          itch_io_url: string | null
+          microsoft_store_url: string | null
+          platforms: Json
+          release_status: string
+          screenshots: Json | null
+          short_description: string | null
+          slug: string
+          steam_url: string | null
+          title: string
+          trailer_url: string | null
+          updated_at: string
+        }
+        Insert: {
+          apple_store_url?: string | null
+          cover_image_url?: string | null
+          created_at?: string
+          display_order?: number | null
+          full_description?: string | null
+          google_play_url?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_featured?: boolean | null
+          itch_io_url?: string | null
+          microsoft_store_url?: string | null
+          platforms?: Json
+          release_status?: string
+          screenshots?: Json | null
+          short_description?: string | null
+          slug: string
+          steam_url?: string | null
+          title: string
+          trailer_url?: string | null
+          updated_at?: string
+        }
+        Update: {
+          apple_store_url?: string | null
+          cover_image_url?: string | null
+          created_at?: string
+          display_order?: number | null
+          full_description?: string | null
+          google_play_url?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_featured?: boolean | null
+          itch_io_url?: string | null
+          microsoft_store_url?: string | null
+          platforms?: Json
+          release_status?: string
+          screenshots?: Json | null
+          short_description?: string | null
+          slug?: string
+          steam_url?: string | null
+          title?: string
+          trailer_url?: string | null
+          updated_at?: string
+        }
+        Relationships: []
       }
       wallet_transactions: {
         Row: {
