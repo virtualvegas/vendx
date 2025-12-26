@@ -21,6 +21,9 @@ import ProductPage from "./pages/ProductPage";
 import CartPage from "./pages/CartPage";
 import SnackBoxPage from "./pages/SnackBoxPage";
 import OrderSuccessPage from "./pages/OrderSuccessPage";
+import VideoGamesPage from "./pages/VideoGamesPage";
+import LocationsPage from "./pages/LocationsPage";
+import LocationDetailPage from "./pages/LocationDetailPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -37,6 +40,9 @@ const App = () => (
             <Route path="/about" element={<AboutPage />} />
             <Route path="/divisions" element={<DivisionsPage />} />
             <Route path="/divisions/:slug" element={<DivisionDetailPage />} />
+            <Route path="/games" element={<VideoGamesPage />} />
+            <Route path="/locations" element={<LocationsPage />} />
+            <Route path="/locations/:id" element={<LocationDetailPage />} />
             <Route path="/careers" element={<CareersPage />} />
             <Route path="/careers/:id" element={<JobDetailPage />} />
             <Route path="/contact" element={<ContactPage />} />
