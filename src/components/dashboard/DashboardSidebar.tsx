@@ -21,9 +21,16 @@ import {
   LayoutDashboard,
   Building2,
   Layers,
+  LogOut,
+  ChevronDown,
+  ChevronRight,
 } from "lucide-react";
 import { AppRole } from "@/pages/DashboardPage";
 import { cn } from "@/lib/utils";
+import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
 
 interface TabConfig {
   id: string;
@@ -32,178 +39,101 @@ interface TabConfig {
   requiredRoles: AppRole[];
 }
 
-const tabs: TabConfig[] = [
-  // Dashboard Overview (all roles)
+interface TabGroup {
+  id: string;
+  label: string;
+  tabs: TabConfig[];
+}
+
+// Organized tab groups by role/function
+const tabGroups: TabGroup[] = [
   {
-    id: "overview",
-    label: "Dashboard",
-    icon: LayoutDashboard,
-    requiredRoles: ["super_admin", "global_operations_manager", "finance_accounting", "regional_manager"],
-  },
-  // Business Owner Dashboard
-  {
-    id: "business-owner",
-    label: "My Business",
-    icon: Building2,
-    requiredRoles: ["business_owner"],
-  },
-  // Customer tabs (shown first for customers)
-  {
-    id: "my-orders",
-    label: "My Orders",
-    icon: Package,
-    requiredRoles: ["customer"],
+    id: "customer",
+    label: "My Account",
+    tabs: [
+      { id: "my-orders", label: "My Orders", icon: Package, requiredRoles: ["customer"] },
+      { id: "my-wallet", label: "My Wallet", icon: Wallet, requiredRoles: ["customer"] },
+      { id: "my-rewards", label: "My Rewards", icon: Gift, requiredRoles: ["customer"] },
+    ],
   },
   {
-    id: "my-wallet",
-    label: "My Wallet",
-    icon: Wallet,
-    requiredRoles: ["customer"],
+    id: "business",
+    label: "Business",
+    tabs: [
+      { id: "business-owner", label: "My Business", icon: Building2, requiredRoles: ["business_owner"] },
+    ],
   },
   {
-    id: "my-rewards",
-    label: "My Rewards",
-    icon: Gift,
-    requiredRoles: ["customer"],
-  },
-  // Admin/Staff tabs
-  {
-    id: "global-operations",
-    label: "Global Operations",
-    icon: Globe,
-    requiredRoles: ["super_admin", "global_operations_manager"],
+    id: "field-ops",
+    label: "Field Operations",
+    tabs: [
+      { id: "my-route", label: "My Route", icon: Navigation, requiredRoles: ["super_admin", "global_operations_manager", "regional_manager", "employee_operator"] },
+      { id: "daily-tasks", label: "Daily Tasks", icon: CheckSquare, requiredRoles: ["super_admin", "employee_operator"] },
+    ],
   },
   {
-    id: "events-rentals",
-    label: "Events & Rentals",
-    icon: Calendar,
-    requiredRoles: ["super_admin", "event_manager"],
+    id: "management",
+    label: "Management",
+    tabs: [
+      { id: "overview", label: "Dashboard", icon: LayoutDashboard, requiredRoles: ["super_admin", "global_operations_manager", "finance_accounting", "regional_manager"] },
+      { id: "global-operations", label: "Global Operations", icon: Globe, requiredRoles: ["super_admin", "global_operations_manager"] },
+      { id: "regional-reports", label: "Regional Reports", icon: MapPin, requiredRoles: ["super_admin", "regional_manager"] },
+      { id: "route-manager", label: "Route Manager", icon: Route, requiredRoles: ["super_admin", "global_operations_manager"] },
+    ],
   },
   {
-    id: "technical-support",
-    label: "Technical Support",
-    icon: Wrench,
-    requiredRoles: ["super_admin", "tech_support_lead"],
+    id: "operations",
+    label: "Operations",
+    tabs: [
+      { id: "machine-registry", label: "Machines", icon: Monitor, requiredRoles: ["super_admin", "tech_support_lead"] },
+      { id: "inventory-logistics", label: "Inventory", icon: Package, requiredRoles: ["super_admin", "warehouse_logistics"] },
+      { id: "technical-support", label: "Tech Support", icon: Wrench, requiredRoles: ["super_admin", "tech_support_lead"] },
+      { id: "kiosk-categories", label: "Kiosk Setup", icon: Layers, requiredRoles: ["super_admin", "tech_support_lead"] },
+    ],
   },
   {
-    id: "finance",
+    id: "finance-group",
     label: "Finance",
-    icon: DollarSign,
-    requiredRoles: ["super_admin", "finance_accounting"],
+    tabs: [
+      { id: "finance", label: "Finance", icon: DollarSign, requiredRoles: ["super_admin", "finance_accounting"] },
+      { id: "vendx-pay", label: "VendX Pay", icon: Wallet, requiredRoles: ["super_admin", "finance_accounting"] },
+      { id: "payouts", label: "Payouts", icon: DollarSign, requiredRoles: ["super_admin", "finance_accounting"] },
+      { id: "profit-splits", label: "Profit Splits", icon: Percent, requiredRoles: ["super_admin", "finance_accounting"] },
+    ],
   },
   {
-    id: "marketing",
-    label: "Marketing",
-    icon: TrendingUp,
-    requiredRoles: ["super_admin", "marketing_sales"],
+    id: "marketing-group",
+    label: "Marketing & Sales",
+    tabs: [
+      { id: "marketing", label: "Campaigns", icon: TrendingUp, requiredRoles: ["super_admin", "marketing_sales"] },
+      { id: "rewards-manager", label: "Rewards", icon: Gift, requiredRoles: ["super_admin", "marketing_sales"] },
+      { id: "partner-offers", label: "Partner Offers", icon: Percent, requiredRoles: ["super_admin", "marketing_sales"] },
+    ],
   },
   {
-    id: "inventory-logistics",
-    label: "Inventory & Logistics",
-    icon: Package,
-    requiredRoles: ["super_admin", "warehouse_logistics"],
+    id: "events",
+    label: "Events",
+    tabs: [
+      { id: "events-rentals", label: "Events & Rentals", icon: Calendar, requiredRoles: ["super_admin", "event_manager"] },
+    ],
   },
   {
-    id: "regional-reports",
-    label: "Regional Reports",
-    icon: MapPin,
-    requiredRoles: ["super_admin", "regional_manager"],
+    id: "store-group",
+    label: "Online Store",
+    tabs: [
+      { id: "store-manager", label: "Orders", icon: ShoppingCart, requiredRoles: ["super_admin"] },
+      { id: "products-manager", label: "Products", icon: Package, requiredRoles: ["super_admin"] },
+    ],
   },
   {
-    id: "daily-tasks",
-    label: "Daily Tasks",
-    icon: CheckSquare,
-    requiredRoles: ["super_admin", "employee_operator"],
-  },
-  {
-    id: "my-route",
-    label: "My Route",
-    icon: Navigation,
-    requiredRoles: ["super_admin", "global_operations_manager", "regional_manager", "employee_operator"],
-  },
-  {
-    id: "route-manager",
-    label: "Route Manager",
-    icon: Route,
-    requiredRoles: ["super_admin", "global_operations_manager"],
-  },
-  {
-    id: "admin-settings",
-    label: "Admin Settings",
-    icon: Settings,
-    requiredRoles: ["super_admin"],
-  },
-  {
-    id: "careers",
-    label: "Careers Manager",
-    icon: Briefcase,
-    requiredRoles: ["super_admin"],
-  },
-  {
-    id: "locations",
-    label: "Global Locations",
-    icon: Map,
-    requiredRoles: ["super_admin"],
-  },
-  {
-    id: "vendx-pay",
-    label: "VendX Pay",
-    icon: Wallet,
-    requiredRoles: ["super_admin", "finance_accounting"],
-  },
-  {
-    id: "payouts",
-    label: "Payouts",
-    icon: DollarSign,
-    requiredRoles: ["super_admin", "finance_accounting"],
-  },
-  {
-    id: "profit-splits",
-    label: "Profit Splits",
-    icon: Percent,
-    requiredRoles: ["super_admin", "finance_accounting"],
-  },
-  {
-    id: "rewards-manager",
-    label: "Rewards Manager",
-    icon: Gift,
-    requiredRoles: ["super_admin", "marketing_sales"],
-  },
-  {
-    id: "machine-registry",
-    label: "Machine Registry",
-    icon: Monitor,
-    requiredRoles: ["super_admin", "tech_support_lead"],
-  },
-  {
-    id: "store-manager",
-    label: "Store Manager",
-    icon: ShoppingCart,
-    requiredRoles: ["super_admin"],
-  },
-  {
-    id: "products-manager",
-    label: "Products Manager",
-    icon: Package,
-    requiredRoles: ["super_admin"],
-  },
-  {
-    id: "partner-offers",
-    label: "Partner Offers",
-    icon: Percent,
-    requiredRoles: ["super_admin", "marketing_sales"],
-  },
-  {
-    id: "video-games",
-    label: "Video Games",
-    icon: Gamepad2,
-    requiredRoles: ["super_admin"],
-  },
-  {
-    id: "kiosk-categories",
-    label: "Kiosk Categories",
-    icon: Layers,
-    requiredRoles: ["super_admin", "tech_support_lead"],
+    id: "admin",
+    label: "Administration",
+    tabs: [
+      { id: "locations", label: "Locations", icon: Map, requiredRoles: ["super_admin"] },
+      { id: "careers", label: "Careers", icon: Briefcase, requiredRoles: ["super_admin"] },
+      { id: "video-games", label: "Games", icon: Gamepad2, requiredRoles: ["super_admin"] },
+      { id: "admin-settings", label: "Settings", icon: Settings, requiredRoles: ["super_admin"] },
+    ],
   },
 ];
 
@@ -220,35 +150,133 @@ const DashboardSidebar = ({
   setActiveTab,
   hasAccess,
 }: DashboardSidebarProps) => {
-  return (
-    <aside className="w-64 bg-card border-r border-border flex-shrink-0">
-      <div className="p-6">
-        <h2 className="text-xl font-bold text-foreground">VendX Dashboard</h2>
-      </div>
-      <nav className="px-3 space-y-1">
-        {tabs.map((tab) => {
-          const hasTabAccess = hasAccess(tab.requiredRoles);
-          if (!hasTabAccess) return null;
+  const navigate = useNavigate();
+  const [expandedGroups, setExpandedGroups] = useState<string[]>(() => {
+    // Auto-expand groups that contain the active tab
+    const activeGroups = tabGroups
+      .filter(group => group.tabs.some(tab => tab.id === activeTab && hasAccess(tab.requiredRoles)))
+      .map(group => group.id);
+    return activeGroups;
+  });
 
-          const Icon = tab.icon;
+  const toggleGroup = (groupId: string) => {
+    setExpandedGroups(prev => 
+      prev.includes(groupId) 
+        ? prev.filter(id => id !== groupId)
+        : [...prev, groupId]
+    );
+  };
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    navigate("/");
+  };
+
+  // Filter groups that have accessible tabs
+  const visibleGroups = tabGroups.filter(group => 
+    group.tabs.some(tab => hasAccess(tab.requiredRoles))
+  );
+
+  return (
+    <div className="h-full flex flex-col">
+      {/* Logo/Brand */}
+      <div className="p-4 lg:p-6 border-b border-border">
+        <h2 className="text-xl font-bold text-foreground">VendX Dashboard</h2>
+        <p className="text-xs text-muted-foreground mt-1">
+          {roles.length > 0 ? roles.map(r => r.replace(/_/g, ' ')).join(', ') : 'Customer'}
+        </p>
+      </div>
+
+      {/* Navigation */}
+      <nav className="flex-1 overflow-y-auto p-3 space-y-1">
+        {visibleGroups.map((group) => {
+          const visibleTabs = group.tabs.filter(tab => hasAccess(tab.requiredRoles));
+          const isExpanded = expandedGroups.includes(group.id);
+          const hasActiveTab = visibleTabs.some(tab => tab.id === activeTab);
+
+          // If only one tab in group, show it directly without collapsible
+          if (visibleTabs.length === 1) {
+            const tab = visibleTabs[0];
+            const Icon = tab.icon;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={cn(
+                  "w-full flex items-center gap-3 px-3 py-3 rounded-lg transition-colors text-left",
+                  activeTab === tab.id
+                    ? "bg-primary text-primary-foreground"
+                    : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                )}
+              >
+                <Icon className="w-5 h-5 flex-shrink-0" />
+                <span className="text-sm font-medium">{tab.label}</span>
+              </button>
+            );
+          }
+
           return (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={cn(
-                "w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors text-left",
-                activeTab === tab.id
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+            <div key={group.id} className="space-y-1">
+              {/* Group Header */}
+              <button
+                onClick={() => toggleGroup(group.id)}
+                className={cn(
+                  "w-full flex items-center justify-between px-3 py-2 rounded-lg transition-colors text-left",
+                  hasActiveTab 
+                    ? "text-foreground" 
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                <span className="text-xs font-semibold uppercase tracking-wider">
+                  {group.label}
+                </span>
+                {isExpanded ? (
+                  <ChevronDown className="w-4 h-4" />
+                ) : (
+                  <ChevronRight className="w-4 h-4" />
+                )}
+              </button>
+
+              {/* Group Tabs */}
+              {isExpanded && (
+                <div className="ml-2 space-y-1">
+                  {visibleTabs.map((tab) => {
+                    const Icon = tab.icon;
+                    return (
+                      <button
+                        key={tab.id}
+                        onClick={() => setActiveTab(tab.id)}
+                        className={cn(
+                          "w-full flex items-center gap-3 px-3 py-3 rounded-lg transition-colors text-left",
+                          activeTab === tab.id
+                            ? "bg-primary text-primary-foreground"
+                            : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                        )}
+                      >
+                        <Icon className="w-5 h-5 flex-shrink-0" />
+                        <span className="text-sm font-medium">{tab.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
               )}
-            >
-              <Icon className="w-5 h-5" />
-              <span className="text-sm font-medium">{tab.label}</span>
-            </button>
+            </div>
           );
         })}
       </nav>
-    </aside>
+
+      {/* Logout Button */}
+      <div className="p-3 border-t border-border">
+        <Button
+          onClick={handleLogout}
+          variant="ghost"
+          className="w-full justify-start gap-3 h-12 text-muted-foreground hover:text-destructive"
+        >
+          <LogOut className="w-5 h-5" />
+          <span className="text-sm font-medium">Sign Out</span>
+        </Button>
+      </div>
+    </div>
   );
 };
 
