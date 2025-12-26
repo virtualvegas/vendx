@@ -272,7 +272,7 @@ const GlobalLocations = () => {
       </Card>
 
       <Dialog open={showDialog} onOpenChange={setShowDialog}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader><DialogTitle>{editingLocation ? "Edit Location" : "Add New Location"}</DialogTitle></DialogHeader>
           <form onSubmit={(e) => { e.preventDefault(); locationMutation.mutate(formData); }} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
@@ -312,7 +312,7 @@ const GlobalLocations = () => {
       </Dialog>
 
       <Dialog open={showMachinesDialog} onOpenChange={setShowMachinesDialog}>
-        <DialogContent><DialogHeader><DialogTitle>Machines at {selectedLocation?.name || selectedLocation?.city}</DialogTitle></DialogHeader>
+        <DialogContent className="max-h-[90vh] overflow-y-auto"><DialogHeader><DialogTitle>Machines at {selectedLocation?.name || selectedLocation?.city}</DialogTitle></DialogHeader>
           {locationMachines.length === 0 ? <p className="text-center text-muted-foreground py-8">No machines</p> : (
             <Table><TableHeader><TableRow><TableHead>Machine</TableHead><TableHead>Type</TableHead><TableHead>Status</TableHead></TableRow></TableHeader>
               <TableBody>{locationMachines.map(m => <TableRow key={m.id}><TableCell className="font-medium">{m.name}</TableCell><TableCell>{m.machine_type}</TableCell><TableCell><Badge variant={m.status === "active" ? "default" : "secondary"}>{m.status}</Badge></TableCell></TableRow>)}</TableBody>

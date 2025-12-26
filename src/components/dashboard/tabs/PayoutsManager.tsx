@@ -33,13 +33,23 @@ const PayoutsManager = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("payouts")
-        .select(`
-          *,
-          business_owner:profiles!payouts_business_owner_id_fkey(id, full_name, email)
-        `)
+        .select("*")
         .order("created_at", { ascending: false });
       if (error) throw error;
-      return data || [];
+      
+      // Fetch profile info for each payout
+      const payoutsWithOwners = await Promise.all(
+        (data || []).map(async (payout) => {
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("id, full_name, email")
+            .eq("id", payout.business_owner_id)
+            .single();
+          return { ...payout, business_owner: profile };
+        })
+      );
+      
+      return payoutsWithOwners;
     },
   });
 
@@ -47,15 +57,20 @@ const PayoutsManager = () => {
   const { data: businessOwners } = useQuery({
     queryKey: ["business-owners"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data: roles, error } = await supabase
         .from("user_roles")
-        .select(`
-          user_id,
-          profile:profiles!user_roles_user_id_fkey(id, full_name, email)
-        `)
+        .select("user_id")
         .eq("role", "business_owner");
       if (error) throw error;
-      return data || [];
+      
+      if (!roles || roles.length === 0) return [];
+      
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("id, full_name, email")
+        .in("id", roles.map(r => r.user_id));
+      
+      return profiles || [];
     },
   });
 
@@ -66,14 +81,22 @@ const PayoutsManager = () => {
       if (!selectedPayout) return [];
       const { data, error } = await supabase
         .from("payout_line_items")
-        .select(`
-          *,
-          machine:vendx_machines!payout_line_items_machine_id_fkey(name, machine_code),
-          location:locations!payout_line_items_location_id_fkey(name, city, country)
-        `)
+        .select("*")
         .eq("payout_id", selectedPayout.id);
       if (error) throw error;
-      return data || [];
+      
+      // Fetch machine and location info
+      const itemsWithDetails = await Promise.all(
+        (data || []).map(async (item) => {
+          const [machineRes, locationRes] = await Promise.all([
+            supabase.from("vendx_machines").select("name, machine_code").eq("id", item.machine_id).single(),
+            supabase.from("locations").select("name, city, country").eq("id", item.location_id).single()
+          ]);
+          return { ...item, machine: machineRes.data, location: locationRes.data };
+        })
+      );
+      
+      return itemsWithDetails;
     },
     enabled: !!selectedPayout,
   });
@@ -164,29 +187,29 @@ const PayoutsManager = () => {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
-          <CardContent className="p-6">
-            <p className="text-sm text-muted-foreground">Pending Payouts</p>
-            <p className="text-2xl font-bold text-yellow-500">{stats.pending}</p>
+          <CardContent className="p-4 lg:p-6">
+            <p className="text-xs lg:text-sm text-muted-foreground">Pending Payouts</p>
+            <p className="text-xl lg:text-2xl font-bold text-yellow-500">{stats.pending}</p>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-6">
-            <p className="text-sm text-muted-foreground">Processing</p>
-            <p className="text-2xl font-bold text-blue-500">{stats.processing}</p>
+          <CardContent className="p-4 lg:p-6">
+            <p className="text-xs lg:text-sm text-muted-foreground">Processing</p>
+            <p className="text-xl lg:text-2xl font-bold text-blue-500">{stats.processing}</p>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-6">
-            <p className="text-sm text-muted-foreground">Completed</p>
-            <p className="text-2xl font-bold text-green-500">{stats.paid}</p>
+          <CardContent className="p-4 lg:p-6">
+            <p className="text-xs lg:text-sm text-muted-foreground">Completed</p>
+            <p className="text-xl lg:text-2xl font-bold text-green-500">{stats.paid}</p>
           </CardContent>
         </Card>
         <Card className="bg-gradient-to-br from-yellow-500/10 to-yellow-600/5">
-          <CardContent className="p-6">
-            <p className="text-sm text-muted-foreground">Total Pending Amount</p>
-            <p className="text-2xl font-bold text-yellow-500">${stats.totalPending.toLocaleString()}</p>
+          <CardContent className="p-4 lg:p-6">
+            <p className="text-xs lg:text-sm text-muted-foreground">Total Pending</p>
+            <p className="text-xl lg:text-2xl font-bold text-yellow-500">${stats.totalPending.toLocaleString()}</p>
           </CardContent>
         </Card>
       </div>
@@ -295,7 +318,7 @@ const PayoutsManager = () => {
 
       {/* Payout Details Dialog */}
       <Dialog open={showDetailsDialog} onOpenChange={setShowDetailsDialog}>
-        <DialogContent className="max-w-4xl">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Payout Details</DialogTitle>
           </DialogHeader>
