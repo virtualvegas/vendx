@@ -179,7 +179,7 @@ const MachineRegistry = () => {
             name: machineForm.name,
             machine_code: machineForm.machine_code,
             machine_type: machineForm.machine_type,
-            location_id: machineForm.location_id || null,
+            location_id: machineForm.location_id && machineForm.location_id !== "none" ? machineForm.location_id : null,
             vendx_pay_enabled: machineForm.vendx_pay_enabled,
             notes: machineForm.notes || null,
           })
@@ -195,7 +195,7 @@ const MachineRegistry = () => {
             name: machineForm.name,
             machine_code: machineForm.machine_code || generateMachineCode(),
             machine_type: machineForm.machine_type,
-            location_id: machineForm.location_id || null,
+            location_id: machineForm.location_id && machineForm.location_id !== "none" ? machineForm.location_id : null,
             vendx_pay_enabled: machineForm.vendx_pay_enabled,
             notes: machineForm.notes || null,
             api_key: apiKey,
@@ -649,7 +649,7 @@ const MachineRegistry = () => {
                     <SelectValue placeholder="Select location" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">No Location</SelectItem>
+                    <SelectItem value="none">No Location</SelectItem>
                     {locations.map(loc => (
                       <SelectItem key={loc.id} value={loc.id}>
                         {loc.name || `${loc.city}, ${loc.country}`}
