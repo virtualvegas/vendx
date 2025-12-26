@@ -17,6 +17,7 @@ import {
   Route,
   Navigation,
   ShoppingCart,
+  Gamepad2,
 } from "lucide-react";
 import { AppRole } from "@/pages/DashboardPage";
 import { cn } from "@/lib/utils";
@@ -162,6 +163,12 @@ const tabs: TabConfig[] = [
     label: "Partner Offers",
     icon: Percent,
     requiredRoles: ["super_admin", "marketing_sales"],
+  },
+  {
+    id: "video-games",
+    label: "Video Games",
+    icon: Gamepad2,
+    requiredRoles: ["super_admin"],
   },
 ];
 
