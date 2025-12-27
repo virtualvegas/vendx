@@ -13,11 +13,11 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { 
-  Plus, Edit, Trash2, MapPin, Users, Route, Eye, RefreshCw,
-  GripVertical, ChevronDown, ChevronUp, Clock, CheckCircle,
+  Plus, Edit, Trash2, MapPin, Users, Route, RefreshCw,
+  ChevronDown, ChevronUp, Clock, CheckCircle,
   AlertTriangle, Copy, Search, Filter, MoreVertical,
-  Monitor, Building, Navigation, Phone, Mail, Calendar,
-  TrendingUp, Target, Zap, ArrowUp, ArrowDown, Play, Pause
+  Monitor, Building, ArrowUp, ArrowDown, Navigation,
+  Zap, Calendar, AlertCircle, Compass, TrendingUp, Timer
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -26,14 +26,20 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
+import { optimizeRouteOrder, calculateTotalDistance, estimateTravelTime, isZoneDueForService, getNextServiceDate } from "@/lib/routeOptimization";
+import { format, formatDistanceToNow, addDays, isAfter, isBefore, isToday } from "date-fns";
 
-interface ServiceRoute {
+interface ServiceZone {
   id: string;
   name: string;
   description: string | null;
   assigned_to: string | null;
   status: string;
   created_at: string;
+  zone_area: string | null;
+  service_frequency_days: number | null;
+  last_serviced_at: string | null;
+  next_service_due: string | null;
 }
 
 interface RouteStop {
@@ -47,6 +53,18 @@ interface RouteStop {
   status: string;
   location_id: string | null;
   machine_id: string | null;
+  scheduled_date: string | null;
+  priority: string | null;
+  auto_scheduled: boolean | null;
+  source_ticket_id: string | null;
+  location?: {
+    id: string;
+    latitude: number | null;
+    longitude: number | null;
+    name: string | null;
+    city: string;
+    address: string | null;
+  } | null;
 }
 
 interface UserProfile {
@@ -62,6 +80,8 @@ interface Location {
   city: string;
   contact_name: string | null;
   contact_phone: string | null;
+  latitude: number | null;
+  longitude: number | null;
 }
 
 interface Machine {
@@ -73,40 +93,50 @@ interface Machine {
 }
 
 const RouteManager = () => {
-  const [routeDialogOpen, setRouteDialogOpen] = useState(false);
+  const [zoneDialogOpen, setZoneDialogOpen] = useState(false);
   const [stopDialogOpen, setStopDialogOpen] = useState(false);
-  const [editingRoute, setEditingRoute] = useState<ServiceRoute | null>(null);
+  const [editingZone, setEditingZone] = useState<ServiceZone | null>(null);
   const [editingStop, setEditingStop] = useState<RouteStop | null>(null);
-  const [selectedRouteId, setSelectedRouteId] = useState<string | null>(null);
-  const [routeForm, setRouteForm] = useState({ name: "", description: "", assigned_to: "", status: "active" });
+  const [selectedZoneId, setSelectedZoneId] = useState<string | null>(null);
+  const [zoneForm, setZoneForm] = useState({ 
+    name: "", 
+    description: "", 
+    assigned_to: "", 
+    status: "active",
+    zone_area: "",
+    service_frequency_days: 15
+  });
   const [stopForm, setStopForm] = useState({ 
     stop_name: "", 
     address: "", 
     notes: "", 
     estimated_duration_minutes: 15,
     location_id: "",
-    machine_id: ""
+    machine_id: "",
+    scheduled_date: "",
+    priority: "normal"
   });
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [activeTab, setActiveTab] = useState<"routes" | "analytics">("routes");
+  const [activeTab, setActiveTab] = useState<"zones" | "schedule" | "analytics">("zones");
+  const [scheduleFilter, setScheduleFilter] = useState<"today" | "upcoming" | "overdue" | "all">("all");
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Fetch all routes
-  const { data: routes, isLoading: routesLoading, refetch: refetchRoutes } = useQuery({
-    queryKey: ["admin-routes"],
+  // Fetch all zones
+  const { data: zones, isLoading: zonesLoading, refetch: refetchZones } = useQuery({
+    queryKey: ["admin-zones"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("service_routes")
         .select("*")
         .order("created_at", { ascending: false });
       if (error) throw error;
-      return data as ServiceRoute[];
+      return data as ServiceZone[];
     },
   });
 
-  // Fetch employees with operator role
+  // Fetch employees
   const { data: employees } = useQuery({
     queryKey: ["employee-operators"],
     queryFn: async () => {
@@ -129,29 +159,50 @@ const RouteManager = () => {
     },
   });
 
-  // Fetch stops for selected route
+  // Fetch stops for selected zone with location data for optimization
   const { data: stops, refetch: refetchStops } = useQuery({
-    queryKey: ["route-stops", selectedRouteId],
+    queryKey: ["zone-stops", selectedZoneId],
     queryFn: async () => {
-      if (!selectedRouteId) return [];
+      if (!selectedZoneId) return [];
       const { data, error } = await supabase
         .from("route_stops")
-        .select("*")
-        .eq("route_id", selectedRouteId)
+        .select(`
+          *,
+          location:locations(id, name, city, address, latitude, longitude)
+        `)
+        .eq("route_id", selectedZoneId)
         .order("stop_order", { ascending: true });
       if (error) throw error;
       return data as RouteStop[];
     },
-    enabled: !!selectedRouteId,
+    enabled: !!selectedZoneId,
   });
 
-  // Fetch locations for stop assignment
+  // Fetch all scheduled stops across all zones
+  const { data: allScheduledStops } = useQuery({
+    queryKey: ["all-scheduled-stops"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("route_stops")
+        .select(`
+          *,
+          location:locations(id, name, city, address),
+          zone:service_routes(id, name, assigned_to)
+        `)
+        .not("scheduled_date", "is", null)
+        .order("scheduled_date", { ascending: true });
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  // Fetch locations
   const { data: locations } = useQuery({
     queryKey: ["all-locations"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("locations")
-        .select("id, name, address, city, contact_name, contact_phone")
+        .select("id, name, address, city, contact_name, contact_phone, latitude, longitude")
         .eq("status", "active")
         .order("name");
       if (error) throw error;
@@ -159,7 +210,7 @@ const RouteManager = () => {
     },
   });
 
-  // Fetch machines for stop assignment
+  // Fetch machines
   const { data: machines } = useQuery({
     queryKey: ["all-machines"],
     queryFn: async () => {
@@ -175,7 +226,7 @@ const RouteManager = () => {
 
   // Fetch all stops for analytics
   const { data: allStops } = useQuery({
-    queryKey: ["all-route-stops"],
+    queryKey: ["all-zone-stops"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("route_stops")
@@ -185,91 +236,95 @@ const RouteManager = () => {
     },
   });
 
-  // Route mutations
-  const createRouteMutation = useMutation({
-    mutationFn: async (data: typeof routeForm) => {
+  // Zone mutations
+  const createZoneMutation = useMutation({
+    mutationFn: async (data: typeof zoneForm) => {
       const { error } = await supabase.from("service_routes").insert([{
         name: data.name,
         description: data.description || null,
         assigned_to: data.assigned_to || null,
         status: data.status,
+        zone_area: data.zone_area || null,
+        service_frequency_days: data.service_frequency_days,
       }]);
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin-routes"] });
-      toast({ title: "Route Created" });
-      setRouteDialogOpen(false);
-      resetRouteForm();
+      queryClient.invalidateQueries({ queryKey: ["admin-zones"] });
+      toast({ title: "Zone Created" });
+      setZoneDialogOpen(false);
+      resetZoneForm();
     },
     onError: (error: any) => {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     },
   });
 
-  const updateRouteMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: typeof routeForm }) => {
+  const updateZoneMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: typeof zoneForm }) => {
       const { error } = await supabase.from("service_routes").update({
         name: data.name,
         description: data.description || null,
         assigned_to: data.assigned_to || null,
         status: data.status,
+        zone_area: data.zone_area || null,
+        service_frequency_days: data.service_frequency_days,
       }).eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin-routes"] });
-      toast({ title: "Route Updated" });
-      setRouteDialogOpen(false);
-      resetRouteForm();
+      queryClient.invalidateQueries({ queryKey: ["admin-zones"] });
+      toast({ title: "Zone Updated" });
+      setZoneDialogOpen(false);
+      resetZoneForm();
     },
     onError: (error: any) => {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     },
   });
 
-  const deleteRouteMutation = useMutation({
+  const deleteZoneMutation = useMutation({
     mutationFn: async (id: string) => {
-      // First delete all stops
       await supabase.from("route_stops").delete().eq("route_id", id);
       const { error } = await supabase.from("service_routes").delete().eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin-routes"] });
-      toast({ title: "Route Deleted" });
-      if (selectedRouteId) setSelectedRouteId(null);
+      queryClient.invalidateQueries({ queryKey: ["admin-zones"] });
+      toast({ title: "Zone Deleted" });
+      if (selectedZoneId) setSelectedZoneId(null);
     },
     onError: (error: any) => {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     },
   });
 
-  const duplicateRouteMutation = useMutation({
-    mutationFn: async (routeId: string) => {
-      const route = routes?.find(r => r.id === routeId);
-      if (!route) throw new Error("Route not found");
+  const duplicateZoneMutation = useMutation({
+    mutationFn: async (zoneId: string) => {
+      const zone = zones?.find(r => r.id === zoneId);
+      if (!zone) throw new Error("Zone not found");
       
-      const { data: newRoute, error: routeError } = await supabase
+      const { data: newZone, error: zoneError } = await supabase
         .from("service_routes")
         .insert([{
-          name: `${route.name} (Copy)`,
-          description: route.description,
+          name: `${zone.name} (Copy)`,
+          description: zone.description,
           status: "inactive",
+          zone_area: zone.zone_area,
+          service_frequency_days: zone.service_frequency_days,
         }])
         .select()
         .single();
-      if (routeError) throw routeError;
+      if (zoneError) throw zoneError;
 
-      // Copy stops
       const { data: existingStops } = await supabase
         .from("route_stops")
         .select("*")
-        .eq("route_id", routeId);
+        .eq("route_id", zoneId);
 
       if (existingStops && existingStops.length > 0) {
         const newStops = existingStops.map(s => ({
-          route_id: newRoute.id,
+          route_id: newZone.id,
           stop_name: s.stop_name,
           address: s.address,
           notes: s.notes,
@@ -277,14 +332,70 @@ const RouteManager = () => {
           estimated_duration_minutes: s.estimated_duration_minutes,
           location_id: s.location_id,
           machine_id: s.machine_id,
+          priority: s.priority,
           status: "pending",
         }));
         await supabase.from("route_stops").insert(newStops);
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin-routes"] });
-      toast({ title: "Route Duplicated" });
+      queryClient.invalidateQueries({ queryKey: ["admin-zones"] });
+      toast({ title: "Zone Duplicated" });
+    },
+    onError: (error: any) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    },
+  });
+
+  // Route optimization mutation
+  const optimizeRouteMutation = useMutation({
+    mutationFn: async () => {
+      if (!stops || stops.length < 2) throw new Error("Need at least 2 stops to optimize");
+      
+      const stopsWithLocations = stops.filter(s => s.location?.latitude && s.location?.longitude);
+      if (stopsWithLocations.length < 2) throw new Error("Need at least 2 stops with coordinates");
+
+      const optimizedOrder = optimizeRouteOrder(stops);
+      
+      // Update each stop with new order
+      for (const { id, newOrder } of optimizedOrder) {
+        await supabase.from("route_stops").update({ stop_order: newOrder }).eq("id", id);
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["zone-stops", selectedZoneId] });
+      toast({ 
+        title: "Route Optimized", 
+        description: "Stops reordered for shortest travel distance" 
+      });
+    },
+    onError: (error: any) => {
+      toast({ title: "Optimization Failed", description: error.message, variant: "destructive" });
+    },
+  });
+
+  // Mark zone as serviced
+  const markZoneServicedMutation = useMutation({
+    mutationFn: async (zoneId: string) => {
+      const zone = zones?.find(z => z.id === zoneId);
+      const nextDue = getNextServiceDate(new Date(), zone?.service_frequency_days || 15);
+      
+      const { error } = await supabase.from("service_routes").update({
+        last_serviced_at: new Date().toISOString(),
+        next_service_due: nextDue.toISOString(),
+      }).eq("id", zoneId);
+      if (error) throw error;
+
+      // Reset all stops to pending
+      await supabase.from("route_stops").update({ 
+        status: "pending", 
+        completed_at: null 
+      }).eq("route_id", zoneId);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-zones"] });
+      queryClient.invalidateQueries({ queryKey: ["zone-stops", selectedZoneId] });
+      toast({ title: "Zone Marked Serviced", description: "Next service date scheduled" });
     },
     onError: (error: any) => {
       toast({ title: "Error", description: error.message, variant: "destructive" });
@@ -296,7 +407,7 @@ const RouteManager = () => {
     mutationFn: async (data: typeof stopForm) => {
       const maxOrder = stops?.length ? Math.max(...stops.map(s => s.stop_order)) + 1 : 0;
       const { error } = await supabase.from("route_stops").insert([{
-        route_id: selectedRouteId,
+        route_id: selectedZoneId,
         stop_name: data.stop_name,
         address: data.address || null,
         notes: data.notes || null,
@@ -304,11 +415,14 @@ const RouteManager = () => {
         stop_order: maxOrder,
         location_id: data.location_id || null,
         machine_id: data.machine_id || null,
+        scheduled_date: data.scheduled_date || null,
+        priority: data.priority,
       }]);
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["route-stops", selectedRouteId] });
+      queryClient.invalidateQueries({ queryKey: ["zone-stops", selectedZoneId] });
+      queryClient.invalidateQueries({ queryKey: ["all-scheduled-stops"] });
       toast({ title: "Stop Added" });
       setStopDialogOpen(false);
       resetStopForm();
@@ -327,11 +441,14 @@ const RouteManager = () => {
         estimated_duration_minutes: data.estimated_duration_minutes,
         location_id: data.location_id || null,
         machine_id: data.machine_id || null,
+        scheduled_date: data.scheduled_date || null,
+        priority: data.priority,
       }).eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["route-stops", selectedRouteId] });
+      queryClient.invalidateQueries({ queryKey: ["zone-stops", selectedZoneId] });
+      queryClient.invalidateQueries({ queryKey: ["all-scheduled-stops"] });
       toast({ title: "Stop Updated" });
       setStopDialogOpen(false);
       resetStopForm();
@@ -347,7 +464,8 @@ const RouteManager = () => {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["route-stops", selectedRouteId] });
+      queryClient.invalidateQueries({ queryKey: ["zone-stops", selectedZoneId] });
+      queryClient.invalidateQueries({ queryKey: ["all-scheduled-stops"] });
       toast({ title: "Stop Removed" });
     },
     onError: (error: any) => {
@@ -355,7 +473,6 @@ const RouteManager = () => {
     },
   });
 
-  // Reorder stops
   const moveStopMutation = useMutation({
     mutationFn: async ({ stopId, direction }: { stopId: string; direction: "up" | "down" }) => {
       if (!stops) return;
@@ -373,50 +490,31 @@ const RouteManager = () => {
       await supabase.from("route_stops").update({ stop_order: currentStop.stop_order }).eq("id", swapStop.id);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["route-stops", selectedRouteId] });
-    },
-    onError: (error: any) => {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+      queryClient.invalidateQueries({ queryKey: ["zone-stops", selectedZoneId] });
     },
   });
 
-  // Reset all stops in route
-  const resetRouteStopsMutation = useMutation({
-    mutationFn: async (routeId: string) => {
-      const { error } = await supabase
-        .from("route_stops")
-        .update({ status: "pending", completed_at: null })
-        .eq("route_id", routeId);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["route-stops", selectedRouteId] });
-      toast({ title: "Route Reset", description: "All stops set to pending" });
-    },
-    onError: (error: any) => {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
-    },
-  });
-
-  const resetRouteForm = () => {
-    setRouteForm({ name: "", description: "", assigned_to: "", status: "active" });
-    setEditingRoute(null);
+  const resetZoneForm = () => {
+    setZoneForm({ name: "", description: "", assigned_to: "", status: "active", zone_area: "", service_frequency_days: 15 });
+    setEditingZone(null);
   };
 
   const resetStopForm = () => {
-    setStopForm({ stop_name: "", address: "", notes: "", estimated_duration_minutes: 15, location_id: "", machine_id: "" });
+    setStopForm({ stop_name: "", address: "", notes: "", estimated_duration_minutes: 15, location_id: "", machine_id: "", scheduled_date: "", priority: "normal" });
     setEditingStop(null);
   };
 
-  const handleEditRoute = (route: ServiceRoute) => {
-    setEditingRoute(route);
-    setRouteForm({
-      name: route.name,
-      description: route.description || "",
-      assigned_to: route.assigned_to || "",
-      status: route.status,
+  const handleEditZone = (zone: ServiceZone) => {
+    setEditingZone(zone);
+    setZoneForm({
+      name: zone.name,
+      description: zone.description || "",
+      assigned_to: zone.assigned_to || "",
+      status: zone.status,
+      zone_area: zone.zone_area || "",
+      service_frequency_days: zone.service_frequency_days || 15,
     });
-    setRouteDialogOpen(true);
+    setZoneDialogOpen(true);
   };
 
   const handleEditStop = (stop: RouteStop) => {
@@ -428,16 +526,18 @@ const RouteManager = () => {
       estimated_duration_minutes: stop.estimated_duration_minutes || 15,
       location_id: stop.location_id || "",
       machine_id: stop.machine_id || "",
+      scheduled_date: stop.scheduled_date || "",
+      priority: stop.priority || "normal",
     });
     setStopDialogOpen(true);
   };
 
-  const handleRouteSubmit = (e: React.FormEvent) => {
+  const handleZoneSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (editingRoute) {
-      updateRouteMutation.mutate({ id: editingRoute.id, data: routeForm });
+    if (editingZone) {
+      updateZoneMutation.mutate({ id: editingZone.id, data: zoneForm });
     } else {
-      createRouteMutation.mutate(routeForm);
+      createZoneMutation.mutate(zoneForm);
     }
   };
 
@@ -456,7 +556,7 @@ const RouteManager = () => {
     return employee?.full_name || employee?.email || "Unknown";
   };
 
-  // When location is selected, auto-fill address
+  // Auto-fill when location selected
   useEffect(() => {
     if (stopForm.location_id) {
       const location = locations?.find(l => l.id === stopForm.location_id);
@@ -464,38 +564,58 @@ const RouteManager = () => {
         setStopForm(prev => ({
           ...prev,
           stop_name: prev.stop_name || location.name || "",
-          address: location.address || `${location.city}`,
+          address: location.address || location.city,
         }));
       }
     }
   }, [stopForm.location_id, locations]);
 
-  // Filter routes
-  const filteredRoutes = routes?.filter(route => {
-    const matchesSearch = route.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      getAssigneeName(route.assigned_to).toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesStatus = statusFilter === "all" || route.status === statusFilter;
+  // Filter zones
+  const filteredZones = zones?.filter(zone => {
+    const matchesSearch = zone.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      getAssigneeName(zone.assigned_to).toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (zone.zone_area || "").toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesStatus = statusFilter === "all" || zone.status === statusFilter;
     return matchesSearch && matchesStatus;
   }) || [];
 
-  const activeRoutes = routes?.filter(r => r.status === "active") || [];
-  const selectedRoute = routes?.find(r => r.id === selectedRouteId);
+  // Filter scheduled stops
+  const filteredScheduledStops = allScheduledStops?.filter(stop => {
+    if (scheduleFilter === "all") return true;
+    if (!stop.scheduled_date) return false;
+    
+    const schedDate = new Date(stop.scheduled_date);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    if (scheduleFilter === "today") return isToday(schedDate);
+    if (scheduleFilter === "overdue") return isBefore(schedDate, today) && stop.status !== "completed";
+    if (scheduleFilter === "upcoming") return isAfter(schedDate, today);
+    return true;
+  }) || [];
 
-  // Analytics calculations
+  const selectedZone = zones?.find(r => r.id === selectedZoneId);
+  const activeZones = zones?.filter(r => r.status === "active") || [];
+  
+  // Calculate route distance
+  const routeDistance = stops ? calculateTotalDistance(stops) : 0;
+  const routeTravelTime = estimateTravelTime(routeDistance);
+  const routeServiceTime = stops?.reduce((acc, s) => acc + (s.estimated_duration_minutes || 15), 0) || 0;
+  
+  // Analytics
   const totalStops = allStops?.length || 0;
   const completedStops = allStops?.filter(s => s.status === "completed")?.length || 0;
-  const pendingStops = allStops?.filter(s => s.status === "pending")?.length || 0;
-  const avgStopsPerRoute = routes?.length ? Math.round(totalStops / routes.length) : 0;
-  const completionRate = totalStops > 0 ? Math.round((completedStops / totalStops) * 100) : 0;
-  const routeStopCount = stops?.length || 0;
-  const routeCompletedCount = stops?.filter(s => s.status === "completed")?.length || 0;
-  const routeTotalMinutes = stops?.reduce((acc, s) => acc + (s.estimated_duration_minutes || 15), 0) || 0;
+  const autoScheduledCount = allScheduledStops?.filter(s => s.auto_scheduled)?.length || 0;
+  const overdueCount = allScheduledStops?.filter(s => {
+    if (!s.scheduled_date || s.status === "completed") return false;
+    return isBefore(new Date(s.scheduled_date), new Date());
+  })?.length || 0;
 
-  if (routesLoading) {
+  if (zonesLoading) {
     return (
       <div className="flex items-center justify-center h-64">
         <RefreshCw className="w-6 h-6 animate-spin text-primary mr-2" />
-        <p className="text-muted-foreground">Loading routes...</p>
+        <p className="text-muted-foreground">Loading zones...</p>
       </div>
     );
   }
@@ -505,51 +625,81 @@ const RouteManager = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h2 className="text-xl lg:text-2xl font-bold text-foreground">Route Manager</h2>
-          <p className="text-sm text-muted-foreground">Create and manage service routes</p>
+          <h2 className="text-xl lg:text-2xl font-bold text-foreground flex items-center gap-2">
+            <Compass className="w-6 h-6 text-primary" />
+            Zone Manager
+          </h2>
+          <p className="text-sm text-muted-foreground">Service zones with bi-monthly scheduling</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" size="icon" onClick={() => refetchRoutes()}>
+          <Button variant="outline" size="icon" onClick={() => refetchZones()}>
             <RefreshCw className="w-4 h-4" />
           </Button>
-          <Dialog open={routeDialogOpen} onOpenChange={setRouteDialogOpen}>
+          <Dialog open={zoneDialogOpen} onOpenChange={setZoneDialogOpen}>
             <DialogTrigger asChild>
-              <Button onClick={resetRouteForm} size="sm">
+              <Button onClick={resetZoneForm} size="sm">
                 <Plus className="w-4 h-4 mr-2" />
-                <span className="hidden sm:inline">Create Route</span>
+                <span className="hidden sm:inline">Create Zone</span>
                 <span className="sm:hidden">New</span>
               </Button>
             </DialogTrigger>
             <DialogContent className="max-h-[90vh] overflow-y-auto">
               <DialogHeader>
-                <DialogTitle>{editingRoute ? "Edit Route" : "Create New Route"}</DialogTitle>
+                <DialogTitle>{editingZone ? "Edit Zone" : "Create New Zone"}</DialogTitle>
               </DialogHeader>
-              <form onSubmit={handleRouteSubmit} className="space-y-4">
+              <form onSubmit={handleZoneSubmit} className="space-y-4">
                 <div>
-                  <Label htmlFor="name">Route Name</Label>
+                  <Label htmlFor="name">Zone Name</Label>
                   <Input
                     id="name"
-                    value={routeForm.name}
-                    onChange={(e) => setRouteForm({ ...routeForm, name: e.target.value })}
-                    placeholder="e.g., Downtown Morning Route"
+                    value={zoneForm.name}
+                    onChange={(e) => setZoneForm({ ...zoneForm, name: e.target.value })}
+                    placeholder="e.g., Downtown District"
                     required
                   />
+                </div>
+                <div>
+                  <Label htmlFor="zone_area">Zone Area / Region</Label>
+                  <Input
+                    id="zone_area"
+                    value={zoneForm.zone_area}
+                    onChange={(e) => setZoneForm({ ...zoneForm, zone_area: e.target.value })}
+                    placeholder="e.g., North Side, Mall District"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="frequency">Service Frequency (days)</Label>
+                  <Select 
+                    value={zoneForm.service_frequency_days.toString()} 
+                    onValueChange={(v) => setZoneForm({ ...zoneForm, service_frequency_days: parseInt(v) })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="7">Weekly (7 days)</SelectItem>
+                      <SelectItem value="14">Bi-weekly (14 days)</SelectItem>
+                      <SelectItem value="15">Twice monthly (15 days)</SelectItem>
+                      <SelectItem value="30">Monthly (30 days)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground mt-1">How often machines in this zone need service</p>
                 </div>
                 <div>
                   <Label htmlFor="description">Description</Label>
                   <Textarea
                     id="description"
-                    value={routeForm.description}
-                    onChange={(e) => setRouteForm({ ...routeForm, description: e.target.value })}
-                    placeholder="Route details and instructions..."
-                    rows={3}
+                    value={zoneForm.description}
+                    onChange={(e) => setZoneForm({ ...zoneForm, description: e.target.value })}
+                    placeholder="Zone details and instructions..."
+                    rows={2}
                   />
                 </div>
                 <div>
-                  <Label htmlFor="assigned_to">Assign To</Label>
+                  <Label htmlFor="assigned_to">Assign Operator</Label>
                   <Select 
-                    value={routeForm.assigned_to || "unassigned"} 
-                    onValueChange={(v) => setRouteForm({ ...routeForm, assigned_to: v === "unassigned" ? "" : v })}
+                    value={zoneForm.assigned_to || "unassigned"} 
+                    onValueChange={(v) => setZoneForm({ ...zoneForm, assigned_to: v === "unassigned" ? "" : v })}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select an operator" />
@@ -567,8 +717,8 @@ const RouteManager = () => {
                 <div>
                   <Label htmlFor="status">Status</Label>
                   <Select 
-                    value={routeForm.status} 
-                    onValueChange={(v) => setRouteForm({ ...routeForm, status: v })}
+                    value={zoneForm.status} 
+                    onValueChange={(v) => setZoneForm({ ...zoneForm, status: v })}
                   >
                     <SelectTrigger>
                       <SelectValue />
@@ -581,12 +731,10 @@ const RouteManager = () => {
                   </Select>
                 </div>
                 <DialogFooter>
-                  <Button type="button" variant="outline" onClick={() => setRouteDialogOpen(false)}>
+                  <Button type="button" variant="outline" onClick={() => setZoneDialogOpen(false)}>
                     Cancel
                   </Button>
-                  <Button type="submit">
-                    {editingRoute ? "Update" : "Create"}
-                  </Button>
+                  <Button type="submit">{editingZone ? "Update" : "Create"}</Button>
                 </DialogFooter>
               </form>
             </DialogContent>
@@ -595,22 +743,117 @@ const RouteManager = () => {
       </div>
 
       {/* Tabs */}
-      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "routes" | "analytics")}>
-        <TabsList className="w-full grid grid-cols-2 h-9">
-          <TabsTrigger value="routes" className="text-xs">Routes</TabsTrigger>
+      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as typeof activeTab)}>
+        <TabsList className="w-full grid grid-cols-3 h-9">
+          <TabsTrigger value="zones" className="text-xs">Zones</TabsTrigger>
+          <TabsTrigger value="schedule" className="text-xs">Schedule</TabsTrigger>
           <TabsTrigger value="analytics" className="text-xs">Analytics</TabsTrigger>
         </TabsList>
 
+        {/* Schedule Tab */}
+        <TabsContent value="schedule" className="mt-4 space-y-4">
+          <div className="flex gap-2 flex-wrap">
+            {(["all", "today", "upcoming", "overdue"] as const).map(filter => (
+              <Button
+                key={filter}
+                variant={scheduleFilter === filter ? "default" : "outline"}
+                size="sm"
+                onClick={() => setScheduleFilter(filter)}
+                className="capitalize"
+              >
+                {filter === "overdue" && <AlertCircle className="w-3 h-3 mr-1 text-destructive" />}
+                {filter === "today" && <Calendar className="w-3 h-3 mr-1" />}
+                {filter}
+                {filter === "overdue" && overdueCount > 0 && (
+                  <Badge variant="destructive" className="ml-1 text-[10px] px-1">
+                    {overdueCount}
+                  </Badge>
+                )}
+              </Button>
+            ))}
+          </div>
+
+          <Card>
+            <CardHeader className="py-3">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <Calendar className="w-4 h-4" />
+                Scheduled Service Calls
+              </CardTitle>
+              <CardDescription className="text-xs">
+                {autoScheduledCount} auto-scheduled from support tickets
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="p-2">
+              {filteredScheduledStops.length === 0 ? (
+                <p className="text-center text-muted-foreground py-8 text-sm">No scheduled stops</p>
+              ) : (
+                <ScrollArea className="h-[400px]">
+                  <div className="space-y-2 pr-2">
+                    {filteredScheduledStops.map(stop => {
+                      const isOverdue = stop.scheduled_date && 
+                        isBefore(new Date(stop.scheduled_date), new Date()) && 
+                        stop.status !== "completed";
+                      
+                      return (
+                        <div 
+                          key={stop.id}
+                          className={`p-3 border rounded-lg ${
+                            isOverdue ? "border-destructive/50 bg-destructive/5" : "border-border"
+                          }`}
+                        >
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <h4 className="font-medium text-sm">{stop.stop_name}</h4>
+                                {stop.auto_scheduled && (
+                                  <Badge variant="secondary" className="text-[10px] px-1">
+                                    <Zap className="w-2.5 h-2.5 mr-0.5" />
+                                    Auto
+                                  </Badge>
+                                )}
+                                <Badge 
+                                  variant={stop.priority === "urgent" ? "destructive" : stop.priority === "high" ? "default" : "outline"}
+                                  className="text-[10px] px-1"
+                                >
+                                  {stop.priority}
+                                </Badge>
+                              </div>
+                              <p className="text-xs text-muted-foreground mt-0.5">
+                                {(stop as any).zone?.name} • {getAssigneeName((stop as any).zone?.assigned_to)}
+                              </p>
+                              {stop.notes && (
+                                <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{stop.notes}</p>
+                              )}
+                            </div>
+                            <div className="text-right flex-shrink-0">
+                              <p className={`text-xs font-medium ${isOverdue ? "text-destructive" : "text-foreground"}`}>
+                                {format(new Date(stop.scheduled_date!), "MMM d")}
+                              </p>
+                              <p className="text-[10px] text-muted-foreground">
+                                {isOverdue ? "Overdue" : formatDistanceToNow(new Date(stop.scheduled_date!), { addSuffix: true })}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </ScrollArea>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Analytics Tab */}
         <TabsContent value="analytics" className="mt-4 space-y-4">
-          {/* Analytics Cards */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
             <Card className="p-3">
               <div className="flex items-center gap-2 mb-1">
-                <Route className="w-4 h-4 text-primary" />
-                <span className="text-xs text-muted-foreground">Total Routes</span>
+                <Compass className="w-4 h-4 text-primary" />
+                <span className="text-xs text-muted-foreground">Total Zones</span>
               </div>
-              <p className="text-2xl font-bold">{routes?.length || 0}</p>
-              <p className="text-xs text-green-600">{activeRoutes.length} active</p>
+              <p className="text-2xl font-bold">{zones?.length || 0}</p>
+              <p className="text-xs text-green-600">{activeZones.length} active</p>
             </Card>
             <Card className="p-3">
               <div className="flex items-center gap-2 mb-1">
@@ -618,58 +861,62 @@ const RouteManager = () => {
                 <span className="text-xs text-muted-foreground">Total Stops</span>
               </div>
               <p className="text-2xl font-bold">{totalStops}</p>
-              <p className="text-xs text-muted-foreground">~{avgStopsPerRoute} per route</p>
+              <p className="text-xs text-muted-foreground">{completedStops} completed</p>
             </Card>
             <Card className="p-3">
               <div className="flex items-center gap-2 mb-1">
-                <CheckCircle className="w-4 h-4 text-green-500" />
-                <span className="text-xs text-muted-foreground">Completion</span>
+                <Zap className="w-4 h-4 text-blue-500" />
+                <span className="text-xs text-muted-foreground">Auto-Scheduled</span>
               </div>
-              <p className="text-2xl font-bold">{completionRate}%</p>
-              <p className="text-xs text-muted-foreground">{completedStops}/{totalStops} stops</p>
+              <p className="text-2xl font-bold">{autoScheduledCount}</p>
+              <p className="text-xs text-muted-foreground">From tickets</p>
             </Card>
             <Card className="p-3">
               <div className="flex items-center gap-2 mb-1">
-                <Users className="w-4 h-4 text-blue-500" />
-                <span className="text-xs text-muted-foreground">Operators</span>
+                <AlertCircle className="w-4 h-4 text-destructive" />
+                <span className="text-xs text-muted-foreground">Overdue</span>
               </div>
-              <p className="text-2xl font-bold">{employees?.length || 0}</p>
-              <p className="text-xs text-muted-foreground">Available</p>
+              <p className="text-2xl font-bold">{overdueCount}</p>
+              <p className="text-xs text-destructive">Needs attention</p>
             </Card>
           </div>
 
-          {/* Route Performance */}
+          {/* Zone Service Status */}
           <Card>
             <CardHeader className="py-3">
-              <CardTitle className="text-sm">Route Performance</CardTitle>
+              <CardTitle className="text-sm">Zone Service Status</CardTitle>
             </CardHeader>
             <CardContent className="p-0">
               <ScrollArea className="h-[300px]">
                 <div className="divide-y">
-                  {routes?.map(route => {
-                    const routeStops = allStops?.filter(s => s.route_id === route.id) || [];
-                    const completed = routeStops.filter(s => s.status === "completed").length;
-                    const total = routeStops.length;
-                    const rate = total > 0 ? Math.round((completed / total) * 100) : 0;
+                  {zones?.map(zone => {
+                    const isDue = isZoneDueForService(
+                      zone.last_serviced_at ? new Date(zone.last_serviced_at) : null,
+                      zone.service_frequency_days || 15
+                    );
+                    const zoneStops = allStops?.filter(s => s.route_id === zone.id) || [];
                     
                     return (
-                      <div key={route.id} className="p-3 flex items-center justify-between">
+                      <div key={zone.id} className="p-3 flex items-center justify-between">
                         <div className="flex-1 min-w-0">
-                          <p className="font-medium text-sm truncate">{route.name}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {getAssigneeName(route.assigned_to)} • {total} stops
-                          </p>
-                        </div>
-                        <div className="flex items-center gap-3">
-                          <Badge variant={route.status === "active" ? "default" : "secondary"} className="text-xs">
-                            {route.status}
-                          </Badge>
-                          <div className="w-12 text-right">
-                            <span className={`text-sm font-bold ${rate >= 80 ? 'text-green-500' : rate >= 50 ? 'text-yellow-500' : 'text-muted-foreground'}`}>
-                              {rate}%
-                            </span>
+                          <div className="flex items-center gap-2">
+                            <p className="font-medium text-sm truncate">{zone.name}</p>
+                            {isDue && (
+                              <Badge variant="destructive" className="text-[10px]">Due</Badge>
+                            )}
                           </div>
+                          <p className="text-xs text-muted-foreground">
+                            {zone.zone_area || "No area"} • {zoneStops.length} machines • Every {zone.service_frequency_days || 15} days
+                          </p>
+                          {zone.last_serviced_at && (
+                            <p className="text-xs text-muted-foreground">
+                              Last: {formatDistanceToNow(new Date(zone.last_serviced_at), { addSuffix: true })}
+                            </p>
+                          )}
                         </div>
+                        <Badge variant={zone.status === "active" ? "default" : "secondary"}>
+                          {zone.status}
+                        </Badge>
                       </div>
                     );
                   })}
@@ -679,13 +926,14 @@ const RouteManager = () => {
           </Card>
         </TabsContent>
 
-        <TabsContent value="routes" className="mt-4 space-y-4">
+        {/* Zones Tab */}
+        <TabsContent value="zones" className="mt-4 space-y-4">
           {/* Search & Filter */}
           <div className="flex gap-2">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input 
-                placeholder="Search routes..." 
+                placeholder="Search zones..." 
                 className="pl-9 h-9"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -705,229 +953,293 @@ const RouteManager = () => {
             </Select>
           </div>
 
-          {/* Routes Grid on Mobile, Side-by-side on Desktop */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            {/* Routes List */}
+            {/* Zones List */}
             <Card>
               <CardHeader className="py-3 px-4">
                 <CardTitle className="text-sm flex items-center gap-2">
-                  <Route className="w-4 h-4" />
-                  Routes ({filteredRoutes.length})
+                  <Compass className="w-4 h-4" />
+                  Zones ({filteredZones.length})
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-2">
-                {filteredRoutes.length === 0 ? (
-                  <p className="text-center text-muted-foreground py-8 text-sm">No routes found</p>
+                {filteredZones.length === 0 ? (
+                  <p className="text-center text-muted-foreground py-8 text-sm">No zones found</p>
                 ) : (
                   <ScrollArea className="h-[400px]">
                     <div className="space-y-2 pr-2">
-                      {filteredRoutes.map((route) => (
-                        <div 
-                          key={route.id} 
-                          className={`p-3 border rounded-lg cursor-pointer transition-all ${
-                            selectedRouteId === route.id 
-                              ? "border-primary bg-primary/5 shadow-sm" 
-                              : "border-border hover:border-primary/50"
-                          }`}
-                          onClick={() => setSelectedRouteId(route.id)}
-                        >
-                          <div className="flex items-start justify-between gap-2">
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2">
-                                <h4 className="font-medium text-sm truncate">{route.name}</h4>
-                                <Badge 
-                                  variant={route.status === "active" ? "default" : "secondary"} 
-                                  className="text-[10px] px-1.5 py-0"
-                                >
-                                  {route.status}
-                                </Badge>
+                      {filteredZones.map((zone) => {
+                        const isDue = isZoneDueForService(
+                          zone.last_serviced_at ? new Date(zone.last_serviced_at) : null,
+                          zone.service_frequency_days || 15
+                        );
+                        
+                        return (
+                          <div 
+                            key={zone.id} 
+                            className={`p-3 border rounded-lg cursor-pointer transition-all ${
+                              selectedZoneId === zone.id 
+                                ? "border-primary bg-primary/5 shadow-sm" 
+                                : isDue
+                                  ? "border-destructive/50 hover:border-destructive"
+                                  : "border-border hover:border-primary/50"
+                            }`}
+                            onClick={() => setSelectedZoneId(zone.id)}
+                          >
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <h4 className="font-medium text-sm truncate">{zone.name}</h4>
+                                  <Badge 
+                                    variant={zone.status === "active" ? "default" : "secondary"} 
+                                    className="text-[10px] px-1.5 py-0"
+                                  >
+                                    {zone.status}
+                                  </Badge>
+                                  {isDue && (
+                                    <Badge variant="destructive" className="text-[10px] px-1">
+                                      <AlertCircle className="w-2.5 h-2.5 mr-0.5" />
+                                      Due
+                                    </Badge>
+                                  )}
+                                </div>
+                                <p className="text-xs text-muted-foreground mt-0.5">
+                                  {zone.zone_area || "No area set"} • Every {zone.service_frequency_days || 15}d
+                                </p>
+                                <p className="text-xs text-muted-foreground flex items-center gap-1">
+                                  <Users className="w-3 h-3" />
+                                  {getAssigneeName(zone.assigned_to)}
+                                </p>
                               </div>
-                              <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1">
-                                <Users className="w-3 h-3" />
-                                {getAssigneeName(route.assigned_to)}
-                              </p>
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => e.stopPropagation()}>
+                                    <MoreVertical className="w-4 h-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  <DropdownMenuItem onClick={() => handleEditZone(zone)}>
+                                    <Edit className="w-4 h-4 mr-2" />
+                                    Edit
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => duplicateZoneMutation.mutate(zone.id)}>
+                                    <Copy className="w-4 h-4 mr-2" />
+                                    Duplicate
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => markZoneServicedMutation.mutate(zone.id)}>
+                                    <CheckCircle className="w-4 h-4 mr-2" />
+                                    Mark Serviced
+                                  </DropdownMenuItem>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem 
+                                    className="text-destructive"
+                                    onClick={() => deleteZoneMutation.mutate(zone.id)}
+                                  >
+                                    <Trash2 className="w-4 h-4 mr-2" />
+                                    Delete
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
                             </div>
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => e.stopPropagation()}>
-                                  <MoreVertical className="w-4 h-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuItem onClick={() => { handleEditRoute(route); }}>
-                                  <Edit className="w-4 h-4 mr-2" />
-                                  Edit
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => duplicateRouteMutation.mutate(route.id)}>
-                                  <Copy className="w-4 h-4 mr-2" />
-                                  Duplicate
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => resetRouteStopsMutation.mutate(route.id)}>
-                                  <RefreshCw className="w-4 h-4 mr-2" />
-                                  Reset Stops
-                                </DropdownMenuItem>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem 
-                                  className="text-destructive"
-                                  onClick={() => deleteRouteMutation.mutate(route.id)}
-                                >
-                                  <Trash2 className="w-4 h-4 mr-2" />
-                                  Delete
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
                           </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   </ScrollArea>
                 )}
               </CardContent>
             </Card>
 
-            {/* Route Stops */}
+            {/* Zone Stops */}
             <Card>
               <CardHeader className="py-3 px-4">
                 <div className="flex items-center justify-between">
                   <div>
                     <CardTitle className="text-sm flex items-center gap-2">
                       <MapPin className="w-4 h-4" />
-                      {selectedRoute ? selectedRoute.name : "Route Stops"}
+                      {selectedZone ? selectedZone.name : "Zone Machines"}
                     </CardTitle>
-                    {selectedRoute && (
+                    {selectedZone && stops && stops.length > 0 && (
                       <CardDescription className="text-xs mt-0.5">
-                        {routeStopCount} stops • ~{Math.round(routeTotalMinutes / 60)}h {routeTotalMinutes % 60}m total
+                        {stops.length} machines • {routeDistance}km • ~{routeTravelTime + routeServiceTime}min total
                       </CardDescription>
                     )}
                   </div>
-                  {selectedRouteId && (
-                    <Dialog open={stopDialogOpen} onOpenChange={setStopDialogOpen}>
-                      <DialogTrigger asChild>
-                        <Button size="sm" variant="outline" onClick={resetStopForm}>
-                          <Plus className="w-4 h-4 mr-1" />
-                          Add
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent className="max-h-[90vh] overflow-y-auto">
-                        <DialogHeader>
-                          <DialogTitle>{editingStop ? "Edit Stop" : "Add Stop"}</DialogTitle>
-                          <DialogDescription>{selectedRoute?.name}</DialogDescription>
-                        </DialogHeader>
-                        <form onSubmit={handleStopSubmit} className="space-y-4">
-                          {/* Location Selector */}
-                          <div>
-                            <Label>Link to Location (Optional)</Label>
-                            <Select 
-                              value={stopForm.location_id || "none"} 
-                              onValueChange={(v) => setStopForm({ ...stopForm, location_id: v === "none" ? "" : v })}
-                            >
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select location" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="none">No location</SelectItem>
-                                {locations?.map((loc) => (
-                                  <SelectItem key={loc.id} value={loc.id}>
-                                    <div className="flex items-center gap-2">
-                                      <Building className="w-3 h-3" />
-                                      {loc.name || loc.city}
-                                    </div>
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </div>
+                  {selectedZoneId && (
+                    <div className="flex gap-1">
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        onClick={() => optimizeRouteMutation.mutate()}
+                        disabled={!stops || stops.length < 2 || optimizeRouteMutation.isPending}
+                        title="Optimize route for shortest distance"
+                      >
+                        <Navigation className="w-4 h-4 mr-1" />
+                        <span className="hidden sm:inline">Optimize</span>
+                      </Button>
+                      <Dialog open={stopDialogOpen} onOpenChange={setStopDialogOpen}>
+                        <DialogTrigger asChild>
+                          <Button size="sm" variant="outline" onClick={resetStopForm}>
+                            <Plus className="w-4 h-4 mr-1" />
+                            Add
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="max-h-[90vh] overflow-y-auto">
+                          <DialogHeader>
+                            <DialogTitle>{editingStop ? "Edit Stop" : "Add Machine"}</DialogTitle>
+                            <DialogDescription>{selectedZone?.name}</DialogDescription>
+                          </DialogHeader>
+                          <form onSubmit={handleStopSubmit} className="space-y-4">
+                            <div>
+                              <Label>Link to Location</Label>
+                              <Select 
+                                value={stopForm.location_id || "none"} 
+                                onValueChange={(v) => setStopForm({ ...stopForm, location_id: v === "none" ? "" : v })}
+                              >
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select location" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="none">No location</SelectItem>
+                                  {locations?.map((loc) => (
+                                    <SelectItem key={loc.id} value={loc.id}>
+                                      <div className="flex items-center gap-2">
+                                        <Building className="w-3 h-3" />
+                                        {loc.name || loc.city}
+                                        {loc.latitude && <MapPin className="w-2.5 h-2.5 text-green-500" />}
+                                      </div>
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              <p className="text-xs text-muted-foreground mt-1">
+                                Locations with coordinates enable route optimization
+                              </p>
+                            </div>
 
-                          {/* Machine Selector */}
-                          <div>
-                            <Label>Link to Machine (Optional)</Label>
-                            <Select 
-                              value={stopForm.machine_id || "none"} 
-                              onValueChange={(v) => setStopForm({ ...stopForm, machine_id: v === "none" ? "" : v })}
-                            >
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select machine" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="none">No machine</SelectItem>
-                                {machines?.map((m) => (
-                                  <SelectItem key={m.id} value={m.id}>
-                                    <div className="flex items-center gap-2">
-                                      <Monitor className="w-3 h-3" />
-                                      {m.name} ({m.machine_code})
-                                    </div>
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </div>
+                            <div>
+                              <Label>Link to Machine</Label>
+                              <Select 
+                                value={stopForm.machine_id || "none"} 
+                                onValueChange={(v) => setStopForm({ ...stopForm, machine_id: v === "none" ? "" : v })}
+                              >
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select machine" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="none">No machine</SelectItem>
+                                  {machines?.map((m) => (
+                                    <SelectItem key={m.id} value={m.id}>
+                                      <div className="flex items-center gap-2">
+                                        <Monitor className="w-3 h-3" />
+                                        {m.name} ({m.machine_code})
+                                      </div>
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
 
-                          <div>
-                            <Label htmlFor="stop_name">Stop Name</Label>
-                            <Input
-                              id="stop_name"
-                              value={stopForm.stop_name}
-                              onChange={(e) => setStopForm({ ...stopForm, stop_name: e.target.value })}
-                              placeholder="e.g., Main Street Mall"
-                              required
-                            />
-                          </div>
-                          <div>
-                            <Label htmlFor="address">Address</Label>
-                            <Input
-                              id="address"
-                              value={stopForm.address}
-                              onChange={(e) => setStopForm({ ...stopForm, address: e.target.value })}
-                              placeholder="123 Main Street, City"
-                            />
-                          </div>
-                          <div>
-                            <Label htmlFor="notes">Notes</Label>
-                            <Textarea
-                              id="notes"
-                              value={stopForm.notes}
-                              onChange={(e) => setStopForm({ ...stopForm, notes: e.target.value })}
-                              placeholder="Special instructions..."
-                              rows={2}
-                            />
-                          </div>
-                          <div>
-                            <Label htmlFor="duration">Est. Duration (min)</Label>
-                            <Input
-                              id="duration"
-                              type="number"
-                              value={stopForm.estimated_duration_minutes}
-                              onChange={(e) => setStopForm({ ...stopForm, estimated_duration_minutes: parseInt(e.target.value) })}
-                              min={5}
-                              max={120}
-                            />
-                          </div>
-                          <DialogFooter>
-                            <Button type="button" variant="outline" onClick={() => setStopDialogOpen(false)}>
-                              Cancel
-                            </Button>
-                            <Button type="submit">{editingStop ? "Update" : "Add"} Stop</Button>
-                          </DialogFooter>
-                        </form>
-                      </DialogContent>
-                    </Dialog>
+                            <div>
+                              <Label htmlFor="stop_name">Stop Name</Label>
+                              <Input
+                                id="stop_name"
+                                value={stopForm.stop_name}
+                                onChange={(e) => setStopForm({ ...stopForm, stop_name: e.target.value })}
+                                placeholder="e.g., Main Street Mall"
+                                required
+                              />
+                            </div>
+                            
+                            <div>
+                              <Label htmlFor="address">Address</Label>
+                              <Input
+                                id="address"
+                                value={stopForm.address}
+                                onChange={(e) => setStopForm({ ...stopForm, address: e.target.value })}
+                                placeholder="123 Main Street, City"
+                              />
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-3">
+                              <div>
+                                <Label htmlFor="scheduled_date">Scheduled Date</Label>
+                                <Input
+                                  id="scheduled_date"
+                                  type="date"
+                                  value={stopForm.scheduled_date}
+                                  onChange={(e) => setStopForm({ ...stopForm, scheduled_date: e.target.value })}
+                                />
+                              </div>
+                              <div>
+                                <Label htmlFor="priority">Priority</Label>
+                                <Select 
+                                  value={stopForm.priority} 
+                                  onValueChange={(v) => setStopForm({ ...stopForm, priority: v })}
+                                >
+                                  <SelectTrigger>
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="normal">Normal</SelectItem>
+                                    <SelectItem value="high">High</SelectItem>
+                                    <SelectItem value="urgent">Urgent</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            </div>
+
+                            <div>
+                              <Label htmlFor="notes">Notes</Label>
+                              <Textarea
+                                id="notes"
+                                value={stopForm.notes}
+                                onChange={(e) => setStopForm({ ...stopForm, notes: e.target.value })}
+                                placeholder="Special instructions..."
+                                rows={2}
+                              />
+                            </div>
+                            
+                            <div>
+                              <Label htmlFor="duration">Est. Service Time (min)</Label>
+                              <Input
+                                id="duration"
+                                type="number"
+                                value={stopForm.estimated_duration_minutes}
+                                onChange={(e) => setStopForm({ ...stopForm, estimated_duration_minutes: parseInt(e.target.value) })}
+                                min={5}
+                                max={120}
+                              />
+                            </div>
+                            
+                            <DialogFooter>
+                              <Button type="button" variant="outline" onClick={() => setStopDialogOpen(false)}>
+                                Cancel
+                              </Button>
+                              <Button type="submit">{editingStop ? "Update" : "Add"}</Button>
+                            </DialogFooter>
+                          </form>
+                        </DialogContent>
+                      </Dialog>
+                    </div>
                   )}
                 </div>
               </CardHeader>
               <CardContent className="p-2">
-                {!selectedRouteId ? (
-                  <p className="text-center text-muted-foreground py-8 text-sm">Select a route to view stops</p>
+                {!selectedZoneId ? (
+                  <p className="text-center text-muted-foreground py-8 text-sm">Select a zone to view machines</p>
                 ) : stops?.length === 0 ? (
-                  <p className="text-center text-muted-foreground py-8 text-sm">No stops added yet</p>
+                  <p className="text-center text-muted-foreground py-8 text-sm">No machines in this zone</p>
                 ) : (
                   <ScrollArea className="h-[400px]">
                     <div className="space-y-1 pr-2">
                       {stops?.map((stop, index) => (
                         <div 
                           key={stop.id} 
-                          className="flex items-center gap-2 p-2 border border-border rounded-lg hover:bg-muted/30 transition-colors"
+                          className={`flex items-center gap-2 p-2 border rounded-lg hover:bg-muted/30 transition-colors ${
+                            stop.auto_scheduled ? "border-blue-500/30 bg-blue-500/5" : "border-border"
+                          }`}
                         >
-                          {/* Reorder buttons */}
                           <div className="flex flex-col gap-0.5">
                             <Button 
                               variant="ghost" 
@@ -949,24 +1261,37 @@ const RouteManager = () => {
                             </Button>
                           </div>
 
-                          {/* Order number */}
                           <div className="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-bold flex-shrink-0">
                             {index + 1}
                           </div>
 
-                          {/* Stop info */}
                           <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-1">
+                            <div className="flex items-center gap-1 flex-wrap">
                               <h4 className="font-medium text-sm truncate">{stop.stop_name}</h4>
                               {stop.machine_id && <Monitor className="w-3 h-3 text-muted-foreground flex-shrink-0" />}
-                              {stop.location_id && <Building className="w-3 h-3 text-muted-foreground flex-shrink-0" />}
+                              {stop.location?.latitude && <span title="Has coordinates"><MapPin className="w-3 h-3 text-green-500 flex-shrink-0" /></span>}
+                              {stop.auto_scheduled && (
+                                <Badge variant="secondary" className="text-[10px] px-1">
+                                  <Zap className="w-2.5 h-2.5" />
+                                </Badge>
+                              )}
+                              {stop.priority === "urgent" && (
+                                <Badge variant="destructive" className="text-[10px] px-1">Urgent</Badge>
+                              )}
+                              {stop.priority === "high" && (
+                                <Badge variant="default" className="text-[10px] px-1">High</Badge>
+                              )}
                             </div>
                             {stop.address && (
                               <p className="text-xs text-muted-foreground truncate">{stop.address}</p>
                             )}
+                            {stop.scheduled_date && (
+                              <p className="text-[10px] text-blue-600">
+                                Scheduled: {format(new Date(stop.scheduled_date), "MMM d")}
+                              </p>
+                            )}
                           </div>
 
-                          {/* Duration & Status */}
                           <div className="flex items-center gap-2">
                             <span className="text-xs text-muted-foreground">{stop.estimated_duration_minutes || 15}m</span>
                             <Badge 
@@ -977,7 +1302,6 @@ const RouteManager = () => {
                             </Badge>
                           </div>
 
-                          {/* Actions */}
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                               <Button variant="ghost" size="icon" className="h-7 w-7">
