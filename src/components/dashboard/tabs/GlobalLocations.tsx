@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,8 +11,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, MapPin, Trash2, Edit, Search, Monitor, RefreshCw, Eye, EyeOff } from "lucide-react";
+import { Plus, MapPin, Trash2, Edit, Search, Monitor, RefreshCw, Eye, EyeOff, Gamepad2 } from "lucide-react";
 
 interface Location {
   id: string;
@@ -46,6 +47,19 @@ interface Machine {
   vendx_pay_enabled: boolean;
 }
 
+interface ArcadeGame {
+  id: string;
+  name: string;
+  game_type: string;
+}
+
+interface LocationArcadeGame {
+  id: string;
+  arcade_game_id: string;
+  machine_count: number;
+  is_active: boolean;
+}
+
 const LOCATION_TYPES = [
   { value: "office", label: "Office Building" },
   { value: "mall", label: "Shopping Mall" },
@@ -69,10 +83,12 @@ const GlobalLocations = () => {
   const [showDialog, setShowDialog] = useState(false);
   const [showMachinesDialog, setShowMachinesDialog] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showArcadeGamesDialog, setShowArcadeGamesDialog] = useState(false);
   const [editingLocation, setEditingLocation] = useState<Location | null>(null);
   const [selectedLocation, setSelectedLocation] = useState<Location | null>(null);
   const [locationMachines, setLocationMachines] = useState<Machine[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedArcadeGames, setSelectedArcadeGames] = useState<Record<string, { selected: boolean; count: number }>>({});
 
   const [formData, setFormData] = useState({
     name: "",
@@ -104,6 +120,15 @@ const GlobalLocations = () => {
       const { data, error } = await supabase.from("locations").select("*").order("created_at", { ascending: false });
       if (error) throw error;
       return data as Location[];
+    },
+  });
+
+  const { data: arcadeGames } = useQuery({
+    queryKey: ["arcade-game-titles"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("arcade_game_titles").select("id, name, game_type").eq("is_active", true).order("name");
+      if (error) throw error;
+      return data as ArcadeGame[];
     },
   });
 
@@ -166,9 +191,69 @@ const GlobalLocations = () => {
     },
   });
 
+  const saveArcadeGamesMutation = useMutation({
+    mutationFn: async ({ locationId, games }: { locationId: string; games: Record<string, { selected: boolean; count: number }> }) => {
+      // First delete existing arcade games for this location
+      const { error: deleteError } = await supabase
+        .from("location_arcade_games")
+        .delete()
+        .eq("location_id", locationId);
+      if (deleteError) throw deleteError;
+
+      // Insert new selections
+      const gamesToInsert = Object.entries(games)
+        .filter(([_, value]) => value.selected)
+        .map(([gameId, value]) => ({
+          location_id: locationId,
+          arcade_game_id: gameId,
+          machine_count: value.count || 1,
+          is_active: true,
+        }));
+
+      if (gamesToInsert.length > 0) {
+        const { error: insertError } = await supabase
+          .from("location_arcade_games")
+          .insert(gamesToInsert);
+        if (insertError) throw insertError;
+      }
+
+      // Update arcade_machine_count
+      const totalArcadeMachines = gamesToInsert.reduce((sum, g) => sum + g.machine_count, 0);
+      const { error: updateError } = await supabase
+        .from("locations")
+        .update({ arcade_machine_count: totalArcadeMachines })
+        .eq("id", locationId);
+      if (updateError) throw updateError;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["locations"] });
+      toast({ title: "Arcade games updated" });
+      setShowArcadeGamesDialog(false);
+    },
+    onError: (error: any) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    },
+  });
+
   const fetchLocationMachines = async (locationId: string) => {
     const { data } = await supabase.from("vendx_machines").select("id, name, machine_code, machine_type, status, vendx_pay_enabled").eq("location_id", locationId);
     setLocationMachines(data || []);
+  };
+
+  const fetchLocationArcadeGames = async (locationId: string) => {
+    const { data } = await supabase
+      .from("location_arcade_games")
+      .select("id, arcade_game_id, machine_count, is_active")
+      .eq("location_id", locationId);
+    
+    const gameMap: Record<string, { selected: boolean; count: number }> = {};
+    (arcadeGames || []).forEach(game => {
+      gameMap[game.id] = { selected: false, count: 1 };
+    });
+    (data || []).forEach((item: LocationArcadeGame) => {
+      gameMap[item.arcade_game_id] = { selected: item.is_active, count: item.machine_count || 1 };
+    });
+    setSelectedArcadeGames(gameMap);
   };
 
   const resetForm = () => {
@@ -213,6 +298,26 @@ const GlobalLocations = () => {
     setShowMachinesDialog(true);
   };
 
+  const openArcadeGamesDialog = (location: Location) => {
+    setSelectedLocation(location);
+    fetchLocationArcadeGames(location.id);
+    setShowArcadeGamesDialog(true);
+  };
+
+  const toggleArcadeGame = (gameId: string) => {
+    setSelectedArcadeGames(prev => ({
+      ...prev,
+      [gameId]: { ...prev[gameId], selected: !prev[gameId]?.selected }
+    }));
+  };
+
+  const updateArcadeGameCount = (gameId: string, count: number) => {
+    setSelectedArcadeGames(prev => ({
+      ...prev,
+      [gameId]: { ...prev[gameId], count: Math.max(1, count) }
+    }));
+  };
+
   const filteredLocations = useMemo(() => {
     return (locations || []).filter(loc => 
       (loc.name?.toLowerCase() || "").includes(searchTerm.toLowerCase()) ||
@@ -230,8 +335,8 @@ const GlobalLocations = () => {
   if (isLoading) return <div className="text-center py-8 text-muted-foreground">Loading...</div>;
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-6 h-full flex flex-col">
+      <div className="flex items-center justify-between flex-shrink-0">
         <h2 className="text-2xl font-bold flex items-center gap-2"><MapPin className="w-6 h-6 text-primary" />Global Locations</h2>
         <div className="flex gap-2">
           <Button variant="outline" size="sm" onClick={() => queryClient.invalidateQueries({ queryKey: ["locations"] })}><RefreshCw className="w-4 h-4 mr-2" />Refresh</Button>
@@ -239,35 +344,62 @@ const GlobalLocations = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-3 gap-4 flex-shrink-0">
         <Card><CardContent className="p-6"><p className="text-sm text-muted-foreground">Total Locations</p><p className="text-2xl font-bold">{stats.total}</p></CardContent></Card>
         <Card><CardContent className="p-6"><p className="text-sm text-muted-foreground">Active</p><p className="text-2xl font-bold text-green-500">{stats.active}</p></CardContent></Card>
         <Card><CardContent className="p-6"><p className="text-sm text-muted-foreground">Total Machines</p><p className="text-2xl font-bold text-primary">{stats.totalMachines}</p></CardContent></Card>
       </div>
 
-      <div className="relative max-w-md"><Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" /><Input placeholder="Search locations..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-10" /></div>
+      <div className="relative max-w-md flex-shrink-0"><Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" /><Input placeholder="Search locations..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-10" /></div>
 
-      <Card>
-        <CardHeader><CardTitle>Locations ({filteredLocations.length})</CardTitle></CardHeader>
-        <CardContent>
-          <ScrollArea className="h-[500px]">
+      <Card className="flex-1 min-h-0 flex flex-col">
+        <CardHeader className="flex-shrink-0"><CardTitle>Locations ({filteredLocations.length})</CardTitle></CardHeader>
+        <CardContent className="flex-1 min-h-0 p-0">
+          <div className="h-full overflow-auto">
             <Table>
-              <TableHeader><TableRow><TableHead>Location</TableHead><TableHead>Type</TableHead><TableHead>Category</TableHead><TableHead>Machines</TableHead><TableHead>Status</TableHead><TableHead>Visible</TableHead><TableHead>Actions</TableHead></TableRow></TableHeader>
+              <TableHeader className="sticky top-0 bg-card z-10">
+                <TableRow>
+                  <TableHead>Location</TableHead>
+                  <TableHead>Type</TableHead>
+                  <TableHead>Category</TableHead>
+                  <TableHead>Machines</TableHead>
+                  <TableHead>Arcade Games</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Visible</TableHead>
+                  <TableHead>Actions</TableHead>
+                </TableRow>
+              </TableHeader>
               <TableBody>
                 {filteredLocations.map((loc) => (
                   <TableRow key={loc.id}>
-                    <TableCell><p className="font-medium">{loc.name || `${loc.city}, ${loc.country}`}</p>{loc.address && <p className="text-xs text-muted-foreground">{loc.address}</p>}</TableCell>
+                    <TableCell>
+                      <p className="font-medium">{loc.name || `${loc.city}, ${loc.country}`}</p>
+                      {loc.address && <p className="text-xs text-muted-foreground">{loc.address}</p>}
+                    </TableCell>
                     <TableCell><Badge variant="outline">{LOCATION_TYPES.find(t => t.value === loc.location_type)?.label || loc.location_type}</Badge></TableCell>
                     <TableCell><Badge variant={loc.location_category === "mixed" ? "default" : "secondary"}>{LOCATION_CATEGORIES.find(c => c.value === loc.location_category)?.label || loc.location_category || "Vending"}</Badge></TableCell>
                     <TableCell><Button variant="ghost" size="sm" onClick={() => openMachinesDialog(loc)} className="gap-1"><Monitor className="w-4 h-4" />{loc.machine_count}</Button></TableCell>
+                    <TableCell>
+                      {(loc.location_category === "arcade" || loc.location_category === "mixed") && (
+                        <Button variant="ghost" size="sm" onClick={() => openArcadeGamesDialog(loc)} className="gap-1">
+                          <Gamepad2 className="w-4 h-4" />
+                          {loc.arcade_machine_count || 0}
+                        </Button>
+                      )}
+                    </TableCell>
                     <TableCell><Badge variant={loc.status === "active" ? "default" : "secondary"}>{loc.status}</Badge></TableCell>
                     <TableCell>{loc.is_visible ? <Eye className="w-4 h-4 text-green-500" /> : <EyeOff className="w-4 h-4 text-muted-foreground" />}</TableCell>
-                    <TableCell><div className="flex gap-1"><Button size="icon" variant="ghost" onClick={() => handleEdit(loc)}><Edit className="w-4 h-4" /></Button><Button size="icon" variant="ghost" onClick={() => { setSelectedLocation(loc); setShowDeleteConfirm(true); }}><Trash2 className="w-4 h-4 text-destructive" /></Button></div></TableCell>
+                    <TableCell>
+                      <div className="flex gap-1">
+                        <Button size="icon" variant="ghost" onClick={() => handleEdit(loc)}><Edit className="w-4 h-4" /></Button>
+                        <Button size="icon" variant="ghost" onClick={() => { setSelectedLocation(loc); setShowDeleteConfirm(true); }}><Trash2 className="w-4 h-4 text-destructive" /></Button>
+                      </div>
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
             </Table>
-          </ScrollArea>
+          </div>
         </CardContent>
       </Card>
 
@@ -299,12 +431,6 @@ const GlobalLocations = () => {
               </div>
             )}
 
-            {(formData.location_category === "arcade" || formData.location_category === "mixed") && (
-              <div className="border rounded-lg p-4 space-y-3">
-                <h3 className="font-semibold">Arcade Machines</h3>
-                <div className="space-y-2"><Label>Total Arcade Machines</Label><Input type="number" min="0" value={formData.arcade_machine_count} onChange={(e) => setFormData({ ...formData, arcade_machine_count: parseInt(e.target.value) || 0 })} /></div>
-              </div>
-            )}
             <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg"><Label>Public Visibility</Label><Switch checked={formData.is_visible} onCheckedChange={(v) => setFormData({ ...formData, is_visible: v })} /></div>
             <DialogFooter><Button type="button" variant="outline" onClick={() => setShowDialog(false)}>Cancel</Button><Button type="submit">{editingLocation ? "Update" : "Add"}</Button></DialogFooter>
           </form>
@@ -312,17 +438,67 @@ const GlobalLocations = () => {
       </Dialog>
 
       <Dialog open={showMachinesDialog} onOpenChange={setShowMachinesDialog}>
-        <DialogContent className="max-h-[90vh] overflow-y-auto"><DialogHeader><DialogTitle>Machines at {selectedLocation?.name || selectedLocation?.city}</DialogTitle></DialogHeader>
+        <DialogContent className="max-h-[90vh] overflow-y-auto">
+          <DialogHeader><DialogTitle>Machines at {selectedLocation?.name || selectedLocation?.city}</DialogTitle></DialogHeader>
           {locationMachines.length === 0 ? <p className="text-center text-muted-foreground py-8">No machines</p> : (
-            <Table><TableHeader><TableRow><TableHead>Machine</TableHead><TableHead>Type</TableHead><TableHead>Status</TableHead></TableRow></TableHeader>
+            <Table>
+              <TableHeader><TableRow><TableHead>Machine</TableHead><TableHead>Type</TableHead><TableHead>Status</TableHead></TableRow></TableHeader>
               <TableBody>{locationMachines.map(m => <TableRow key={m.id}><TableCell className="font-medium">{m.name}</TableCell><TableCell>{m.machine_type}</TableCell><TableCell><Badge variant={m.status === "active" ? "default" : "secondary"}>{m.status}</Badge></TableCell></TableRow>)}</TableBody>
             </Table>
           )}
         </DialogContent>
       </Dialog>
 
+      <Dialog open={showArcadeGamesDialog} onOpenChange={setShowArcadeGamesDialog}>
+        <DialogContent className="max-w-lg max-h-[90vh]">
+          <DialogHeader>
+            <DialogTitle>Arcade Games at {selectedLocation?.name || selectedLocation?.city}</DialogTitle>
+            <DialogDescription>Select which arcade games are available at this location</DialogDescription>
+          </DialogHeader>
+          <ScrollArea className="h-[400px] pr-4">
+            <div className="space-y-3">
+              {(arcadeGames || []).map(game => (
+                <div key={game.id} className="flex items-center gap-3 p-3 border rounded-lg hover:bg-muted/50 transition-colors">
+                  <Checkbox 
+                    id={game.id}
+                    checked={selectedArcadeGames[game.id]?.selected || false}
+                    onCheckedChange={() => toggleArcadeGame(game.id)}
+                  />
+                  <div className="flex-1">
+                    <label htmlFor={game.id} className="font-medium cursor-pointer">{game.name}</label>
+                    <p className="text-xs text-muted-foreground capitalize">{game.game_type}</p>
+                  </div>
+                  {selectedArcadeGames[game.id]?.selected && (
+                    <div className="flex items-center gap-2">
+                      <Label className="text-xs">Qty:</Label>
+                      <Input 
+                        type="number" 
+                        min="1" 
+                        value={selectedArcadeGames[game.id]?.count || 1}
+                        onChange={(e) => updateArcadeGameCount(game.id, parseInt(e.target.value) || 1)}
+                        className="w-16 h-8"
+                      />
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </ScrollArea>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowArcadeGamesDialog(false)}>Cancel</Button>
+            <Button 
+              onClick={() => selectedLocation && saveArcadeGamesMutation.mutate({ locationId: selectedLocation.id, games: selectedArcadeGames })}
+              disabled={saveArcadeGamesMutation.isPending}
+            >
+              {saveArcadeGamesMutation.isPending ? "Saving..." : "Save Changes"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
-        <DialogContent><DialogHeader><DialogTitle>Delete Location</DialogTitle><DialogDescription>Are you sure?</DialogDescription></DialogHeader>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Delete Location</DialogTitle><DialogDescription>Are you sure?</DialogDescription></DialogHeader>
           <DialogFooter><Button variant="outline" onClick={() => setShowDeleteConfirm(false)}>Cancel</Button><Button variant="destructive" onClick={() => selectedLocation && deleteMutation.mutate(selectedLocation.id)}>Delete</Button></DialogFooter>
         </DialogContent>
       </Dialog>
