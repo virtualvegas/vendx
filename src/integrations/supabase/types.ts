@@ -1285,6 +1285,7 @@ export type Database = {
       route_stops: {
         Row: {
           address: string | null
+          auto_scheduled: boolean | null
           completed_at: string | null
           created_at: string
           estimated_duration_minutes: number | null
@@ -1292,7 +1293,10 @@ export type Database = {
           location_id: string | null
           machine_id: string | null
           notes: string | null
+          priority: string | null
           route_id: string
+          scheduled_date: string | null
+          source_ticket_id: string | null
           status: string
           stop_name: string
           stop_order: number
@@ -1300,6 +1304,7 @@ export type Database = {
         }
         Insert: {
           address?: string | null
+          auto_scheduled?: boolean | null
           completed_at?: string | null
           created_at?: string
           estimated_duration_minutes?: number | null
@@ -1307,7 +1312,10 @@ export type Database = {
           location_id?: string | null
           machine_id?: string | null
           notes?: string | null
+          priority?: string | null
           route_id: string
+          scheduled_date?: string | null
+          source_ticket_id?: string | null
           status?: string
           stop_name: string
           stop_order?: number
@@ -1315,6 +1323,7 @@ export type Database = {
         }
         Update: {
           address?: string | null
+          auto_scheduled?: boolean | null
           completed_at?: string | null
           created_at?: string
           estimated_duration_minutes?: number | null
@@ -1322,7 +1331,10 @@ export type Database = {
           location_id?: string | null
           machine_id?: string | null
           notes?: string | null
+          priority?: string | null
           route_id?: string
+          scheduled_date?: string | null
+          source_ticket_id?: string | null
           status?: string
           stop_name?: string
           stop_order?: number
@@ -1350,6 +1362,13 @@ export type Database = {
             referencedRelation: "service_routes"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "route_stops_source_ticket_id_fkey"
+            columns: ["source_ticket_id"]
+            isOneToOne: false
+            referencedRelation: "support_tickets"
+            referencedColumns: ["id"]
+          },
         ]
       }
       service_routes: {
@@ -1359,9 +1378,13 @@ export type Database = {
           created_by: string | null
           description: string | null
           id: string
+          last_serviced_at: string | null
           name: string
+          next_service_due: string | null
+          service_frequency_days: number | null
           status: string
           updated_at: string
+          zone_area: string | null
         }
         Insert: {
           assigned_to?: string | null
@@ -1369,9 +1392,13 @@ export type Database = {
           created_by?: string | null
           description?: string | null
           id?: string
+          last_serviced_at?: string | null
           name: string
+          next_service_due?: string | null
+          service_frequency_days?: number | null
           status?: string
           updated_at?: string
+          zone_area?: string | null
         }
         Update: {
           assigned_to?: string | null
@@ -1379,9 +1406,13 @@ export type Database = {
           created_by?: string | null
           description?: string | null
           id?: string
+          last_serviced_at?: string | null
           name?: string
+          next_service_due?: string | null
+          service_frequency_days?: number | null
           status?: string
           updated_at?: string
+          zone_area?: string | null
         }
         Relationships: []
       }
