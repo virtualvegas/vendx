@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import Navigation from "@/components/Navigation";
 import StarField from "@/components/StarField";
 import Footer from "@/components/Footer";
+import LocationsMap from "@/components/LocationsMap";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -17,7 +18,6 @@ import {
   Coffee,
   Gamepad2,
   Combine,
-  Building2,
   ChevronRight,
   Globe
 } from "lucide-react";
@@ -121,17 +121,6 @@ const LocationsPage = () => {
     return groups;
   }, [filteredLocations]);
 
-  // Generate Google Maps embed URL for all locations
-  const mapEmbedUrl = useMemo(() => {
-    if (!locations || locations.length === 0) return null;
-    
-    // Use first location with coordinates as center, or default
-    const centerLoc = locations.find((l) => l.latitude && l.longitude);
-    if (centerLoc) {
-      return `https://www.google.com/maps/embed/v1/view?key=AIzaSyBFw0Qbyq9zTFTd-tUY6dZWTgaQzuU17R8&center=${centerLoc.latitude},${centerLoc.longitude}&zoom=4`;
-    }
-    return `https://www.google.com/maps/embed/v1/view?key=AIzaSyBFw0Qbyq9zTFTd-tUY6dZWTgaQzuU17R8&center=39.8283,-98.5795&zoom=4`;
-  }, [locations]);
 
   const stats = useMemo(() => {
     if (!locations) return { total: 0, active: 0, countries: 0 };
@@ -181,23 +170,8 @@ const LocationsPage = () => {
           </div>
 
           {/* Map */}
-          <div className="mb-12 rounded-xl overflow-hidden border border-border/50 shadow-lg">
-            {mapEmbedUrl ? (
-              <iframe
-                src={mapEmbedUrl}
-                width="100%"
-                height="400"
-                style={{ border: 0 }}
-                allowFullScreen
-                loading="lazy"
-                referrerPolicy="no-referrer-when-downgrade"
-                title="VendX Locations Map"
-              />
-            ) : (
-              <div className="h-[400px] bg-muted flex items-center justify-center">
-                <Globe className="w-16 h-16 text-muted-foreground/30" />
-              </div>
-            )}
+          <div className="mb-12">
+            <LocationsMap locations={locations || []} />
           </div>
 
           {/* Filters */}
