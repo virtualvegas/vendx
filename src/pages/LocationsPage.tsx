@@ -5,7 +5,6 @@ import { supabase } from "@/integrations/supabase/client";
 import Navigation from "@/components/Navigation";
 import StarField from "@/components/StarField";
 import Footer from "@/components/Footer";
-import LocationsMap from "@/components/LocationsMap";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,7 +18,8 @@ import {
   Gamepad2,
   Combine,
   ChevronRight,
-  Globe
+  Globe,
+  Navigation as NavIcon
 } from "lucide-react";
 
 interface Location {
@@ -71,6 +71,35 @@ const statusLabels: Record<string, string> = {
   coming_soon: "Coming Soon",
   seasonal: "Seasonal",
   inactive: "Closed",
+};
+
+const getDirectionsUrl = (location: Location) => {
+  // Build destination string
+  let destination = "";
+  
+  if (location.latitude && location.longitude) {
+    destination = `${location.latitude},${location.longitude}`;
+  } else if (location.address) {
+    destination = encodeURIComponent(`${location.address}, ${location.city}, ${location.country}`);
+  } else {
+    destination = encodeURIComponent(`${location.city}, ${location.country}`);
+  }
+
+  // Check if on mobile (iOS or Android)
+  const userAgent = navigator.userAgent.toLowerCase();
+  const isIOS = /iphone|ipad|ipod/.test(userAgent);
+  const isAndroid = /android/.test(userAgent);
+
+  if (isIOS) {
+    // Apple Maps
+    return `maps://maps.apple.com/?daddr=${destination}`;
+  } else if (isAndroid) {
+    // Google Maps app intent
+    return `geo:0,0?q=${destination}`;
+  } else {
+    // Desktop: Google Maps web
+    return `https://www.google.com/maps/dir/?api=1&destination=${destination}`;
+  }
 };
 
 const LocationsPage = () => {
@@ -169,10 +198,6 @@ const LocationsPage = () => {
             </div>
           </div>
 
-          {/* Map */}
-          <div className="mb-12">
-            <LocationsMap locations={locations || []} />
-          </div>
 
           {/* Filters */}
           <div className="flex flex-col md:flex-row gap-4 mb-8">
@@ -295,12 +320,20 @@ const LocationsPage = () => {
                                 </span>
                               )}
                             </div>
-                            <Link to={`/locations/${location.id}`}>
-                              <Button variant="ghost" size="sm" className="gap-1">
-                                Details
-                                <ChevronRight className="w-4 h-4" />
-                              </Button>
-                            </Link>
+                            <div className="flex gap-2">
+                              <a href={getDirectionsUrl(location)} target="_blank" rel="noopener noreferrer">
+                                <Button variant="outline" size="sm" className="gap-1">
+                                  <NavIcon className="w-4 h-4" />
+                                  Directions
+                                </Button>
+                              </a>
+                              <Link to={`/locations/${location.id}`}>
+                                <Button variant="ghost" size="sm" className="gap-1">
+                                  Details
+                                  <ChevronRight className="w-4 h-4" />
+                                </Button>
+                              </Link>
+                            </div>
                           </div>
                         </CardContent>
                       </Card>
