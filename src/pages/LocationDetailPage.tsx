@@ -17,7 +17,16 @@ import {
   Combine,
   Building2,
   Globe,
-  Navigation as NavIcon
+  Navigation as NavIcon,
+  ShoppingBag,
+  GraduationCap,
+  Hotel,
+  Dumbbell,
+  Plane,
+  Hospital,
+  Factory,
+  Store,
+  Warehouse
 } from "lucide-react";
 
 interface Location {
@@ -87,6 +96,34 @@ const gameTypeLabels: Record<string, string> = {
   sports: "Sports",
   rhythm: "Rhythm Game",
   other: "Other",
+};
+
+const locationTypeIcons: Record<string, React.ReactNode> = {
+  office: <Building2 className="w-4 h-4" />,
+  retail: <ShoppingBag className="w-4 h-4" />,
+  school: <GraduationCap className="w-4 h-4" />,
+  university: <GraduationCap className="w-4 h-4" />,
+  hotel: <Hotel className="w-4 h-4" />,
+  gym: <Dumbbell className="w-4 h-4" />,
+  airport: <Plane className="w-4 h-4" />,
+  hospital: <Hospital className="w-4 h-4" />,
+  factory: <Factory className="w-4 h-4" />,
+  mall: <Store className="w-4 h-4" />,
+  warehouse: <Warehouse className="w-4 h-4" />,
+};
+
+const locationTypeLabels: Record<string, string> = {
+  office: "Office Building",
+  retail: "Retail Store",
+  school: "School",
+  university: "University",
+  hotel: "Hotel",
+  gym: "Gym / Fitness",
+  airport: "Airport",
+  hospital: "Hospital",
+  factory: "Factory",
+  mall: "Shopping Mall",
+  warehouse: "Warehouse",
 };
 
 const LocationDetailPage = () => {
@@ -252,6 +289,12 @@ const LocationDetailPage = () => {
               <div className="flex items-center gap-2 text-muted-foreground">
                 <Globe className="w-4 h-4" />
                 <span>{location.city}, {location.country}</span>
+                {location.location_type && (
+                  <Badge variant="outline" className="gap-1 ml-2">
+                    {locationTypeIcons[location.location_type] || <Building2 className="w-4 h-4" />}
+                    {locationTypeLabels[location.location_type] || location.location_type}
+                  </Badge>
+                )}
               </div>
               {location.address && (
                 <p className="text-muted-foreground mt-1">{location.address}</p>
