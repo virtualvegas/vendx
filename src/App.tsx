@@ -24,6 +24,7 @@ import OrderSuccessPage from "./pages/OrderSuccessPage";
 import VideoGamesPage from "./pages/VideoGamesPage";
 import LocationsPage from "./pages/LocationsPage";
 import LocationDetailPage from "./pages/LocationDetailPage";
+import LinksPage from "./pages/LinksPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -46,6 +47,7 @@ const App = () => (
             <Route path="/careers" element={<CareersPage />} />
             <Route path="/careers/:id" element={<JobDetailPage />} />
             <Route path="/contact" element={<ContactPage />} />
+            <Route path="/links" element={<LinksPage />} />
             <Route path="/auth" element={<AuthPage />} />
             <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="/wallet" element={<WalletPage />} />
