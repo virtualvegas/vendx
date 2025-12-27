@@ -153,35 +153,30 @@ const LocationDetailPage = () => {
     return machines;
   }, [location]);
 
-  // Google Maps embed URL for this location
-  const mapEmbedUrl = useMemo(() => {
-    if (!location) return null;
-    
-    if (location.latitude && location.longitude) {
-      return `https://www.google.com/maps/embed/v1/place?key=AIzaSyBFw0Qbyq9zTFTd-tUY6dZWTgaQzuU17R8&q=${location.latitude},${location.longitude}&zoom=15`;
-    }
-    
-    if (location.address) {
-      const query = encodeURIComponent(`${location.address}, ${location.city}, ${location.country}`);
-      return `https://www.google.com/maps/embed/v1/place?key=AIzaSyBFw0Qbyq9zTFTd-tUY6dZWTgaQzuU17R8&q=${query}&zoom=15`;
-    }
-    
-    const query = encodeURIComponent(`${location.city}, ${location.country}`);
-    return `https://www.google.com/maps/embed/v1/place?key=AIzaSyBFw0Qbyq9zTFTd-tUY6dZWTgaQzuU17R8&q=${query}&zoom=12`;
-  }, [location]);
-
   const directionsUrl = useMemo(() => {
     if (!location) return null;
     
-    if (location.latitude && location.longitude) {
-      return `https://www.google.com/maps/dir/?api=1&destination=${location.latitude},${location.longitude}`;
+    const getDestination = () => {
+      if (location.latitude && location.longitude) {
+        return `${location.latitude},${location.longitude}`;
+      }
+      if (location.address) {
+        return encodeURIComponent(`${location.address}, ${location.city}, ${location.country}`);
+      }
+      return encodeURIComponent(`${location.city}, ${location.country}`);
+    };
+
+    const destination = getDestination();
+    const userAgent = navigator.userAgent.toLowerCase();
+    const isIOS = /iphone|ipad|ipod/.test(userAgent);
+    const isAndroid = /android/.test(userAgent);
+
+    if (isIOS) {
+      return `maps://maps.apple.com/?daddr=${destination}`;
+    } else if (isAndroid) {
+      return `geo:0,0?q=${destination}`;
     }
-    
-    if (location.address) {
-      return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(`${location.address}, ${location.city}, ${location.country}`)}`;
-    }
-    
-    return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(`${location.city}, ${location.country}`)}`;
+    return `https://www.google.com/maps/dir/?api=1&destination=${destination}`;
   }, [location]);
 
   if (locationLoading) {
@@ -273,23 +268,6 @@ const LocationDetailPage = () => {
             )}
           </div>
 
-          {/* Map */}
-          {mapEmbedUrl && (
-            <div className="rounded-xl overflow-hidden border border-border/50 shadow-lg mb-12">
-              <iframe
-                src={mapEmbedUrl}
-                width="100%"
-                height="300"
-                style={{ border: 0 }}
-                allowFullScreen
-                loading="lazy"
-                referrerPolicy="no-referrer-when-downgrade"
-                title={`Map of ${location.name || location.city}`}
-              />
-            </div>
-          )}
-
-          {/* Machines */}
           <div className="grid md:grid-cols-2 gap-8">
             {/* Vending Machines */}
             {(location.location_category === "vending" || location.location_category === "mixed") && (
