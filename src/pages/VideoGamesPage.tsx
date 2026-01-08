@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import Navigation from "@/components/Navigation";
 import StarField from "@/components/StarField";
@@ -12,9 +13,12 @@ import {
   SiSteam, 
   SiGoogleplay, 
   SiApple,
-  SiItchdotio
+  SiItchdotio,
+  SiPlaystation,
+  SiNintendoswitch
 } from "react-icons/si";
-import { Monitor } from "lucide-react";
+import { FaXbox, FaAmazon } from "react-icons/fa";
+import { Monitor, Globe } from "lucide-react";
 import { Gamepad2, ExternalLink, Play, Filter } from "lucide-react";
 
 interface VideoGame {
@@ -32,6 +36,11 @@ interface VideoGame {
   apple_store_url: string | null;
   microsoft_store_url: string | null;
   itch_io_url: string | null;
+  amazon_app_store_url: string | null;
+  xbox_store_url: string | null;
+  playstation_store_url: string | null;
+  nintendo_eshop_url: string | null;
+  browser_play_url: string | null;
   is_featured: boolean | null;
 }
 
@@ -44,6 +53,11 @@ const platformIcons: Record<string, React.ReactNode> = {
   windows: <Monitor className="w-5 h-5" />,
   itch_io: <SiItchdotio className="w-5 h-5" />,
   itchio: <SiItchdotio className="w-5 h-5" />,
+  amazon: <FaAmazon className="w-5 h-5" />,
+  xbox: <FaXbox className="w-5 h-5" />,
+  playstation: <SiPlaystation className="w-5 h-5" />,
+  nintendo: <SiNintendoswitch className="w-5 h-5" />,
+  browser: <Globe className="w-5 h-5" />,
 };
 
 const platformLabels: Record<string, string> = {
@@ -55,6 +69,11 @@ const platformLabels: Record<string, string> = {
   windows: "Microsoft Store",
   itch_io: "itch.io",
   itchio: "itch.io",
+  amazon: "Amazon Appstore",
+  xbox: "Xbox Store",
+  playstation: "PlayStation Store",
+  nintendo: "Nintendo eShop",
+  browser: "Play in Browser",
 };
 
 const statusColors: Record<string, string> = {
@@ -92,7 +111,6 @@ const VideoGamesPage = () => {
 
   const filteredGames = games?.filter((game) => {
     if (!selectedPlatform) return true;
-    // Check for both normalized and original platform names
     const normalizedPlatforms = game.platforms?.map((p: string) => {
       const map: Record<string, string> = {
         google_play: "android",
@@ -104,7 +122,7 @@ const VideoGamesPage = () => {
     return normalizedPlatforms?.includes(selectedPlatform) || game.platforms?.includes(selectedPlatform);
   });
 
-  const platforms = ["steam", "android", "ios", "windows", "itchio"];
+  const platforms = ["steam", "android", "ios", "windows", "itchio", "amazon", "xbox", "playstation", "nintendo", "browser"];
 
   const getPlatformUrl = (game: VideoGame, platform: string) => {
     switch (platform) {
@@ -116,19 +134,16 @@ const VideoGamesPage = () => {
       case "windows": return game.microsoft_store_url;
       case "itch_io": 
       case "itchio": return game.itch_io_url;
+      case "amazon": return game.amazon_app_store_url;
+      case "xbox": return game.xbox_store_url;
+      case "playstation": return game.playstation_store_url;
+      case "nintendo": return game.nintendo_eshop_url;
+      case "browser": return game.browser_play_url ? "/games-player" : null;
       default: return null;
     }
   };
 
-  // Normalize platform names for filtering
-  const normalizePlatform = (platform: string) => {
-    const map: Record<string, string> = {
-      google_play: "android",
-      apple: "ios",
-      itch_io: "itchio",
-    };
-    return map[platform] || platform;
-  };
+  const hasBrowserGames = games?.some(g => g.browser_play_url || g.itch_io_url);
 
   return (
     <div className="relative min-h-screen bg-background">
@@ -146,9 +161,17 @@ const VideoGamesPage = () => {
             <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-4">
               Video Games
             </h1>
-            <p className="text-muted-foreground max-w-2xl mx-auto">
+            <p className="text-muted-foreground max-w-2xl mx-auto mb-6">
               Explore video games published by VendX Global across all major platforms
             </p>
+            {hasBrowserGames && (
+              <Link to="/games-player">
+                <Button className="gap-2">
+                  <Gamepad2 className="w-4 h-4" />
+                  Play Games in Browser
+                </Button>
+              </Link>
+            )}
           </div>
 
           {/* Platform Filter */}

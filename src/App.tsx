@@ -22,6 +22,7 @@ import CartPage from "./pages/CartPage";
 import SnackBoxPage from "./pages/SnackBoxPage";
 import OrderSuccessPage from "./pages/OrderSuccessPage";
 import VideoGamesPage from "./pages/VideoGamesPage";
+import GamesPlayerPage from "./pages/GamesPlayerPage";
 import LocationsPage from "./pages/LocationsPage";
 import LocationDetailPage from "./pages/LocationDetailPage";
 import LinksPage from "./pages/LinksPage";
@@ -42,6 +43,7 @@ const App = () => (
             <Route path="/divisions" element={<DivisionsPage />} />
             <Route path="/divisions/:slug" element={<DivisionDetailPage />} />
             <Route path="/games" element={<VideoGamesPage />} />
+            <Route path="/games-player" element={<GamesPlayerPage />} />
             <Route path="/locations" element={<LocationsPage />} />
             <Route path="/locations/:id" element={<LocationDetailPage />} />
             <Route path="/careers" element={<CareersPage />} />
