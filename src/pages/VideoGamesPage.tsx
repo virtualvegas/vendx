@@ -38,29 +38,39 @@ interface VideoGame {
 const platformIcons: Record<string, React.ReactNode> = {
   steam: <SiSteam className="w-5 h-5" />,
   google_play: <SiGoogleplay className="w-5 h-5" />,
+  android: <SiGoogleplay className="w-5 h-5" />,
   apple: <SiApple className="w-5 h-5" />,
+  ios: <SiApple className="w-5 h-5" />,
   windows: <Monitor className="w-5 h-5" />,
   itch_io: <SiItchdotio className="w-5 h-5" />,
+  itchio: <SiItchdotio className="w-5 h-5" />,
 };
 
 const platformLabels: Record<string, string> = {
   steam: "Steam",
   google_play: "Google Play",
+  android: "Google Play",
   apple: "App Store",
+  ios: "App Store",
   windows: "Microsoft Store",
   itch_io: "itch.io",
+  itchio: "itch.io",
 };
 
 const statusColors: Record<string, string> = {
   released: "bg-accent text-accent-foreground",
+  live: "bg-accent text-accent-foreground",
   beta: "bg-yellow-500/20 text-yellow-400 border-yellow-500/30",
   coming_soon: "bg-primary/20 text-primary border-primary/30",
+  in_development: "bg-blue-500/20 text-blue-400 border-blue-500/30",
 };
 
 const statusLabels: Record<string, string> = {
   released: "Live",
+  live: "Live",
   beta: "Beta",
   coming_soon: "Coming Soon",
+  in_development: "In Development",
 };
 
 const VideoGamesPage = () => {
@@ -82,20 +92,42 @@ const VideoGamesPage = () => {
 
   const filteredGames = games?.filter((game) => {
     if (!selectedPlatform) return true;
-    return game.platforms?.includes(selectedPlatform);
+    // Check for both normalized and original platform names
+    const normalizedPlatforms = game.platforms?.map((p: string) => {
+      const map: Record<string, string> = {
+        google_play: "android",
+        apple: "ios",
+        itch_io: "itchio",
+      };
+      return map[p] || p;
+    });
+    return normalizedPlatforms?.includes(selectedPlatform) || game.platforms?.includes(selectedPlatform);
   });
 
-  const platforms = ["steam", "google_play", "apple", "windows", "itch_io"];
+  const platforms = ["steam", "android", "ios", "windows", "itchio"];
 
   const getPlatformUrl = (game: VideoGame, platform: string) => {
     switch (platform) {
       case "steam": return game.steam_url;
-      case "google_play": return game.google_play_url;
-      case "apple": return game.apple_store_url;
+      case "google_play": 
+      case "android": return game.google_play_url;
+      case "apple": 
+      case "ios": return game.apple_store_url;
       case "windows": return game.microsoft_store_url;
-      case "itch_io": return game.itch_io_url;
+      case "itch_io": 
+      case "itchio": return game.itch_io_url;
       default: return null;
     }
+  };
+
+  // Normalize platform names for filtering
+  const normalizePlatform = (platform: string) => {
+    const map: Record<string, string> = {
+      google_play: "android",
+      apple: "ios",
+      itch_io: "itchio",
+    };
+    return map[platform] || platform;
   };
 
   return (
