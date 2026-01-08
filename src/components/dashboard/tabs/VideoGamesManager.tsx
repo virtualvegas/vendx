@@ -14,7 +14,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, Gamepad2, Trash2, Edit, Search, RefreshCw, Eye, EyeOff, ExternalLink } from "lucide-react";
-import { FaGooglePlay, FaApple, FaSteam, FaWindows, FaItchIo } from "react-icons/fa";
+import { FaGooglePlay, FaApple, FaSteam, FaWindows, FaItchIo, FaAmazon, FaXbox, FaPlaystation } from "react-icons/fa";
+import { SiNintendoswitch } from "react-icons/si";
+import { Globe } from "lucide-react";
 
 interface VideoGame {
   id: string;
@@ -30,6 +32,11 @@ interface VideoGame {
   microsoft_store_url: string | null;
   steam_url: string | null;
   itch_io_url: string | null;
+  amazon_app_store_url: string | null;
+  xbox_store_url: string | null;
+  playstation_store_url: string | null;
+  nintendo_eshop_url: string | null;
+  browser_play_url: string | null;
   trailer_url: string | null;
   is_featured: boolean;
   is_active: boolean;
@@ -61,6 +68,11 @@ const VideoGamesManager = () => {
     microsoft_store_url: "",
     steam_url: "",
     itch_io_url: "",
+    amazon_app_store_url: "",
+    xbox_store_url: "",
+    playstation_store_url: "",
+    nintendo_eshop_url: "",
+    browser_play_url: "",
     trailer_url: "",
     is_featured: false,
     is_active: true,
@@ -90,6 +102,11 @@ const VideoGamesManager = () => {
       if (data.microsoft_store_url) platforms.push("windows");
       if (data.steam_url) platforms.push("steam");
       if (data.itch_io_url) platforms.push("itchio");
+      if (data.amazon_app_store_url) platforms.push("amazon");
+      if (data.xbox_store_url) platforms.push("xbox");
+      if (data.playstation_store_url) platforms.push("playstation");
+      if (data.nintendo_eshop_url) platforms.push("nintendo");
+      if (data.browser_play_url) platforms.push("browser");
 
       const payload = {
         title: data.title,
@@ -104,6 +121,11 @@ const VideoGamesManager = () => {
         microsoft_store_url: data.microsoft_store_url || null,
         steam_url: data.steam_url || null,
         itch_io_url: data.itch_io_url || null,
+        amazon_app_store_url: data.amazon_app_store_url || null,
+        xbox_store_url: data.xbox_store_url || null,
+        playstation_store_url: data.playstation_store_url || null,
+        nintendo_eshop_url: data.nintendo_eshop_url || null,
+        browser_play_url: data.browser_play_url || null,
         trailer_url: data.trailer_url || null,
         is_featured: data.is_featured,
         is_active: data.is_active,
@@ -158,6 +180,11 @@ const VideoGamesManager = () => {
       microsoft_store_url: "",
       steam_url: "",
       itch_io_url: "",
+      amazon_app_store_url: "",
+      xbox_store_url: "",
+      playstation_store_url: "",
+      nintendo_eshop_url: "",
+      browser_play_url: "",
       trailer_url: "",
       is_featured: false,
       is_active: true,
@@ -180,6 +207,11 @@ const VideoGamesManager = () => {
       microsoft_store_url: game.microsoft_store_url || "",
       steam_url: game.steam_url || "",
       itch_io_url: game.itch_io_url || "",
+      amazon_app_store_url: game.amazon_app_store_url || "",
+      xbox_store_url: game.xbox_store_url || "",
+      playstation_store_url: game.playstation_store_url || "",
+      nintendo_eshop_url: game.nintendo_eshop_url || "",
+      browser_play_url: game.browser_play_url || "",
       trailer_url: game.trailer_url || "",
       is_featured: game.is_featured || false,
       is_active: game.is_active,
@@ -205,11 +237,16 @@ const VideoGamesManager = () => {
 
   const getPlatformIcons = (game: VideoGame) => {
     const icons = [];
-    if (game.google_play_url) icons.push(<FaGooglePlay key="android" className="w-4 h-4" title="Google Play" />);
-    if (game.apple_store_url) icons.push(<FaApple key="ios" className="w-4 h-4" title="App Store" />);
-    if (game.microsoft_store_url) icons.push(<FaWindows key="windows" className="w-4 h-4" title="Microsoft Store" />);
-    if (game.steam_url) icons.push(<FaSteam key="steam" className="w-4 h-4" title="Steam" />);
-    if (game.itch_io_url) icons.push(<FaItchIo key="itchio" className="w-4 h-4" title="itch.io" />);
+    if (game.google_play_url) icons.push(<FaGooglePlay key="android" className="w-4 h-4" />);
+    if (game.apple_store_url) icons.push(<FaApple key="ios" className="w-4 h-4" />);
+    if (game.microsoft_store_url) icons.push(<FaWindows key="windows" className="w-4 h-4" />);
+    if (game.steam_url) icons.push(<FaSteam key="steam" className="w-4 h-4" />);
+    if (game.itch_io_url) icons.push(<FaItchIo key="itchio" className="w-4 h-4" />);
+    if (game.amazon_app_store_url) icons.push(<FaAmazon key="amazon" className="w-4 h-4" />);
+    if (game.xbox_store_url) icons.push(<FaXbox key="xbox" className="w-4 h-4" />);
+    if (game.playstation_store_url) icons.push(<FaPlaystation key="playstation" className="w-4 h-4" />);
+    if (game.nintendo_eshop_url) icons.push(<SiNintendoswitch key="nintendo" className="w-4 h-4" />);
+    if (game.browser_play_url) icons.push(<span key="browser" className="w-4 h-4"><Globe className="w-4 h-4" /></span>);
     return icons;
   };
 
@@ -390,6 +427,26 @@ const VideoGamesManager = () => {
                 <div className="space-y-2">
                   <Label className="flex items-center gap-2"><FaItchIo />itch.io</Label>
                   <Input value={formData.itch_io_url} onChange={(e) => setFormData({ ...formData, itch_io_url: e.target.value })} placeholder="https://itch.io/..." />
+                </div>
+                <div className="space-y-2">
+                  <Label className="flex items-center gap-2"><FaAmazon />Amazon Appstore</Label>
+                  <Input value={formData.amazon_app_store_url} onChange={(e) => setFormData({ ...formData, amazon_app_store_url: e.target.value })} placeholder="https://amazon.com/..." />
+                </div>
+                <div className="space-y-2">
+                  <Label className="flex items-center gap-2"><FaXbox />Xbox Store</Label>
+                  <Input value={formData.xbox_store_url} onChange={(e) => setFormData({ ...formData, xbox_store_url: e.target.value })} placeholder="https://xbox.com/..." />
+                </div>
+                <div className="space-y-2">
+                  <Label className="flex items-center gap-2"><FaPlaystation />PlayStation Store</Label>
+                  <Input value={formData.playstation_store_url} onChange={(e) => setFormData({ ...formData, playstation_store_url: e.target.value })} placeholder="https://store.playstation.com/..." />
+                </div>
+                <div className="space-y-2">
+                  <Label className="flex items-center gap-2"><SiNintendoswitch />Nintendo eShop</Label>
+                  <Input value={formData.nintendo_eshop_url} onChange={(e) => setFormData({ ...formData, nintendo_eshop_url: e.target.value })} placeholder="https://nintendo.com/..." />
+                </div>
+                <div className="col-span-2 space-y-2">
+                  <Label className="flex items-center gap-2"><Globe className="w-4 h-4" />Browser Play URL (embed)</Label>
+                  <Input value={formData.browser_play_url} onChange={(e) => setFormData({ ...formData, browser_play_url: e.target.value })} placeholder="https://... (embeddable game URL)" />
                 </div>
               </div>
             </div>

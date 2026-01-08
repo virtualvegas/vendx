@@ -1946,7 +1946,9 @@ export type Database = {
       }
       video_games: {
         Row: {
+          amazon_app_store_url: string | null
           apple_store_url: string | null
+          browser_play_url: string | null
           cover_image_url: string | null
           created_at: string
           display_order: number | null
@@ -1957,7 +1959,9 @@ export type Database = {
           is_featured: boolean | null
           itch_io_url: string | null
           microsoft_store_url: string | null
+          nintendo_eshop_url: string | null
           platforms: Json
+          playstation_store_url: string | null
           release_status: string
           screenshots: Json | null
           short_description: string | null
@@ -1966,9 +1970,12 @@ export type Database = {
           title: string
           trailer_url: string | null
           updated_at: string
+          xbox_store_url: string | null
         }
         Insert: {
+          amazon_app_store_url?: string | null
           apple_store_url?: string | null
+          browser_play_url?: string | null
           cover_image_url?: string | null
           created_at?: string
           display_order?: number | null
@@ -1979,7 +1986,9 @@ export type Database = {
           is_featured?: boolean | null
           itch_io_url?: string | null
           microsoft_store_url?: string | null
+          nintendo_eshop_url?: string | null
           platforms?: Json
+          playstation_store_url?: string | null
           release_status?: string
           screenshots?: Json | null
           short_description?: string | null
@@ -1988,9 +1997,12 @@ export type Database = {
           title: string
           trailer_url?: string | null
           updated_at?: string
+          xbox_store_url?: string | null
         }
         Update: {
+          amazon_app_store_url?: string | null
           apple_store_url?: string | null
+          browser_play_url?: string | null
           cover_image_url?: string | null
           created_at?: string
           display_order?: number | null
@@ -2001,7 +2013,9 @@ export type Database = {
           is_featured?: boolean | null
           itch_io_url?: string | null
           microsoft_store_url?: string | null
+          nintendo_eshop_url?: string | null
           platforms?: Json
+          playstation_store_url?: string | null
           release_status?: string
           screenshots?: Json | null
           short_description?: string | null
@@ -2010,6 +2024,7 @@ export type Database = {
           title?: string
           trailer_url?: string | null
           updated_at?: string
+          xbox_store_url?: string | null
         }
         Relationships: []
       }
