@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useSearchParams, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import Navigation from "@/components/Navigation";
@@ -7,8 +7,31 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { Search, ShoppingCart, Star, Package, Shirt, Cpu, Cookie, Gift } from "lucide-react";
+import { 
+  Search, 
+  ShoppingCart, 
+  Star, 
+  Package, 
+  Shirt, 
+  Cpu, 
+  Cookie, 
+  Gift,
+  SlidersHorizontal,
+  ArrowUpDown,
+  Grid3X3,
+  LayoutList,
+  TrendingUp,
+  Clock,
+  DollarSign
+} from "lucide-react";
 import { useCart } from "@/hooks/useCart";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
 interface Product {
   id: string;
@@ -33,13 +56,18 @@ const categories = [
   { id: "tech", label: "Tech & Arcade", icon: Cpu },
 ];
 
+type SortOption = "featured" | "newest" | "price-asc" | "price-desc" | "name";
+type ViewMode = "grid" | "list";
+
 const StorePage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [sortBy, setSortBy] = useState<SortOption>("featured");
+  const [viewMode, setViewMode] = useState<ViewMode>("grid");
   const activeCategory = searchParams.get("category") || "all";
-  const { cartCount } = useCart();
+  const { cartCount, addToCart } = useCart();
 
   useEffect(() => {
     fetchProducts();
@@ -65,10 +93,49 @@ const StorePage = () => {
     setLoading(false);
   };
 
-  const filteredProducts = products.filter(product =>
-    product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    product.short_description?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredAndSortedProducts = useMemo(() => {
+    let result = products.filter(product =>
+      product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      product.short_description?.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
+    switch (sortBy) {
+      case "newest":
+        // Already sorted by created_at from query
+        break;
+      case "price-asc":
+        result = [...result].sort((a, b) => {
+          const priceA = a.is_subscription ? (a.subscription_price || 0) : a.price;
+          const priceB = b.is_subscription ? (b.subscription_price || 0) : b.price;
+          return priceA - priceB;
+        });
+        break;
+      case "price-desc":
+        result = [...result].sort((a, b) => {
+          const priceA = a.is_subscription ? (a.subscription_price || 0) : a.price;
+          const priceB = b.is_subscription ? (b.subscription_price || 0) : b.price;
+          return priceB - priceA;
+        });
+        break;
+      case "name":
+        result = [...result].sort((a, b) => a.name.localeCompare(b.name));
+        break;
+      case "featured":
+      default:
+        // Featured items first (already sorted from query)
+        break;
+    }
+
+    return result;
+  }, [products, searchQuery, sortBy]);
+
+  const sortOptions = [
+    { value: "featured", label: "Featured", icon: TrendingUp },
+    { value: "newest", label: "Newest", icon: Clock },
+    { value: "price-asc", label: "Price: Low to High", icon: DollarSign },
+    { value: "price-desc", label: "Price: High to Low", icon: DollarSign },
+    { value: "name", label: "Name A-Z", icon: ArrowUpDown },
+  ];
 
   const handleCategoryChange = (categoryId: string) => {
     if (categoryId === "all") {
@@ -108,25 +175,70 @@ const StorePage = () => {
         </div>
       </section>
 
-      {/* Categories */}
+      {/* Categories & Filters */}
       <section className="py-6 px-4 border-b border-border bg-card/50">
         <div className="container mx-auto">
-          <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
-            {categories.map((cat) => {
-              const Icon = cat.icon;
-              return (
-                <Button
-                  key={cat.id}
-                  variant={activeCategory === cat.id ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => handleCategoryChange(cat.id)}
-                  className="whitespace-nowrap"
-                >
-                  <Icon className="h-4 w-4 mr-2" />
-                  {cat.label}
-                </Button>
-              );
-            })}
+          <div className="flex flex-col md:flex-row md:items-center gap-4">
+            {/* Category Filters */}
+            <div className="flex gap-2 overflow-x-auto pb-2 md:pb-0 scrollbar-hide flex-1">
+              {categories.map((cat) => {
+                const Icon = cat.icon;
+                return (
+                  <Button
+                    key={cat.id}
+                    variant={activeCategory === cat.id ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => handleCategoryChange(cat.id)}
+                    className="whitespace-nowrap"
+                  >
+                    <Icon className="h-4 w-4 mr-2" />
+                    {cat.label}
+                  </Button>
+                );
+              })}
+            </div>
+
+            {/* Sort & View Controls */}
+            <div className="flex items-center gap-2">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="gap-2">
+                    <SlidersHorizontal className="h-4 w-4" />
+                    <span className="hidden sm:inline">Sort</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  {sortOptions.map((option) => {
+                    const Icon = option.icon;
+                    return (
+                      <DropdownMenuItem
+                        key={option.value}
+                        onClick={() => setSortBy(option.value as SortOption)}
+                        className={sortBy === option.value ? "bg-accent" : ""}
+                      >
+                        <Icon className="h-4 w-4 mr-2" />
+                        {option.label}
+                      </DropdownMenuItem>
+                    );
+                  })}
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              <ToggleGroup type="single" value={viewMode} onValueChange={(v) => v && setViewMode(v as ViewMode)}>
+                <ToggleGroupItem value="grid" aria-label="Grid view" size="sm">
+                  <Grid3X3 className="h-4 w-4" />
+                </ToggleGroupItem>
+                <ToggleGroupItem value="list" aria-label="List view" size="sm">
+                  <LayoutList className="h-4 w-4" />
+                </ToggleGroupItem>
+              </ToggleGroup>
+            </div>
+          </div>
+
+          {/* Results count */}
+          <div className="mt-4 text-sm text-muted-foreground">
+            Showing {filteredAndSortedProducts.length} product{filteredAndSortedProducts.length !== 1 ? "s" : ""}
+            {searchQuery && ` for "${searchQuery}"`}
           </div>
         </div>
       </section>
@@ -164,15 +276,18 @@ const StorePage = () => {
         </section>
       )}
 
-      {/* Products Grid */}
+      {/* Products Grid/List */}
       <section className="py-8 px-4">
         <div className="container mx-auto">
           {loading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <div className={viewMode === "grid" 
+              ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+              : "flex flex-col gap-4"
+            }>
               {[...Array(8)].map((_, i) => (
-                <Card key={i} className="bg-card border-border animate-pulse">
-                  <div className="aspect-square bg-muted" />
-                  <CardContent className="p-4">
+                <Card key={i} className={`bg-card border-border animate-pulse ${viewMode === "list" ? "flex flex-row" : ""}`}>
+                  <div className={viewMode === "grid" ? "aspect-square bg-muted" : "w-32 h-32 bg-muted flex-shrink-0"} />
+                  <CardContent className="p-4 flex-1">
                     <div className="h-4 bg-muted rounded w-3/4 mb-2" />
                     <div className="h-3 bg-muted rounded w-full mb-4" />
                     <div className="h-6 bg-muted rounded w-1/4" />
@@ -180,17 +295,26 @@ const StorePage = () => {
                 </Card>
               ))}
             </div>
-          ) : filteredProducts.length === 0 ? (
+          ) : filteredAndSortedProducts.length === 0 ? (
             <div className="text-center py-12">
               <Package className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
               <h3 className="text-xl font-semibold mb-2">No products found</h3>
               <p className="text-muted-foreground">Try adjusting your search or category filter</p>
+              {searchQuery && (
+                <Button 
+                  variant="outline" 
+                  className="mt-4"
+                  onClick={() => setSearchQuery("")}
+                >
+                  Clear Search
+                </Button>
+              )}
             </div>
-          ) : (
+          ) : viewMode === "grid" ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {filteredProducts.map((product) => (
-                <Link key={product.id} to={`/store/${product.slug}`}>
-                  <Card className="bg-card border-border hover:border-primary/50 transition-all group h-full">
+              {filteredAndSortedProducts.map((product) => (
+                <Card key={product.id} className="bg-card border-border hover:border-primary/50 transition-all group h-full flex flex-col">
+                  <Link to={`/store/${product.slug}`} className="flex-1">
                     <div className="aspect-square relative overflow-hidden rounded-t-lg">
                       <img
                         src={product.images[0] || "https://via.placeholder.com/400"}
@@ -228,8 +352,101 @@ const StorePage = () => {
                         )}
                       </div>
                     </CardContent>
-                  </Card>
-                </Link>
+                  </Link>
+                  {!product.is_subscription && (
+                    <div className="px-4 pb-4">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="w-full gap-2"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          addToCart(product.id, 1);
+                        }}
+                      >
+                        <ShoppingCart className="h-4 w-4" />
+                        Quick Add
+                      </Button>
+                    </div>
+                  )}
+                </Card>
+              ))}
+            </div>
+          ) : (
+            // List View
+            <div className="flex flex-col gap-4">
+              {filteredAndSortedProducts.map((product) => (
+                <Card key={product.id} className="bg-card border-border hover:border-primary/50 transition-all group">
+                  <div className="flex flex-col sm:flex-row">
+                    <Link to={`/store/${product.slug}`} className="sm:w-48 sm:h-48 flex-shrink-0">
+                      <div className="aspect-square sm:aspect-auto sm:h-full relative overflow-hidden rounded-t-lg sm:rounded-l-lg sm:rounded-tr-none">
+                        <img
+                          src={product.images[0] || "https://via.placeholder.com/400"}
+                          alt={product.name}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                        />
+                        {product.is_featured && (
+                          <Badge className="absolute top-2 left-2 bg-primary">Featured</Badge>
+                        )}
+                      </div>
+                    </Link>
+                    <CardContent className="p-4 flex-1 flex flex-col justify-between">
+                      <div>
+                        <div className="flex items-start justify-between gap-4">
+                          <Link to={`/store/${product.slug}`}>
+                            <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors">
+                              {product.name}
+                            </h3>
+                          </Link>
+                          <div className="flex items-center gap-2 flex-shrink-0">
+                            {product.is_subscription && (
+                              <Badge className="bg-accent text-accent-foreground">Subscription</Badge>
+                            )}
+                            {product.compare_at_price && product.compare_at_price > product.price && (
+                              <Badge className="bg-destructive">Sale</Badge>
+                            )}
+                          </div>
+                        </div>
+                        <p className="text-sm text-muted-foreground mt-2 line-clamp-2">
+                          {product.short_description}
+                        </p>
+                      </div>
+                      <div className="flex items-center justify-between mt-4">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xl font-bold text-primary">
+                            ${product.is_subscription ? product.subscription_price?.toFixed(2) : product.price.toFixed(2)}
+                          </span>
+                          {product.is_subscription && (
+                            <span className="text-sm text-muted-foreground">/month</span>
+                          )}
+                          {product.compare_at_price && product.compare_at_price > product.price && (
+                            <span className="text-sm text-muted-foreground line-through">
+                              ${product.compare_at_price.toFixed(2)}
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {!product.is_subscription && (
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              className="gap-2"
+                              onClick={() => addToCart(product.id, 1)}
+                            >
+                              <ShoppingCart className="h-4 w-4" />
+                              Quick Add
+                            </Button>
+                          )}
+                          <Button asChild size="sm">
+                            <Link to={`/store/${product.slug}`}>
+                              View Details
+                            </Link>
+                          </Button>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </div>
+                </Card>
               ))}
             </div>
           )}
