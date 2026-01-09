@@ -64,7 +64,7 @@ const perks = [
   "Early access to new machines",
 ];
 
-const ArcadeSubscriptionPage = () => {
+const SnackBoxPage = () => {
   const navigate = useNavigate();
   const [products, setProducts] = useState<Product[]>([]);
   const [addons, setAddons] = useState<Record<string, Addon[]>>({});
@@ -79,7 +79,7 @@ const ArcadeSubscriptionPage = () => {
 
   const fetchProducts = async () => {
     // Fetch the three tier products by slug
-    const slugs = ["arcade-starter", "arcade-pro", "arcade-elite"];
+    const slugs = ["starter-arcade", "pro-arcade", "elite-arcade"];
     const { data: productData } = await supabase.from("store_products").select("*").in("slug", slugs);
 
     if (productData) {
@@ -291,4 +291,4 @@ const ArcadeSubscriptionPage = () => {
   );
 };
 
-export default ArcadeSubscriptionPage;
+export default SnackBoxPage;
