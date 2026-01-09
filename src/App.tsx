@@ -26,6 +26,9 @@ import GamesPlayerPage from "./pages/GamesPlayerPage";
 import LocationsPage from "./pages/LocationsPage";
 import LocationDetailPage from "./pages/LocationDetailPage";
 import LinksPage from "./pages/LinksPage";
+import NewsPage from "./pages/NewsPage";
+import NewsArticlePage from "./pages/NewsArticlePage";
+import FunnelPage from "./pages/FunnelPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -60,6 +63,9 @@ const App = () => (
             <Route path="/store/snack-in-the-box" element={<SnackBoxPage />} />
             <Route path="/store/order-success" element={<OrderSuccessPage />} />
             <Route path="/store/:slug" element={<ProductPage />} />
+            <Route path="/funnel/:slug" element={<FunnelPage />} />
+            <Route path="/news" element={<NewsPage />} />
+            <Route path="/news/:slug" element={<NewsArticlePage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

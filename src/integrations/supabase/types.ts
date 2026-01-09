@@ -816,6 +816,107 @@ export type Database = {
         }
         Relationships: []
       }
+      news_articles: {
+        Row: {
+          author_id: string | null
+          category_id: string | null
+          content: string
+          created_at: string | null
+          excerpt: string | null
+          featured_image: string | null
+          id: string
+          is_featured: boolean | null
+          is_published: boolean | null
+          meta_description: string | null
+          meta_title: string | null
+          published_at: string | null
+          slug: string
+          tags: string[] | null
+          title: string
+          updated_at: string | null
+          view_count: number | null
+        }
+        Insert: {
+          author_id?: string | null
+          category_id?: string | null
+          content: string
+          created_at?: string | null
+          excerpt?: string | null
+          featured_image?: string | null
+          id?: string
+          is_featured?: boolean | null
+          is_published?: boolean | null
+          meta_description?: string | null
+          meta_title?: string | null
+          published_at?: string | null
+          slug: string
+          tags?: string[] | null
+          title: string
+          updated_at?: string | null
+          view_count?: number | null
+        }
+        Update: {
+          author_id?: string | null
+          category_id?: string | null
+          content?: string
+          created_at?: string | null
+          excerpt?: string | null
+          featured_image?: string | null
+          id?: string
+          is_featured?: boolean | null
+          is_published?: boolean | null
+          meta_description?: string | null
+          meta_title?: string | null
+          published_at?: string | null
+          slug?: string
+          tags?: string[] | null
+          title?: string
+          updated_at?: string | null
+          view_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "news_articles_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "news_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      news_categories: {
+        Row: {
+          color: string | null
+          created_at: string | null
+          description: string | null
+          display_order: number | null
+          id: string
+          is_active: boolean | null
+          name: string
+          slug: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string | null
+          description?: string | null
+          display_order?: number | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          slug: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string | null
+          description?: string | null
+          display_order?: number | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          slug?: string
+        }
+        Relationships: []
+      }
       partner_offers: {
         Row: {
           created_at: string
@@ -1521,6 +1622,228 @@ export type Database = {
           session_id?: string | null
           updated_at?: string | null
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      store_funnel_addons: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          display_order: number | null
+          funnel_step_id: string
+          id: string
+          is_active: boolean | null
+          name: string
+          price: number
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          display_order?: number | null
+          funnel_step_id: string
+          id?: string
+          is_active?: boolean | null
+          name: string
+          price?: number
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          display_order?: number | null
+          funnel_step_id?: string
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "store_funnel_addons_funnel_step_id_fkey"
+            columns: ["funnel_step_id"]
+            isOneToOne: false
+            referencedRelation: "store_funnel_steps"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      store_funnel_analytics: {
+        Row: {
+          completed: boolean | null
+          created_at: string | null
+          funnel_id: string
+          id: string
+          session_id: string | null
+          step_reached: number | null
+          total_value: number | null
+          user_id: string | null
+        }
+        Insert: {
+          completed?: boolean | null
+          created_at?: string | null
+          funnel_id: string
+          id?: string
+          session_id?: string | null
+          step_reached?: number | null
+          total_value?: number | null
+          user_id?: string | null
+        }
+        Update: {
+          completed?: boolean | null
+          created_at?: string | null
+          funnel_id?: string
+          id?: string
+          session_id?: string | null
+          step_reached?: number | null
+          total_value?: number | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "store_funnel_analytics_funnel_id_fkey"
+            columns: ["funnel_id"]
+            isOneToOne: false
+            referencedRelation: "store_funnels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      store_funnel_products: {
+        Row: {
+          created_at: string | null
+          custom_name: string | null
+          custom_price: number | null
+          discount_percentage: number | null
+          display_order: number | null
+          funnel_step_id: string
+          id: string
+          is_featured: boolean | null
+          product_id: string
+          quantity_limit: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          custom_name?: string | null
+          custom_price?: number | null
+          discount_percentage?: number | null
+          display_order?: number | null
+          funnel_step_id: string
+          id?: string
+          is_featured?: boolean | null
+          product_id: string
+          quantity_limit?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          custom_name?: string | null
+          custom_price?: number | null
+          discount_percentage?: number | null
+          display_order?: number | null
+          funnel_step_id?: string
+          id?: string
+          is_featured?: boolean | null
+          product_id?: string
+          quantity_limit?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "store_funnel_products_funnel_step_id_fkey"
+            columns: ["funnel_step_id"]
+            isOneToOne: false
+            referencedRelation: "store_funnel_steps"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "store_funnel_products_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "store_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      store_funnel_steps: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          funnel_id: string
+          id: string
+          is_required: boolean | null
+          settings: Json | null
+          step_order: number
+          step_type: string
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          funnel_id: string
+          id?: string
+          is_required?: boolean | null
+          settings?: Json | null
+          step_order?: number
+          step_type?: string
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          funnel_id?: string
+          id?: string
+          is_required?: boolean | null
+          settings?: Json | null
+          step_order?: number
+          step_type?: string
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "store_funnel_steps_funnel_id_fkey"
+            columns: ["funnel_id"]
+            isOneToOne: false
+            referencedRelation: "store_funnels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      store_funnels: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          display_order: number | null
+          funnel_type: string
+          id: string
+          is_active: boolean | null
+          name: string
+          settings: Json | null
+          slug: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          display_order?: number | null
+          funnel_type?: string
+          id?: string
+          is_active?: boolean | null
+          name: string
+          settings?: Json | null
+          slug: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          display_order?: number | null
+          funnel_type?: string
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          settings?: Json | null
+          slug?: string
+          updated_at?: string | null
         }
         Relationships: []
       }
