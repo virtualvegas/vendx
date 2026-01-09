@@ -265,7 +265,7 @@ const StorePage = () => {
                   </div>
                   <div className="w-48 h-48 rounded-lg overflow-hidden">
                     <img
-                      src="https://images.unsplash.com/photo-1606813902976-33a69dfb27f0?w=400"
+                      src="https://cdn.discordapp.com/attachments/1445085982163599467/1459000912793043190/ChatGPT_Image_Jan_8_2026_04_17_13_PM.png?ex=6961affc&is=69605e7c&hm=679305046e414385d9e29e4f336933252744f50d624acfad4b76aca0f3dd4e88&"
                       alt="Arcade Machine"
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform"
                     />
