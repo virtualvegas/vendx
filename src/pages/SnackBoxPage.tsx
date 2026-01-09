@@ -79,7 +79,7 @@ const ArcadeSubscriptionPage = () => {
 
   const fetchProducts = async () => {
     // Fetch the three tier products by slug
-    const slugs = ["starter-arcade", "pro-arcade", "elite-arcade"];
+    const slugs = ["arcade-starter", "arcade-pro", "arcade-elite"];
     const { data: productData } = await supabase.from("store_products").select("*").in("slug", slugs);
 
     if (productData) {
@@ -291,4 +291,4 @@ const ArcadeSubscriptionPage = () => {
   );
 };
 
-export default SnackBoxPage;
+export default ArcadeSubscriptionPage;
