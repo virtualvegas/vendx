@@ -261,12 +261,12 @@ const SnackBoxPage = () => {
           </div>
           <div className="grid grid-cols-2 gap-4">
             <img
-              src="https://images.unsplash.com/photo-1602524200067-0d65caa1f191?w=400"
+              src="https://cdn.discordapp.com/attachments/1445085982163599467/1459000912793043190/ChatGPT_Image_Jan_8_2026_04_17_13_PM.png?ex=6961affc&is=69605e7c&hm=679305046e414385d9e29e4f336933252744f50d624acfad4b76aca0f3dd4e88&"
               alt="Arcade"
               className="rounded-xl w-full aspect-square object-cover"
             />
             <img
-              src="https://images.unsplash.com/photo-1574226516831-e1dff420e8e6?w=400"
+              src="https://cdn.discordapp.com/attachments/1445085982163599467/1459000912793043190/ChatGPT_Image_Jan_8_2026_04_17_13_PM.png?ex=6961affc&is=69605e7c&hm=679305046e414385d9e29e4f336933252744f50d624acfad4b76aca0f3dd4e88&"
               alt="Arcade"
               className="rounded-xl w-full aspect-square object-cover mt-8"
             />
