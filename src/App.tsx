@@ -63,6 +63,7 @@ const App = () => (
             <Route path="/store/snack-in-the-box" element={<SnackBoxPage />} />
             <Route path="/store/order-success" element={<OrderSuccessPage />} />
             <Route path="/store/:slug" element={<ProductPage />} />
+            <Route path="/funnel" element={<FunnelPage />} />
             <Route path="/funnel/:slug" element={<FunnelPage />} />
             <Route path="/news" element={<NewsPage />} />
             <Route path="/news/:slug" element={<NewsArticlePage />} />
