@@ -24,6 +24,8 @@ import {
   LogOut,
   ChevronDown,
   ChevronRight,
+  Newspaper,
+  GitBranch,
 } from "lucide-react";
 import { AppRole } from "@/pages/DashboardPage";
 import { cn } from "@/lib/utils";
@@ -109,6 +111,7 @@ const tabGroups: TabGroup[] = [
       { id: "marketing", label: "Campaigns", icon: TrendingUp, requiredRoles: ["super_admin", "marketing_sales"] },
       { id: "rewards-manager", label: "Rewards", icon: Gift, requiredRoles: ["super_admin", "marketing_sales"] },
       { id: "partner-offers", label: "Partner Offers", icon: Percent, requiredRoles: ["super_admin", "marketing_sales"] },
+      { id: "news", label: "News", icon: Newspaper, requiredRoles: ["super_admin"] },
     ],
   },
   {
@@ -117,6 +120,7 @@ const tabGroups: TabGroup[] = [
     tabs: [
       { id: "store-manager", label: "Orders", icon: ShoppingCart, requiredRoles: ["super_admin"] },
       { id: "products-manager", label: "Products", icon: Package, requiredRoles: ["super_admin"] },
+      { id: "funnels", label: "Funnels", icon: GitBranch, requiredRoles: ["super_admin"] },
     ],
   },
   {
