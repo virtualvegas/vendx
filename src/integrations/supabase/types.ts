@@ -47,6 +47,48 @@ export type Database = {
         }
         Relationships: []
       }
+      arcade_waitlist: {
+        Row: {
+          converted_at: string | null
+          created_at: string
+          email: string
+          full_name: string | null
+          id: string
+          notes: string | null
+          notified_at: string | null
+          phone: string | null
+          preferred_plan: string | null
+          referral_source: string | null
+          status: string | null
+        }
+        Insert: {
+          converted_at?: string | null
+          created_at?: string
+          email: string
+          full_name?: string | null
+          id?: string
+          notes?: string | null
+          notified_at?: string | null
+          phone?: string | null
+          preferred_plan?: string | null
+          referral_source?: string | null
+          status?: string | null
+        }
+        Update: {
+          converted_at?: string | null
+          created_at?: string
+          email?: string
+          full_name?: string | null
+          id?: string
+          notes?: string | null
+          notified_at?: string | null
+          phone?: string | null
+          preferred_plan?: string | null
+          referral_source?: string | null
+          status?: string | null
+        }
+        Relationships: []
+      }
       daily_tasks: {
         Row: {
           assigned_to: string | null

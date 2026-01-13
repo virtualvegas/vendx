@@ -32,6 +32,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import ArcadeWaitlistSection from "@/components/store/ArcadeWaitlistSection";
 
 interface Product {
   id: string;
@@ -242,6 +243,9 @@ const StorePage = () => {
           </div>
         </div>
       </section>
+
+      {/* Featured Arcade Subscription Waitlist */}
+      {activeCategory === "all" && <ArcadeWaitlistSection />}
 
       {/* Featured Banner for Snack In The Box */}
       {activeCategory === "all" && (
