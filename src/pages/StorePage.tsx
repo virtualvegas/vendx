@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { useSearchParams, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import arcadeHeroImage from "@/assets/arcade-hero.png";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { Input } from "@/components/ui/input";
@@ -268,7 +269,7 @@ const StorePage = () => {
                   </div>
                   <div className="w-48 h-48 rounded-lg overflow-hidden">
                     <img 
-                      src="https://images.unsplash.com/photo-1511882150382-421056c89033?w=400" 
+                      src={arcadeHeroImage} 
                       alt="Arcade Machine"
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform"
                     />
