@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import arcadeHomeMachine from "@/assets/arcade-home-machine.png";
+import arcadeHeroImage from "@/assets/arcade-hero.png";
 import { supabase } from "@/integrations/supabase/client";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
@@ -264,7 +264,7 @@ const ArcadeSubscriptionPage = () => {
             <div className="relative">
               <div className="aspect-square rounded-2xl overflow-hidden border-4 border-purple-500/30 shadow-2xl">
                 <img 
-                  src={arcadeHomeMachine} 
+                  src={arcadeHeroImage} 
                   alt="Arcade Machine in Home"
                   className="w-full h-full object-cover"
                 />
