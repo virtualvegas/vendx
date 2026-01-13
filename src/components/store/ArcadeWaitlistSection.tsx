@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import arcadeHomeMachine from "@/assets/arcade-home-machine.png";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -398,8 +399,8 @@ const ArcadeWaitlistSection = () => {
               <div className="w-full lg:w-80 flex-shrink-0">
                 <div className="relative aspect-square rounded-2xl overflow-hidden border border-purple-500/30">
                   <img 
-                    src="https://images.unsplash.com/photo-1511882150382-421056c89033?w=400" 
-                    alt="Arcade Machine"
+                    src={arcadeHomeMachine} 
+                    alt="Arcade Machine in Home"
                     className="w-full h-full object-cover"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-purple-900/80 via-transparent to-transparent" />
