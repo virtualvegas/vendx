@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,32 +25,20 @@ import {
   Rocket
 } from "lucide-react";
 
-const plans = [
-  {
-    id: "starter",
-    name: "Arcade Starter",
-    price: 19.99,
-    features: ["5 Classic Games", "Monthly Game Rotation", "Cloud Saves", "Mobile Support"],
-    icon: Gamepad2,
-    popular: false,
-  },
-  {
-    id: "pro",
-    name: "Arcade Pro",
-    price: 34.99,
-    features: ["25 Games Library", "Weekly New Releases", "Cloud Saves", "All Platforms", "Multiplayer Access"],
-    icon: Zap,
-    popular: true,
-  },
-  {
-    id: "elite",
-    name: "Arcade Elite",
-    price: 49.99,
-    features: ["Unlimited Games", "Day-One Releases", "Cloud Saves", "All Platforms", "Multiplayer Access", "Exclusive Beta Access", "Priority Support"],
-    icon: Crown,
-    popular: false,
-  },
-];
+interface ArcadeProduct {
+  id: string;
+  name: string;
+  slug: string;
+  price: number;
+  subscription_price: number | null;
+  short_description: string | null;
+}
+
+const planIcons: Record<string, any> = {
+  starter: Gamepad2,
+  pro: Zap,
+  elite: Crown,
+};
 
 const ArcadeWaitlistSection = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -58,8 +46,59 @@ const ArcadeWaitlistSection = () => {
   const [success, setSuccess] = useState(false);
   const [email, setEmail] = useState("");
   const [fullName, setFullName] = useState("");
-  const [selectedPlan, setSelectedPlan] = useState("pro");
+  const [selectedPlan, setSelectedPlan] = useState("");
+  const [arcadeProducts, setArcadeProducts] = useState<ArcadeProduct[]>([]);
+  const [waitlistCount, setWaitlistCount] = useState(0);
+  const [loadingData, setLoadingData] = useState(true);
   const { toast } = useToast();
+
+  useEffect(() => {
+    fetchArcadeProducts();
+    fetchWaitlistCount();
+  }, []);
+
+  const fetchArcadeProducts = async () => {
+    const { data, error } = await supabase
+      .from("store_products")
+      .select("id, name, slug, price, subscription_price, short_description")
+      .eq("is_active", true)
+      .eq("is_subscription", true)
+      .ilike("slug", "%arcade%")
+      .order("subscription_price", { ascending: true });
+
+    if (!error && data) {
+      setArcadeProducts(data);
+      if (data.length > 0 && !selectedPlan) {
+        // Default to middle option if exists, otherwise first
+        const middleIndex = Math.floor(data.length / 2);
+        setSelectedPlan(data[middleIndex]?.id || data[0]?.id);
+      }
+    }
+    setLoadingData(false);
+  };
+
+  const fetchWaitlistCount = async () => {
+    const { count, error } = await supabase
+      .from("arcade_waitlist")
+      .select("*", { count: "exact", head: true });
+
+    if (!error && count !== null) {
+      setWaitlistCount(count);
+    }
+  };
+
+  const getPlanTier = (slug: string): string => {
+    if (slug.includes("elite")) return "elite";
+    if (slug.includes("pro")) return "pro";
+    return "starter";
+  };
+
+  const isPopularPlan = (index: number, total: number): boolean => {
+    // Middle plan is popular, or second if only 2
+    if (total <= 1) return false;
+    if (total === 2) return index === 1;
+    return index === Math.floor(total / 2);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -116,6 +155,11 @@ const ArcadeWaitlistSection = () => {
     setSuccess(false);
   };
 
+  // Don't render if no arcade products
+  if (!loadingData && arcadeProducts.length === 0) {
+    return null;
+  }
+
   return (
     <section className="py-8 px-4">
       <div className="container mx-auto">
@@ -141,34 +185,50 @@ const ArcadeWaitlistSection = () => {
                   Play anywhere, anytime on any device.
                 </p>
 
-                {/* Plan Preview Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-                  {plans.map((plan) => {
-                    const Icon = plan.icon;
-                    return (
-                      <div
-                        key={plan.id}
-                        className={`relative p-4 rounded-lg border transition-all ${
-                          plan.popular 
-                            ? "border-purple-500 bg-purple-500/10" 
-                            : "border-border/50 bg-card/50"
-                        }`}
-                      >
-                        {plan.popular && (
-                          <Badge className="absolute -top-2 left-1/2 -translate-x-1/2 bg-purple-500 text-white text-xs">
-                            Most Popular
-                          </Badge>
-                        )}
-                        <Icon className={`h-8 w-8 mx-auto mb-2 ${plan.popular ? "text-purple-400" : "text-muted-foreground"}`} />
-                        <h3 className="font-semibold text-sm text-center">{plan.name}</h3>
-                        <p className="text-center mt-1">
-                          <span className="text-xl font-bold text-foreground">${plan.price}</span>
-                          <span className="text-muted-foreground text-sm">/mo</span>
-                        </p>
+                {/* Plan Preview Cards - Dynamic from Database */}
+                {loadingData ? (
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+                    {[1, 2, 3].map((i) => (
+                      <div key={i} className="p-4 rounded-lg border border-border/50 bg-card/50 animate-pulse">
+                        <div className="h-8 w-8 bg-muted rounded mx-auto mb-2" />
+                        <div className="h-4 bg-muted rounded w-3/4 mx-auto mb-2" />
+                        <div className="h-6 bg-muted rounded w-1/2 mx-auto" />
                       </div>
-                    );
-                  })}
-                </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className={`grid grid-cols-1 ${arcadeProducts.length === 2 ? 'md:grid-cols-2' : 'md:grid-cols-3'} gap-4 mb-8`}>
+                    {arcadeProducts.map((product, index) => {
+                      const tier = getPlanTier(product.slug);
+                      const Icon = planIcons[tier] || Gamepad2;
+                      const isPopular = isPopularPlan(index, arcadeProducts.length);
+                      const price = product.subscription_price || product.price;
+                      
+                      return (
+                        <div
+                          key={product.id}
+                          className={`relative p-4 rounded-lg border transition-all ${
+                            isPopular 
+                              ? "border-purple-500 bg-purple-500/10" 
+                              : "border-border/50 bg-card/50"
+                          }`}
+                        >
+                          {isPopular && (
+                            <Badge className="absolute -top-2 left-1/2 -translate-x-1/2 bg-purple-500 text-white text-xs">
+                              Most Popular
+                            </Badge>
+                          )}
+                          <Icon className={`h-8 w-8 mx-auto mb-2 ${isPopular ? "text-purple-400" : "text-muted-foreground"}`} />
+                          <h3 className="font-semibold text-sm text-center">{product.name}</h3>
+                          <p className="text-center mt-1">
+                            <span className="text-xl font-bold text-foreground">${price.toFixed(2)}</span>
+                            <span className="text-muted-foreground text-sm">/mo</span>
+                          </p>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
 
                 {/* CTA */}
                 <Dialog open={isOpen} onOpenChange={(open) => {
@@ -237,15 +297,18 @@ const ArcadeWaitlistSection = () => {
                         <div className="space-y-3">
                           <Label>Interested in which plan?</Label>
                           <RadioGroup value={selectedPlan} onValueChange={setSelectedPlan}>
-                            {plans.map((plan) => (
-                              <div key={plan.id} className="flex items-center space-x-3">
-                                <RadioGroupItem value={plan.id} id={plan.id} />
-                                <Label htmlFor={plan.id} className="flex items-center gap-2 cursor-pointer">
-                                  <span className="font-medium">{plan.name}</span>
-                                  <span className="text-muted-foreground text-sm">${plan.price}/mo</span>
-                                </Label>
-                              </div>
-                            ))}
+                            {arcadeProducts.map((product) => {
+                              const price = product.subscription_price || product.price;
+                              return (
+                                <div key={product.id} className="flex items-center space-x-3">
+                                  <RadioGroupItem value={product.id} id={product.id} />
+                                  <Label htmlFor={product.id} className="flex items-center gap-2 cursor-pointer">
+                                    <span className="font-medium">{product.name}</span>
+                                    <span className="text-muted-foreground text-sm">${price.toFixed(2)}/mo</span>
+                                  </Label>
+                                </div>
+                              );
+                            })}
                           </RadioGroup>
                         </div>
 
@@ -277,7 +340,10 @@ const ArcadeWaitlistSection = () => {
 
                 <p className="mt-4 text-sm text-muted-foreground flex items-center justify-center lg:justify-start gap-2">
                   <Users className="h-4 w-4" />
-                  Join 500+ gamers on the waitlist
+                  {waitlistCount > 0 
+                    ? `Join ${waitlistCount.toLocaleString()}+ gamer${waitlistCount !== 1 ? 's' : ''} on the waitlist`
+                    : 'Be the first to join the waitlist!'
+                  }
                 </p>
               </div>
 
