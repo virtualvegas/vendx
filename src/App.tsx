@@ -20,6 +20,7 @@ import StorePage from "./pages/StorePage";
 import ProductPage from "./pages/ProductPage";
 import CartPage from "./pages/CartPage";
 import SnackBoxPage from "./pages/SnackBoxPage";
+import ArcadeSubscriptionPage from "./pages/ArcadeSubscriptionPage";
 import OrderSuccessPage from "./pages/OrderSuccessPage";
 import VideoGamesPage from "./pages/VideoGamesPage";
 import GamesPlayerPage from "./pages/GamesPlayerPage";
@@ -61,6 +62,7 @@ const App = () => (
             <Route path="/store" element={<StorePage />} />
             <Route path="/store/cart" element={<CartPage />} />
             <Route path="/store/snack-in-the-box" element={<SnackBoxPage />} />
+            <Route path="/store/arcade-subscription" element={<ArcadeSubscriptionPage />} />
             <Route path="/store/order-success" element={<OrderSuccessPage />} />
             <Route path="/store/:slug" element={<ProductPage />} />
             <Route path="/funnel/:slug" element={<FunnelPage />} />
