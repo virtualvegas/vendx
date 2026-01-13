@@ -22,7 +22,12 @@ import {
   Check, 
   Loader2,
   Users,
-  Rocket
+  Rocket,
+  Truck,
+  Wrench,
+  RefreshCw,
+  MapPin,
+  Home
 } from "lucide-react";
 
 interface ArcadeProduct {
@@ -171,19 +176,48 @@ const ArcadeWaitlistSection = () => {
             <div className="flex flex-col lg:flex-row gap-8 items-center">
               {/* Left side - Info */}
               <div className="flex-1 text-center lg:text-left">
-                <Badge className="mb-4 bg-purple-500/20 text-purple-300 border-purple-500/30">
-                  <Sparkles className="h-3 w-3 mr-1" />
-                  COMING SOON
-                </Badge>
+                <div className="flex flex-wrap gap-2 mb-4">
+                  <Badge className="bg-purple-500/20 text-purple-300 border-purple-500/30">
+                    <Sparkles className="h-3 w-3 mr-1" />
+                    COMING SOON
+                  </Badge>
+                  <Badge variant="outline" className="border-amber-500/50 text-amber-400">
+                    <MapPin className="h-3 w-3 mr-1" />
+                    Massachusetts Only
+                  </Badge>
+                </div>
                 <h2 className="text-3xl md:text-4xl font-bold mb-4">
-                  <span className="text-purple-400">VendX</span>{" "}
+                  <span className="text-purple-400">VendX Global</span>{" "}
                   <span className="text-foreground">Arcade</span>{" "}
-                  <span className="text-indigo-400">Subscriptions</span>
+                  <span className="text-indigo-400">Subscription</span>
                 </h2>
-                <p className="text-muted-foreground text-lg mb-6 max-w-xl">
-                  Unlimited access to our growing library of arcade classics and exclusive VendX games. 
-                  Play anywhere, anytime on any device.
+                <p className="text-muted-foreground text-lg mb-4 max-w-xl">
+                  Get a real arcade machine in your home without buying one. Pay monthly, and we handle 
+                  delivery, setup, and all maintenance. If something breaks, we fix it.
                 </p>
+                <p className="text-foreground font-medium mb-6 max-w-xl">
+                  No ownership. No repairs. No hassle — just play.
+                </p>
+
+                {/* Feature highlights */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Truck className="h-4 w-4 text-purple-400 flex-shrink-0" />
+                    <span>Free Delivery</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Home className="h-4 w-4 text-purple-400 flex-shrink-0" />
+                    <span>Pro Setup</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Wrench className="h-4 w-4 text-purple-400 flex-shrink-0" />
+                    <span>Free Repairs</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <RefreshCw className="h-4 w-4 text-purple-400 flex-shrink-0" />
+                    <span>Machine Swaps</span>
+                  </div>
+                </div>
 
                 {/* Plan Preview Cards - Dynamic from Database */}
                 {loadingData ? (
@@ -248,18 +282,24 @@ const ArcadeWaitlistSection = () => {
                         Join the Arcade Waitlist
                       </DialogTitle>
                       <DialogDescription>
-                        Be the first to know when VendX Arcade launches. Get early access and exclusive launch discounts!
+                        Be the first to get a real arcade machine in your home. Join the waitlist for early access, 
+                        exclusive launch pricing, and priority scheduling in Massachusetts.
                       </DialogDescription>
                     </DialogHeader>
+
+                    <Badge variant="outline" className="w-fit border-amber-500/50 text-amber-400">
+                      <MapPin className="h-3 w-3 mr-1" />
+                      Currently launching in Massachusetts only
+                    </Badge>
 
                     {success ? (
                       <div className="py-8 text-center">
                         <div className="w-16 h-16 rounded-full bg-green-500/20 flex items-center justify-center mx-auto mb-4">
                           <Check className="h-8 w-8 text-green-500" />
                         </div>
-                        <h3 className="text-xl font-semibold mb-2">You're on the list!</h3>
+                        <h3 className="text-xl font-semibold mb-2">You are on the list!</h3>
                         <p className="text-muted-foreground">
-                          We'll send you an email as soon as VendX Arcade is ready to launch.
+                          We will send you an email when VendX Arcade launches in Massachusetts.
                         </p>
                         <Button 
                           variant="outline" 
@@ -331,36 +371,44 @@ const ArcadeWaitlistSection = () => {
                         </Button>
 
                         <p className="text-xs text-muted-foreground text-center">
-                          We'll only email you about the Arcade launch. No spam, ever.
+                          We will only email you about the Arcade launch. No spam, ever.
                         </p>
                       </form>
                     )}
                   </DialogContent>
                 </Dialog>
 
-                <p className="mt-4 text-sm text-muted-foreground flex items-center justify-center lg:justify-start gap-2">
-                  <Users className="h-4 w-4" />
-                  {waitlistCount > 0 
-                    ? `Join ${waitlistCount.toLocaleString()}+ gamer${waitlistCount !== 1 ? 's' : ''} on the waitlist`
-                    : 'Be the first to join the waitlist!'
-                  }
-                </p>
+                <div className="mt-4 flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3 text-sm text-muted-foreground">
+                  <span className="flex items-center gap-2">
+                    <Users className="h-4 w-4" />
+                    {waitlistCount > 0 
+                      ? `${waitlistCount.toLocaleString()} on the waitlist`
+                      : 'Be the first to join!'
+                    }
+                  </span>
+                  <span className="hidden sm:inline text-border">•</span>
+                  <span className="flex items-center gap-2">
+                    <MapPin className="h-4 w-4 text-amber-400" />
+                    Massachusetts Launch
+                  </span>
+                </div>
               </div>
 
               {/* Right side - Visual */}
               <div className="w-full lg:w-80 flex-shrink-0">
                 <div className="relative aspect-square rounded-2xl overflow-hidden border border-purple-500/30">
                   <img 
-                    src="https://images.unsplash.com/photo-1511512578047-dfb367046420?w=400" 
-                    alt="Arcade Gaming"
+                    src="https://images.unsplash.com/photo-1511882150382-421056c89033?w=400" 
+                    alt="Arcade Machine"
                     className="w-full h-full object-cover"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-purple-900/80 via-transparent to-transparent" />
-                  <div className="absolute bottom-4 left-4 right-4">
+                  <div className="absolute bottom-4 left-4 right-4 space-y-2">
                     <div className="flex items-center gap-2 text-white">
-                      <Gamepad2 className="h-5 w-5 text-purple-400" />
-                      <span className="font-semibold">50+ Games at Launch</span>
+                      <Home className="h-5 w-5 text-purple-400" />
+                      <span className="font-semibold">Real Arcade. Your Home.</span>
                     </div>
+                    <p className="text-xs text-white/70">Swap machines based on your plan</p>
                   </div>
                 </div>
               </div>
