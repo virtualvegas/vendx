@@ -32,7 +32,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import ArcadeWaitlistSection from "@/components/store/ArcadeWaitlistSection";
+
 
 interface Product {
   id: string;
@@ -244,8 +244,41 @@ const StorePage = () => {
         </div>
       </section>
 
-      {/* Featured Arcade Subscription Waitlist */}
-      {activeCategory === "all" && <ArcadeWaitlistSection />}
+      {/* Featured Arcade Subscription Banner */}
+      {activeCategory === "all" && (
+        <section className="py-8 px-4">
+          <div className="container mx-auto">
+            <Link to="/store/arcade-subscription">
+              <div className="relative rounded-xl overflow-hidden bg-gradient-to-r from-purple-500/20 via-indigo-500/20 to-purple-500/20 p-8 md:p-12 border border-purple-500/30 hover:border-purple-500/50 transition-all group">
+                <div className="flex flex-col md:flex-row items-center gap-6">
+                  <div className="flex-1 text-center md:text-left">
+                    <div className="flex flex-wrap gap-2 mb-3 justify-center md:justify-start">
+                      <Badge className="bg-purple-500/20 text-purple-300 border-purple-500/30">COMING SOON</Badge>
+                      <Badge variant="outline" className="border-amber-500/50 text-amber-400">MA Only</Badge>
+                    </div>
+                    <h2 className="text-3xl md:text-4xl font-bold mb-3">
+                      <span className="text-purple-400">VendX</span> Arcade Subscription
+                    </h2>
+                    <p className="text-muted-foreground mb-4">
+                      Real arcade machines in your home. No ownership, no repairs — just play. Starting at $99/month.
+                    </p>
+                    <Button className="bg-purple-600 hover:bg-purple-700 text-white">
+                      Join Waitlist
+                    </Button>
+                  </div>
+                  <div className="w-48 h-48 rounded-lg overflow-hidden">
+                    <img 
+                      src="https://images.unsplash.com/photo-1511882150382-421056c89033?w=400" 
+                      alt="Arcade Machine"
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                    />
+                  </div>
+                </div>
+              </div>
+            </Link>
+          </div>
+        </section>
+      )}
 
       {/* Featured Banner for Snack In The Box */}
       {activeCategory === "all" && (
