@@ -31,25 +31,16 @@ const GamesPlayerPage = () => {
         .from("video_games")
         .select("id, title, slug, short_description, cover_image_url, browser_play_url, itch_io_url")
         .eq("is_active", true)
-        .or("browser_play_url.neq.null,itch_io_url.neq.null")
+        .not("browser_play_url", "is", null)
         .order("display_order", { ascending: true });
 
       if (error) throw error;
-      return (data as PlayableGame[]).filter(g => g.browser_play_url || g.itch_io_url);
+      return data as PlayableGame[];
     },
   });
 
   const getEmbedUrl = (game: PlayableGame) => {
-    // Prefer browser_play_url, fallback to itch.io embed
-    if (game.browser_play_url) return game.browser_play_url;
-    if (game.itch_io_url) {
-      // Convert itch.io page URL to embed URL if needed
-      const url = game.itch_io_url;
-      if (url.includes("/embed/")) return url;
-      // Try to construct embed URL from game page
-      return url;
-    }
-    return null;
+    return game.browser_play_url;
   };
 
   const toggleFullscreen = () => {
