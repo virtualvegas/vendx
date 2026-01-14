@@ -302,7 +302,7 @@ const StorePage = () => {
                   </div>
                   <div className="w-48 h-48 rounded-lg overflow-hidden">
                     <img 
-                      src="https://images.unsplash.com/photo-1621939514649-280e2ee25f60?w=400" 
+                      src="https://cdn.discordapp.com/attachments/1460835944260436093/1460836257541263506/OIP_10.jpg?ex=69685d48&is=69670bc8&hm=4d88a9210700476ba2e78dd45094355d54764b14a920ef9c362aeac482f2ff98&" 
                       alt="Snack Box"
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform"
                     />
