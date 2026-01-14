@@ -26,6 +26,7 @@ import {
   ChevronRight,
   Newspaper,
   GitBranch,
+  Users,
 } from "lucide-react";
 import { AppRole } from "@/pages/DashboardPage";
 import { cn } from "@/lib/utils";
@@ -120,6 +121,7 @@ const tabGroups: TabGroup[] = [
     tabs: [
       { id: "store-manager", label: "Orders", icon: ShoppingCart, requiredRoles: ["super_admin"] },
       { id: "products-manager", label: "Products", icon: Package, requiredRoles: ["super_admin"] },
+      { id: "waitlist-manager", label: "Waitlist", icon: Users, requiredRoles: ["super_admin"] },
       { id: "funnels", label: "Funnels", icon: GitBranch, requiredRoles: ["super_admin"] },
     ],
   },

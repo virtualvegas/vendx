@@ -33,6 +33,7 @@ interface Product {
   is_subscription: boolean | null;
   subscription_price: number | null;
   subscription_interval: string | null;
+  waitlist_enabled: boolean | null;
   created_at: string | null;
 }
 
@@ -64,7 +65,8 @@ const ProductsManager = () => {
     is_featured: false,
     is_subscription: false,
     subscription_price: 0,
-    subscription_interval: "month"
+    subscription_interval: "month",
+    waitlist_enabled: false
   });
 
   useEffect(() => {
@@ -102,7 +104,8 @@ const ProductsManager = () => {
       is_featured: false,
       is_subscription: false,
       subscription_price: 0,
-      subscription_interval: "month"
+      subscription_interval: "month",
+      waitlist_enabled: false
     });
     setEditingProduct(null);
   };
@@ -124,7 +127,8 @@ const ProductsManager = () => {
       is_featured: product.is_featured ?? false,
       is_subscription: product.is_subscription ?? false,
       subscription_price: product.subscription_price || 0,
-      subscription_interval: product.subscription_interval || "month"
+      subscription_interval: product.subscription_interval || "month",
+      waitlist_enabled: product.waitlist_enabled ?? false
     });
     setDialogOpen(true);
   };
@@ -210,7 +214,8 @@ const ProductsManager = () => {
       is_featured: form.is_featured,
       is_subscription: form.is_subscription,
       subscription_price: form.is_subscription ? form.subscription_price : null,
-      subscription_interval: form.is_subscription ? form.subscription_interval : null
+      subscription_interval: form.is_subscription ? form.subscription_interval : null,
+      waitlist_enabled: form.waitlist_enabled
     };
 
     try {
@@ -481,6 +486,13 @@ const ProductsManager = () => {
                       onCheckedChange={(v) => setForm({...form, is_subscription: v})}
                     />
                     <Label>Subscription Product</Label>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Switch 
+                      checked={form.waitlist_enabled}
+                      onCheckedChange={(v) => setForm({...form, waitlist_enabled: v})}
+                    />
+                    <Label>Waitlist Enabled</Label>
                   </div>
                 </div>
 
