@@ -35,6 +35,7 @@ import KioskCategoriesManager from "@/components/dashboard/tabs/KioskCategoriesM
 import FunnelManager from "@/components/dashboard/tabs/FunnelManager";
 import NewsManager from "@/components/dashboard/tabs/NewsManager";
 import WaitlistManager from "@/components/dashboard/tabs/WaitlistManager";
+import DivisionsManager from "@/components/dashboard/tabs/DivisionsManager";
 
 export type AppRole =
   | "super_admin"
@@ -178,6 +179,8 @@ const DashboardPage = () => {
         return <WaitlistManager />;
       case "news":
         return <NewsManager />;
+      case "divisions-manager":
+        return <DivisionsManager />;
       default:
         return <CustomerOrders />;
     }

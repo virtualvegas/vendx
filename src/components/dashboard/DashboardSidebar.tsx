@@ -130,6 +130,7 @@ const tabGroups: TabGroup[] = [
     label: "Administration",
     tabs: [
       { id: "locations", label: "Locations", icon: Map, requiredRoles: ["super_admin"] },
+      { id: "divisions-manager", label: "Divisions", icon: Layers, requiredRoles: ["super_admin"] },
       { id: "careers", label: "Careers", icon: Briefcase, requiredRoles: ["super_admin"] },
       { id: "video-games", label: "Games", icon: Gamepad2, requiredRoles: ["super_admin"] },
       { id: "admin-settings", label: "Settings", icon: Settings, requiredRoles: ["super_admin"] },
