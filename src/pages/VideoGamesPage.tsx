@@ -20,6 +20,7 @@ import {
 import { FaXbox, FaAmazon } from "react-icons/fa";
 import { Monitor, Globe } from "lucide-react";
 import { Gamepad2, ExternalLink, Play, Filter } from "lucide-react";
+import vendxInteractiveLogo from "@/assets/vendx-interactive-logo.png";
 
 interface VideoGame {
   id: string;
@@ -154,19 +155,20 @@ const VideoGamesPage = () => {
         <div className="container mx-auto px-4">
           {/* Header */}
           <div className="text-center mb-12">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/30 mb-6">
-              <Gamepad2 className="w-4 h-4 text-primary" />
-              <span className="text-sm text-primary font-medium">VendX Games</span>
-            </div>
+            <img 
+              src={vendxInteractiveLogo} 
+              alt="VendX Interactive" 
+              className="h-24 md:h-32 mx-auto mb-6"
+            />
             <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-4">
-              Video Games
+              VendX Interactive
             </h1>
             <p className="text-muted-foreground max-w-2xl mx-auto mb-6">
-              Explore video games published by VendX Global across all major platforms
+              Experience gaming excellence with VendX Interactive — our publishing division bringing premium titles across all major platforms
             </p>
             {hasBrowserGames && (
               <Link to="/games-player">
-                <Button className="gap-2">
+                <Button className="gap-2 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700">
                   <Gamepad2 className="w-4 h-4" />
                   Play Games in Browser
                 </Button>

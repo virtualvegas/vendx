@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Gamepad2, Maximize2, Minimize2, ArrowLeft, ExternalLink } from "lucide-react";
 import { Link } from "react-router-dom";
+import vendxInteractiveLogo from "@/assets/vendx-interactive-logo.png";
 
 interface PlayableGame {
   id: string;
@@ -71,21 +72,22 @@ const GamesPlayerPage = () => {
             <Link to="/games">
               <Button variant="outline" size="sm" className="gap-2">
                 <ArrowLeft className="w-4 h-4" />
-                Back to Games
+                Back to VendX Interactive
               </Button>
             </Link>
           </div>
 
           <div className="text-center mb-12">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/30 mb-6">
-              <Gamepad2 className="w-4 h-4 text-primary" />
-              <span className="text-sm text-primary font-medium">Browser Games</span>
-            </div>
+            <img 
+              src={vendxInteractiveLogo} 
+              alt="VendX Interactive" 
+              className="h-20 md:h-24 mx-auto mb-6"
+            />
             <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-4">
               Play in Browser
             </h1>
             <p className="text-muted-foreground max-w-2xl mx-auto">
-              Play VendX games directly in your browser - no downloads required
+              Play VendX Interactive games directly in your browser — no downloads required
             </p>
           </div>
 
@@ -191,14 +193,14 @@ const GamesPlayerPage = () => {
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-20">
+              <div className="text-center py-20">
                   <Gamepad2 className="w-16 h-16 text-muted-foreground/30 mx-auto mb-4" />
                   <h3 className="text-xl font-semibold text-foreground mb-2">No browser games available</h3>
                   <p className="text-muted-foreground mb-4">
                     Check back soon for playable games!
                   </p>
                   <Link to="/games">
-                    <Button variant="outline">View All Games</Button>
+                    <Button variant="outline">View All VendX Interactive Games</Button>
                   </Link>
                 </div>
               )}
