@@ -1,8 +1,38 @@
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
-import { Globe, Users, Award, TrendingUp } from "lucide-react";
+import { Globe, Users, Award, TrendingUp, LucideIcon } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+
+const iconConfig: Record<number, { icon: LucideIcon; colorClass: string }> = {
+  1: { icon: Globe, colorClass: "bg-primary/10 border-primary text-primary" },
+  2: { icon: Users, colorClass: "bg-accent/10 border-accent text-accent" },
+  3: { icon: Award, colorClass: "bg-primary/10 border-primary text-primary" },
+  4: { icon: TrendingUp, colorClass: "bg-accent/10 border-accent text-accent" },
+};
+
+const highlightDescriptions: Record<string, string> = {
+  "Countries Operating In": "Operating in {value}+ countries with machines worldwide",
+  "Machines Worldwide": "Over {value}+ machines deployed globally",
+  "Team Members": "{value}+ employees across robotics, AI, and logistics",
+  "Years Industry Leader": "Recognized as the most innovative vending company for {value} consecutive years",
+};
 
 const AboutPage = () => {
+  const { data: highlights, isLoading } = useQuery({
+    queryKey: ["about-highlights"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("metrics")
+        .select("*")
+        .eq("metric_type", "about_highlight")
+        .order("display_order", { ascending: true });
+      
+      if (error) throw error;
+      return data;
+    },
+  });
+
   return (
     <div className="min-h-screen bg-background">
       <Navigation />
@@ -37,45 +67,38 @@ const AboutPage = () => {
             <div className="bg-card/40 backdrop-blur-sm border border-primary/30 rounded-2xl p-8 space-y-6">
               <h3 className="text-2xl font-bold">Company Highlights</h3>
               <div className="space-y-4">
-                <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 rounded-full bg-primary/10 border border-primary flex items-center justify-center flex-shrink-0">
-                    <Globe className="w-6 h-6 text-primary" />
-                  </div>
-                  <div>
-                    <h4 className="font-semibold mb-1">Global Presence</h4>
-                    <p className="text-sm text-muted-foreground">Operating in 150+ countries with 50,000+ machines worldwide</p>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 rounded-full bg-accent/10 border border-accent flex items-center justify-center flex-shrink-0">
-                    <Users className="w-6 h-6 text-accent" />
-                  </div>
-                  <div>
-                    <h4 className="font-semibold mb-1">Team Excellence</h4>
-                    <p className="text-sm text-muted-foreground">2,500+ employees across robotics, AI, and logistics</p>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 rounded-full bg-primary/10 border border-primary flex items-center justify-center flex-shrink-0">
-                    <Award className="w-6 h-6 text-primary" />
-                  </div>
-                  <div>
-                    <h4 className="font-semibold mb-1">Industry Leader</h4>
-                    <p className="text-sm text-muted-foreground">Recognized as the most innovative vending company for 5 consecutive years</p>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 rounded-full bg-accent/10 border border-accent flex items-center justify-center flex-shrink-0">
-                    <TrendingUp className="w-6 h-6 text-accent" />
-                  </div>
-                  <div>
-                    <h4 className="font-semibold mb-1">Sustainable Growth</h4>
-                    <p className="text-sm text-muted-foreground">100% of new machines powered by renewable energy by 2026</p>
-                  </div>
-                </div>
+                {isLoading ? (
+                  Array.from({ length: 4 }).map((_, idx) => (
+                    <div key={idx} className="flex items-start gap-4 animate-pulse">
+                      <div className="w-12 h-12 rounded-full bg-muted flex-shrink-0" />
+                      <div className="flex-1 space-y-2">
+                        <div className="h-4 bg-muted rounded w-1/3" />
+                        <div className="h-3 bg-muted rounded w-2/3" />
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  highlights?.map((highlight, idx) => {
+                    const config = iconConfig[highlight.display_order || idx + 1] || iconConfig[1];
+                    const Icon = config.icon;
+                    const description = highlightDescriptions[highlight.metric_label]?.replace(
+                      "{value}",
+                      highlight.metric_value.toLocaleString()
+                    ) || `${highlight.metric_value.toLocaleString()}+ ${highlight.metric_label}`;
+                    
+                    return (
+                      <div key={highlight.id} className="flex items-start gap-4">
+                        <div className={`w-12 h-12 rounded-full border flex items-center justify-center flex-shrink-0 ${config.colorClass}`}>
+                          <Icon className="w-6 h-6" />
+                        </div>
+                        <div>
+                          <h4 className="font-semibold mb-1">{highlight.metric_label}</h4>
+                          <p className="text-sm text-muted-foreground">{description}</p>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
               </div>
             </div>
           </div>
