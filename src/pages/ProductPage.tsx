@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { ShoppingCart, Minus, Plus, ArrowLeft, Package, Check, Loader2 } from "lucide-react";
 import { useCart } from "@/hooks/useCart";
 import { toast } from "sonner";
+import { useSEO } from "@/hooks/useSEO";
 
 interface Product {
   id: string;
@@ -45,6 +46,18 @@ const ProductPage = () => {
   const [loading, setLoading] = useState(true);
   const [adding, setAdding] = useState(false);
   const { addToCart, cartCount } = useCart();
+
+  // Dynamic SEO for product sharing
+  useSEO({
+    title: product?.name,
+    description: product?.short_description || product?.description?.slice(0, 160),
+    image: product?.images?.[0],
+    type: "product",
+    price: product?.is_subscription ? product?.subscription_price || product?.price : product?.price,
+    currency: "USD",
+    availability: product?.stock === null || product?.stock > 0 ? "in stock" : "out of stock",
+    category: product?.category,
+  });
 
   useEffect(() => {
     if (slug) {
