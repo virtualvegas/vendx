@@ -47,18 +47,25 @@ interface ArcadeProduct {
   price: number;
   subscription_price: number | null;
   short_description: string | null;
+  waitlist_enabled: boolean | null;
 }
 
 const planIcons: Record<string, any> = {
   starter: Gamepad2,
+  bronze: Gamepad2,
   pro: Zap,
+  silver: Zap,
   elite: Crown,
+  gold: Crown,
 };
 
 const planFeatures: Record<string, string[]> = {
   starter: ["1 Arcade Machine", "Classic Game Library", "Standard Support", "Annual Machine Swap"],
+  bronze: ["1 Arcade Machine", "Classic Game Library", "Standard Support", "Annual Machine Swap"],
   pro: ["1 Arcade Machine", "Premium Game Library", "Priority Support", "Quarterly Machine Swaps"],
+  silver: ["1 Arcade Machine", "Premium Game Library", "Priority Support", "Quarterly Machine Swaps"],
   elite: ["Up to 2 Machines", "Full Game Library", "24/7 VIP Support", "Monthly Machine Swaps"],
+  gold: ["Up to 2 Machines", "Full Game Library", "24/7 VIP Support", "Monthly Machine Swaps"],
 };
 
 const features = [
@@ -92,37 +99,42 @@ const ArcadeSubscriptionPage = () => {
 
   useEffect(() => {
     fetchArcadeProducts();
-    fetchWaitlistCount();
   }, []);
 
   const fetchArcadeProducts = async () => {
+    // Fetch arcade subscription products that have waitlist enabled
     const { data, error } = await supabase
       .from("store_products")
-      .select("id, name, slug, price, subscription_price, short_description")
+      .select("id, name, slug, price, subscription_price, short_description, waitlist_enabled")
       .eq("is_active", true)
       .eq("is_subscription", true)
+      .eq("category", "subscriptions")
       .ilike("slug", "%arcade%")
       .order("subscription_price", { ascending: true });
 
     if (!error && data) {
       setArcadeProducts(data);
+      
+      // Fetch waitlist count for these products
+      if (data.length > 0) {
+        const productIds = data.map(p => p.id);
+        const { count } = await supabase
+          .from("product_waitlist")
+          .select("*", { count: "exact", head: true })
+          .in("product_id", productIds);
+        
+        if (count !== null) {
+          setWaitlistCount(count);
+        }
+      }
     }
     setLoadingData(false);
   };
 
-  const fetchWaitlistCount = async () => {
-    const { count, error } = await supabase
-      .from("arcade_waitlist")
-      .select("*", { count: "exact", head: true });
-
-    if (!error && count !== null) {
-      setWaitlistCount(count);
-    }
-  };
-
   const getPlanTier = (slug: string): string => {
-    if (slug.includes("elite")) return "elite";
-    if (slug.includes("pro")) return "pro";
+    if (slug.includes("elite") || slug.includes("gold")) return "elite";
+    if (slug.includes("pro") || slug.includes("silver")) return "pro";
+    if (slug.includes("bronze")) return "bronze";
     return "starter";
   };
 
@@ -150,10 +162,11 @@ const ArcadeSubscriptionPage = () => {
 
     setLoading(true);
     try {
-      const { error } = await supabase.from("arcade_waitlist").insert({
+      // Insert into the generic product_waitlist table
+      const { error } = await supabase.from("product_waitlist").insert({
         email,
         full_name: fullName || null,
-        preferred_plan: selectedPlan,
+        product_id: selectedPlan,
         referral_source: "arcade_page",
       });
 
@@ -161,7 +174,7 @@ const ArcadeSubscriptionPage = () => {
         if (error.code === "23505") {
           toast({
             title: "Already on waitlist!",
-            description: "This email is already registered for the waitlist.",
+            description: "This email is already registered for this product.",
           });
         } else {
           throw error;
@@ -172,7 +185,18 @@ const ArcadeSubscriptionPage = () => {
           title: "You're on the list! 🎮",
           description: "We'll notify you as soon as Arcade subscriptions launch.",
         });
-        fetchWaitlistCount();
+        // Refresh waitlist count
+        if (arcadeProducts.length > 0) {
+          const productIds = arcadeProducts.map(p => p.id);
+          const { count } = await supabase
+            .from("product_waitlist")
+            .select("*", { count: "exact", head: true })
+            .in("product_id", productIds);
+          
+          if (count !== null) {
+            setWaitlistCount(count);
+          }
+        }
       }
     } catch (error: any) {
       console.error("Error joining waitlist:", error);
@@ -326,6 +350,12 @@ const ArcadeSubscriptionPage = () => {
                   </CardContent>
                 </Card>
               ))
+            ) : arcadeProducts.length === 0 ? (
+              <div className="col-span-full text-center py-12">
+                <Gamepad2 className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-xl font-semibold mb-2">No Plans Available Yet</h3>
+                <p className="text-muted-foreground">Check back soon for arcade subscription plans!</p>
+              </div>
             ) : (
               arcadeProducts.map((product, index) => {
                 const tier = getPlanTier(product.slug);
