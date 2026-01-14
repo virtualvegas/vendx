@@ -1180,6 +1180,56 @@ export type Database = {
         }
         Relationships: []
       }
+      product_waitlist: {
+        Row: {
+          converted_at: string | null
+          created_at: string
+          email: string
+          full_name: string | null
+          id: string
+          notes: string | null
+          notified_at: string | null
+          phone: string | null
+          product_id: string | null
+          referral_source: string | null
+          status: string | null
+        }
+        Insert: {
+          converted_at?: string | null
+          created_at?: string
+          email: string
+          full_name?: string | null
+          id?: string
+          notes?: string | null
+          notified_at?: string | null
+          phone?: string | null
+          product_id?: string | null
+          referral_source?: string | null
+          status?: string | null
+        }
+        Update: {
+          converted_at?: string | null
+          created_at?: string
+          email?: string
+          full_name?: string | null
+          id?: string
+          notes?: string | null
+          notified_at?: string | null
+          phone?: string | null
+          product_id?: string | null
+          referral_source?: string | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_waitlist_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "store_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string
@@ -2063,6 +2113,7 @@ export type Database = {
           subscription_interval: string | null
           subscription_price: number | null
           updated_at: string | null
+          waitlist_enabled: boolean | null
         }
         Insert: {
           category: string
@@ -2086,6 +2137,7 @@ export type Database = {
           subscription_interval?: string | null
           subscription_price?: number | null
           updated_at?: string | null
+          waitlist_enabled?: boolean | null
         }
         Update: {
           category?: string
@@ -2109,6 +2161,7 @@ export type Database = {
           subscription_interval?: string | null
           subscription_price?: number | null
           updated_at?: string | null
+          waitlist_enabled?: boolean | null
         }
         Relationships: []
       }
