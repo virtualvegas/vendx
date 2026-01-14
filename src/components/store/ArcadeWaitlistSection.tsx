@@ -38,18 +38,25 @@ interface ArcadeProduct {
   price: number;
   subscription_price: number | null;
   short_description: string | null;
+  waitlist_enabled: boolean | null;
 }
 
 const planIcons: Record<string, any> = {
   starter: Gamepad2,
+  bronze: Gamepad2,
   pro: Zap,
+  silver: Zap,
   elite: Crown,
+  gold: Crown,
 };
 
 const planFeatures: Record<string, string[]> = {
   starter: ["1 Machine", "Basic Games", "Standard Support", "Annual Swap"],
+  bronze: ["1 Machine", "Basic Games", "Standard Support", "Annual Swap"],
   pro: ["1 Machine", "Premium Games", "Priority Support", "Quarterly Swaps"],
+  silver: ["1 Machine", "Premium Games", "Priority Support", "Quarterly Swaps"],
   elite: ["1-2 Machines", "All Games", "24/7 Support", "Monthly Swaps"],
+  gold: ["1-2 Machines", "All Games", "24/7 Support", "Monthly Swaps"],
 };
 
 const features = [
@@ -73,37 +80,42 @@ const ArcadeWaitlistSection = () => {
 
   useEffect(() => {
     fetchArcadeProducts();
-    fetchWaitlistCount();
   }, []);
 
   const fetchArcadeProducts = async () => {
+    // Fetch arcade subscription products
     const { data, error } = await supabase
       .from("store_products")
-      .select("id, name, slug, price, subscription_price, short_description")
+      .select("id, name, slug, price, subscription_price, short_description, waitlist_enabled")
       .eq("is_active", true)
       .eq("is_subscription", true)
+      .eq("category", "subscriptions")
       .ilike("slug", "%arcade%")
       .order("subscription_price", { ascending: true });
 
     if (!error && data) {
       setArcadeProducts(data);
+      
+      // Fetch waitlist count for these products from the generic product_waitlist table
+      if (data.length > 0) {
+        const productIds = data.map(p => p.id);
+        const { count } = await supabase
+          .from("product_waitlist")
+          .select("*", { count: "exact", head: true })
+          .in("product_id", productIds);
+        
+        if (count !== null) {
+          setWaitlistCount(count);
+        }
+      }
     }
     setLoadingData(false);
   };
 
-  const fetchWaitlistCount = async () => {
-    const { count, error } = await supabase
-      .from("arcade_waitlist")
-      .select("*", { count: "exact", head: true });
-
-    if (!error && count !== null) {
-      setWaitlistCount(count);
-    }
-  };
-
   const getPlanTier = (slug: string): string => {
-    if (slug.includes("elite")) return "elite";
-    if (slug.includes("pro")) return "pro";
+    if (slug.includes("elite") || slug.includes("gold")) return "elite";
+    if (slug.includes("pro") || slug.includes("silver")) return "pro";
+    if (slug.includes("bronze")) return "bronze";
     return "starter";
   };
 
@@ -131,10 +143,11 @@ const ArcadeWaitlistSection = () => {
 
     setLoading(true);
     try {
-      const { error } = await supabase.from("arcade_waitlist").insert({
+      // Insert into the generic product_waitlist table
+      const { error } = await supabase.from("product_waitlist").insert({
         email,
         full_name: fullName || null,
-        preferred_plan: selectedPlan,
+        product_id: selectedPlan,
         referral_source: "store_page",
       });
 
@@ -142,7 +155,7 @@ const ArcadeWaitlistSection = () => {
         if (error.code === "23505") {
           toast({
             title: "Already on waitlist!",
-            description: "This email is already registered for the waitlist.",
+            description: "This email is already registered for this product.",
           });
         } else {
           throw error;
@@ -153,7 +166,18 @@ const ArcadeWaitlistSection = () => {
           title: "You're on the list! 🎮",
           description: "We'll notify you as soon as Arcade subscriptions launch.",
         });
-        fetchWaitlistCount();
+        // Refresh waitlist count
+        if (arcadeProducts.length > 0) {
+          const productIds = arcadeProducts.map(p => p.id);
+          const { count } = await supabase
+            .from("product_waitlist")
+            .select("*", { count: "exact", head: true })
+            .in("product_id", productIds);
+          
+          if (count !== null) {
+            setWaitlistCount(count);
+          }
+        }
       }
     } catch (error: any) {
       console.error("Error joining waitlist:", error);
@@ -456,7 +480,7 @@ const ArcadeWaitlistSection = () => {
 
                 <Button 
                   type="submit" 
-                  className="w-full h-12 bg-purple-600 hover:bg-purple-700"
+                  className="w-full bg-purple-600 hover:bg-purple-700"
                   disabled={loading}
                 >
                   {loading ? (
