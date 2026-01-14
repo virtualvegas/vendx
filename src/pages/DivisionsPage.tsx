@@ -1,19 +1,23 @@
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { Link } from "react-router-dom";
-import { Smartphone, Maximize2, Apple, Monitor, Truck, Bot, Rocket, ArrowRight } from "lucide-react";
+import { Zap, Gamepad2, Monitor, Truck, Bot, Headphones, Megaphone, Wrench, PartyPopper, Smartphone, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import type { LucideIcon } from "lucide-react";
 
-const iconMap: Record<string, any> = {
-  smartphone: Smartphone,
-  maximize2: Maximize2,
-  apple: Apple,
-  monitor: Monitor,
-  truck: Truck,
-  bot: Bot,
-  rocket: Rocket,
+const iconMap: Record<string, LucideIcon> = {
+  Zap: Zap,
+  Gamepad2: Gamepad2,
+  Monitor: Monitor,
+  Truck: Truck,
+  Bot: Bot,
+  Headphones: Headphones,
+  Megaphone: Megaphone,
+  Wrench: Wrench,
+  PartyPopper: PartyPopper,
+  Smartphone: Smartphone,
 };
 
 const DivisionsPage = () => {
@@ -61,7 +65,7 @@ const DivisionsPage = () => {
               ))
             ) : (
               divisions?.map((division) => {
-                const Icon = iconMap[division.icon || "smartphone"] || Smartphone;
+                const Icon = iconMap[division.icon || "Zap"] || Zap;
                 const features = Array.isArray(division.features) ? division.features : [];
                 
                 return (
