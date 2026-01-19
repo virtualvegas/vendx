@@ -1698,6 +1698,53 @@ export type Database = {
           },
         ]
       }
+      stand_menu_items: {
+        Row: {
+          category: string | null
+          created_at: string
+          description: string | null
+          display_order: number | null
+          id: string
+          is_available: boolean | null
+          name: string
+          price: number | null
+          stand_id: string
+          updated_at: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          display_order?: number | null
+          id?: string
+          is_available?: boolean | null
+          name: string
+          price?: number | null
+          stand_id: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          display_order?: number | null
+          id?: string
+          is_available?: boolean | null
+          name?: string
+          price?: number | null
+          stand_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stand_menu_items_stand_id_fkey"
+            columns: ["stand_id"]
+            isOneToOne: false
+            referencedRelation: "stands"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       stands: {
         Row: {
           brand_future_focus: string | null
@@ -1705,6 +1752,7 @@ export type Database = {
           description: string | null
           id: string
           image_url: string | null
+          images: string[] | null
           name: string
           status: string
           story: string | null
@@ -1716,6 +1764,7 @@ export type Database = {
           description?: string | null
           id?: string
           image_url?: string | null
+          images?: string[] | null
           name: string
           status?: string
           story?: string | null
@@ -1727,6 +1776,7 @@ export type Database = {
           description?: string | null
           id?: string
           image_url?: string | null
+          images?: string[] | null
           name?: string
           status?: string
           story?: string | null

@@ -5,7 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -31,6 +31,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Switch } from "@/components/ui/switch";
 import {
   Plus,
   Pencil,
@@ -40,6 +41,10 @@ import {
   MapPin,
   Sparkles,
   Search,
+  ImageIcon,
+  UtensilsCrossed,
+  X,
+  DollarSign,
 } from "lucide-react";
 import { format } from "date-fns";
 
@@ -50,6 +55,7 @@ interface Stand {
   story: string | null;
   brand_future_focus: string | null;
   image_url: string | null;
+  images: string[] | null;
   status: string;
   created_at: string;
 }
@@ -67,6 +73,18 @@ interface StandEvent {
   stands?: Stand;
 }
 
+interface MenuItem {
+  id: string;
+  stand_id: string;
+  name: string;
+  description: string | null;
+  price: number | null;
+  category: string | null;
+  display_order: number;
+  is_available: boolean;
+  created_at: string;
+}
+
 const StandsManager = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -82,8 +100,10 @@ const StandsManager = () => {
     story: "",
     brand_future_focus: "",
     image_url: "",
+    images: [] as string[],
     status: "active",
   });
+  const [newImageUrl, setNewImageUrl] = useState("");
 
   // Event dialog state
   const [eventDialogOpen, setEventDialogOpen] = useState(false);
@@ -98,9 +118,21 @@ const StandsManager = () => {
     status: "upcoming",
   });
 
+  // Menu dialog state
+  const [menuDialogOpen, setMenuDialogOpen] = useState(false);
+  const [selectedStandForMenu, setSelectedStandForMenu] = useState<Stand | null>(null);
+  const [menuItemForm, setMenuItemForm] = useState({
+    name: "",
+    description: "",
+    price: "",
+    category: "",
+    is_available: true,
+  });
+  const [editingMenuItem, setEditingMenuItem] = useState<MenuItem | null>(null);
+
   // Delete confirmation state
   const [deleteDialog, setDeleteDialog] = useState<{
-    type: "stand" | "event";
+    type: "stand" | "event" | "menu_item";
     id: string;
     name: string;
   } | null>(null);
@@ -131,17 +163,37 @@ const StandsManager = () => {
     },
   });
 
+  // Fetch menu items for selected stand
+  const { data: menuItems = [], isLoading: menuLoading } = useQuery({
+    queryKey: ["stand_menu_items", selectedStandForMenu?.id],
+    queryFn: async () => {
+      if (!selectedStandForMenu?.id) return [];
+      const { data, error } = await supabase
+        .from("stand_menu_items")
+        .select("*")
+        .eq("stand_id", selectedStandForMenu.id)
+        .order("display_order");
+      if (error) throw error;
+      return data as MenuItem[];
+    },
+    enabled: !!selectedStandForMenu?.id,
+  });
+
   // Stand mutations
   const standMutation = useMutation({
     mutationFn: async (data: typeof standForm & { id?: string }) => {
+      const payload = {
+        ...data,
+        images: data.images.length > 0 ? data.images : null,
+      };
       if (data.id) {
         const { error } = await supabase
           .from("stands")
-          .update(data)
+          .update(payload)
           .eq("id", data.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("stands").insert(data);
+        const { error } = await supabase.from("stands").insert(payload);
         if (error) throw error;
       }
     },
@@ -242,6 +294,64 @@ const StandsManager = () => {
     },
   });
 
+  // Menu item mutations
+  const menuItemMutation = useMutation({
+    mutationFn: async (data: typeof menuItemForm & { id?: string; stand_id: string }) => {
+      const payload = {
+        stand_id: data.stand_id,
+        name: data.name,
+        description: data.description || null,
+        price: data.price ? parseFloat(data.price) : null,
+        category: data.category || null,
+        is_available: data.is_available,
+        display_order: editingMenuItem?.display_order || menuItems.length,
+      };
+      if (data.id) {
+        const { error } = await supabase
+          .from("stand_menu_items")
+          .update(payload)
+          .eq("id", data.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from("stand_menu_items").insert(payload);
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["stand_menu_items", selectedStandForMenu?.id] });
+      resetMenuItemForm();
+      toast({
+        title: editingMenuItem ? "Menu item updated" : "Menu item added",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteMenuItemMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("stand_menu_items").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["stand_menu_items", selectedStandForMenu?.id] });
+      setDeleteDialog(null);
+      toast({ title: "Menu item deleted" });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   const resetStandForm = () => {
     setStandForm({
       name: "",
@@ -249,8 +359,10 @@ const StandsManager = () => {
       story: "",
       brand_future_focus: "",
       image_url: "",
+      images: [],
       status: "active",
     });
+    setNewImageUrl("");
     setEditingStand(null);
   };
 
@@ -267,6 +379,17 @@ const StandsManager = () => {
     setEditingEvent(null);
   };
 
+  const resetMenuItemForm = () => {
+    setMenuItemForm({
+      name: "",
+      description: "",
+      price: "",
+      category: "",
+      is_available: true,
+    });
+    setEditingMenuItem(null);
+  };
+
   const handleEditStand = (stand: Stand) => {
     setEditingStand(stand);
     setStandForm({
@@ -275,6 +398,7 @@ const StandsManager = () => {
       story: stand.story || "",
       brand_future_focus: stand.brand_future_focus || "",
       image_url: stand.image_url || "",
+      images: stand.images || [],
       status: stand.status,
     });
     setStandDialogOpen(true);
@@ -292,6 +416,39 @@ const StandsManager = () => {
       status: event.status,
     });
     setEventDialogOpen(true);
+  };
+
+  const handleEditMenuItem = (item: MenuItem) => {
+    setEditingMenuItem(item);
+    setMenuItemForm({
+      name: item.name,
+      description: item.description || "",
+      price: item.price?.toString() || "",
+      category: item.category || "",
+      is_available: item.is_available,
+    });
+  };
+
+  const handleOpenMenu = (stand: Stand) => {
+    setSelectedStandForMenu(stand);
+    setMenuDialogOpen(true);
+  };
+
+  const handleAddImage = () => {
+    if (newImageUrl.trim()) {
+      setStandForm({
+        ...standForm,
+        images: [...standForm.images, newImageUrl.trim()],
+      });
+      setNewImageUrl("");
+    }
+  };
+
+  const handleRemoveImage = (index: number) => {
+    setStandForm({
+      ...standForm,
+      images: standForm.images.filter((_, i) => i !== index),
+    });
   };
 
   const handleStandSubmit = () => {
@@ -319,6 +476,22 @@ const StandsManager = () => {
     }
     eventMutation.mutate(
       editingEvent ? { ...eventForm, id: editingEvent.id } : eventForm
+    );
+  };
+
+  const handleMenuItemSubmit = () => {
+    if (!menuItemForm.name || !selectedStandForMenu) {
+      toast({
+        title: "Validation Error",
+        description: "Item name is required",
+        variant: "destructive",
+      });
+      return;
+    }
+    menuItemMutation.mutate(
+      editingMenuItem
+        ? { ...menuItemForm, id: editingMenuItem.id, stand_id: selectedStandForMenu.id }
+        : { ...menuItemForm, stand_id: selectedStandForMenu.id }
     );
   };
 
@@ -359,7 +532,7 @@ const StandsManager = () => {
         <div>
           <h1 className="text-2xl font-bold">Amusement & Concession Stands</h1>
           <p className="text-muted-foreground">
-            Manage your stands and their event schedules
+            Manage your stands, menus, and their event schedules
           </p>
         </div>
       </div>
@@ -492,13 +665,19 @@ const StandsManager = () => {
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {filteredStands.map((stand) => (
                 <Card key={stand.id} className="overflow-hidden">
-                  {stand.image_url && (
+                  {(stand.image_url || (stand.images && stand.images.length > 0)) && (
                     <div className="aspect-video relative">
                       <img
-                        src={stand.image_url}
+                        src={stand.image_url || stand.images?.[0]}
                         alt={stand.name}
                         className="w-full h-full object-cover"
                       />
+                      {stand.images && stand.images.length > 1 && (
+                        <Badge className="absolute bottom-2 right-2 bg-black/60">
+                          <ImageIcon className="h-3 w-3 mr-1" />
+                          {stand.images.length}
+                        </Badge>
+                      )}
                     </div>
                   )}
                   <CardHeader>
@@ -510,6 +689,14 @@ const StandsManager = () => {
                         </Badge>
                       </div>
                       <div className="flex gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleOpenMenu(stand)}
+                          title="Manage Menu"
+                        >
+                          <UtensilsCrossed className="h-4 w-4" />
+                        </Button>
                         <Button
                           variant="ghost"
                           size="icon"
@@ -728,7 +915,7 @@ const StandsManager = () => {
               </div>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="image_url">Image URL</Label>
+              <Label htmlFor="image_url">Primary Image URL</Label>
               <Input
                 id="image_url"
                 value={standForm.image_url}
@@ -738,6 +925,44 @@ const StandsManager = () => {
                 placeholder="https://..."
               />
             </div>
+            
+            {/* Additional Images */}
+            <div className="space-y-2">
+              <Label>Additional Images (Optional)</Label>
+              <div className="flex gap-2">
+                <Input
+                  value={newImageUrl}
+                  onChange={(e) => setNewImageUrl(e.target.value)}
+                  placeholder="Enter image URL"
+                  onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), handleAddImage())}
+                />
+                <Button type="button" onClick={handleAddImage} variant="outline">
+                  <Plus className="h-4 w-4" />
+                </Button>
+              </div>
+              {standForm.images.length > 0 && (
+                <div className="grid grid-cols-3 gap-2 mt-2">
+                  {standForm.images.map((url, index) => (
+                    <div key={index} className="relative group aspect-video">
+                      <img
+                        src={url}
+                        alt={`Image ${index + 1}`}
+                        className="w-full h-full object-cover rounded-md"
+                      />
+                      <Button
+                        variant="destructive"
+                        size="icon"
+                        className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={() => handleRemoveImage(index)}
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
             <div className="space-y-2">
               <Label htmlFor="description">Description</Label>
               <Textarea
@@ -924,6 +1149,164 @@ const StandsManager = () => {
         </DialogContent>
       </Dialog>
 
+      {/* Menu Management Dialog */}
+      <Dialog open={menuDialogOpen} onOpenChange={(open) => {
+        setMenuDialogOpen(open);
+        if (!open) {
+          setSelectedStandForMenu(null);
+          resetMenuItemForm();
+        }
+      }}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <UtensilsCrossed className="h-5 w-5" />
+              Menu - {selectedStandForMenu?.name}
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-6">
+            {/* Add/Edit Menu Item Form */}
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm">
+                  {editingMenuItem ? "Edit Menu Item" : "Add Menu Item"}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label>Item Name *</Label>
+                    <Input
+                      value={menuItemForm.name}
+                      onChange={(e) => setMenuItemForm({ ...menuItemForm, name: e.target.value })}
+                      placeholder="e.g., Funnel Cake"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Price</Label>
+                    <div className="relative">
+                      <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        type="number"
+                        step="0.01"
+                        value={menuItemForm.price}
+                        onChange={(e) => setMenuItemForm({ ...menuItemForm, price: e.target.value })}
+                        placeholder="0.00"
+                        className="pl-10"
+                      />
+                    </div>
+                  </div>
+                </div>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label>Category</Label>
+                    <Input
+                      value={menuItemForm.category}
+                      onChange={(e) => setMenuItemForm({ ...menuItemForm, category: e.target.value })}
+                      placeholder="e.g., Desserts, Drinks"
+                    />
+                  </div>
+                  <div className="flex items-center gap-2 pt-6">
+                    <Switch
+                      checked={menuItemForm.is_available}
+                      onCheckedChange={(checked) => setMenuItemForm({ ...menuItemForm, is_available: checked })}
+                    />
+                    <Label>Available</Label>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label>Description</Label>
+                  <Textarea
+                    value={menuItemForm.description}
+                    onChange={(e) => setMenuItemForm({ ...menuItemForm, description: e.target.value })}
+                    placeholder="Describe this menu item..."
+                    rows={2}
+                  />
+                </div>
+                <div className="flex gap-2">
+                  <Button onClick={handleMenuItemSubmit} disabled={menuItemMutation.isPending}>
+                    {menuItemMutation.isPending ? "Saving..." : editingMenuItem ? "Update Item" : "Add Item"}
+                  </Button>
+                  {editingMenuItem && (
+                    <Button variant="outline" onClick={resetMenuItemForm}>
+                      Cancel Edit
+                    </Button>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Menu Items List */}
+            <div className="space-y-2">
+              <h4 className="font-medium">Menu Items</h4>
+              {menuLoading ? (
+                <p className="text-muted-foreground text-sm">Loading menu...</p>
+              ) : menuItems.length === 0 ? (
+                <p className="text-muted-foreground text-sm">No menu items yet. Add your first item above.</p>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Item</TableHead>
+                      <TableHead>Category</TableHead>
+                      <TableHead>Price</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {menuItems.map((item) => (
+                      <TableRow key={item.id}>
+                        <TableCell>
+                          <div>
+                            <p className="font-medium">{item.name}</p>
+                            {item.description && (
+                              <p className="text-xs text-muted-foreground line-clamp-1">
+                                {item.description}
+                              </p>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell>{item.category || "-"}</TableCell>
+                        <TableCell>
+                          {item.price ? `$${item.price.toFixed(2)}` : "-"}
+                        </TableCell>
+                        <TableCell>
+                          <Badge className={item.is_available ? "bg-green-500/20 text-green-400" : "bg-muted text-muted-foreground"}>
+                            {item.is_available ? "Available" : "Unavailable"}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleEditMenuItem(item)}
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => setDeleteDialog({
+                              type: "menu_item",
+                              id: item.id,
+                              name: item.name,
+                            })}
+                          >
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {/* Delete Confirmation Dialog */}
       <Dialog
         open={!!deleteDialog}
@@ -948,10 +1331,12 @@ const StandsManager = () => {
                   deleteStandMutation.mutate(deleteDialog.id);
                 } else if (deleteDialog?.type === "event") {
                   deleteEventMutation.mutate(deleteDialog.id);
+                } else if (deleteDialog?.type === "menu_item") {
+                  deleteMenuItemMutation.mutate(deleteDialog.id);
                 }
               }}
               disabled={
-                deleteStandMutation.isPending || deleteEventMutation.isPending
+                deleteStandMutation.isPending || deleteEventMutation.isPending || deleteMenuItemMutation.isPending
               }
             >
               Delete
