@@ -1754,6 +1754,7 @@ export type Database = {
           image_url: string | null
           images: string[] | null
           name: string
+          slug: string | null
           status: string
           story: string | null
           updated_at: string
@@ -1766,6 +1767,7 @@ export type Database = {
           image_url?: string | null
           images?: string[] | null
           name: string
+          slug?: string | null
           status?: string
           story?: string | null
           updated_at?: string
@@ -1778,6 +1780,7 @@ export type Database = {
           image_url?: string | null
           images?: string[] | null
           name?: string
+          slug?: string | null
           status?: string
           story?: string | null
           updated_at?: string
