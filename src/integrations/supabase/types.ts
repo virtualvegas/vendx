@@ -1651,6 +1651,89 @@ export type Database = {
         }
         Relationships: []
       }
+      stand_events: {
+        Row: {
+          created_at: string
+          event_date: string
+          event_end_date: string | null
+          event_location: string
+          event_name: string
+          id: string
+          notes: string | null
+          stand_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          event_date: string
+          event_end_date?: string | null
+          event_location: string
+          event_name: string
+          id?: string
+          notes?: string | null
+          stand_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          event_date?: string
+          event_end_date?: string | null
+          event_location?: string
+          event_name?: string
+          id?: string
+          notes?: string | null
+          stand_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stand_events_stand_id_fkey"
+            columns: ["stand_id"]
+            isOneToOne: false
+            referencedRelation: "stands"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stands: {
+        Row: {
+          brand_future_focus: string | null
+          created_at: string
+          description: string | null
+          id: string
+          image_url: string | null
+          name: string
+          status: string
+          story: string | null
+          updated_at: string
+        }
+        Insert: {
+          brand_future_focus?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          name: string
+          status?: string
+          story?: string | null
+          updated_at?: string
+        }
+        Update: {
+          brand_future_focus?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          name?: string
+          status?: string
+          story?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       store_cart_items: {
         Row: {
           addon_ids: string[] | null
