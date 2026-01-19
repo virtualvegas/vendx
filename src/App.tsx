@@ -27,6 +27,7 @@ import GamesPlayerPage from "./pages/GamesPlayerPage";
 import LocationsPage from "./pages/LocationsPage";
 import LocationDetailPage from "./pages/LocationDetailPage";
 import EventsPage from "./pages/EventsPage";
+import StandDetailPage from "./pages/StandDetailPage";
 import LinksPage from "./pages/LinksPage";
 import NewsPage from "./pages/NewsPage";
 import NewsArticlePage from "./pages/NewsArticlePage";
@@ -52,6 +53,7 @@ const App = () => (
             <Route path="/locations" element={<LocationsPage />} />
             <Route path="/locations/events" element={<EventsPage />} />
             <Route path="/locations/:id" element={<LocationDetailPage />} />
+            <Route path="/stands/:slug" element={<StandDetailPage />} />
             <Route path="/careers" element={<CareersPage />} />
             <Route path="/careers/:id" element={<JobDetailPage />} />
             <Route path="/contact" element={<ContactPage />} />
