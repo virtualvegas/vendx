@@ -26,6 +26,7 @@ import VideoGamesPage from "./pages/VideoGamesPage";
 import GamesPlayerPage from "./pages/GamesPlayerPage";
 import LocationsPage from "./pages/LocationsPage";
 import LocationDetailPage from "./pages/LocationDetailPage";
+import EventsPage from "./pages/EventsPage";
 import LinksPage from "./pages/LinksPage";
 import NewsPage from "./pages/NewsPage";
 import NewsArticlePage from "./pages/NewsArticlePage";
@@ -49,6 +50,7 @@ const App = () => (
             <Route path="/games" element={<VideoGamesPage />} />
             <Route path="/games-player" element={<GamesPlayerPage />} />
             <Route path="/locations" element={<LocationsPage />} />
+            <Route path="/locations/events" element={<EventsPage />} />
             <Route path="/locations/:id" element={<LocationDetailPage />} />
             <Route path="/careers" element={<CareersPage />} />
             <Route path="/careers/:id" element={<JobDetailPage />} />
