@@ -27,6 +27,7 @@ import {
   Newspaper,
   GitBranch,
   Users,
+  Store,
 } from "lucide-react";
 import { AppRole } from "@/pages/DashboardPage";
 import { cn } from "@/lib/utils";
@@ -130,6 +131,7 @@ const tabGroups: TabGroup[] = [
     label: "Administration",
     tabs: [
       { id: "locations", label: "Locations", icon: Map, requiredRoles: ["super_admin"] },
+      { id: "stands-manager", label: "Stands", icon: Store, requiredRoles: ["super_admin"] },
       { id: "divisions-manager", label: "Divisions", icon: Layers, requiredRoles: ["super_admin"] },
       { id: "careers", label: "Careers", icon: Briefcase, requiredRoles: ["super_admin"] },
       { id: "video-games", label: "Games", icon: Gamepad2, requiredRoles: ["super_admin"] },
