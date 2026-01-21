@@ -23,7 +23,7 @@ serve(async (req) => {
     let event: Stripe.Event;
 
     // For webhook signature verification (if webhook secret is set)
-    const webhookSecret = Deno.env.get("STRIPE_WEBHOOK_SECRET");
+    const webhookSecret = Deno.env.get("STRIPE_WALLET_WEBHOOK_SECRET");
     if (webhookSecret && signature) {
       try {
         event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
