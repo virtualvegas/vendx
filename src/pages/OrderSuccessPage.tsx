@@ -1,21 +1,58 @@
 import { useEffect, useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useSearchParams, useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { CheckCircle, Package, ArrowRight, Gift } from "lucide-react";
+import { CheckCircle, Package, ArrowRight, Gift, Loader2 } from "lucide-react";
 import confetti from "canvas-confetti";
 
 const OrderSuccessPage = () => {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const sessionId = searchParams.get("session_id");
+  const isPayPal = searchParams.get("paypal") === "true";
+  const paypalToken = searchParams.get("token");
   const [showConfetti, setShowConfetti] = useState(false);
+  const [processing, setProcessing] = useState(false);
+  const [orderComplete, setOrderComplete] = useState(!isPayPal);
+
+  // Handle PayPal capture
+  useEffect(() => {
+    const capturePayPalOrder = async () => {
+      if (isPayPal && paypalToken && !orderComplete) {
+        setProcessing(true);
+        try {
+          const { data, error } = await supabase.functions.invoke("paypal-capture", {
+            body: { orderId: paypalToken, type: "store_order" }
+          });
+          
+          if (error) throw error;
+          
+          if (data?.success) {
+            setOrderComplete(true);
+            toast.success("Payment confirmed!");
+          } else {
+            throw new Error("Payment capture failed");
+          }
+        } catch (error: any) {
+          console.error("PayPal capture error:", error);
+          toast.error(error.message || "Failed to process payment");
+          navigate("/store/cart");
+        } finally {
+          setProcessing(false);
+        }
+      }
+    };
+    
+    capturePayPalOrder();
+  }, [isPayPal, paypalToken, orderComplete, navigate]);
 
   useEffect(() => {
-    if (!showConfetti) {
+    if (orderComplete && !showConfetti) {
       setShowConfetti(true);
-      // Trigger confetti
       confetti({
         particleCount: 100,
         spread: 70,
@@ -23,7 +60,23 @@ const OrderSuccessPage = () => {
         colors: ['#2563eb', '#00ff88', '#ffffff']
       });
     }
-  }, [showConfetti]);
+  }, [orderComplete, showConfetti]);
+
+  if (processing) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navigation />
+        <div className="container mx-auto px-4 pt-24 pb-12">
+          <div className="max-w-2xl mx-auto text-center">
+            <Loader2 className="h-16 w-16 animate-spin mx-auto mb-4 text-primary" />
+            <h1 className="text-2xl font-bold mb-2">Processing Your Payment</h1>
+            <p className="text-muted-foreground">Please wait while we confirm your PayPal payment...</p>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
