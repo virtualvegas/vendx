@@ -5,7 +5,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Loader2, CreditCard, DollarSign } from "lucide-react";
+import { Loader2, DollarSign, Wallet } from "lucide-react";
+import PaymentMethodSelector, { PaymentMethod } from "@/components/payment/PaymentMethodSelector";
 
 interface WalletLoadDialogProps {
   open: boolean;
@@ -18,6 +19,7 @@ const WalletLoadDialog = ({ open, onOpenChange }: WalletLoadDialogProps) => {
   const [amount, setAmount] = useState<number>(25);
   const [customAmount, setCustomAmount] = useState<string>("");
   const [loading, setLoading] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("stripe");
   const { toast } = useToast();
 
   const handleLoadWallet = async () => {
@@ -46,7 +48,11 @@ const WalletLoadDialog = ({ open, onOpenChange }: WalletLoadDialogProps) => {
         return;
       }
 
-      const { data, error } = await supabase.functions.invoke("vendx-pay-create-checkout", {
+      const functionName = paymentMethod === "paypal" 
+        ? "vendx-pay-paypal-checkout" 
+        : "vendx-pay-create-checkout";
+      
+      const { data, error } = await supabase.functions.invoke(functionName, {
         body: { amount: finalAmount },
       });
 
@@ -74,7 +80,7 @@ const WalletLoadDialog = ({ open, onOpenChange }: WalletLoadDialogProps) => {
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <CreditCard className="w-5 h-5 text-primary" />
+            <Wallet className="w-5 h-5 text-primary" />
             Add Funds to Wallet
           </DialogTitle>
           <DialogDescription>
@@ -128,6 +134,16 @@ const WalletLoadDialog = ({ open, onOpenChange }: WalletLoadDialogProps) => {
             </div>
           </div>
 
+          {/* Payment Method Selection */}
+          <div className="space-y-2">
+            <Label>Payment Method</Label>
+            <PaymentMethodSelector
+              selected={paymentMethod}
+              onSelect={setPaymentMethod}
+              disabled={loading}
+            />
+          </div>
+
           <Button
             onClick={handleLoadWallet}
             disabled={loading}
@@ -140,14 +156,13 @@ const WalletLoadDialog = ({ open, onOpenChange }: WalletLoadDialogProps) => {
               </>
             ) : (
               <>
-                <CreditCard className="w-5 h-5 mr-2" />
-                Pay with Card
+                {paymentMethod === "stripe" ? "Pay with Card" : "Pay with PayPal"}
               </>
             )}
           </Button>
 
           <p className="text-xs text-center text-muted-foreground">
-            Secure payment powered by Stripe. Your card details are never stored on our servers.
+            Secure payment. Your payment details are never stored on our servers.
           </p>
         </div>
       </DialogContent>

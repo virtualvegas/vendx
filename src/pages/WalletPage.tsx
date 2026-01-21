@@ -70,22 +70,58 @@ const WalletPage = () => {
     return () => subscription.unsubscribe();
   }, [navigate]);
 
+  // Handle PayPal return
   useEffect(() => {
-    if (searchParams.get("success") === "true") {
+    const handlePayPalReturn = async () => {
+      const isPayPal = searchParams.get("paypal") === "true";
+      const token = searchParams.get("token"); // PayPal order ID
       const amount = searchParams.get("amount");
-      toast({
-        title: "Wallet Loaded!",
-        description: `Successfully added $${amount} to your VendX wallet.`,
-      });
-      window.history.replaceState({}, "", "/wallet");
-    } else if (searchParams.get("canceled") === "true") {
-      toast({
-        title: "Payment Canceled",
-        description: "Your wallet load was canceled.",
-        variant: "destructive",
-      });
-      window.history.replaceState({}, "", "/wallet");
-    }
+      
+      if (isPayPal && token) {
+        try {
+          toast({
+            title: "Processing Payment...",
+            description: "Please wait while we confirm your PayPal payment.",
+          });
+          
+          const { data, error } = await supabase.functions.invoke("paypal-capture", {
+            body: { orderId: token, type: "wallet_load" }
+          });
+          
+          if (error) throw error;
+          
+          if (data?.success) {
+            toast({
+              title: "Wallet Loaded!",
+              description: `Successfully added $${amount} to your VendX wallet via PayPal.`,
+            });
+          }
+        } catch (error: any) {
+          console.error("PayPal capture error:", error);
+          toast({
+            title: "Payment Error",
+            description: error.message || "Failed to process PayPal payment.",
+            variant: "destructive",
+          });
+        }
+        window.history.replaceState({}, "", "/wallet");
+      } else if (searchParams.get("success") === "true") {
+        toast({
+          title: "Wallet Loaded!",
+          description: `Successfully added $${amount} to your VendX wallet.`,
+        });
+        window.history.replaceState({}, "", "/wallet");
+      } else if (searchParams.get("canceled") === "true") {
+        toast({
+          title: "Payment Canceled",
+          description: "Your wallet load was canceled.",
+          variant: "destructive",
+        });
+        window.history.replaceState({}, "", "/wallet");
+      }
+    };
+    
+    handlePayPalReturn();
   }, [searchParams, toast]);
 
   useEffect(() => {

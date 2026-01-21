@@ -8,12 +8,17 @@ import { Card, CardContent } from "@/components/ui/card";
 import { ShoppingCart, Minus, Plus, Trash2, ArrowLeft, ArrowRight, Loader2, ShoppingBag } from "lucide-react";
 import { useCart } from "@/hooks/useCart";
 import { toast } from "sonner";
+import PaymentMethodSelector, { PaymentMethod } from "@/components/payment/PaymentMethodSelector";
 
 const CartPage = () => {
   const navigate = useNavigate();
   const { cartItems, loading, updateQuantity, removeFromCart, getCartTotal, refreshCart } = useCart();
   const [checkingOut, setCheckingOut] = useState(false);
   const [user, setUser] = useState<any>(null);
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("stripe");
+
+  // Check if cart has subscription items (PayPal doesn't support subscriptions)
+  const hasSubscription = cartItems.some(item => item.product?.is_subscription);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setUser(data.user));
@@ -26,10 +31,16 @@ const CartPage = () => {
       return;
     }
 
+    if (paymentMethod === "paypal" && hasSubscription) {
+      toast.error("PayPal is not available for subscription products. Please use Debit/Credit.");
+      return;
+    }
+
     setCheckingOut(true);
     
     try {
-      const { data, error } = await supabase.functions.invoke("store-create-checkout", {
+      const functionName = paymentMethod === "paypal" ? "store-paypal-checkout" : "store-create-checkout";
+      const { data, error } = await supabase.functions.invoke(functionName, {
         body: { cartItems }
       });
 
@@ -194,24 +205,40 @@ const CartPage = () => {
                     </div>
                   </div>
 
-                  <Button 
-                    className="w-full h-12" 
-                    onClick={handleCheckout}
-                    disabled={checkingOut}
-                  >
-                    {checkingOut ? (
-                      <Loader2 className="h-5 w-5 mr-2 animate-spin" />
-                    ) : (
-                      <ArrowRight className="h-5 w-5 mr-2" />
-                    )}
-                    Proceed to Checkout
-                  </Button>
+                  <div className="space-y-4">
+                    <div>
+                      <p className="text-sm font-medium mb-2">Payment Method</p>
+                      <PaymentMethodSelector
+                        selected={paymentMethod}
+                        onSelect={setPaymentMethod}
+                        disabled={checkingOut}
+                      />
+                      {hasSubscription && paymentMethod === "paypal" && (
+                        <p className="text-xs text-destructive mt-2">
+                          PayPal is not available for subscription products
+                        </p>
+                      )}
+                    </div>
 
-                  {!user && (
-                    <p className="text-xs text-muted-foreground text-center mt-3">
-                      You'll need to sign in to complete your purchase
-                    </p>
-                  )}
+                    <Button 
+                      className="w-full h-12" 
+                      onClick={handleCheckout}
+                      disabled={checkingOut || (hasSubscription && paymentMethod === "paypal")}
+                    >
+                      {checkingOut ? (
+                        <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                      ) : (
+                        <ArrowRight className="h-5 w-5 mr-2" />
+                      )}
+                      Proceed to Checkout
+                    </Button>
+
+                    {!user && (
+                      <p className="text-xs text-muted-foreground text-center">
+                        You'll need to sign in to complete your purchase
+                      </p>
+                    )}
+                  </div>
                 </CardContent>
               </Card>
             </div>
