@@ -183,17 +183,21 @@ async function syncPayPalTransactions(supabase: any, startDate?: string): Promis
   let synced = 0;
 
   try {
-    // Calculate date range (last 30 days if no start date)
-    const start = startDate 
+    // Calculate date range
+    // If no startDate is provided, sync ALL recorded PayPal transactions.
+    const start = startDate
       ? new Date(startDate).toISOString()
-      : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+      : new Date(0).toISOString();
 
     // Sync PayPal store orders from internal records
     const { data: paypalOrders, error: ordersError } = await supabase
       .from("store_orders")
-      .select("*, profiles:user_id(email, full_name)")
-      .eq("payment_method", "paypal")
-      .not("paypal_order_id", "is", null)
+      .select("id, order_number, user_id, status, total, created_at, paypal_order_id, payment_method")
+      // Include any orders tagged as PayPal OR having a PayPal order id.
+      .or("payment_method.eq.paypal,paypal_order_id.not.is.null")
+      // Any post-payment status should count as a completed transaction
+      // (admins may advance status to shipped/delivered after payment)
+      .in("status", ["paid", "completed", "shipped", "delivered"])
       .gte("created_at", start)
       .order("created_at", { ascending: false });
 
@@ -209,10 +213,10 @@ async function syncPayPalTransactions(supabase: any, startDate?: string): Promis
           transaction_type: "revenue",
           amount: Number(order.total),
           currency: "USD",
-          status: order.status === "paid" ? "completed" : order.status,
+          status: "completed",
           description: `Store Order ${order.order_number || order.id}`,
-          customer_email: order.profiles?.email || null,
-          customer_name: order.profiles?.full_name || null,
+          customer_email: null,
+          customer_name: null,
           transaction_date: order.created_at,
           metadata: {
             order_id: order.id,
@@ -237,9 +241,10 @@ async function syncPayPalTransactions(supabase: any, startDate?: string): Promis
     // Sync PayPal wallet transactions from internal records
     const { data: walletTxns, error: walletError } = await supabase
       .from("wallet_transactions")
-      .select("*, wallets:wallet_id(user_id, profiles:user_id(email, full_name))")
+      .select("id, wallet_id, amount, transaction_type, description, reference_id, created_at")
       .eq("transaction_type", "load")
-      .ilike("description", "%PayPal%")
+      // Prefer reference_id (PayPal order id) but keep description fallback for older rows
+      .or("reference_id.not.is.null,description.ilike.%PayPal%")
       .gte("created_at", start)
       .order("created_at", { ascending: false });
 
@@ -258,8 +263,8 @@ async function syncPayPalTransactions(supabase: any, startDate?: string): Promis
           currency: "USD",
           status: "completed",
           description: txn.description || "Wallet load via PayPal",
-          customer_email: txn.wallets?.profiles?.email || null,
-          customer_name: txn.wallets?.profiles?.full_name || null,
+          customer_email: null,
+          customer_name: null,
           transaction_date: txn.created_at,
           metadata: {
             wallet_transaction_id: txn.id,
