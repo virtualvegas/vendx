@@ -32,3 +32,6 @@ verify_jwt = true
 
 [functions.paypal-capture]
 verify_jwt = false
+
+[functions.sync-payment-transactions]
+verify_jwt = false

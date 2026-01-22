@@ -2412,6 +2412,90 @@ export type Database = {
         }
         Relationships: []
       }
+      synced_transactions: {
+        Row: {
+          amount: number
+          created_at: string
+          currency: string
+          customer_email: string | null
+          customer_name: string | null
+          description: string | null
+          id: string
+          metadata: Json | null
+          provider: string
+          provider_transaction_id: string
+          status: string
+          synced_at: string
+          transaction_date: string
+          transaction_type: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          currency?: string
+          customer_email?: string | null
+          customer_name?: string | null
+          description?: string | null
+          id?: string
+          metadata?: Json | null
+          provider: string
+          provider_transaction_id: string
+          status: string
+          synced_at?: string
+          transaction_date: string
+          transaction_type?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          currency?: string
+          customer_email?: string | null
+          customer_name?: string | null
+          description?: string | null
+          id?: string
+          metadata?: Json | null
+          provider?: string
+          provider_transaction_id?: string
+          status?: string
+          synced_at?: string
+          transaction_date?: string
+          transaction_type?: string
+        }
+        Relationships: []
+      }
+      transaction_sync_status: {
+        Row: {
+          error_message: string | null
+          id: string
+          last_sync_at: string | null
+          last_sync_cursor: string | null
+          provider: string
+          sync_status: string
+          transactions_synced: number | null
+          updated_at: string
+        }
+        Insert: {
+          error_message?: string | null
+          id?: string
+          last_sync_at?: string | null
+          last_sync_cursor?: string | null
+          provider: string
+          sync_status?: string
+          transactions_synced?: number | null
+          updated_at?: string
+        }
+        Update: {
+          error_message?: string | null
+          id?: string
+          last_sync_at?: string | null
+          last_sync_cursor?: string | null
+          provider?: string
+          sync_status?: string
+          transactions_synced?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
