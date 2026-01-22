@@ -2132,9 +2132,6 @@ export type Database = {
           id: string
           notes: string | null
           order_number: string
-          payment_method: string | null
-          paypal_order_id: string | null
-          shipping_address: Json | null
           shipping_address_id: string | null
           shipping_cost: number | null
           status: string
@@ -2151,9 +2148,6 @@ export type Database = {
           id?: string
           notes?: string | null
           order_number: string
-          payment_method?: string | null
-          paypal_order_id?: string | null
-          shipping_address?: Json | null
           shipping_address_id?: string | null
           shipping_cost?: number | null
           status?: string
@@ -2170,9 +2164,6 @@ export type Database = {
           id?: string
           notes?: string | null
           order_number?: string
-          payment_method?: string | null
-          paypal_order_id?: string | null
-          shipping_address?: Json | null
           shipping_address_id?: string | null
           shipping_cost?: number | null
           status?: string
@@ -2682,7 +2673,6 @@ export type Database = {
           description: string | null
           id: string
           machine_id: string | null
-          reference_id: string | null
           stripe_payment_intent_id: string | null
           transaction_type: string
           wallet_id: string
@@ -2693,7 +2683,6 @@ export type Database = {
           description?: string | null
           id?: string
           machine_id?: string | null
-          reference_id?: string | null
           stripe_payment_intent_id?: string | null
           transaction_type: string
           wallet_id: string
@@ -2704,7 +2693,6 @@ export type Database = {
           description?: string | null
           id?: string
           machine_id?: string | null
-          reference_id?: string | null
           stripe_payment_intent_id?: string | null
           transaction_type?: string
           wallet_id?: string
