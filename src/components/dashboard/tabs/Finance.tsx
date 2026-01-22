@@ -128,10 +128,26 @@ const Finance = () => {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["synced-transactions"] });
       queryClient.invalidateQueries({ queryKey: ["sync-status"] });
-      toast({
-        title: "Sync Complete",
-        description: `Synced ${data.total} transactions (Stripe: ${data.stripe_transactions}, PayPal: ${data.paypal_transactions})`,
-      });
+      
+      // Show success with any warnings
+      if (data.stripe_error || data.paypal_error) {
+        toast({
+          title: "Sync Completed with Warnings",
+          description: (
+            <div className="space-y-1">
+              <p>Synced {data.total} transactions</p>
+              {data.stripe_error && <p className="text-sm text-orange-500">Stripe: {data.stripe_error}</p>}
+              {data.paypal_error && <p className="text-sm text-orange-500">PayPal: {data.paypal_error}</p>}
+            </div>
+          ),
+          variant: "default",
+        });
+      } else {
+        toast({
+          title: "Sync Complete",
+          description: `Synced ${data.total} transactions (Stripe: ${data.stripe_transactions}, PayPal: ${data.paypal_transactions})`,
+        });
+      }
     },
     onError: (error: any) => {
       toast({

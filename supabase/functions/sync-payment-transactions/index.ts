@@ -366,21 +366,44 @@ serve(async (req) => {
 
     let stripeCount = 0;
     let paypalCount = 0;
+    let stripeError: string | null = null;
+    let paypalError: string | null = null;
 
     if (!provider || provider === "stripe") {
-      stripeCount = await syncStripeTransactions(supabaseClient, startDate);
+      try {
+        stripeCount = await syncStripeTransactions(supabaseClient, startDate);
+      } catch (error) {
+        stripeError = error instanceof Error ? error.message : "Unknown Stripe error";
+        logStep("Stripe sync failed, continuing", { error: stripeError });
+      }
     }
 
     if (!provider || provider === "paypal") {
-      paypalCount = await syncPayPalTransactions(supabaseClient, startDate);
+      try {
+        paypalCount = await syncPayPalTransactions(supabaseClient, startDate);
+      } catch (error) {
+        paypalError = error instanceof Error ? error.message : "Unknown PayPal error";
+        logStep("PayPal sync failed, continuing", { error: paypalError });
+        
+        // Check if it's a permissions error and provide helpful message
+        if (paypalError.includes("NOT_AUTHORIZED") || paypalError.includes("insufficient permissions")) {
+          paypalError = "PayPal Transaction Search API requires additional permissions. Enable 'Transaction Search' in your PayPal Developer Dashboard under App Settings > Advanced Options.";
+        }
+      }
     }
 
+    // Return partial success if at least one provider synced
+    const hasSuccess = stripeCount > 0 || paypalCount > 0 || (!stripeError && !paypalError);
+    
     return new Response(JSON.stringify({
-      success: true,
+      success: hasSuccess,
       stripe_transactions: stripeCount,
       paypal_transactions: paypalCount,
       total: stripeCount + paypalCount,
+      stripe_error: stripeError,
+      paypal_error: paypalError,
     }), {
+      status: hasSuccess ? 200 : 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {
