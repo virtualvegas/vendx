@@ -11,35 +11,7 @@ const logStep = (step: string, details?: any) => {
   console.log(`[SYNC-TRANSACTIONS] ${step}`, details ? JSON.stringify(details) : "");
 };
 
-const PAYPAL_API_URL = Deno.env.get("PAYPAL_API_URL") || "https://api-m.paypal.com";
-
-async function getPayPalAccessToken(): Promise<string> {
-  const clientId = Deno.env.get("PAYPAL_CLIENT_ID");
-  const clientSecret = Deno.env.get("PAYPAL_CLIENT_SECRET");
-  
-  if (!clientId || !clientSecret) {
-    throw new Error("PayPal credentials not configured");
-  }
-
-  const auth = btoa(`${clientId}:${clientSecret}`);
-  
-  const response = await fetch(`${PAYPAL_API_URL}/v1/oauth2/token`, {
-    method: "POST",
-    headers: {
-      "Authorization": `Basic ${auth}`,
-      "Content-Type": "application/x-www-form-urlencoded",
-    },
-    body: "grant_type=client_credentials",
-  });
-
-  if (!response.ok) {
-    const error = await response.text();
-    throw new Error(`Failed to get PayPal access token: ${error}`);
-  }
-
-  const data = await response.json();
-  return data.access_token;
-}
+// PayPal sync now uses internal records instead of Transaction Search API
 
 async function syncStripeTransactions(supabase: any, startDate?: string): Promise<number> {
   const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
@@ -200,7 +172,7 @@ async function syncStripeTransactions(supabase: any, startDate?: string): Promis
 }
 
 async function syncPayPalTransactions(supabase: any, startDate?: string): Promise<number> {
-  logStep("Starting PayPal sync");
+  logStep("Starting PayPal sync from internal records");
 
   // Update sync status to syncing
   await supabase
@@ -211,91 +183,101 @@ async function syncPayPalTransactions(supabase: any, startDate?: string): Promis
   let synced = 0;
 
   try {
-    const accessToken = await getPayPalAccessToken();
-
     // Calculate date range (last 30 days if no start date)
-    const endDate = new Date().toISOString();
     const start = startDate 
       ? new Date(startDate).toISOString()
       : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
 
-    // Fetch transactions from PayPal
-    const url = new URL(`${PAYPAL_API_URL}/v1/reporting/transactions`);
-    url.searchParams.set("start_date", start);
-    url.searchParams.set("end_date", endDate);
-    url.searchParams.set("fields", "all");
-    url.searchParams.set("page_size", "100");
+    // Sync PayPal store orders from internal records
+    const { data: paypalOrders, error: ordersError } = await supabase
+      .from("store_orders")
+      .select("*, profiles:user_id(email, full_name)")
+      .eq("payment_method", "paypal")
+      .not("paypal_order_id", "is", null)
+      .gte("created_at", start)
+      .order("created_at", { ascending: false });
 
-    let page = 1;
-    let hasMore = true;
+    if (ordersError) {
+      logStep("Error fetching PayPal orders", { error: ordersError });
+    } else {
+      logStep(`Found ${paypalOrders?.length || 0} PayPal store orders`);
 
-    while (hasMore) {
-      url.searchParams.set("page", page.toString());
-
-      const response = await fetch(url.toString(), {
-        headers: {
-          "Authorization": `Bearer ${accessToken}`,
-          "Content-Type": "application/json",
-        },
-      });
-
-      if (!response.ok) {
-        const error = await response.text();
-        throw new Error(`Failed to fetch PayPal transactions: ${error}`);
-      }
-
-      const data = await response.json();
-      logStep(`Fetched page ${page} with ${data.transaction_details?.length || 0} PayPal transactions`);
-
-      const transactions = data.transaction_details || [];
-
-      for (const txn of transactions) {
-        const info = txn.transaction_info;
-        const payerInfo = txn.payer_info;
-        
-        // Only process completed transactions
-        if (info.transaction_status !== "S") continue;
-
-        const amount = parseFloat(info.transaction_amount?.value || "0");
-        const isRefund = info.transaction_event_code?.startsWith("T11") || amount < 0;
-
+      for (const order of paypalOrders || []) {
         const transaction = {
           provider: "paypal",
-          provider_transaction_id: info.transaction_id,
-          transaction_type: isRefund ? "refund" : "revenue",
-          amount: Math.abs(amount),
-          currency: info.transaction_amount?.currency_code || "USD",
-          status: "completed",
-          description: info.transaction_subject || info.transaction_note || `PayPal transaction ${info.transaction_id}`,
-          customer_email: payerInfo?.email_address || null,
-          customer_name: payerInfo?.payer_name?.alternate_full_name || null,
-          transaction_date: info.transaction_initiation_date || info.transaction_updated_date,
+          provider_transaction_id: order.paypal_order_id,
+          transaction_type: "revenue",
+          amount: Number(order.total),
+          currency: "USD",
+          status: order.status === "paid" ? "completed" : order.status,
+          description: `Store Order ${order.order_number || order.id}`,
+          customer_email: order.profiles?.email || null,
+          customer_name: order.profiles?.full_name || null,
+          transaction_date: order.created_at,
           metadata: {
-            transaction_event_code: info.transaction_event_code,
-            fee_amount: info.fee_amount?.value,
-            custom_field: info.custom_field,
+            order_id: order.id,
+            order_number: order.order_number,
+            source: "store",
           },
           synced_at: new Date().toISOString(),
         };
-
-        // Handle negative amounts for refunds
-        if (isRefund) {
-          transaction.amount = -Math.abs(amount);
-        }
 
         const { error } = await supabase
           .from("synced_transactions")
           .upsert(transaction, { onConflict: "provider,provider_transaction_id" });
 
         if (error) {
-          logStep("Error upserting PayPal transaction", { error, id: info.transaction_id });
+          logStep("Error upserting PayPal order", { error, id: order.paypal_order_id });
         } else {
           synced++;
         }
       }
+    }
 
-      hasMore = data.total_pages > page;
-      page++;
+    // Sync PayPal wallet transactions from internal records
+    const { data: walletTxns, error: walletError } = await supabase
+      .from("wallet_transactions")
+      .select("*, wallets:wallet_id(user_id, profiles:user_id(email, full_name))")
+      .eq("transaction_type", "load")
+      .ilike("description", "%PayPal%")
+      .gte("created_at", start)
+      .order("created_at", { ascending: false });
+
+    if (walletError) {
+      logStep("Error fetching PayPal wallet transactions", { error: walletError });
+    } else {
+      logStep(`Found ${walletTxns?.length || 0} PayPal wallet loads`);
+
+      for (const txn of walletTxns || []) {
+        const refId = txn.reference_id || `wallet_${txn.id}`;
+        const transaction = {
+          provider: "paypal",
+          provider_transaction_id: refId,
+          transaction_type: "revenue",
+          amount: Number(txn.amount),
+          currency: "USD",
+          status: "completed",
+          description: txn.description || "Wallet load via PayPal",
+          customer_email: txn.wallets?.profiles?.email || null,
+          customer_name: txn.wallets?.profiles?.full_name || null,
+          transaction_date: txn.created_at,
+          metadata: {
+            wallet_transaction_id: txn.id,
+            source: "wallet",
+          },
+          synced_at: new Date().toISOString(),
+        };
+
+        const { error } = await supabase
+          .from("synced_transactions")
+          .upsert(transaction, { onConflict: "provider,provider_transaction_id" });
+
+        if (error) {
+          logStep("Error upserting PayPal wallet transaction", { error, id: refId });
+        } else {
+          synced++;
+        }
+      }
     }
 
     // Update sync status to completed
@@ -310,7 +292,7 @@ async function syncPayPalTransactions(supabase: any, startDate?: string): Promis
       })
       .eq("provider", "paypal");
 
-    logStep(`PayPal sync complete: ${synced} transactions`);
+    logStep(`PayPal sync complete: ${synced} transactions from internal records`);
     return synced;
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
