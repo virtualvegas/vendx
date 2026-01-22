@@ -8,8 +8,11 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, DollarSign, Trash2, Edit } from "lucide-react";
+import { Plus, DollarSign, Trash2, Edit, RefreshCw, CreditCard, Loader2 } from "lucide-react";
+import { format } from "date-fns";
 
 interface Transaction {
   id: string;
@@ -21,9 +24,34 @@ interface Transaction {
   division_id: string | null;
 }
 
+interface SyncedTransaction {
+  id: string;
+  provider: string;
+  provider_transaction_id: string;
+  transaction_type: string;
+  amount: number;
+  currency: string;
+  status: string;
+  description: string | null;
+  customer_email: string | null;
+  customer_name: string | null;
+  transaction_date: string;
+  synced_at: string;
+}
+
+interface SyncStatus {
+  id: string;
+  provider: string;
+  last_sync_at: string | null;
+  sync_status: string;
+  error_message: string | null;
+  transactions_synced: number;
+}
+
 const Finance = () => {
   const [open, setOpen] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
+  const [providerFilter, setProviderFilter] = useState<string>("all");
   const [formData, setFormData] = useState({
     transaction_type: "revenue",
     category: "",
@@ -46,6 +74,37 @@ const Finance = () => {
     },
   });
 
+  const { data: syncedTransactions, isLoading: syncedLoading } = useQuery({
+    queryKey: ["synced-transactions", providerFilter],
+    queryFn: async () => {
+      let query = supabase
+        .from("synced_transactions")
+        .select("*")
+        .order("transaction_date", { ascending: false })
+        .limit(100);
+      
+      if (providerFilter !== "all") {
+        query = query.eq("provider", providerFilter);
+      }
+      
+      const { data, error } = await query;
+      if (error) throw error;
+      return data as SyncedTransaction[];
+    },
+  });
+
+  const { data: syncStatus } = useQuery({
+    queryKey: ["sync-status"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("transaction_sync_status")
+        .select("*");
+      if (error) throw error;
+      return data as SyncStatus[];
+    },
+    refetchInterval: 5000, // Refresh every 5 seconds to check sync status
+  });
+
   const { data: divisions } = useQuery({
     queryKey: ["finance-divisions"],
     queryFn: async () => {
@@ -55,6 +114,31 @@ const Finance = () => {
         .eq("status", "active");
       if (error) throw error;
       return data;
+    },
+  });
+
+  const syncMutation = useMutation({
+    mutationFn: async (provider?: string) => {
+      const { data, error } = await supabase.functions.invoke("sync-payment-transactions", {
+        body: { provider },
+      });
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["synced-transactions"] });
+      queryClient.invalidateQueries({ queryKey: ["sync-status"] });
+      toast({
+        title: "Sync Complete",
+        description: `Synced ${data.total} transactions (Stripe: ${data.stripe_transactions}, PayPal: ${data.paypal_transactions})`,
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Sync Failed",
+        description: error.message,
+        variant: "destructive",
+      });
     },
   });
 
@@ -136,10 +220,20 @@ const Finance = () => {
     setOpen(true);
   };
 
+  const getStripeStatus = () => syncStatus?.find(s => s.provider === "stripe");
+  const getPayPalStatus = () => syncStatus?.find(s => s.provider === "paypal");
+
   const totalRevenue = transactions?.filter((t) => t.transaction_type === "revenue").reduce((sum, t) => sum + t.amount, 0) || 0;
   const totalExpenses = transactions?.filter((t) => t.transaction_type === "expense").reduce((sum, t) => sum + t.amount, 0) || 0;
   const netProfit = totalRevenue - totalExpenses;
   const profitMargin = totalRevenue > 0 ? ((netProfit / totalRevenue) * 100).toFixed(1) : "0.0";
+
+  const syncedRevenue = syncedTransactions?.filter(t => t.transaction_type === "revenue").reduce((sum, t) => sum + t.amount, 0) || 0;
+  const syncedRefunds = syncedTransactions?.filter(t => t.transaction_type === "refund").reduce((sum, t) => sum + Math.abs(t.amount), 0) || 0;
+
+  const isSyncing = syncMutation.isPending || 
+    getStripeStatus()?.sync_status === "syncing" || 
+    getPayPalStatus()?.sync_status === "syncing";
 
   if (isLoading) {
     return <div className="flex items-center justify-center h-64"><p className="text-muted-foreground">Loading...</p></div>;
@@ -150,7 +244,7 @@ const Finance = () => {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-3xl font-bold text-foreground mb-2">Finance & Accounting</h2>
-          <p className="text-muted-foreground">Track revenue, expenses, and financial performance</p>
+          <p className="text-muted-foreground">Track revenue, expenses, and synced payment transactions</p>
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
@@ -264,54 +358,270 @@ const Finance = () => {
         </Card>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Recent Transactions</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            {transactions?.length === 0 ? (
-              <p className="text-center text-muted-foreground py-8">No transactions recorded</p>
-            ) : (
-              transactions?.slice(0, 20).map((transaction) => (
-                <div key={transaction.id} className="flex items-center justify-between border-b border-border pb-3">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3">
-                      <h3 className="font-medium text-foreground">{transaction.category}</h3>
-                      <span className={`text-xs px-2 py-1 rounded-full ${
-                        transaction.transaction_type === "revenue" ? "bg-green-500/10 text-green-500" : "bg-red-500/10 text-red-500"
-                      }`}>
-                        {transaction.transaction_type}
-                      </span>
+      <Tabs defaultValue="manual" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="manual">Manual Transactions</TabsTrigger>
+          <TabsTrigger value="synced">Synced Payments</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="manual">
+          <Card>
+            <CardHeader>
+              <CardTitle>Recent Transactions</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {transactions?.length === 0 ? (
+                  <p className="text-center text-muted-foreground py-8">No transactions recorded</p>
+                ) : (
+                  transactions?.slice(0, 20).map((transaction) => (
+                    <div key={transaction.id} className="flex items-center justify-between border-b border-border pb-3">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3">
+                          <h3 className="font-medium text-foreground">{transaction.category}</h3>
+                          <span className={`text-xs px-2 py-1 rounded-full ${
+                            transaction.transaction_type === "revenue" ? "bg-green-500/10 text-green-500" : "bg-red-500/10 text-red-500"
+                          }`}>
+                            {transaction.transaction_type}
+                          </span>
+                        </div>
+                        {transaction.description && (
+                          <p className="text-sm text-muted-foreground mt-1">{transaction.description}</p>
+                        )}
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {new Date(transaction.transaction_date).toLocaleDateString()}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <p className={`text-lg font-bold ${
+                          transaction.transaction_type === "revenue" ? "text-green-500" : "text-red-500"
+                        }`}>
+                          {transaction.transaction_type === "revenue" ? "+" : "-"}${transaction.amount.toLocaleString()}
+                        </p>
+                        <div className="flex gap-2">
+                          <Button variant="outline" size="sm" onClick={() => handleEdit(transaction)}>
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                          <Button variant="outline" size="sm" onClick={() => deleteMutation.mutate(transaction.id)}>
+                            <Trash2 className="w-4 h-4 text-destructive" />
+                          </Button>
+                        </div>
+                      </div>
                     </div>
-                    {transaction.description && (
-                      <p className="text-sm text-muted-foreground mt-1">{transaction.description}</p>
+                  ))
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="synced" className="space-y-4">
+          {/* Sync Controls */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <CreditCard className="w-5 h-5" />
+                Payment Provider Sync
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {/* Stripe Status */}
+                <div className="border rounded-lg p-4 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium">Stripe</span>
+                    <Badge variant={getStripeStatus()?.sync_status === "completed" ? "default" : 
+                      getStripeStatus()?.sync_status === "syncing" ? "secondary" : 
+                      getStripeStatus()?.sync_status === "error" ? "destructive" : "outline"}>
+                      {getStripeStatus()?.sync_status || "idle"}
+                    </Badge>
+                  </div>
+                  {getStripeStatus()?.last_sync_at && (
+                    <p className="text-xs text-muted-foreground">
+                      Last sync: {format(new Date(getStripeStatus()!.last_sync_at!), "MMM d, h:mm a")}
+                    </p>
+                  )}
+                  {getStripeStatus()?.error_message && (
+                    <p className="text-xs text-destructive">{getStripeStatus()!.error_message}</p>
+                  )}
+                  <Button 
+                    size="sm" 
+                    variant="outline" 
+                    className="w-full"
+                    disabled={isSyncing}
+                    onClick={() => syncMutation.mutate("stripe")}
+                  >
+                    {getStripeStatus()?.sync_status === "syncing" ? (
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    ) : (
+                      <RefreshCw className="w-4 h-4 mr-2" />
                     )}
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {new Date(transaction.transaction_date).toLocaleDateString()}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <p className={`text-lg font-bold ${
-                      transaction.transaction_type === "revenue" ? "text-green-500" : "text-red-500"
-                    }`}>
-                      {transaction.transaction_type === "revenue" ? "+" : "-"}${transaction.amount.toLocaleString()}
-                    </p>
-                    <div className="flex gap-2">
-                      <Button variant="outline" size="sm" onClick={() => handleEdit(transaction)}>
-                        <Edit className="w-4 h-4" />
-                      </Button>
-                      <Button variant="outline" size="sm" onClick={() => deleteMutation.mutate(transaction.id)}>
-                        <Trash2 className="w-4 h-4 text-destructive" />
-                      </Button>
-                    </div>
-                  </div>
+                    Sync Stripe
+                  </Button>
                 </div>
-              ))
-            )}
+
+                {/* PayPal Status */}
+                <div className="border rounded-lg p-4 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium">PayPal</span>
+                    <Badge variant={getPayPalStatus()?.sync_status === "completed" ? "default" : 
+                      getPayPalStatus()?.sync_status === "syncing" ? "secondary" : 
+                      getPayPalStatus()?.sync_status === "error" ? "destructive" : "outline"}>
+                      {getPayPalStatus()?.sync_status || "idle"}
+                    </Badge>
+                  </div>
+                  {getPayPalStatus()?.last_sync_at && (
+                    <p className="text-xs text-muted-foreground">
+                      Last sync: {format(new Date(getPayPalStatus()!.last_sync_at!), "MMM d, h:mm a")}
+                    </p>
+                  )}
+                  {getPayPalStatus()?.error_message && (
+                    <p className="text-xs text-destructive">{getPayPalStatus()!.error_message}</p>
+                  )}
+                  <Button 
+                    size="sm" 
+                    variant="outline" 
+                    className="w-full"
+                    disabled={isSyncing}
+                    onClick={() => syncMutation.mutate("paypal")}
+                  >
+                    {getPayPalStatus()?.sync_status === "syncing" ? (
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    ) : (
+                      <RefreshCw className="w-4 h-4 mr-2" />
+                    )}
+                    Sync PayPal
+                  </Button>
+                </div>
+
+                {/* Sync All */}
+                <div className="border rounded-lg p-4 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium">Sync All</span>
+                    <Badge variant="outline">Combined</Badge>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Sync transactions from all payment providers
+                  </p>
+                  <Button 
+                    size="sm" 
+                    className="w-full"
+                    disabled={isSyncing}
+                    onClick={() => syncMutation.mutate(undefined)}
+                  >
+                    {isSyncing ? (
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    ) : (
+                      <RefreshCw className="w-4 h-4 mr-2" />
+                    )}
+                    Sync All Providers
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Synced Stats */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">Synced Revenue</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-2xl font-bold text-green-500">${syncedRevenue.toLocaleString()}</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">Refunds</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-2xl font-bold text-red-500">${syncedRefunds.toLocaleString()}</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">Total Transactions</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-2xl font-bold text-foreground">{syncedTransactions?.length || 0}</p>
+              </CardContent>
+            </Card>
           </div>
-        </CardContent>
-      </Card>
+
+          {/* Synced Transactions List */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle>Synced Transactions</CardTitle>
+                <Select value={providerFilter} onValueChange={setProviderFilter}>
+                  <SelectTrigger className="w-32">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All</SelectItem>
+                    <SelectItem value="stripe">Stripe</SelectItem>
+                    <SelectItem value="paypal">PayPal</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {syncedLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+                </div>
+              ) : syncedTransactions?.length === 0 ? (
+                <p className="text-center text-muted-foreground py-8">
+                  No synced transactions. Click "Sync" to import transactions.
+                </p>
+              ) : (
+                <div className="space-y-3">
+                  {syncedTransactions?.map((txn) => (
+                    <div key={txn.id} className="flex items-center justify-between border-b border-border pb-3">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3">
+                          <Badge variant={txn.provider === "stripe" ? "default" : "secondary"}>
+                            {txn.provider}
+                          </Badge>
+                          <span className={`text-xs px-2 py-1 rounded-full ${
+                            txn.transaction_type === "revenue" ? "bg-green-500/10 text-green-500" : "bg-red-500/10 text-red-500"
+                          }`}>
+                            {txn.transaction_type}
+                          </span>
+                          <Badge variant="outline" className="text-xs">
+                            {txn.status}
+                          </Badge>
+                        </div>
+                        <p className="text-sm text-foreground mt-1 line-clamp-1">
+                          {txn.description}
+                        </p>
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
+                          <span>{format(new Date(txn.transaction_date), "MMM d, yyyy h:mm a")}</span>
+                          {txn.customer_email && (
+                            <>
+                              <span>•</span>
+                              <span>{txn.customer_email}</span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className={`text-lg font-bold ${
+                          txn.amount >= 0 ? "text-green-500" : "text-red-500"
+                        }`}>
+                          {txn.amount >= 0 ? "+" : ""}${Math.abs(txn.amount).toLocaleString()}
+                        </p>
+                        <p className="text-xs text-muted-foreground uppercase">{txn.currency}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
