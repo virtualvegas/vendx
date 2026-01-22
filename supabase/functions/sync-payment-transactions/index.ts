@@ -392,18 +392,16 @@ serve(async (req) => {
       }
     }
 
-    // Return partial success if at least one provider synced
-    const hasSuccess = stripeCount > 0 || paypalCount > 0 || (!stripeError && !paypalError);
-    
+    // Always return 200 with details - let the UI handle displaying errors
     return new Response(JSON.stringify({
-      success: hasSuccess,
+      success: true,
       stripe_transactions: stripeCount,
       paypal_transactions: paypalCount,
       total: stripeCount + paypalCount,
       stripe_error: stripeError,
       paypal_error: paypalError,
     }), {
-      status: hasSuccess ? 200 : 500,
+      status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {
