@@ -37,6 +37,7 @@ import NewsManager from "@/components/dashboard/tabs/NewsManager";
 import WaitlistManager from "@/components/dashboard/tabs/WaitlistManager";
 import DivisionsManager from "@/components/dashboard/tabs/DivisionsManager";
 import StandsManager from "@/components/dashboard/tabs/StandsManager";
+import QuestsManager from "@/components/dashboard/tabs/QuestsManager";
 
 export type AppRole =
   | "super_admin"
@@ -184,6 +185,8 @@ const DashboardPage = () => {
         return <DivisionsManager />;
       case "stands-manager":
         return <StandsManager />;
+      case "quests-manager":
+        return <QuestsManager />;
       default:
         return <CustomerOrders />;
     }
