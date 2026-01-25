@@ -28,6 +28,7 @@ import {
   GitBranch,
   Users,
   Store,
+  Swords,
 } from "lucide-react";
 import { AppRole } from "@/pages/DashboardPage";
 import { cn } from "@/lib/utils";
@@ -133,6 +134,7 @@ const tabGroups: TabGroup[] = [
       { id: "locations", label: "Locations", icon: Map, requiredRoles: ["super_admin"] },
       { id: "stands-manager", label: "Stands", icon: Store, requiredRoles: ["super_admin"] },
       { id: "divisions-manager", label: "Divisions", icon: Layers, requiredRoles: ["super_admin"] },
+      { id: "quests-manager", label: "Quests", icon: Swords, requiredRoles: ["super_admin"] },
       { id: "careers", label: "Careers", icon: Briefcase, requiredRoles: ["super_admin"] },
       { id: "video-games", label: "Games", icon: Gamepad2, requiredRoles: ["super_admin"] },
       { id: "admin-settings", label: "Settings", icon: Settings, requiredRoles: ["super_admin"] },

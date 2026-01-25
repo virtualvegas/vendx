@@ -1266,6 +1266,633 @@ export type Database = {
         }
         Relationships: []
       }
+      quest_badges: {
+        Row: {
+          category: string | null
+          created_at: string | null
+          description: string | null
+          icon_url: string | null
+          id: string
+          is_hidden: boolean | null
+          name: string
+          requirement_type: string
+          requirement_value: number | null
+          xp_reward: number | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          icon_url?: string | null
+          id?: string
+          is_hidden?: boolean | null
+          name: string
+          requirement_type: string
+          requirement_value?: number | null
+          xp_reward?: number | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          icon_url?: string | null
+          id?: string
+          is_hidden?: boolean | null
+          name?: string
+          requirement_type?: string
+          requirement_value?: number | null
+          xp_reward?: number | null
+        }
+        Relationships: []
+      }
+      quest_chain_steps: {
+        Row: {
+          chain_id: string
+          created_at: string | null
+          id: string
+          quest_id: string
+          step_order: number
+        }
+        Insert: {
+          chain_id: string
+          created_at?: string | null
+          id?: string
+          quest_id: string
+          step_order: number
+        }
+        Update: {
+          chain_id?: string
+          created_at?: string | null
+          id?: string
+          quest_id?: string
+          step_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quest_chain_steps_chain_id_fkey"
+            columns: ["chain_id"]
+            isOneToOne: false
+            referencedRelation: "quest_chains"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quest_chain_steps_quest_id_fkey"
+            columns: ["quest_id"]
+            isOneToOne: false
+            referencedRelation: "quests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quest_chains: {
+        Row: {
+          bonus_credits: number | null
+          bonus_xp: number | null
+          created_at: string | null
+          description: string | null
+          icon_url: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          total_quests: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          bonus_credits?: number | null
+          bonus_xp?: number | null
+          created_at?: string | null
+          description?: string | null
+          icon_url?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          total_quests?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          bonus_credits?: number | null
+          bonus_xp?: number | null
+          created_at?: string | null
+          description?: string | null
+          icon_url?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          total_quests?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      quest_completions: {
+        Row: {
+          checkin_latitude: number | null
+          checkin_longitude: number | null
+          claimed_at: string | null
+          completed_at: string | null
+          created_at: string | null
+          credits_earned: number | null
+          id: string
+          node_id: string | null
+          points_earned: number | null
+          progress_data: Json | null
+          quest_id: string
+          rewards_data: Json | null
+          status: Database["public"]["Enums"]["quest_completion_status"]
+          updated_at: string | null
+          user_id: string
+          verified_via: string | null
+          xp_earned: number | null
+        }
+        Insert: {
+          checkin_latitude?: number | null
+          checkin_longitude?: number | null
+          claimed_at?: string | null
+          completed_at?: string | null
+          created_at?: string | null
+          credits_earned?: number | null
+          id?: string
+          node_id?: string | null
+          points_earned?: number | null
+          progress_data?: Json | null
+          quest_id: string
+          rewards_data?: Json | null
+          status?: Database["public"]["Enums"]["quest_completion_status"]
+          updated_at?: string | null
+          user_id: string
+          verified_via?: string | null
+          xp_earned?: number | null
+        }
+        Update: {
+          checkin_latitude?: number | null
+          checkin_longitude?: number | null
+          claimed_at?: string | null
+          completed_at?: string | null
+          created_at?: string | null
+          credits_earned?: number | null
+          id?: string
+          node_id?: string | null
+          points_earned?: number | null
+          progress_data?: Json | null
+          quest_id?: string
+          rewards_data?: Json | null
+          status?: Database["public"]["Enums"]["quest_completion_status"]
+          updated_at?: string | null
+          user_id?: string
+          verified_via?: string | null
+          xp_earned?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quest_completions_node_id_fkey"
+            columns: ["node_id"]
+            isOneToOne: false
+            referencedRelation: "quest_nodes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quest_completions_quest_id_fkey"
+            columns: ["quest_id"]
+            isOneToOne: false
+            referencedRelation: "quests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quest_leaderboards: {
+        Row: {
+          created_at: string | null
+          id: string
+          nodes_visited: number | null
+          period: string
+          period_start: string
+          quests_completed: number | null
+          rank: number | null
+          region: string | null
+          updated_at: string | null
+          user_id: string
+          xp_earned: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          nodes_visited?: number | null
+          period: string
+          period_start: string
+          quests_completed?: number | null
+          rank?: number | null
+          region?: string | null
+          updated_at?: string | null
+          user_id: string
+          xp_earned?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          nodes_visited?: number | null
+          period?: string
+          period_start?: string
+          quests_completed?: number | null
+          rank?: number | null
+          region?: string | null
+          updated_at?: string | null
+          user_id?: string
+          xp_earned?: number | null
+        }
+        Relationships: []
+      }
+      quest_node_assignments: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          node_id: string
+          quest_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          node_id: string
+          quest_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          node_id?: string
+          quest_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quest_node_assignments_node_id_fkey"
+            columns: ["node_id"]
+            isOneToOne: false
+            referencedRelation: "quest_nodes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quest_node_assignments_quest_id_fkey"
+            columns: ["quest_id"]
+            isOneToOne: false
+            referencedRelation: "quests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quest_node_discoveries: {
+        Row: {
+          discovered_at: string | null
+          id: string
+          last_visited_at: string | null
+          node_id: string
+          user_id: string
+          visit_count: number | null
+        }
+        Insert: {
+          discovered_at?: string | null
+          id?: string
+          last_visited_at?: string | null
+          node_id: string
+          user_id: string
+          visit_count?: number | null
+        }
+        Update: {
+          discovered_at?: string | null
+          id?: string
+          last_visited_at?: string | null
+          node_id?: string
+          user_id?: string
+          visit_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quest_node_discoveries_node_id_fkey"
+            columns: ["node_id"]
+            isOneToOne: false
+            referencedRelation: "quest_nodes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quest_nodes: {
+        Row: {
+          available_from: string | null
+          available_until: string | null
+          color: string | null
+          cooldown_hours: number | null
+          created_at: string | null
+          description: string | null
+          icon_url: string | null
+          id: string
+          is_active: boolean | null
+          is_virtual: boolean | null
+          latitude: number | null
+          location_id: string | null
+          longitude: number | null
+          machine_id: string | null
+          name: string
+          node_type: string
+          radius_meters: number | null
+          rarity: Database["public"]["Enums"]["quest_node_rarity"]
+          updated_at: string | null
+        }
+        Insert: {
+          available_from?: string | null
+          available_until?: string | null
+          color?: string | null
+          cooldown_hours?: number | null
+          created_at?: string | null
+          description?: string | null
+          icon_url?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_virtual?: boolean | null
+          latitude?: number | null
+          location_id?: string | null
+          longitude?: number | null
+          machine_id?: string | null
+          name: string
+          node_type?: string
+          radius_meters?: number | null
+          rarity?: Database["public"]["Enums"]["quest_node_rarity"]
+          updated_at?: string | null
+        }
+        Update: {
+          available_from?: string | null
+          available_until?: string | null
+          color?: string | null
+          cooldown_hours?: number | null
+          created_at?: string | null
+          description?: string | null
+          icon_url?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_virtual?: boolean | null
+          latitude?: number | null
+          location_id?: string | null
+          longitude?: number | null
+          machine_id?: string | null
+          name?: string
+          node_type?: string
+          radius_meters?: number | null
+          rarity?: Database["public"]["Enums"]["quest_node_rarity"]
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quest_nodes_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quest_nodes_machine_id_fkey"
+            columns: ["machine_id"]
+            isOneToOne: false
+            referencedRelation: "vendx_machines"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quest_player_badges: {
+        Row: {
+          badge_id: string
+          earned_at: string | null
+          id: string
+          user_id: string
+        }
+        Insert: {
+          badge_id: string
+          earned_at?: string | null
+          id?: string
+          user_id: string
+        }
+        Update: {
+          badge_id?: string
+          earned_at?: string | null
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quest_player_badges_badge_id_fkey"
+            columns: ["badge_id"]
+            isOneToOne: false
+            referencedRelation: "quest_badges"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quest_player_progress: {
+        Row: {
+          created_at: string | null
+          current_level: number | null
+          current_streak: number | null
+          id: string
+          last_quest_date: string | null
+          longest_streak: number | null
+          nodes_discovered: number | null
+          quests_completed: number | null
+          total_credits_earned: number | null
+          total_distance_traveled: number | null
+          total_points_earned: number | null
+          total_xp: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          current_level?: number | null
+          current_streak?: number | null
+          id?: string
+          last_quest_date?: string | null
+          longest_streak?: number | null
+          nodes_discovered?: number | null
+          quests_completed?: number | null
+          total_credits_earned?: number | null
+          total_distance_traveled?: number | null
+          total_points_earned?: number | null
+          total_xp?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          current_level?: number | null
+          current_streak?: number | null
+          id?: string
+          last_quest_date?: string | null
+          longest_streak?: number | null
+          nodes_discovered?: number | null
+          quests_completed?: number | null
+          total_credits_earned?: number | null
+          total_distance_traveled?: number | null
+          total_points_earned?: number | null
+          total_xp?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      quest_rewards: {
+        Row: {
+          created_at: string | null
+          drop_chance: number | null
+          id: string
+          is_guaranteed: boolean | null
+          quest_id: string
+          rarity_multiplier: number | null
+          reward_code: string | null
+          reward_item_id: string | null
+          reward_type: string
+          reward_value: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          drop_chance?: number | null
+          id?: string
+          is_guaranteed?: boolean | null
+          quest_id: string
+          rarity_multiplier?: number | null
+          reward_code?: string | null
+          reward_item_id?: string | null
+          reward_type: string
+          reward_value?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          drop_chance?: number | null
+          id?: string
+          is_guaranteed?: boolean | null
+          quest_id?: string
+          rarity_multiplier?: number | null
+          reward_code?: string | null
+          reward_item_id?: string | null
+          reward_type?: string
+          reward_value?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quest_rewards_quest_id_fkey"
+            columns: ["quest_id"]
+            isOneToOne: false
+            referencedRelation: "quests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quests: {
+        Row: {
+          created_at: string | null
+          credits_reward: number | null
+          current_completions: number | null
+          description: string
+          difficulty: string | null
+          end_date: string | null
+          estimated_time_minutes: number | null
+          icon_url: string | null
+          id: string
+          is_featured: boolean | null
+          max_completions_per_user: number | null
+          max_total_completions: number | null
+          points_reward: number | null
+          quest_type: Database["public"]["Enums"]["quest_type"]
+          required_achievement: string | null
+          required_game_id: string | null
+          required_product_id: string | null
+          required_purchase_amount: number | null
+          required_score: number | null
+          requires_checkin: boolean | null
+          requires_qr_scan: boolean | null
+          requires_transaction: boolean | null
+          short_description: string | null
+          sort_order: number | null
+          start_date: string | null
+          status: Database["public"]["Enums"]["quest_status"]
+          title: string
+          updated_at: string | null
+          xp_reward: number
+        }
+        Insert: {
+          created_at?: string | null
+          credits_reward?: number | null
+          current_completions?: number | null
+          description: string
+          difficulty?: string | null
+          end_date?: string | null
+          estimated_time_minutes?: number | null
+          icon_url?: string | null
+          id?: string
+          is_featured?: boolean | null
+          max_completions_per_user?: number | null
+          max_total_completions?: number | null
+          points_reward?: number | null
+          quest_type?: Database["public"]["Enums"]["quest_type"]
+          required_achievement?: string | null
+          required_game_id?: string | null
+          required_product_id?: string | null
+          required_purchase_amount?: number | null
+          required_score?: number | null
+          requires_checkin?: boolean | null
+          requires_qr_scan?: boolean | null
+          requires_transaction?: boolean | null
+          short_description?: string | null
+          sort_order?: number | null
+          start_date?: string | null
+          status?: Database["public"]["Enums"]["quest_status"]
+          title: string
+          updated_at?: string | null
+          xp_reward?: number
+        }
+        Update: {
+          created_at?: string | null
+          credits_reward?: number | null
+          current_completions?: number | null
+          description?: string
+          difficulty?: string | null
+          end_date?: string | null
+          estimated_time_minutes?: number | null
+          icon_url?: string | null
+          id?: string
+          is_featured?: boolean | null
+          max_completions_per_user?: number | null
+          max_total_completions?: number | null
+          points_reward?: number | null
+          quest_type?: Database["public"]["Enums"]["quest_type"]
+          required_achievement?: string | null
+          required_game_id?: string | null
+          required_product_id?: string | null
+          required_purchase_amount?: number | null
+          required_score?: number | null
+          requires_checkin?: boolean | null
+          requires_qr_scan?: boolean | null
+          requires_transaction?: boolean | null
+          short_description?: string | null
+          sort_order?: number | null
+          start_date?: string | null
+          status?: Database["public"]["Enums"]["quest_status"]
+          title?: string
+          updated_at?: string | null
+          xp_reward?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quests_required_game_id_fkey"
+            columns: ["required_game_id"]
+            isOneToOne: false
+            referencedRelation: "arcade_game_titles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quests_required_product_id_fkey"
+            columns: ["required_product_id"]
+            isOneToOne: false
+            referencedRelation: "store_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       redemptions: {
         Row: {
           completed_at: string | null
@@ -2754,6 +3381,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      calculate_quest_level: { Args: { xp: number }; Returns: number }
       generate_totp_secret: { Args: never; Returns: string }
       has_role: {
         Args: {
@@ -2777,6 +3405,14 @@ export type Database = {
         | "employee_operator"
         | "customer"
         | "business_owner"
+      quest_completion_status:
+        | "in_progress"
+        | "completed"
+        | "claimed"
+        | "expired"
+      quest_node_rarity: "common" | "rare" | "epic" | "legendary"
+      quest_status: "active" | "inactive" | "scheduled" | "expired"
+      quest_type: "free" | "game" | "paid" | "order"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -2917,6 +3553,15 @@ export const Constants = {
         "customer",
         "business_owner",
       ],
+      quest_completion_status: [
+        "in_progress",
+        "completed",
+        "claimed",
+        "expired",
+      ],
+      quest_node_rarity: ["common", "rare", "epic", "legendary"],
+      quest_status: ["active", "inactive", "scheduled", "expired"],
+      quest_type: ["free", "game", "paid", "order"],
     },
   },
 } as const
