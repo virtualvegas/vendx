@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Gift, Star, Trophy, TrendingUp } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { formatDisplayDate } from "@/lib/dateUtils";
 
 const tierColors: Record<string, string> = {
   bronze: "bg-amber-700",
@@ -245,7 +246,7 @@ const CustomerRewards = () => {
                       {(redemption.reward_catalog as any)?.name || "Reward"}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      {new Date(redemption.created_at).toLocaleDateString()}
+                      {formatDisplayDate(redemption.created_at)}
                     </p>
                   </div>
                   <div className="text-right">

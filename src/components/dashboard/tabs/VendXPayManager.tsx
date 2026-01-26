@@ -9,6 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Wallet, Search, RefreshCw, DollarSign, Users, TrendingUp, AlertTriangle } from "lucide-react";
+import { formatDisplayDate } from "@/lib/dateUtils";
 
 interface WalletWithProfile {
   id: string;
@@ -300,7 +301,7 @@ const VendXPayManager = () => {
                   </TableCell>
                   <TableCell className="text-muted-foreground">
                     {wallet.last_loaded
-                      ? new Date(wallet.last_loaded).toLocaleDateString()
+                      ? formatDisplayDate(wallet.last_loaded)
                       : "Never"}
                   </TableCell>
                   <TableCell>

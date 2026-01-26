@@ -16,6 +16,7 @@ import {
   Wallet, Plus, Search, RefreshCw, DollarSign, Users, 
   Calendar, Download, Eye, CheckCircle, XCircle 
 } from "lucide-react";
+import { formatDisplayDate } from "@/lib/dateUtils";
 
 const PayoutsManager = () => {
   const [showCreateDialog, setShowCreateDialog] = useState(false);
@@ -273,7 +274,7 @@ const PayoutsManager = () => {
                       </TableCell>
                       <TableCell>
                         <p className="text-sm">
-                          {new Date(payout.period_start).toLocaleDateString()} - {new Date(payout.period_end).toLocaleDateString()}
+                          {formatDisplayDate(payout.period_start)} - {formatDisplayDate(payout.period_end)}
                         </p>
                       </TableCell>
                       <TableCell>${Number(payout.gross_revenue).toLocaleString()}</TableCell>
@@ -332,7 +333,7 @@ const PayoutsManager = () => {
                 <div>
                   <p className="text-sm text-muted-foreground">Period</p>
                   <p className="font-medium">
-                    {new Date(selectedPayout.period_start).toLocaleDateString()} - {new Date(selectedPayout.period_end).toLocaleDateString()}
+                    {formatDisplayDate(selectedPayout.period_start)} - {formatDisplayDate(selectedPayout.period_end)}
                   </p>
                 </div>
                 <div>

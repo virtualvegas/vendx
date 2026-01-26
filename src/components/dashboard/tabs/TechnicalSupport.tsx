@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, AlertTriangle, Trash2, Edit, CheckCircle } from "lucide-react";
+import { formatDisplayDate } from "@/lib/dateUtils";
 
 interface SupportTicket {
   id: string;
@@ -345,7 +346,7 @@ const TechnicalSupport = () => {
                       </span>
                     </div>
                     <p className="text-sm text-muted-foreground">
-                      {ticket.ticket_number} • {ticket.machine_id} • {ticket.location} • {new Date(ticket.created_at).toLocaleDateString()}
+                      {ticket.ticket_number} • {ticket.machine_id} • {ticket.location} • {formatDisplayDate(ticket.created_at)}
                     </p>
                   </div>
                   <div className="flex gap-2">

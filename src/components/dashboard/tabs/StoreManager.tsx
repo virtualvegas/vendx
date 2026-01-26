@@ -16,6 +16,7 @@ import {
   Package, Plus, Edit, Trash2, ShoppingCart, DollarSign, 
   Users, TrendingUp, Eye, Loader2, RefreshCw 
 } from "lucide-react";
+import { formatDisplayDate } from "@/lib/dateUtils";
 
 interface Product {
   id: string;
@@ -521,7 +522,7 @@ const StoreManager = () => {
                       <TableCell>
                         <Badge className={getStatusColor(order.status)}>{order.status}</Badge>
                       </TableCell>
-                      <TableCell>{new Date(order.created_at).toLocaleDateString()}</TableCell>
+                      <TableCell>{formatDisplayDate(order.created_at)}</TableCell>
                       <TableCell>
                         <Select 
                           value={order.status}
@@ -579,7 +580,7 @@ const StoreManager = () => {
                           {sub.status}
                         </Badge>
                       </TableCell>
-                      <TableCell>{new Date(sub.created_at).toLocaleDateString()}</TableCell>
+                      <TableCell>{formatDisplayDate(sub.created_at)}</TableCell>
                     </TableRow>
                   ))}
                   {subscriptions.length === 0 && (
