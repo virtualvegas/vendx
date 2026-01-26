@@ -12,7 +12,7 @@ import {
   PartyPopper,
   ArrowLeft
 } from "lucide-react";
-import { isAfter, isBefore, isToday, parseISO } from "date-fns";
+import { parseLocalDate, isLocalToday } from "@/lib/dateUtils";
 
 import EventCard from "@/components/events/EventCard";
 
@@ -67,13 +67,13 @@ const EventsPage = () => {
 
   const getEventStatus = (event: StandEvent) => {
     const today = new Date();
-    const startDate = parseISO(event.event_date);
-    const endDate = event.event_end_date ? parseISO(event.event_end_date) : startDate;
+    const startDate = parseLocalDate(event.event_date);
+    const endDate = event.event_end_date ? parseLocalDate(event.event_end_date) : startDate;
 
-    if (isToday(startDate) || (isAfter(today, startDate) && isBefore(today, endDate)) || isToday(endDate)) {
+    if (isLocalToday(event.event_date) || (today > startDate && today < endDate) || (event.event_end_date && isLocalToday(event.event_end_date))) {
       return "ongoing";
     }
-    if (isAfter(startDate, today)) {
+    if (startDate > today) {
       return "upcoming";
     }
     return "completed";

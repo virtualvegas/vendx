@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, DollarSign, Trash2, Edit, RefreshCw, CreditCard, Loader2 } from "lucide-react";
 import { format } from "date-fns";
+import { formatDisplayDate } from "@/lib/dateUtils";
 
 interface Transaction {
   id: string;
@@ -405,7 +406,7 @@ const Finance = () => {
                           <p className="text-sm text-muted-foreground mt-1">{transaction.description}</p>
                         )}
                         <p className="text-xs text-muted-foreground mt-1">
-                          {new Date(transaction.transaction_date).toLocaleDateString()}
+                          {formatDisplayDate(transaction.transaction_date)}
                         </p>
                       </div>
                       <div className="flex items-center gap-3">

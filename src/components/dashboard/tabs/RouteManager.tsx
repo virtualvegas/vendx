@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { optimizeRouteOrder, calculateTotalDistance, estimateTravelTime, isZoneDueForService, getNextServiceDate } from "@/lib/routeOptimization";
 import { format, formatDistanceToNow, addDays, isAfter, isBefore, isToday } from "date-fns";
+import { parseLocalDate } from "@/lib/dateUtils";
 
 interface ServiceZone {
   id: string;
@@ -827,10 +828,10 @@ const RouteManager = () => {
                             </div>
                             <div className="text-right flex-shrink-0">
                               <p className={`text-xs font-medium ${isOverdue ? "text-destructive" : "text-foreground"}`}>
-                                {format(new Date(stop.scheduled_date!), "MMM d")}
+                                {format(parseLocalDate(stop.scheduled_date!), "MMM d")}
                               </p>
                               <p className="text-[10px] text-muted-foreground">
-                                {isOverdue ? "Overdue" : formatDistanceToNow(new Date(stop.scheduled_date!), { addSuffix: true })}
+                                {isOverdue ? "Overdue" : formatDistanceToNow(parseLocalDate(stop.scheduled_date!), { addSuffix: true })}
                               </p>
                             </div>
                           </div>
@@ -1287,7 +1288,7 @@ const RouteManager = () => {
                             )}
                             {stop.scheduled_date && (
                               <p className="text-[10px] text-blue-600">
-                                Scheduled: {format(new Date(stop.scheduled_date), "MMM d")}
+                                Scheduled: {format(parseLocalDate(stop.scheduled_date), "MMM d")}
                               </p>
                             )}
                           </div>
