@@ -1,4 +1,5 @@
-import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { QuestNode, Quest } from "@/pages/QuestsPage";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
@@ -7,6 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useToast } from "@/hooks/use-toast";
+import { claimQuestRewards } from "@/lib/questUtils";
 import { 
   MapPin, 
   Clock, 
@@ -19,7 +22,9 @@ import {
   Gamepad2,
   ShoppingCart,
   Check,
-  Lock
+  Lock,
+  Loader2,
+  Sparkles
 } from "lucide-react";
 
 interface QuestNodeSheetProps {
@@ -67,6 +72,10 @@ const QuestNodeSheet = ({
   userId,
   onStartQuest,
 }: QuestNodeSheetProps) => {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [claimingId, setClaimingId] = useState<string | null>(null);
+
   // Fetch quests available at this node
   const { data: quests = [], isLoading } = useQuery({
     queryKey: ["node-quests", node?.id],
@@ -88,14 +97,14 @@ const QuestNodeSheet = ({
   });
 
   // Fetch user's completions for these quests
-  const { data: completions = [] } = useQuery({
+  const { data: completions = [], refetch: refetchCompletions } = useQuery({
     queryKey: ["quest-completions", node?.id, userId],
     queryFn: async () => {
       if (!userId || !node) return [];
 
       const { data, error } = await supabase
         .from("quest_completions")
-        .select("quest_id, status")
+        .select("*")
         .eq("user_id", userId)
         .eq("node_id", node.id);
 
@@ -104,6 +113,38 @@ const QuestNodeSheet = ({
     },
     enabled: !!userId && !!node,
   });
+
+  const claimMutation = useMutation({
+    mutationFn: async (completionId: string) => {
+      if (!userId) throw new Error("Not logged in");
+      return claimQuestRewards(userId, completionId);
+    },
+    onSuccess: (result) => {
+      toast({
+        title: "🎁 Rewards Claimed!",
+        description: result.credits > 0 
+          ? `+$${result.credits.toFixed(2)} credits added to your wallet!`
+          : `+${result.points} points earned!`,
+      });
+      refetchCompletions();
+      queryClient.invalidateQueries({ queryKey: ["quest-player-progress"] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+    onSettled: () => {
+      setClaimingId(null);
+    },
+  });
+
+  const handleClaimRewards = (completionId: string) => {
+    setClaimingId(completionId);
+    claimMutation.mutate(completionId);
+  };
 
   const getDirectionsUrl = () => {
     if (!node) return "#";
@@ -126,12 +167,28 @@ const QuestNodeSheet = ({
     return "#";
   };
 
+  const getCompletionForQuest = (questId: string) => {
+    return completions.find((c) => c.quest_id === questId);
+  };
+
   const isQuestCompleted = (questId: string) => {
-    return completions.some((c) => c.quest_id === questId && (c.status === "completed" || c.status === "claimed"));
+    const completion = getCompletionForQuest(questId);
+    return completion?.status === "completed" || completion?.status === "claimed";
+  };
+
+  const isQuestClaimed = (questId: string) => {
+    const completion = getCompletionForQuest(questId);
+    return completion?.status === "claimed";
   };
 
   const isQuestInProgress = (questId: string) => {
-    return completions.some((c) => c.quest_id === questId && c.status === "in_progress");
+    const completion = getCompletionForQuest(questId);
+    return completion?.status === "in_progress";
+  };
+
+  const canClaimRewards = (questId: string) => {
+    const completion = getCompletionForQuest(questId);
+    return completion?.status === "completed" && !completion.claimed_at;
   };
 
   if (!node) return null;
@@ -203,10 +260,13 @@ const QuestNodeSheet = ({
                 <div className="space-y-3">
                   {quests.map((quest) => {
                     const completed = isQuestCompleted(quest.id);
+                    const claimed = isQuestClaimed(quest.id);
                     const inProgress = isQuestInProgress(quest.id);
+                    const canClaim = canClaimRewards(quest.id);
+                    const completion = getCompletionForQuest(quest.id);
 
                     return (
-                      <Card key={quest.id} className={completed ? "opacity-60" : ""}>
+                      <Card key={quest.id} className={claimed ? "opacity-60" : ""}>
                         <CardContent className="p-4">
                           <div className="flex items-start justify-between mb-3">
                             <div className="flex items-center gap-2">
@@ -220,10 +280,16 @@ const QuestNodeSheet = ({
                                 </p>
                               </div>
                             </div>
-                            {completed && (
+                            {claimed && (
                               <Badge className="bg-accent text-accent-foreground gap-1">
                                 <Check className="w-3 h-3" />
-                                Done
+                                Claimed
+                              </Badge>
+                            )}
+                            {canClaim && (
+                              <Badge className="bg-primary text-primary-foreground gap-1 animate-pulse">
+                                <Sparkles className="w-3 h-3" />
+                                Claim!
                               </Badge>
                             )}
                           </div>
@@ -263,7 +329,7 @@ const QuestNodeSheet = ({
                               <Star className="w-4 h-4 text-accent" />
                               <span className="font-semibold">{quest.xp_reward} XP</span>
                             </div>
-                            {quest.credits_reward && quest.credits_reward > 0 && (
+                            {quest.credits_reward && Number(quest.credits_reward) > 0 && (
                               <div className="flex items-center gap-1 text-sm">
                                 <DollarSign className="w-4 h-4 text-primary" />
                                 <span className="font-semibold">${quest.credits_reward}</span>
@@ -283,7 +349,20 @@ const QuestNodeSheet = ({
                               <Lock className="w-4 h-4" />
                               Login to Start
                             </Button>
-                          ) : completed ? (
+                          ) : canClaim && completion ? (
+                            <Button
+                              onClick={() => handleClaimRewards(completion.id)}
+                              disabled={claimingId === completion.id}
+                              className="w-full gap-2 bg-gradient-to-r from-primary to-accent"
+                            >
+                              {claimingId === completion.id ? (
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                              ) : (
+                                <Gift className="w-4 h-4" />
+                              )}
+                              Claim Rewards
+                            </Button>
+                          ) : claimed ? (
                             <Button disabled variant="secondary" className="w-full gap-2">
                               <Check className="w-4 h-4" />
                               Completed
