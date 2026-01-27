@@ -12,6 +12,13 @@ import { ShoppingCart, Minus, Plus, ArrowLeft, Package, Check, Loader2 } from "l
 import { useCart } from "@/hooks/useCart";
 import { toast } from "sonner";
 import { useSEO } from "@/hooks/useSEO";
+import RetailLinks from "@/components/store/RetailLinks";
+import type { Json } from "@/integrations/supabase/types";
+
+interface RetailLink {
+  store: string;
+  url: string;
+}
 
 interface Product {
   id: string;
@@ -27,6 +34,7 @@ interface Product {
   is_subscription: boolean;
   subscription_interval: string | null;
   subscription_price: number | null;
+  retail_links: Json | null;
 }
 
 interface Addon {
@@ -339,6 +347,13 @@ const ProductPage = () => {
                   </div>
                 )}
               </div>
+
+              {/* Retail Store Links */}
+              {product.retail_links && Array.isArray(product.retail_links) && product.retail_links.length > 0 && (
+                <div className="mt-6">
+                  <RetailLinks links={product.retail_links as unknown as RetailLink[]} />
+                </div>
+              )}
             </div>
           </div>
         </div>

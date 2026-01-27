@@ -2876,6 +2876,7 @@ export type Database = {
           metadata: Json | null
           name: string
           price: number
+          retail_links: Json | null
           short_description: string | null
           slug: string
           stock: number | null
@@ -2900,6 +2901,7 @@ export type Database = {
           metadata?: Json | null
           name: string
           price?: number
+          retail_links?: Json | null
           short_description?: string | null
           slug: string
           stock?: number | null
@@ -2924,6 +2926,7 @@ export type Database = {
           metadata?: Json | null
           name?: string
           price?: number
+          retail_links?: Json | null
           short_description?: string | null
           slug?: string
           stock?: number | null

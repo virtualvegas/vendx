@@ -1,0 +1,154 @@
+import { ExternalLink, ShoppingBag, Store } from "lucide-react";
+import { FaAmazon } from "react-icons/fa";
+import { 
+  SiWalmart, 
+  SiTarget, 
+  SiEbay, 
+  SiEtsy 
+} from "react-icons/si";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+
+interface RetailLink {
+  store: string;
+  url: string;
+}
+
+interface RetailLinksProps {
+  links: RetailLink[];
+  compact?: boolean;
+}
+
+const storeConfig: Record<string, { 
+  name: string; 
+  icon: React.ReactNode; 
+  color: string;
+  bgColor: string;
+}> = {
+  amazon: {
+    name: "Amazon",
+    icon: <FaAmazon className="w-5 h-5" />,
+    color: "text-[#FF9900]",
+    bgColor: "bg-[#FF9900]/10 hover:bg-[#FF9900]/20"
+  },
+  walmart: {
+    name: "Walmart",
+    icon: <SiWalmart className="w-5 h-5" />,
+    color: "text-[#0071CE]",
+    bgColor: "bg-[#0071CE]/10 hover:bg-[#0071CE]/20"
+  },
+  target: {
+    name: "Target",
+    icon: <SiTarget className="w-5 h-5" />,
+    color: "text-[#CC0000]",
+    bgColor: "bg-[#CC0000]/10 hover:bg-[#CC0000]/20"
+  },
+  ebay: {
+    name: "eBay",
+    icon: <SiEbay className="w-5 h-5" />,
+    color: "text-[#E53238]",
+    bgColor: "bg-[#E53238]/10 hover:bg-[#E53238]/20"
+  },
+  etsy: {
+    name: "Etsy",
+    icon: <SiEtsy className="w-5 h-5" />,
+    color: "text-[#F56400]",
+    bgColor: "bg-[#F56400]/10 hover:bg-[#F56400]/20"
+  },
+  bestbuy: {
+    name: "Best Buy",
+    icon: <ShoppingBag className="w-5 h-5" />,
+    color: "text-[#0046BE]",
+    bgColor: "bg-[#0046BE]/10 hover:bg-[#0046BE]/20"
+  },
+  costco: {
+    name: "Costco",
+    icon: <Store className="w-5 h-5" />,
+    color: "text-[#E31837]",
+    bgColor: "bg-[#E31837]/10 hover:bg-[#E31837]/20"
+  },
+  other: {
+    name: "Other",
+    icon: <ExternalLink className="w-5 h-5" />,
+    color: "text-muted-foreground",
+    bgColor: "bg-muted hover:bg-muted/80"
+  }
+};
+
+export const AVAILABLE_STORES = [
+  { value: "amazon", label: "Amazon" },
+  { value: "walmart", label: "Walmart" },
+  { value: "target", label: "Target" },
+  { value: "ebay", label: "eBay" },
+  { value: "etsy", label: "Etsy" },
+  { value: "bestbuy", label: "Best Buy" },
+  { value: "costco", label: "Costco" },
+  { value: "other", label: "Other" }
+];
+
+const RetailLinks = ({ links, compact = false }: RetailLinksProps) => {
+  if (!links || links.length === 0) return null;
+
+  const validLinks = links.filter(link => link.url && link.store);
+
+  if (validLinks.length === 0) return null;
+
+  if (compact) {
+    return (
+      <div className="flex flex-wrap gap-2">
+        {validLinks.map((link, index) => {
+          const config = storeConfig[link.store] || storeConfig.other;
+          return (
+            <a
+              key={index}
+              href={link.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={`inline-flex items-center gap-2 px-3 py-2 rounded-lg ${config.bgColor} ${config.color} transition-colors text-sm font-medium`}
+            >
+              {config.icon}
+              <span>{config.name}</span>
+            </a>
+          );
+        })}
+      </div>
+    );
+  }
+
+  return (
+    <Card className="bg-card/50 border-border">
+      <CardHeader className="pb-3">
+        <CardTitle className="text-lg flex items-center gap-2">
+          <ExternalLink className="w-5 h-5 text-primary" />
+          Also Available At
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+          {validLinks.map((link, index) => {
+            const config = storeConfig[link.store] || storeConfig.other;
+            return (
+              <a
+                key={index}
+                href={link.url}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <Button
+                  variant="outline"
+                  className={`w-full justify-start gap-3 h-12 ${config.color} border-current/20 hover:border-current/40`}
+                >
+                  {config.icon}
+                  <span className="truncate">{config.name}</span>
+                  <ExternalLink className="w-3 h-3 ml-auto opacity-50" />
+                </Button>
+              </a>
+            );
+          })}
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
+
+export default RetailLinks;
