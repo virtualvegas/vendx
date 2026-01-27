@@ -38,100 +38,28 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 
-const services = [
-  {
-    icon: Gamepad2,
-    title: "Arcade Machines",
-    description: "Classic and modern arcade cabinets that drive foot traffic and create memorable experiences.",
-    features: ["Revenue sharing", "Full maintenance", "Game rotation"]
-  },
-  {
-    icon: Package,
-    title: "Vending Machines",
-    description: "State-of-the-art snack and beverage machines with cashless payment options.",
-    features: ["Smart inventory", "24/7 monitoring", "Custom stocking"]
-  },
-  {
-    icon: Coins,
-    title: "Coin Operated",
-    description: "Laundry, car wash, and specialty coin-op solutions for any venue.",
-    features: ["Hybrid payments", "Remote diagnostics", "Durable builds"]
-  },
-  {
-    icon: Candy,
-    title: "Gumball & Capsule",
-    description: "Colorful bulk vending machines that attract families and generate steady income.",
-    features: ["Low maintenance", "High margins", "Kid-friendly"]
-  },
-  {
-    icon: CreditCard,
-    title: "ATM Machines",
-    description: "Generate passive income with fee-based ATM placements at your location.",
-    features: ["Transaction fees", "Cash services", "Compliance handled"]
-  },
-  {
-    icon: Smartphone,
-    title: "Phone Charger Kiosks",
-    description: "Keep customers connected with battery rental stations that increase dwell time.",
-    features: ["App integration", "Brand exposure", "Retention boost"]
-  }
+// Icon mapping for dynamic icons
+const iconMap: Record<string, any> = {
+  Gamepad2, Package, Coins, Candy, CreditCard, Smartphone,
+  TrendingUp, Clock, Shield, Wrench, Users, BarChart3,
+  DollarSign, Star, Zap, Building2, CheckCircle2
+};
+
+// Fallback data
+const fallbackServices = [
+  { icon: "Gamepad2", title: "Arcade Machines", description: "Classic and modern arcade cabinets that drive foot traffic.", features: ["Revenue sharing", "Full maintenance", "Game rotation"] },
+  { icon: "Package", title: "Vending Machines", description: "State-of-the-art snack and beverage machines.", features: ["Smart inventory", "24/7 monitoring", "Custom stocking"] },
+  { icon: "Coins", title: "Coin Operated", description: "Laundry, car wash, and specialty coin-op solutions.", features: ["Hybrid payments", "Remote diagnostics", "Durable builds"] },
 ];
 
-const benefits = [
-  {
-    icon: DollarSign,
-    title: "Zero Upfront Cost",
-    description: "We handle all equipment, installation, and maintenance costs. You just provide the space."
-  },
-  {
-    icon: TrendingUp,
-    title: "Passive Revenue",
-    description: "Earn consistent monthly income through our competitive profit-sharing model."
-  },
-  {
-    icon: Wrench,
-    title: "Full Service",
-    description: "24/7 maintenance, restocking, and support. We keep everything running smoothly."
-  },
-  {
-    icon: BarChart3,
-    title: "Real-Time Analytics",
-    description: "Track performance, revenue, and inventory through our business owner dashboard."
-  },
-  {
-    icon: Shield,
-    title: "Fully Insured",
-    description: "Complete liability coverage and equipment insurance for your peace of mind."
-  },
-  {
-    icon: Clock,
-    title: "Fast Deployment",
-    description: "From approval to installation in as little as 2 weeks. Quick ROI realization."
-  }
+const fallbackBenefits = [
+  { icon: "DollarSign", title: "Zero Upfront Cost", description: "We handle all equipment, installation, and maintenance costs." },
+  { icon: "TrendingUp", title: "Passive Revenue", description: "Earn consistent monthly income through our profit-sharing model." },
+  { icon: "Wrench", title: "Full Service", description: "24/7 maintenance, restocking, and support included." },
 ];
 
-const testimonials = [
-  {
-    name: "Marcus Johnson",
-    role: "Restaurant Owner",
-    location: "Boston, MA",
-    quote: "VendX arcade machines have become a major draw for families. Our weekend revenue is up 30%.",
-    rating: 5
-  },
-  {
-    name: "Sarah Chen",
-    role: "Laundromat Manager",
-    location: "Cambridge, MA",
-    quote: "The phone charging kiosks were a game-changer. Customers stay longer and spend more.",
-    rating: 5
-  },
-  {
-    name: "David Martinez",
-    role: "Gas Station Owner",
-    location: "Worcester, MA",
-    quote: "Zero hassle with their ATM service. The extra foot traffic has boosted our store sales.",
-    rating: 5
-  }
+const fallbackTestimonials = [
+  { name: "Marcus Johnson", role: "Restaurant Owner", location: "Boston, MA", quote: "VendX arcade machines have become a major draw for families.", rating: 5 },
 ];
 
 // Contact info
@@ -150,6 +78,48 @@ const BusinessPage = () => {
     message: ""
   });
   const [submitting, setSubmitting] = useState(false);
+
+  // Fetch services from database
+  const { data: services } = useQuery({
+    queryKey: ["business-services"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("business_services")
+        .select("*")
+        .eq("is_active", true)
+        .order("display_order");
+      if (error) throw error;
+      return data || fallbackServices;
+    }
+  });
+
+  // Fetch benefits from database
+  const { data: benefits } = useQuery({
+    queryKey: ["business-benefits"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("business_benefits")
+        .select("*")
+        .eq("is_active", true)
+        .order("display_order");
+      if (error) throw error;
+      return data || fallbackBenefits;
+    }
+  });
+
+  // Fetch testimonials from database
+  const { data: testimonials } = useQuery({
+    queryKey: ["business-testimonials"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("business_testimonials")
+        .select("*")
+        .eq("is_active", true)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data || fallbackTestimonials;
+    }
+  });
 
   // Fetch real stats from database
   const { data: businessStats } = useQuery({
@@ -328,37 +298,40 @@ const BusinessPage = () => {
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {services.map((service, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: index * 0.1 }}
-              >
-                <Card className="h-full bg-card/50 border-border hover:border-primary/50 transition-all duration-300 hover:shadow-[0_0_30px_rgba(26,124,255,0.2)] group">
-                  <CardHeader>
-                    <div className="w-14 h-14 rounded-xl bg-primary/10 border border-primary/30 flex items-center justify-center mb-4 group-hover:border-primary group-hover:shadow-[0_0_20px_rgba(26,124,255,0.4)] transition-all">
-                      <service.icon className="w-7 h-7 text-primary" />
-                    </div>
-                    <CardTitle className="text-xl">{service.title}</CardTitle>
-                    <CardDescription className="text-muted-foreground">
-                      {service.description}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <ul className="space-y-2">
-                      {service.features.map((feature, fIndex) => (
-                        <li key={fIndex} className="flex items-center gap-2 text-sm">
-                          <CheckCircle2 className="w-4 h-4 text-accent" />
-                          <span>{feature}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))}
+            {(services || fallbackServices).map((service, index) => {
+              const IconComponent = iconMap[service.icon] || Package;
+              return (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: index * 0.1 }}
+                >
+                  <Card className="h-full bg-card/50 border-border hover:border-primary/50 transition-all duration-300 hover:shadow-[0_0_30px_rgba(26,124,255,0.2)] group">
+                    <CardHeader>
+                      <div className="w-14 h-14 rounded-xl bg-primary/10 border border-primary/30 flex items-center justify-center mb-4 group-hover:border-primary group-hover:shadow-[0_0_20px_rgba(26,124,255,0.4)] transition-all">
+                        <IconComponent className="w-7 h-7 text-primary" />
+                      </div>
+                      <CardTitle className="text-xl">{service.title}</CardTitle>
+                      <CardDescription className="text-muted-foreground">
+                        {service.description}
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <ul className="space-y-2">
+                        {service.features?.map((feature: string, fIndex: number) => (
+                          <li key={fIndex} className="flex items-center gap-2 text-sm">
+                            <CheckCircle2 className="w-4 h-4 text-accent" />
+                            <span>{feature}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              );
+            })}
           </div>
         </div>
       </section>
@@ -377,24 +350,27 @@ const BusinessPage = () => {
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {benefits.map((benefit, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: index * 0.1 }}
-                className="flex gap-4"
-              >
-                <div className="flex-shrink-0 w-12 h-12 rounded-lg bg-accent/10 border border-accent/30 flex items-center justify-center">
-                  <benefit.icon className="w-6 h-6 text-accent" />
-                </div>
-                <div>
-                  <h3 className="text-xl font-bold mb-2">{benefit.title}</h3>
-                  <p className="text-muted-foreground">{benefit.description}</p>
-                </div>
-              </motion.div>
-            ))}
+            {(benefits || fallbackBenefits).map((benefit, index) => {
+              const IconComponent = iconMap[benefit.icon] || Star;
+              return (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: index * 0.1 }}
+                  className="flex gap-4"
+                >
+                  <div className="flex-shrink-0 w-12 h-12 rounded-lg bg-accent/10 border border-accent/30 flex items-center justify-center">
+                    <IconComponent className="w-6 h-6 text-accent" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold mb-2">{benefit.title}</h3>
+                    <p className="text-muted-foreground">{benefit.description}</p>
+                  </div>
+                </motion.div>
+              );
+            })}
           </div>
         </div>
       </section>
@@ -451,7 +427,7 @@ const BusinessPage = () => {
           </div>
 
           <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-            {testimonials.map((testimonial, index) => (
+            {(testimonials || fallbackTestimonials).map((testimonial, index) => (
               <motion.div
                 key={index}
                 initial={{ opacity: 0, y: 20 }}

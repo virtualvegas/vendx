@@ -1,14 +1,22 @@
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
-import { Globe, Users, Award, TrendingUp, LucideIcon } from "lucide-react";
+import { Globe, Users, Award, TrendingUp, LucideIcon, Package, Gamepad2, Coins, Candy, CreditCard, Smartphone, DollarSign, Wrench, BarChart3, Shield, Clock, Star, ArrowRight } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useBusinessServices } from "@/hooks/useBusinessContent";
+import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
 
 const iconConfig: Record<number, { icon: LucideIcon; colorClass: string }> = {
   1: { icon: Globe, colorClass: "bg-primary/10 border-primary text-primary" },
   2: { icon: Users, colorClass: "bg-accent/10 border-accent text-accent" },
   3: { icon: Award, colorClass: "bg-primary/10 border-primary text-primary" },
   4: { icon: TrendingUp, colorClass: "bg-accent/10 border-accent text-accent" },
+};
+
+const serviceIconMap: Record<string, LucideIcon> = {
+  Package, Gamepad2, Coins, Candy, CreditCard, Smartphone,
+  DollarSign, Wrench, BarChart3, Shield, Clock, Star, TrendingUp
 };
 
 const highlightDescriptions: Record<string, string> = {
@@ -32,6 +40,8 @@ const AboutPage = () => {
       return data;
     },
   });
+
+  const { data: services } = useBusinessServices();
 
   return (
     <div className="min-h-screen bg-background">
@@ -102,6 +112,37 @@ const AboutPage = () => {
               </div>
             </div>
           </div>
+
+          {/* Services Section */}
+          {services && services.length > 0 && (
+            <div className="max-w-6xl mx-auto mb-24">
+              <h2 className="text-4xl font-bold text-center mb-12">
+                Our <span className="glow-blue">Services</span>
+              </h2>
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {services.slice(0, 6).map((service) => {
+                  const IconComponent = serviceIconMap[service.icon] || Package;
+                  return (
+                    <div key={service.id} className="bg-card/40 border border-border hover:border-primary/50 rounded-xl p-6 transition-all">
+                      <div className="w-12 h-12 rounded-lg bg-primary/10 border border-primary/30 flex items-center justify-center mb-4">
+                        <IconComponent className="w-6 h-6 text-primary" />
+                      </div>
+                      <h3 className="text-lg font-bold mb-2">{service.title}</h3>
+                      <p className="text-muted-foreground text-sm">{service.description}</p>
+                    </div>
+                  );
+                })}
+              </div>
+              <div className="text-center mt-8">
+                <Link to="/business">
+                  <Button className="bg-primary hover:bg-primary/90">
+                    Learn More About Partnering
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                  </Button>
+                </Link>
+              </div>
+            </div>
+          )}
 
           <div className="max-w-6xl mx-auto bg-gradient-space border border-primary/30 rounded-3xl p-12 text-center">
             <h2 className="text-4xl font-bold mb-6">
