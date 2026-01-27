@@ -1,9 +1,8 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import Navigation from "@/components/Navigation";
-import Footer from "@/components/Footer";
 import QuestMap from "@/components/quests/QuestMap";
 import QuestSidebar from "@/components/quests/QuestSidebar";
 import QuestNodeSheet from "@/components/quests/QuestNodeSheet";
@@ -12,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Map, List, User, Trophy } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { completeQuest, calculateDistance } from "@/lib/questUtils";
 
 export interface QuestNode {
   id: string;
@@ -77,6 +77,7 @@ export interface PlayerProgress {
 const QuestsPage = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [selectedNode, setSelectedNode] = useState<QuestNode | null>(null);
   const [viewMode, setViewMode] = useState<"map" | "list">("map");
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
@@ -195,16 +196,22 @@ const QuestsPage = () => {
       }
     }
 
+    // For free quests that only require check-in, complete immediately
+    const shouldCompleteImmediately = 
+      quest.quest_type === "free" && 
+      !quest.requires_transaction && 
+      !quest.requires_qr_scan;
+
     // Create quest completion entry
-    const { error } = await supabase.from("quest_completions").insert({
+    const { data: completionData, error } = await supabase.from("quest_completions").insert({
       user_id: user.id,
       quest_id: quest.id,
       node_id: node.id,
-      status: quest.requires_checkin || quest.requires_transaction ? "in_progress" : "completed",
+      status: shouldCompleteImmediately ? "completed" : "in_progress",
       checkin_latitude: userLocation?.lat,
       checkin_longitude: userLocation?.lng,
       verified_via: "gps",
-    });
+    }).select().single();
 
     if (error) {
       toast({
@@ -215,17 +222,31 @@ const QuestsPage = () => {
       return;
     }
 
-    // Record node discovery
-    await supabase.from("quest_node_discoveries").upsert({
-      user_id: user.id,
-      node_id: node.id,
-      last_visited_at: new Date().toISOString(),
-    }, { onConflict: "user_id,node_id" });
+    // If quest completes immediately, award rewards
+    if (shouldCompleteImmediately && completionData) {
+      try {
+        const result = await completeQuest(user.id, quest.id, node.id, completionData.id);
+        
+        toast({
+          title: result.leveledUp ? "🎉 Level Up!" : "Quest Completed!",
+          description: result.leveledUp 
+            ? `You reached level ${result.newLevel}! +${result.xpEarned} XP`
+            : `+${result.xpEarned} XP earned!`,
+        });
 
-    toast({
-      title: "Quest Started!",
-      description: `You've started: ${quest.title}`,
-    });
+        // Refresh data
+        queryClient.invalidateQueries({ queryKey: ["quest-player-progress"] });
+        queryClient.invalidateQueries({ queryKey: ["quest-discoveries"] });
+        queryClient.invalidateQueries({ queryKey: ["quest-completions"] });
+      } catch (err) {
+        console.error("Error completing quest:", err);
+      }
+    } else {
+      toast({
+        title: "Quest Started!",
+        description: `You've started: ${quest.title}`,
+      });
+    }
   };
 
   return (
@@ -326,21 +347,5 @@ const QuestsPage = () => {
     </div>
   );
 };
-
-// Helper function to calculate distance between two coordinates
-function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
-  const R = 6371e3; // Earth's radius in meters
-  const φ1 = (lat1 * Math.PI) / 180;
-  const φ2 = (lat2 * Math.PI) / 180;
-  const Δφ = ((lat2 - lat1) * Math.PI) / 180;
-  const Δλ = ((lon2 - lon1) * Math.PI) / 180;
-
-  const a =
-    Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
-    Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-
-  return R * c;
-}
 
 export default QuestsPage;
