@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Menu, X, Facebook, Instagram, ChevronDown, ShoppingBag, Gamepad2, MapPin, Briefcase, Info, Phone, Newspaper, Users } from "lucide-react";
+import { Menu, X, Facebook, Instagram, ChevronDown, ShoppingBag, Gamepad2, MapPin, Briefcase, Info, Phone, Newspaper, Users, Link2 } from "lucide-react";
 import vendxLogo from "@/assets/vendx-logo.png";
 import { SiTiktok, SiX } from "react-icons/si";
 import {
@@ -46,6 +46,7 @@ const Navigation = () => {
         { name: "Our Divisions", path: "/divisions", icon: Briefcase },
         { name: "Store", path: "/store", icon: ShoppingBag },
         { name: "Interactive", path: "/games", icon: Gamepad2 },
+        { name: "VendX Ecosystem", path: "/links", icon: Link2 },
       ],
     },
     {
@@ -129,6 +130,9 @@ const Navigation = () => {
                       </NavListItem>
                       <NavListItem to="/games" title="VendX Interactive" icon={Gamepad2}>
                         Gaming, entertainment & digital experiences
+                      </NavListItem>
+                      <NavListItem to="/links" title="VendX Ecosystem" icon={Link2}>
+                        Explore our family of brands and services
                       </NavListItem>
                       <NavListItem to="/rewards" title="Rewards Program" icon={Users}>
                         Earn points and unlock exclusive perks
