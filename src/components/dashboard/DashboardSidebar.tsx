@@ -63,9 +63,13 @@ const tabGroups: TabGroup[] = [
   },
   {
     id: "business",
-    label: "Business",
+    label: "My Business",
     tabs: [
-      { id: "business-owner", label: "My Business", icon: Building2, requiredRoles: ["business_owner"] },
+      { id: "business-overview", label: "Overview", icon: LayoutDashboard, requiredRoles: ["business_owner"] },
+      { id: "business-locations", label: "My Locations", icon: MapPin, requiredRoles: ["business_owner"] },
+      { id: "business-machines", label: "My Machines", icon: Monitor, requiredRoles: ["business_owner"] },
+      { id: "business-payouts", label: "Payouts", icon: DollarSign, requiredRoles: ["business_owner"] },
+      { id: "business-support", label: "Support", icon: Wrench, requiredRoles: ["business_owner"] },
     ],
   },
   {
