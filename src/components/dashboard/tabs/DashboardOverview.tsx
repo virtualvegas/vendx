@@ -6,8 +6,9 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { 
   DollarSign, MapPin, Monitor, AlertTriangle, 
-  TrendingUp, Package, CheckCircle, XCircle, Wrench 
+  TrendingUp, Package
 } from "lucide-react";
+import { MachineStatsCards, calculateMachineStats, BaseMachine } from "@/components/machines";
 
 const DashboardOverview = () => {
   // Fetch machine transactions for revenue
@@ -83,22 +84,10 @@ const DashboardOverview = () => {
     };
   }, [transactions]);
 
-  // Machine status counts
+  // Machine status counts using universal utility
   const machineStatus = useMemo(() => {
     if (!machines) return { online: 0, offline: 0, maintenance: 0, total: 0 };
-
-    const fiveMinutesAgo = Date.now() - 5 * 60 * 1000;
-
-    return {
-      total: machines.length,
-      online: machines.filter(m => 
-        m.status === "active" && m.last_seen && new Date(m.last_seen).getTime() > fiveMinutesAgo
-      ).length,
-      offline: machines.filter(m => 
-        m.status === "active" && (!m.last_seen || new Date(m.last_seen).getTime() <= fiveMinutesAgo)
-      ).length,
-      maintenance: machines.filter(m => m.status === "maintenance").length,
-    };
+    return calculateMachineStats(machines as BaseMachine[]);
   }, [machines]);
 
   // Top machines by revenue
@@ -180,7 +169,7 @@ const DashboardOverview = () => {
         </Card>
       </div>
 
-      {/* Status Cards */}
+      {/* Machine Status Cards - Using Universal Component */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card>
           <CardContent className="p-4">
@@ -193,40 +182,13 @@ const DashboardOverview = () => {
             </div>
           </CardContent>
         </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Online Machines</p>
-                <p className="text-2xl font-bold text-green-500">{machineStatus.online}</p>
-              </div>
-              <CheckCircle className="w-8 h-8 text-green-500 opacity-50" />
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Offline Machines</p>
-                <p className="text-2xl font-bold text-red-500">{machineStatus.offline}</p>
-              </div>
-              <XCircle className="w-8 h-8 text-red-500 opacity-50" />
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">In Maintenance</p>
-                <p className="text-2xl font-bold text-yellow-500">{machineStatus.maintenance}</p>
-              </div>
-              <Wrench className="w-8 h-8 text-yellow-500 opacity-50" />
-            </div>
-          </CardContent>
-        </Card>
       </div>
+      
+      <MachineStatsCards 
+        machines={(machines || []) as BaseMachine[]} 
+        showVendxPay={true}
+        compact
+      />
 
       {/* Bottom Grids */}
       <div className="grid md:grid-cols-3 gap-6">
