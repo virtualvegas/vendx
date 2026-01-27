@@ -13,7 +13,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, MapPin, Trash2, Edit, Search, Monitor, RefreshCw, Eye, EyeOff, Gamepad2 } from "lucide-react";
+import { Plus, MapPin, Trash2, Edit, Search, Monitor, RefreshCw, Eye, EyeOff, Gamepad2, UserCheck, Users } from "lucide-react";
 
 interface Location {
   id: string;
@@ -60,6 +60,19 @@ interface LocationArcadeGame {
   is_active: boolean;
 }
 
+interface BusinessOwner {
+  id: string;
+  full_name: string | null;
+  email: string;
+}
+
+interface LocationAssignment {
+  id: string;
+  location_id: string;
+  business_owner_id: string;
+  is_active: boolean;
+}
+
 const LOCATION_TYPES = [
   { value: "office", label: "Office Building" },
   { value: "mall", label: "Shopping Mall" },
@@ -84,11 +97,13 @@ const GlobalLocations = () => {
   const [showMachinesDialog, setShowMachinesDialog] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showArcadeGamesDialog, setShowArcadeGamesDialog] = useState(false);
+  const [showOwnerDialog, setShowOwnerDialog] = useState(false);
   const [editingLocation, setEditingLocation] = useState<Location | null>(null);
   const [selectedLocation, setSelectedLocation] = useState<Location | null>(null);
   const [locationMachines, setLocationMachines] = useState<Machine[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedArcadeGames, setSelectedArcadeGames] = useState<Record<string, { selected: boolean; count: number }>>({});
+  const [selectedOwner, setSelectedOwner] = useState<string>("");
 
   const [formData, setFormData] = useState({
     name: "",
@@ -129,6 +144,40 @@ const GlobalLocations = () => {
       const { data, error } = await supabase.from("arcade_game_titles").select("id, name, game_type").eq("is_active", true).order("name");
       if (error) throw error;
       return data as ArcadeGame[];
+    },
+  });
+
+  // Fetch business owners (users with business_owner role)
+  const { data: businessOwners } = useQuery({
+    queryKey: ["business-owners"],
+    queryFn: async () => {
+      const { data: roles, error } = await supabase
+        .from("user_roles")
+        .select("user_id")
+        .eq("role", "business_owner");
+      if (error) throw error;
+      
+      if (!roles || roles.length === 0) return [];
+      
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("id, full_name, email")
+        .in("id", roles.map(r => r.user_id));
+      
+      return (profiles || []) as BusinessOwner[];
+    },
+  });
+
+  // Fetch all location assignments
+  const { data: locationAssignments } = useQuery({
+    queryKey: ["location-assignments"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("location_assignments")
+        .select("id, location_id, business_owner_id, is_active")
+        .eq("is_active", true);
+      if (error) throw error;
+      return (data || []) as LocationAssignment[];
     },
   });
 
@@ -235,6 +284,54 @@ const GlobalLocations = () => {
     },
   });
 
+  // Assign business owner mutation
+  const assignOwnerMutation = useMutation({
+    mutationFn: async ({ locationId, ownerId }: { locationId: string; ownerId: string }) => {
+      // First, deactivate any existing assignments for this location
+      await supabase
+        .from("location_assignments")
+        .update({ is_active: false })
+        .eq("location_id", locationId);
+      
+      // Then create new assignment
+      const { error } = await supabase
+        .from("location_assignments")
+        .upsert({
+          location_id: locationId,
+          business_owner_id: ownerId,
+          is_active: true,
+        }, { onConflict: "location_id,business_owner_id" });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["location-assignments"] });
+      toast({ title: "Business owner assigned" });
+      setShowOwnerDialog(false);
+      setSelectedOwner("");
+    },
+    onError: (error: any) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    },
+  });
+
+  // Remove business owner assignment mutation
+  const removeOwnerMutation = useMutation({
+    mutationFn: async (assignmentId: string) => {
+      const { error } = await supabase
+        .from("location_assignments")
+        .update({ is_active: false })
+        .eq("id", assignmentId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["location-assignments"] });
+      toast({ title: "Business owner removed" });
+    },
+    onError: (error: any) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    },
+  });
+
   const fetchLocationMachines = async (locationId: string) => {
     const { data } = await supabase.from("vendx_machines").select("id, name, machine_code, machine_type, status, vendx_pay_enabled").eq("location_id", locationId);
     setLocationMachines(data || []);
@@ -304,6 +401,19 @@ const GlobalLocations = () => {
     setShowArcadeGamesDialog(true);
   };
 
+  const openOwnerDialog = (location: Location) => {
+    setSelectedLocation(location);
+    const existingAssignment = locationAssignments?.find(a => a.location_id === location.id);
+    setSelectedOwner(existingAssignment?.business_owner_id || "");
+    setShowOwnerDialog(true);
+  };
+
+  const getLocationOwner = (locationId: string) => {
+    const assignment = locationAssignments?.find(a => a.location_id === locationId);
+    if (!assignment) return null;
+    return businessOwners?.find(o => o.id === assignment.business_owner_id);
+  };
+
   const toggleArcadeGame = (gameId: string) => {
     setSelectedArcadeGames(prev => ({
       ...prev,
@@ -362,6 +472,7 @@ const GlobalLocations = () => {
                   <TableHead>Location</TableHead>
                   <TableHead>Type</TableHead>
                   <TableHead>Category</TableHead>
+                  <TableHead>Business Owner</TableHead>
                   <TableHead>Machines</TableHead>
                   <TableHead>Arcade Games</TableHead>
                   <TableHead>Status</TableHead>
@@ -378,6 +489,22 @@ const GlobalLocations = () => {
                     </TableCell>
                     <TableCell><Badge variant="outline">{LOCATION_TYPES.find(t => t.value === loc.location_type)?.label || loc.location_type}</Badge></TableCell>
                     <TableCell><Badge variant={loc.location_category === "mixed" ? "default" : "secondary"}>{LOCATION_CATEGORIES.find(c => c.value === loc.location_category)?.label || loc.location_category || "Vending"}</Badge></TableCell>
+                    <TableCell>
+                      {(() => {
+                        const owner = getLocationOwner(loc.id);
+                        return owner ? (
+                          <Button variant="ghost" size="sm" onClick={() => openOwnerDialog(loc)} className="gap-1 text-left max-w-[150px]">
+                            <UserCheck className="w-4 h-4 text-green-500 shrink-0" />
+                            <span className="truncate">{owner.full_name || owner.email}</span>
+                          </Button>
+                        ) : (
+                          <Button variant="ghost" size="sm" onClick={() => openOwnerDialog(loc)} className="gap-1 text-muted-foreground">
+                            <Users className="w-4 h-4" />
+                            Assign
+                          </Button>
+                        );
+                      })()}
+                    </TableCell>
                     <TableCell><Button variant="ghost" size="sm" onClick={() => openMachinesDialog(loc)} className="gap-1"><Monitor className="w-4 h-4" />{loc.machine_count}</Button></TableCell>
                     <TableCell>
                       {(loc.location_category === "arcade" || loc.location_category === "mixed") && (
@@ -500,6 +627,90 @@ const GlobalLocations = () => {
         <DialogContent>
           <DialogHeader><DialogTitle>Delete Location</DialogTitle><DialogDescription>Are you sure?</DialogDescription></DialogHeader>
           <DialogFooter><Button variant="outline" onClick={() => setShowDeleteConfirm(false)}>Cancel</Button><Button variant="destructive" onClick={() => selectedLocation && deleteMutation.mutate(selectedLocation.id)}>Delete</Button></DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Business Owner Assignment Dialog */}
+      <Dialog open={showOwnerDialog} onOpenChange={setShowOwnerDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Assign Business Owner</DialogTitle>
+            <DialogDescription>
+              Select a business owner for {selectedLocation?.name || selectedLocation?.city}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Business Owner</Label>
+              <Select value={selectedOwner} onValueChange={setSelectedOwner}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a business owner" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">No owner assigned</SelectItem>
+                  {(businessOwners || []).map(owner => (
+                    <SelectItem key={owner.id} value={owner.id}>
+                      {owner.full_name || owner.email}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {businessOwners?.length === 0 && (
+                <p className="text-xs text-muted-foreground">
+                  No users with the Business Owner role found. Assign the role first in Admin Settings.
+                </p>
+              )}
+            </div>
+
+            {/* Show current assignment if exists */}
+            {selectedLocation && (() => {
+              const assignment = locationAssignments?.find(a => a.location_id === selectedLocation.id);
+              const currentOwner = assignment ? businessOwners?.find(o => o.id === assignment.business_owner_id) : null;
+              if (currentOwner) {
+                return (
+                  <div className="p-3 bg-muted/50 rounded-lg">
+                    <p className="text-sm text-muted-foreground mb-1">Currently assigned:</p>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-medium">{currentOwner.full_name || "Unnamed"}</p>
+                        <p className="text-xs text-muted-foreground">{currentOwner.email}</p>
+                      </div>
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        onClick={() => removeOwnerMutation.mutate(assignment.id)}
+                        disabled={removeOwnerMutation.isPending}
+                      >
+                        <Trash2 className="w-4 h-4 mr-1" />
+                        Remove
+                      </Button>
+                    </div>
+                  </div>
+                );
+              }
+              return null;
+            })()}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowOwnerDialog(false)}>Cancel</Button>
+            <Button 
+              onClick={() => {
+                if (selectedLocation && selectedOwner && selectedOwner !== "none") {
+                  assignOwnerMutation.mutate({ locationId: selectedLocation.id, ownerId: selectedOwner });
+                } else if (selectedLocation && selectedOwner === "none") {
+                  // Remove current assignment
+                  const assignment = locationAssignments?.find(a => a.location_id === selectedLocation.id);
+                  if (assignment) {
+                    removeOwnerMutation.mutate(assignment.id);
+                  }
+                  setShowOwnerDialog(false);
+                }
+              }}
+              disabled={!selectedOwner || assignOwnerMutation.isPending}
+            >
+              {assignOwnerMutation.isPending ? "Saving..." : "Save"}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
