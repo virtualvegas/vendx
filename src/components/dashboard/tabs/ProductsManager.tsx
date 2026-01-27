@@ -13,10 +13,17 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { 
   Package, Plus, Edit, Trash2, Loader2, RefreshCw, 
-  Upload, X, Image as ImageIcon, Eye 
+  Upload, X, Image as ImageIcon, Eye, Store, ExternalLink 
 } from "lucide-react";
+import { AVAILABLE_STORES } from "@/components/store/RetailLinks";
 
-interface Product {
+interface RetailLink {
+  store: string;
+  url: string;
+}
+
+// Product type from Supabase - uses Json for retail_links
+type Product = {
   id: string;
   name: string;
   slug: string;
@@ -34,8 +41,9 @@ interface Product {
   subscription_price: number | null;
   subscription_interval: string | null;
   waitlist_enabled: boolean | null;
+  retail_links: unknown;
   created_at: string | null;
-}
+};
 
 const categories = ["subscriptions", "apparel", "accessories", "snacks", "tech", "merchandise"];
 const subscriptionIntervals = ["week", "month", "year"];
@@ -66,7 +74,8 @@ const ProductsManager = () => {
     is_subscription: false,
     subscription_price: 0,
     subscription_interval: "month",
-    waitlist_enabled: false
+    waitlist_enabled: false,
+    retail_links: [] as RetailLink[]
   });
 
   useEffect(() => {
@@ -105,7 +114,8 @@ const ProductsManager = () => {
       is_subscription: false,
       subscription_price: 0,
       subscription_interval: "month",
-      waitlist_enabled: false
+      waitlist_enabled: false,
+      retail_links: []
     });
     setEditingProduct(null);
   };
@@ -128,7 +138,8 @@ const ProductsManager = () => {
       is_subscription: product.is_subscription ?? false,
       subscription_price: product.subscription_price || 0,
       subscription_interval: product.subscription_interval || "month",
-      waitlist_enabled: product.waitlist_enabled ?? false
+      waitlist_enabled: product.waitlist_enabled ?? false,
+      retail_links: Array.isArray(product.retail_links) ? (product.retail_links as RetailLink[]) : []
     });
     setDialogOpen(true);
   };
@@ -199,7 +210,9 @@ const ProductsManager = () => {
     setSaving(true);
     const slug = form.slug || form.name.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
     
-    const productData = {
+    const validRetailLinks = form.retail_links.filter(link => link.store && link.url);
+    
+    const productData: Record<string, unknown> = {
       name: form.name.trim(),
       slug,
       description: form.description || null,
@@ -215,14 +228,15 @@ const ProductsManager = () => {
       is_subscription: form.is_subscription,
       subscription_price: form.is_subscription ? form.subscription_price : null,
       subscription_interval: form.is_subscription ? form.subscription_interval : null,
-      waitlist_enabled: form.waitlist_enabled
+      waitlist_enabled: form.waitlist_enabled,
+      retail_links: validRetailLinks.length > 0 ? validRetailLinks : null
     };
 
     try {
       if (editingProduct) {
         const { error } = await supabase
           .from("store_products")
-          .update(productData)
+          .update(productData as any)
           .eq("id", editingProduct.id);
         
         if (error) throw error;
@@ -230,7 +244,7 @@ const ProductsManager = () => {
       } else {
         const { error } = await supabase
           .from("store_products")
-          .insert(productData);
+          .insert(productData as any);
         
         if (error) throw error;
         toast.success("Product created successfully");
@@ -529,6 +543,82 @@ const ProductsManager = () => {
                     </div>
                   </div>
                 )}
+
+                {/* Retail Store Links */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <Label className="flex items-center gap-2">
+                      <Store className="w-4 h-4" />
+                      Retail Store Links
+                    </Label>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setForm({
+                        ...form,
+                        retail_links: [...form.retail_links, { store: "amazon", url: "" }]
+                      })}
+                    >
+                      <Plus className="w-3 h-3 mr-1" />
+                      Add Store
+                    </Button>
+                  </div>
+                  
+                  {form.retail_links.length > 0 && (
+                    <div className="space-y-2 p-4 border border-border rounded-lg bg-muted/30">
+                      {form.retail_links.map((link, index) => (
+                        <div key={index} className="flex gap-2 items-center">
+                          <Select
+                            value={link.store}
+                            onValueChange={(v) => {
+                              const newLinks = [...form.retail_links];
+                              newLinks[index].store = v;
+                              setForm({ ...form, retail_links: newLinks });
+                            }}
+                          >
+                            <SelectTrigger className="w-[140px]">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {AVAILABLE_STORES.map(store => (
+                                <SelectItem key={store.value} value={store.value}>
+                                  {store.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <Input
+                            value={link.url}
+                            onChange={(e) => {
+                              const newLinks = [...form.retail_links];
+                              newLinks[index].url = e.target.value;
+                              setForm({ ...form, retail_links: newLinks });
+                            }}
+                            placeholder="https://..."
+                            className="flex-1"
+                          />
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => {
+                              const newLinks = form.retail_links.filter((_, i) => i !== index);
+                              setForm({ ...form, retail_links: newLinks });
+                            }}
+                            className="text-destructive hover:text-destructive"
+                          >
+                            <X className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  
+                  <p className="text-xs text-muted-foreground">
+                    Add links to external retail stores where customers can also purchase this product.
+                  </p>
+                </div>
 
                 <Button onClick={handleSave} disabled={saving} className="w-full">
                   {saving ? (
