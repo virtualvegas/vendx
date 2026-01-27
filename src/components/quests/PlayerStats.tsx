@@ -1,11 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { PlayerProgress } from "@/pages/QuestsPage";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { getXpToNextLevel } from "@/lib/questUtils";
 import {
   Trophy,
   Star,
@@ -15,21 +16,13 @@ import {
   Award,
   TrendingUp,
   Clock,
+  Medal,
 } from "lucide-react";
 
 interface PlayerStatsProps {
   progress: PlayerProgress | null;
   userId: string;
 }
-
-// Calculate XP needed for next level
-const getXpForLevel = (level: number): number => {
-  return (level * (level + 1) * 50);
-};
-
-const getXpForCurrentLevel = (level: number): number => {
-  return ((level - 1) * level * 50);
-};
 
 const PlayerStats = ({ progress, userId }: PlayerStatsProps) => {
   // Fetch player badges
@@ -50,7 +43,7 @@ const PlayerStats = ({ progress, userId }: PlayerStatsProps) => {
     },
   });
 
-  // Fetch recent completions
+  // Fetch recent completions (both completed and claimed)
   const { data: recentCompletions = [] } = useQuery({
     queryKey: ["recent-completions", userId],
     queryFn: async () => {
@@ -61,7 +54,7 @@ const PlayerStats = ({ progress, userId }: PlayerStatsProps) => {
           quest:quests(title, xp_reward)
         `)
         .eq("user_id", userId)
-        .eq("status", "completed")
+        .in("status", ["completed", "claimed"])
         .order("completed_at", { ascending: false })
         .limit(5);
 
@@ -70,29 +63,40 @@ const PlayerStats = ({ progress, userId }: PlayerStatsProps) => {
     },
   });
 
-  // Fetch leaderboard position
-  const { data: leaderboardRank } = useQuery({
+  // Fetch leaderboard position (weekly)
+  const { data: leaderboardData } = useQuery({
     queryKey: ["leaderboard-rank", userId],
     queryFn: async () => {
+      // Get current week's leaderboard - calculate week start manually
+      const now = new Date();
+      const day = now.getDay();
+      const diff = now.getDate() - day + (day === 0 ? -6 : 1);
+      const weekStartDate = new Date(now.setDate(diff));
+      weekStartDate.setHours(0, 0, 0, 0);
+      const weekStart = weekStartDate.toISOString().split("T")[0];
+      
       const { data, error } = await supabase
         .from("quest_leaderboards")
-        .select("rank")
-        .eq("user_id", userId)
-        .eq("period", "alltime")
-        .single();
+        .select("*")
+        .eq("period", "weekly")
+        .eq("period_start", weekStart)
+        .order("xp_earned", { ascending: false })
+        .limit(10);
 
-      if (error && error.code !== "PGRST116") throw error;
-      return data?.rank || null;
+      if (error) throw error;
+      
+      // Find user's rank
+      const userEntry = data?.find(d => d.user_id === userId);
+      const userRank = userEntry ? data.indexOf(userEntry) + 1 : null;
+      
+      return { entries: data || [], userRank, userEntry };
     },
   });
 
   const currentLevel = progress?.current_level || 1;
   const totalXp = progress?.total_xp || 0;
-  const xpForCurrentLevel = getXpForCurrentLevel(currentLevel);
-  const xpForNextLevel = getXpForLevel(currentLevel);
-  const xpProgress = totalXp - xpForCurrentLevel;
-  const xpNeeded = xpForNextLevel - xpForCurrentLevel;
-  const progressPercent = Math.min((xpProgress / xpNeeded) * 100, 100);
+  const xpInfo = getXpToNextLevel(totalXp);
+  const leaderboardRank = leaderboardData?.userRank;
 
   return (
     <ScrollArea className="h-full">
@@ -113,12 +117,12 @@ const PlayerStats = ({ progress, userId }: PlayerStatsProps) => {
             <div className="flex items-center justify-between text-sm mb-2">
               <span className="text-muted-foreground">XP Progress</span>
               <span className="font-semibold text-foreground">
-                {xpProgress.toLocaleString()} / {xpNeeded.toLocaleString()}
+                {xpInfo.current.toLocaleString()} / {xpInfo.required.toLocaleString()}
               </span>
             </div>
-            <Progress value={progressPercent} className="h-3" />
+            <Progress value={xpInfo.progress} className="h-3" />
             <p className="text-xs text-muted-foreground mt-1">
-              {(xpNeeded - xpProgress).toLocaleString()} XP to next level
+              {(xpInfo.required - xpInfo.current).toLocaleString()} XP to next level
             </p>
           </div>
         </div>

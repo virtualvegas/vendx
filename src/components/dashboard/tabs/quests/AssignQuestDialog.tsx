@@ -1,9 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
@@ -36,7 +35,7 @@ const AssignQuestDialog = ({ open, onOpenChange, node }: AssignQuestDialogProps)
   });
 
   // Fetch current assignments for this node
-  const { data: currentAssignments = [] } = useQuery({
+  const { data: currentAssignments = [], isSuccess: assignmentsLoaded } = useQuery({
     queryKey: ["node-assignments", node?.id],
     queryFn: async () => {
       if (!node) return [];
@@ -50,12 +49,19 @@ const AssignQuestDialog = ({ open, onOpenChange, node }: AssignQuestDialogProps)
     enabled: !!node && open,
   });
 
-  // Set initial selection when data loads
-  useState(() => {
-    if (currentAssignments.length > 0) {
+  // Set initial selection when assignments are loaded
+  useEffect(() => {
+    if (assignmentsLoaded && currentAssignments.length >= 0) {
       setSelectedQuests(currentAssignments);
     }
-  });
+  }, [currentAssignments, assignmentsLoaded]);
+
+  // Reset selection when dialog closes
+  useEffect(() => {
+    if (!open) {
+      setSelectedQuests([]);
+    }
+  }, [open]);
 
   const mutation = useMutation({
     mutationFn: async () => {
@@ -80,6 +86,7 @@ const AssignQuestDialog = ({ open, onOpenChange, node }: AssignQuestDialogProps)
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["node-assignments"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-quest-nodes"] });
       toast({ title: "Quests assigned successfully" });
       onOpenChange(false);
     },
@@ -96,6 +103,14 @@ const AssignQuestDialog = ({ open, onOpenChange, node }: AssignQuestDialogProps)
     );
   };
 
+  const selectAll = () => {
+    setSelectedQuests(allQuests.map((q: any) => q.id));
+  };
+
+  const clearAll = () => {
+    setSelectedQuests([]);
+  };
+
   if (!node) return null;
 
   return (
@@ -107,6 +122,15 @@ const AssignQuestDialog = ({ open, onOpenChange, node }: AssignQuestDialogProps)
             Assign Quests to {node.name}
           </DialogTitle>
         </DialogHeader>
+
+        <div className="flex gap-2 mb-2">
+          <Button variant="outline" size="sm" onClick={selectAll}>
+            Select All
+          </Button>
+          <Button variant="outline" size="sm" onClick={clearAll}>
+            Clear All
+          </Button>
+        </div>
 
         <ScrollArea className="max-h-[400px] pr-4">
           <div className="space-y-2">
@@ -134,7 +158,7 @@ const AssignQuestDialog = ({ open, onOpenChange, node }: AssignQuestDialogProps)
                       <Zap className="w-4 h-4 text-primary flex-shrink-0" />
                       <p className="font-medium text-foreground truncate">{quest.title}</p>
                     </div>
-                    <div className="flex gap-2 mt-1">
+                    <div className="flex gap-2 mt-1 flex-wrap">
                       <Badge variant="outline" className="text-xs capitalize">
                         {quest.quest_type}
                       </Badge>
