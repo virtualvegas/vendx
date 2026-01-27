@@ -62,8 +62,24 @@ const DashboardPage = () => {
   const [roles, setRoles] = useState<AppRole[]>([]);
   const [loading, setLoading] = useState(true);
   const { tab } = useParams<{ tab?: string }>();
-  const [activeTab, setActiveTab] = useState(tab || "my-orders");
   const navigate = useNavigate();
+  
+  // Determine default tab based on roles (will be updated after roles load)
+  const getDefaultTab = (userRoles: AppRole[]) => {
+    if (userRoles.includes("super_admin") || userRoles.includes("global_operations_manager") || 
+        userRoles.includes("finance_accounting") || userRoles.includes("regional_manager")) {
+      return "overview";
+    }
+    if (userRoles.includes("business_owner")) {
+      return "business-overview";
+    }
+    if (userRoles.includes("employee_operator")) {
+      return "my-route";
+    }
+    return "my-orders"; // Default for customers
+  };
+  
+  const [activeTab, setActiveTab] = useState(tab || "my-orders");
   const { toast } = useToast();
 
   // Sync URL param with activeTab
@@ -116,6 +132,13 @@ const DashboardPage = () => {
         if (error) throw error;
 
         setRoles(data.map((r) => r.role as AppRole));
+        
+        // Set default tab based on roles if no tab specified in URL
+        if (!tab) {
+          const defaultTab = getDefaultTab(data.map((r) => r.role as AppRole));
+          setActiveTab(defaultTab);
+          navigate(`/dashboard/${defaultTab}`, { replace: true });
+        }
       } catch (error: any) {
         console.error("Error fetching roles:", error);
         toast({
