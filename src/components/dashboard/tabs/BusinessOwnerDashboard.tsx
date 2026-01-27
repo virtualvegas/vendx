@@ -21,8 +21,8 @@ import {
 } from "lucide-react";
 
 // Contact info
-const VENDX_PHONE = "(508) 235-8555";
-const VENDX_PHONE_TEL = "tel:+15082358555";
+const VENDX_PHONE = "(781) 214-1806";
+const VENDX_PHONE_TEL = "tel:+17812141806";
 const VENDX_EMAIL = "partners@vendx.space";
 
 interface SupportRequest {
