@@ -51,14 +51,16 @@ interface TabGroup {
 }
 
 // Organized tab groups by role/function
+// Note: Users can have multiple roles and will see all tabs their roles grant access to
 const tabGroups: TabGroup[] = [
   {
     id: "customer",
     label: "My Account",
     tabs: [
-      { id: "my-orders", label: "My Orders", icon: Package, requiredRoles: ["customer"] },
-      { id: "my-wallet", label: "My Wallet", icon: Wallet, requiredRoles: ["customer"] },
-      { id: "my-rewards", label: "My Rewards", icon: Gift, requiredRoles: ["customer"] },
+      // Customer tabs are available to all authenticated users (customer role or any other role)
+      { id: "my-orders", label: "My Orders", icon: Package, requiredRoles: ["customer", "business_owner", "employee_operator", "super_admin", "global_operations_manager", "regional_manager", "finance_accounting", "marketing_sales", "warehouse_logistics", "tech_support_lead", "event_manager"] },
+      { id: "my-wallet", label: "My Wallet", icon: Wallet, requiredRoles: ["customer", "business_owner", "employee_operator", "super_admin", "global_operations_manager", "regional_manager", "finance_accounting", "marketing_sales", "warehouse_logistics", "tech_support_lead", "event_manager"] },
+      { id: "my-rewards", label: "My Rewards", icon: Gift, requiredRoles: ["customer", "business_owner", "employee_operator", "super_admin", "global_operations_manager", "regional_manager", "finance_accounting", "marketing_sales", "warehouse_logistics", "tech_support_lead", "event_manager"] },
     ],
   },
   {
