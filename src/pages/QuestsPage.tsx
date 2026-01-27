@@ -7,11 +7,19 @@ import QuestMap from "@/components/quests/QuestMap";
 import QuestSidebar from "@/components/quests/QuestSidebar";
 import QuestNodeSheet from "@/components/quests/QuestNodeSheet";
 import PlayerStats from "@/components/quests/PlayerStats";
+import DailyChallenges from "@/components/quests/DailyChallenges";
+import FeaturedQuests from "@/components/quests/FeaturedQuests";
+import QuestChainProgress from "@/components/quests/QuestChainProgress";
+import LevelUpModal from "@/components/quests/LevelUpModal";
+import AchievementToast, { Achievement } from "@/components/quests/AchievementToast";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Map, List, User, Trophy } from "lucide-react";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import { Map, List, User, Trophy, Flame, Star, Sparkles } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { completeQuest, calculateDistance, validateQuestStart } from "@/lib/questUtils";
+import { completeQuest, calculateDistance, validateQuestStart, getXpToNextLevel } from "@/lib/questUtils";
 
 export interface QuestNode {
   id: string;
@@ -81,8 +89,20 @@ const QuestsPage = () => {
   const queryClient = useQueryClient();
   const [selectedNode, setSelectedNode] = useState<QuestNode | null>(null);
   const [viewMode, setViewMode] = useState<"map" | "list">("map");
+  const [activeTab, setActiveTab] = useState<"explore" | "progress">("explore");
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [nodeSheetOpen, setNodeSheetOpen] = useState(false);
+  
+  // Game state
+  const [levelUpData, setLevelUpData] = useState<{
+    open: boolean;
+    newLevel: number;
+    xpEarned: number;
+    creditsEarned: number;
+    pointsEarned: number;
+    badgesEarned: string[];
+  } | null>(null);
+  const [achievement, setAchievement] = useState<Achievement | null>(null);
 
   // Check if user is logged in
   const { data: user } = useQuery({
@@ -111,7 +131,7 @@ const QuestsPage = () => {
   });
 
   // Fetch player progress
-  const { data: playerProgress } = useQuery({
+  const { data: playerProgress, refetch: refetchProgress } = useQuery({
     queryKey: ["quest-player-progress", user?.id],
     queryFn: async () => {
       if (!user) return null;
@@ -155,8 +175,7 @@ const QuestsPage = () => {
         },
         (error) => {
           console.log("Geolocation error:", error);
-          // Default to a central location
-          setUserLocation({ lat: 42.3601, lng: -71.0589 }); // Boston
+          setUserLocation({ lat: 42.3601, lng: -71.0589 }); // Boston default
         }
       );
     }
@@ -178,7 +197,7 @@ const QuestsPage = () => {
       return;
     }
 
-    // Validate quest start (cooldown, max completions, etc.)
+    // Validate quest start
     const validation = await validateQuestStart(user.id, quest.id, node.id);
     if (!validation.canStart) {
       toast({
@@ -189,7 +208,7 @@ const QuestsPage = () => {
       return;
     }
 
-    // Check if within range (if requires checkin)
+    // Check if within range
     if (quest.requires_checkin && userLocation && node.latitude && node.longitude) {
       const distance = calculateDistance(
         userLocation.lat,
@@ -239,22 +258,43 @@ const QuestsPage = () => {
       try {
         const result = await completeQuest(user.id, quest.id, node.id, completionData.id);
         
-        let description = `+${result.xpEarned} XP earned!`;
-        if (result.badgesEarned && result.badgesEarned.length > 0) {
-          description += ` 🏅 New badge: ${result.badgesEarned[0]}!`;
+        // Show level up modal if leveled up
+        if (result.leveledUp) {
+          setLevelUpData({
+            open: true,
+            newLevel: result.newLevel,
+            xpEarned: result.xpEarned,
+            creditsEarned: result.creditsEarned,
+            pointsEarned: result.pointsEarned,
+            badgesEarned: result.badgesEarned || [],
+          });
+        } else {
+          // Show achievement toast for regular completion
+          setAchievement({
+            id: completionData.id,
+            type: "milestone",
+            title: `+${result.xpEarned} XP`,
+            description: `Quest "${quest.title}" completed!`,
+          });
         }
 
-        toast({
-          title: result.leveledUp ? "🎉 Level Up!" : "Quest Completed!",
-          description: result.leveledUp 
-            ? `You reached level ${result.newLevel}! ${description}`
-            : description,
-        });
+        // Show badge toast if earned
+        if (result.badgesEarned && result.badgesEarned.length > 0 && !result.leveledUp) {
+          setTimeout(() => {
+            setAchievement({
+              id: `badge-${Date.now()}`,
+              type: "badge",
+              title: result.badgesEarned![0],
+              description: "New badge unlocked!",
+            });
+          }, 2000);
+        }
 
         // Refresh data
-        queryClient.invalidateQueries({ queryKey: ["quest-player-progress"] });
+        refetchProgress();
         queryClient.invalidateQueries({ queryKey: ["quest-discoveries"] });
         queryClient.invalidateQueries({ queryKey: ["quest-completions"] });
+        queryClient.invalidateQueries({ queryKey: ["today-quest-stats"] });
       } catch (err: any) {
         console.error("Error completing quest:", err);
         toast({
@@ -265,7 +305,7 @@ const QuestsPage = () => {
       }
     } else {
       toast({
-        title: "Quest Started!",
+        title: "🎮 Quest Started!",
         description: `You've started: ${quest.title}`,
       });
     }
@@ -274,90 +314,231 @@ const QuestsPage = () => {
     queryClient.invalidateQueries({ queryKey: ["quest-completions", node.id, user.id] });
   };
 
+  const xpInfo = playerProgress ? getXpToNextLevel(playerProgress.total_xp) : { current: 0, required: 100, progress: 0 };
+
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <Navigation />
 
+      {/* Achievement Toast */}
+      <AchievementToast
+        achievement={achievement}
+        onDismiss={() => setAchievement(null)}
+      />
+
+      {/* Level Up Modal */}
+      {levelUpData && (
+        <LevelUpModal
+          open={levelUpData.open}
+          onClose={() => setLevelUpData(null)}
+          newLevel={levelUpData.newLevel}
+          xpEarned={levelUpData.xpEarned}
+          creditsEarned={levelUpData.creditsEarned}
+          pointsEarned={levelUpData.pointsEarned}
+          badgesEarned={levelUpData.badgesEarned}
+        />
+      )}
+
       <div className="flex-1 flex flex-col pt-16">
-        {/* Top Bar */}
+        {/* Top Bar with Player Mini Stats */}
         <div className="bg-card/80 backdrop-blur-lg border-b border-border sticky top-16 z-40">
-          <div className="container mx-auto px-4 py-3 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center">
-                <Map className="w-5 h-5 text-primary-foreground" />
-              </div>
-              <span className="font-bold text-lg text-foreground">VendX Quests</span>
-            </div>
-
-            <div className="flex items-center gap-2">
-              {/* View Toggle */}
-              <div className="bg-muted rounded-lg p-1 flex gap-1">
-                <Button
-                  variant={viewMode === "map" ? "default" : "ghost"}
-                  size="sm"
-                  onClick={() => setViewMode("map")}
-                  className="h-8 px-3"
-                >
-                  <Map className="w-4 h-4" />
-                </Button>
-                <Button
-                  variant={viewMode === "list" ? "default" : "ghost"}
-                  size="sm"
-                  onClick={() => setViewMode("list")}
-                  className="h-8 px-3"
-                >
-                  <List className="w-4 h-4" />
-                </Button>
+          <div className="container mx-auto px-4 py-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center">
+                  <Sparkles className="w-5 h-5 text-primary-foreground" />
+                </div>
+                <div>
+                  <span className="font-bold text-lg text-foreground">VendX Quests</span>
+                  {user && playerProgress && (
+                    <div className="flex items-center gap-2 text-xs">
+                      <Badge variant="outline" className="gap-1 h-5">
+                        <Star className="w-3 h-3 text-accent" />
+                        Lv.{playerProgress.current_level}
+                      </Badge>
+                      {playerProgress.current_streak > 0 && (
+                        <Badge variant="outline" className="gap-1 h-5">
+                          <Flame className="w-3 h-3 text-orange-400" />
+                          {playerProgress.current_streak}d
+                        </Badge>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
 
-              {/* Player Stats Button */}
-              {user && (
-                <Sheet>
-                  <SheetTrigger asChild>
-                    <Button variant="outline" size="sm" className="gap-2">
-                      <Trophy className="w-4 h-4 text-accent" />
-                      <span className="hidden sm:inline">Lv.{playerProgress?.current_level || 1}</span>
-                    </Button>
-                  </SheetTrigger>
-                  <SheetContent side="right" className="w-full sm:max-w-md overflow-y-auto">
-                    <PlayerStats 
-                      progress={playerProgress} 
-                      userId={user.id} 
-                    />
-                  </SheetContent>
-                </Sheet>
-              )}
+              <div className="flex items-center gap-2">
+                {/* Mini XP Bar (logged in) */}
+                {user && playerProgress && (
+                  <div className="hidden sm:flex items-center gap-2 px-3 py-1 rounded-full bg-muted">
+                    <Progress value={xpInfo.progress} className="w-20 h-2" />
+                    <span className="text-xs text-muted-foreground font-medium">
+                      {xpInfo.current}/{xpInfo.required}
+                    </span>
+                  </div>
+                )}
 
-              {!user && (
-                <Button onClick={() => navigate("/auth")} size="sm" className="gap-2">
-                  <User className="w-4 h-4" />
-                  Login
-                </Button>
-              )}
+                {/* View Toggle */}
+                <div className="bg-muted rounded-lg p-1 flex gap-1">
+                  <Button
+                    variant={viewMode === "map" ? "default" : "ghost"}
+                    size="sm"
+                    onClick={() => setViewMode("map")}
+                    className="h-8 px-3"
+                  >
+                    <Map className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    variant={viewMode === "list" ? "default" : "ghost"}
+                    size="sm"
+                    onClick={() => setViewMode("list")}
+                    className="h-8 px-3"
+                  >
+                    <List className="w-4 h-4" />
+                  </Button>
+                </div>
+
+                {/* Player Stats Button */}
+                {user && (
+                  <Sheet>
+                    <SheetTrigger asChild>
+                      <Button variant="outline" size="sm" className="gap-2">
+                        <Trophy className="w-4 h-4 text-accent" />
+                        <span className="hidden sm:inline">Stats</span>
+                      </Button>
+                    </SheetTrigger>
+                    <SheetContent side="right" className="w-full sm:max-w-md overflow-y-auto">
+                      <PlayerStats 
+                        progress={playerProgress} 
+                        userId={user.id} 
+                      />
+                    </SheetContent>
+                  </Sheet>
+                )}
+
+                {!user && (
+                  <Button onClick={() => navigate("/auth")} size="sm" className="gap-2">
+                    <User className="w-4 h-4" />
+                    Login
+                  </Button>
+                )}
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Main Content */}
-        <div className="flex-1 relative">
-          {viewMode === "map" ? (
-            <QuestMap
-              nodes={nodes}
-              userLocation={userLocation}
-              onNodeSelect={handleNodeSelect}
-              discoveredNodes={discoveredNodes}
-              isLoading={nodesLoading}
-            />
-          ) : (
-            <QuestSidebar
-              nodes={nodes}
-              userLocation={userLocation}
-              onNodeSelect={handleNodeSelect}
-              discoveredNodes={discoveredNodes}
-              isLoading={nodesLoading}
-            />
-          )}
-        </div>
+        {/* Main Content with Tabs */}
+        {user ? (
+          <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "explore" | "progress")} className="flex-1 flex flex-col">
+            <div className="border-b border-border bg-card/50">
+              <div className="container mx-auto px-4">
+                <TabsList className="bg-transparent h-12">
+                  <TabsTrigger value="explore" className="data-[state=active]:bg-primary/10 gap-2">
+                    <Map className="w-4 h-4" />
+                    Explore
+                  </TabsTrigger>
+                  <TabsTrigger value="progress" className="data-[state=active]:bg-primary/10 gap-2">
+                    <Trophy className="w-4 h-4" />
+                    Progress
+                  </TabsTrigger>
+                </TabsList>
+              </div>
+            </div>
+
+            <TabsContent value="explore" className="flex-1 mt-0 flex flex-col">
+              {/* Featured Quests */}
+              <div className="pt-4">
+                <FeaturedQuests />
+              </div>
+
+              {/* Map or List View */}
+              <div className="flex-1 relative">
+                {viewMode === "map" ? (
+                  <QuestMap
+                    nodes={nodes}
+                    userLocation={userLocation}
+                    onNodeSelect={handleNodeSelect}
+                    discoveredNodes={discoveredNodes}
+                    isLoading={nodesLoading}
+                  />
+                ) : (
+                  <QuestSidebar
+                    nodes={nodes}
+                    userLocation={userLocation}
+                    onNodeSelect={handleNodeSelect}
+                    discoveredNodes={discoveredNodes}
+                    isLoading={nodesLoading}
+                  />
+                )}
+              </div>
+            </TabsContent>
+
+            <TabsContent value="progress" className="flex-1 mt-0 overflow-y-auto">
+              <div className="container mx-auto px-4 py-6 space-y-6">
+                {/* Daily Challenges */}
+                <DailyChallenges userId={user.id} progress={playerProgress} />
+
+                {/* Quest Chains */}
+                <QuestChainProgress userId={user.id} />
+
+                {/* Quick Stats */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  <div className="p-4 rounded-xl bg-card border border-border text-center">
+                    <p className="text-2xl font-bold text-foreground">{playerProgress?.quests_completed || 0}</p>
+                    <p className="text-xs text-muted-foreground">Quests Done</p>
+                  </div>
+                  <div className="p-4 rounded-xl bg-card border border-border text-center">
+                    <p className="text-2xl font-bold text-foreground">{playerProgress?.nodes_discovered || 0}</p>
+                    <p className="text-xs text-muted-foreground">Nodes Found</p>
+                  </div>
+                  <div className="p-4 rounded-xl bg-card border border-border text-center">
+                    <p className="text-2xl font-bold text-foreground">{playerProgress?.longest_streak || 0}</p>
+                    <p className="text-xs text-muted-foreground">Best Streak</p>
+                  </div>
+                  <div className="p-4 rounded-xl bg-card border border-border text-center">
+                    <p className="text-2xl font-bold text-primary">${(playerProgress?.total_credits_earned || 0).toFixed(2)}</p>
+                    <p className="text-xs text-muted-foreground">Earned</p>
+                  </div>
+                </div>
+              </div>
+            </TabsContent>
+          </Tabs>
+        ) : (
+          // Non-logged in view
+          <div className="flex-1 relative">
+            {viewMode === "map" ? (
+              <QuestMap
+                nodes={nodes}
+                userLocation={userLocation}
+                onNodeSelect={handleNodeSelect}
+                discoveredNodes={discoveredNodes}
+                isLoading={nodesLoading}
+              />
+            ) : (
+              <QuestSidebar
+                nodes={nodes}
+                userLocation={userLocation}
+                onNodeSelect={handleNodeSelect}
+                discoveredNodes={discoveredNodes}
+                isLoading={nodesLoading}
+              />
+            )}
+
+            {/* Login Prompt Overlay */}
+            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-background via-background/95 to-transparent p-6 text-center">
+              <div className="max-w-md mx-auto">
+                <h3 className="text-xl font-bold text-foreground mb-2">Ready to Start Your Adventure?</h3>
+                <p className="text-muted-foreground mb-4">
+                  Login to complete quests, earn rewards, and track your progress!
+                </p>
+                <Button onClick={() => navigate("/auth")} size="lg" className="w-full sm:w-auto gap-2">
+                  <User className="w-5 h-5" />
+                  Login to Play
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Node Detail Sheet */}
         <QuestNodeSheet
