@@ -18,6 +18,7 @@ import {
   SiNintendoswitch
 } from "react-icons/si";
 import { FaXbox, FaAmazon } from "react-icons/fa";
+import { SiEpicgames } from "react-icons/si";
 import { Monitor, Globe } from "lucide-react";
 import { Gamepad2, ExternalLink, Play, Filter } from "lucide-react";
 import vendxInteractiveLogo from "@/assets/vendx-interactive-logo.png";
@@ -41,6 +42,7 @@ interface VideoGame {
   xbox_store_url: string | null;
   playstation_store_url: string | null;
   nintendo_eshop_url: string | null;
+  epic_games_store_url: string | null;
   browser_play_url: string | null;
   is_featured: boolean | null;
 }
@@ -58,6 +60,7 @@ const platformIcons: Record<string, React.ReactNode> = {
   xbox: <FaXbox className="w-5 h-5" />,
   playstation: <SiPlaystation className="w-5 h-5" />,
   nintendo: <SiNintendoswitch className="w-5 h-5" />,
+  epic: <SiEpicgames className="w-5 h-5" />,
   browser: <Globe className="w-5 h-5" />,
 };
 
@@ -74,6 +77,7 @@ const platformLabels: Record<string, string> = {
   xbox: "Xbox Store",
   playstation: "PlayStation Store",
   nintendo: "Nintendo eShop",
+  epic: "Epic Games",
   browser: "Play in Browser",
 };
 
@@ -123,7 +127,7 @@ const VideoGamesPage = () => {
     return normalizedPlatforms?.includes(selectedPlatform) || game.platforms?.includes(selectedPlatform);
   });
 
-  const platforms = ["steam", "android", "ios", "windows", "itchio", "amazon", "xbox", "playstation", "nintendo", "browser"];
+  const platforms = ["steam", "android", "ios", "windows", "itchio", "amazon", "xbox", "playstation", "nintendo", "epic", "browser"];
 
   const getPlatformUrl = (game: VideoGame, platform: string) => {
     switch (platform) {
@@ -139,6 +143,7 @@ const VideoGamesPage = () => {
       case "xbox": return game.xbox_store_url;
       case "playstation": return game.playstation_store_url;
       case "nintendo": return game.nintendo_eshop_url;
+      case "epic": return game.epic_games_store_url;
       case "browser": return game.browser_play_url ? "/games-player" : null;
       default: return null;
     }

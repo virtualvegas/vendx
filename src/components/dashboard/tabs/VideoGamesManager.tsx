@@ -15,7 +15,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, Gamepad2, Trash2, Edit, Search, RefreshCw, Eye, EyeOff, ExternalLink } from "lucide-react";
 import { FaGooglePlay, FaApple, FaSteam, FaWindows, FaItchIo, FaAmazon, FaXbox, FaPlaystation } from "react-icons/fa";
-import { SiNintendoswitch } from "react-icons/si";
+import { SiNintendoswitch, SiEpicgames } from "react-icons/si";
 import { Globe } from "lucide-react";
 
 interface VideoGame {
@@ -36,6 +36,7 @@ interface VideoGame {
   xbox_store_url: string | null;
   playstation_store_url: string | null;
   nintendo_eshop_url: string | null;
+  epic_games_store_url: string | null;
   browser_play_url: string | null;
   trailer_url: string | null;
   is_featured: boolean;
@@ -72,6 +73,7 @@ const VideoGamesManager = () => {
     xbox_store_url: "",
     playstation_store_url: "",
     nintendo_eshop_url: "",
+    epic_games_store_url: "",
     browser_play_url: "",
     trailer_url: "",
     is_featured: false,
@@ -106,6 +108,7 @@ const VideoGamesManager = () => {
       if (data.xbox_store_url) platforms.push("xbox");
       if (data.playstation_store_url) platforms.push("playstation");
       if (data.nintendo_eshop_url) platforms.push("nintendo");
+      if (data.epic_games_store_url) platforms.push("epic");
       if (data.browser_play_url) platforms.push("browser");
 
       const payload = {
@@ -125,6 +128,7 @@ const VideoGamesManager = () => {
         xbox_store_url: data.xbox_store_url || null,
         playstation_store_url: data.playstation_store_url || null,
         nintendo_eshop_url: data.nintendo_eshop_url || null,
+        epic_games_store_url: data.epic_games_store_url || null,
         browser_play_url: data.browser_play_url || null,
         trailer_url: data.trailer_url || null,
         is_featured: data.is_featured,
@@ -184,6 +188,7 @@ const VideoGamesManager = () => {
       xbox_store_url: "",
       playstation_store_url: "",
       nintendo_eshop_url: "",
+      epic_games_store_url: "",
       browser_play_url: "",
       trailer_url: "",
       is_featured: false,
@@ -211,6 +216,7 @@ const VideoGamesManager = () => {
       xbox_store_url: game.xbox_store_url || "",
       playstation_store_url: game.playstation_store_url || "",
       nintendo_eshop_url: game.nintendo_eshop_url || "",
+      epic_games_store_url: (game as any).epic_games_store_url || "",
       browser_play_url: game.browser_play_url || "",
       trailer_url: game.trailer_url || "",
       is_featured: game.is_featured || false,
@@ -246,6 +252,7 @@ const VideoGamesManager = () => {
     if (game.xbox_store_url) icons.push(<FaXbox key="xbox" className="w-4 h-4" />);
     if (game.playstation_store_url) icons.push(<FaPlaystation key="playstation" className="w-4 h-4" />);
     if (game.nintendo_eshop_url) icons.push(<SiNintendoswitch key="nintendo" className="w-4 h-4" />);
+    if ((game as any).epic_games_store_url) icons.push(<SiEpicgames key="epic" className="w-4 h-4" />);
     if (game.browser_play_url) icons.push(<span key="browser" className="w-4 h-4"><Globe className="w-4 h-4" /></span>);
     return icons;
   };
@@ -443,6 +450,10 @@ const VideoGamesManager = () => {
                 <div className="space-y-2">
                   <Label className="flex items-center gap-2"><SiNintendoswitch />Nintendo eShop</Label>
                   <Input value={formData.nintendo_eshop_url} onChange={(e) => setFormData({ ...formData, nintendo_eshop_url: e.target.value })} placeholder="https://nintendo.com/..." />
+                </div>
+                <div className="space-y-2">
+                  <Label className="flex items-center gap-2"><SiEpicgames />Epic Games Store</Label>
+                  <Input value={formData.epic_games_store_url} onChange={(e) => setFormData({ ...formData, epic_games_store_url: e.target.value })} placeholder="https://store.epicgames.com/..." />
                 </div>
                 <div className="col-span-2 space-y-2">
                   <Label className="flex items-center gap-2"><Globe className="w-4 h-4" />Browser Play URL (embed)</Label>
