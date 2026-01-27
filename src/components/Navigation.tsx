@@ -88,6 +88,19 @@ const Navigation = () => {
           <div className="hidden lg:flex items-center">
             <NavigationMenu>
               <NavigationMenuList className="gap-1">
+                {/* Home Link */}
+                <NavigationMenuItem>
+                  <Link
+                    to="/"
+                    className={cn(
+                      "group inline-flex h-10 w-max items-center justify-center rounded-md bg-transparent px-4 py-2 text-sm font-medium transition-colors hover:bg-primary/5 hover:text-accent-foreground focus:bg-primary/5 focus:text-accent-foreground focus:outline-none",
+                      location.pathname === "/" && "text-primary"
+                    )}
+                  >
+                    Home
+                  </Link>
+                </NavigationMenuItem>
+
                 {/* Products & Services Dropdown */}
                 <NavigationMenuItem>
                   <NavigationMenuTrigger className="bg-transparent hover:bg-primary/5 data-[state=open]:bg-primary/10">
