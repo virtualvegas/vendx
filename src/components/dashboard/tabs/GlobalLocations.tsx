@@ -103,7 +103,7 @@ const GlobalLocations = () => {
   const [locationMachines, setLocationMachines] = useState<Machine[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedArcadeGames, setSelectedArcadeGames] = useState<Record<string, { selected: boolean; count: number }>>({});
-  const [selectedOwner, setSelectedOwner] = useState<string>("");
+  const [selectedOwner, setSelectedOwner] = useState<string>("none");
 
   const [formData, setFormData] = useState({
     name: "",
@@ -307,7 +307,7 @@ const GlobalLocations = () => {
       queryClient.invalidateQueries({ queryKey: ["location-assignments"] });
       toast({ title: "Business owner assigned" });
       setShowOwnerDialog(false);
-      setSelectedOwner("");
+      setSelectedOwner("none");
     },
     onError: (error: any) => {
       toast({ title: "Error", description: error.message, variant: "destructive" });
@@ -404,7 +404,7 @@ const GlobalLocations = () => {
   const openOwnerDialog = (location: Location) => {
     setSelectedLocation(location);
     const existingAssignment = locationAssignments?.find(a => a.location_id === location.id);
-    setSelectedOwner(existingAssignment?.business_owner_id || "");
+    setSelectedOwner(existingAssignment?.business_owner_id || "none");
     setShowOwnerDialog(true);
   };
 
@@ -706,7 +706,7 @@ const GlobalLocations = () => {
                   setShowOwnerDialog(false);
                 }
               }}
-              disabled={!selectedOwner || assignOwnerMutation.isPending}
+              disabled={assignOwnerMutation.isPending || removeOwnerMutation.isPending}
             >
               {assignOwnerMutation.isPending ? "Saving..." : "Save"}
             </Button>
