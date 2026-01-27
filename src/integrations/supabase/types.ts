@@ -89,6 +89,48 @@ export type Database = {
         }
         Relationships: []
       }
+      business_inquiries: {
+        Row: {
+          business_name: string
+          contact_name: string
+          created_at: string
+          email: string
+          id: string
+          interested_services: string | null
+          location_type: string | null
+          message: string | null
+          phone: string | null
+          status: string | null
+          updated_at: string
+        }
+        Insert: {
+          business_name: string
+          contact_name: string
+          created_at?: string
+          email: string
+          id?: string
+          interested_services?: string | null
+          location_type?: string | null
+          message?: string | null
+          phone?: string | null
+          status?: string | null
+          updated_at?: string
+        }
+        Update: {
+          business_name?: string
+          contact_name?: string
+          created_at?: string
+          email?: string
+          id?: string
+          interested_services?: string | null
+          location_type?: string | null
+          message?: string | null
+          phone?: string | null
+          status?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       daily_tasks: {
         Row: {
           assigned_to: string | null

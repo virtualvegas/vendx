@@ -34,6 +34,7 @@ import NewsArticlePage from "./pages/NewsArticlePage";
 import FunnelPage from "./pages/FunnelPage";
 import QuestsPage from "./pages/QuestsPage";
 import NotFound from "./pages/NotFound";
+import BusinessPage from "./pages/BusinessPage";
 
 const queryClient = new QueryClient();
 
@@ -47,6 +48,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/about" element={<AboutPage />} />
+            <Route path="/business" element={<BusinessPage />} />
             <Route path="/divisions" element={<DivisionsPage />} />
             <Route path="/divisions/:slug" element={<DivisionDetailPage />} />
             <Route path="/games" element={<VideoGamesPage />} />
