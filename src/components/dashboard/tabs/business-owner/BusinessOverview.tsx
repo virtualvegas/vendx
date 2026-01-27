@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,20 +9,30 @@ import {
   BarChart3, Activity, Phone, Mail, Headphones, AlertCircle, Clock, CheckCircle2, Plus
 } from "lucide-react";
 import { useBusinessOwnerData } from "./useBusinessOwnerData";
+import BusinessOnboarding from "./BusinessOnboarding";
 
 const VENDX_PHONE = "(781) 214-1806";
 const VENDX_PHONE_TEL = "tel:+17812141806";
 const VENDX_EMAIL = "partners@vendx.space";
 
 const BusinessOverview = () => {
+  const [showOnboarding, setShowOnboarding] = useState<boolean | null>(null);
   const { 
     assignments, 
     machines, 
     profitSplits, 
     payouts, 
+    payoutSettings,
     supportRequests,
     isLoading 
   } = useBusinessOwnerData();
+
+  // Check if onboarding is needed (no payout settings configured)
+  useMemo(() => {
+    if (!isLoading && showOnboarding === null) {
+      setShowOnboarding(!payoutSettings);
+    }
+  }, [isLoading, payoutSettings, showOnboarding]);
 
   // Calculate earnings summary
   const earnings = useMemo(() => {
@@ -87,6 +97,17 @@ const BusinessOverview = () => {
       <div className="flex items-center justify-center min-h-[400px]">
         <p className="text-muted-foreground">Loading your dashboard...</p>
       </div>
+    );
+  }
+
+  // Show onboarding if needed
+  if (showOnboarding) {
+    return (
+      <BusinessOnboarding 
+        onComplete={() => setShowOnboarding(false)} 
+        assignments={assignments || []}
+        machines={machines || []}
+      />
     );
   }
 
