@@ -134,6 +134,7 @@ const tabGroups: TabGroup[] = [
       { id: "locations", label: "Locations", icon: Map, requiredRoles: ["super_admin"] },
       { id: "stands-manager", label: "Stands", icon: Store, requiredRoles: ["super_admin"] },
       { id: "divisions-manager", label: "Divisions", icon: Layers, requiredRoles: ["super_admin"] },
+      { id: "business-content", label: "Business Page", icon: Briefcase, requiredRoles: ["super_admin"] },
       { id: "quests-manager", label: "Quests", icon: Swords, requiredRoles: ["super_admin"] },
       { id: "careers", label: "Careers", icon: Briefcase, requiredRoles: ["super_admin"] },
       { id: "video-games", label: "Games", icon: Gamepad2, requiredRoles: ["super_admin"] },
