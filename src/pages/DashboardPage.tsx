@@ -28,7 +28,11 @@ import StoreManager from "@/components/dashboard/tabs/StoreManager";
 import ProductsManager from "@/components/dashboard/tabs/ProductsManager";
 import VideoGamesManager from "@/components/dashboard/tabs/VideoGamesManager";
 import DashboardOverview from "@/components/dashboard/tabs/DashboardOverview";
-import BusinessOwnerDashboard from "@/components/dashboard/tabs/BusinessOwnerDashboard";
+import BusinessOverview from "@/components/dashboard/tabs/business-owner/BusinessOverview";
+import BusinessLocations from "@/components/dashboard/tabs/business-owner/BusinessLocations";
+import BusinessMachines from "@/components/dashboard/tabs/business-owner/BusinessMachines";
+import BusinessPayouts from "@/components/dashboard/tabs/business-owner/BusinessPayouts";
+import BusinessSupport from "@/components/dashboard/tabs/business-owner/BusinessSupport";
 import PayoutsManager from "@/components/dashboard/tabs/PayoutsManager";
 import ProfitSplitsManager from "@/components/dashboard/tabs/ProfitSplitsManager";
 import KioskCategoriesManager from "@/components/dashboard/tabs/KioskCategoriesManager";
@@ -121,8 +125,16 @@ const DashboardPage = () => {
     switch (activeTab) {
       case "overview":
         return <DashboardOverview />;
-      case "business-owner":
-        return <BusinessOwnerDashboard />;
+      case "business-overview":
+        return <BusinessOverview />;
+      case "business-locations":
+        return <BusinessLocations />;
+      case "business-machines":
+        return <BusinessMachines />;
+      case "business-payouts":
+        return <BusinessPayouts />;
+      case "business-support":
+        return <BusinessSupport />;
       case "my-orders":
         return <CustomerOrders />;
       case "my-wallet":
