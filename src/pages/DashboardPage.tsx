@@ -65,18 +65,40 @@ const DashboardPage = () => {
   const navigate = useNavigate();
   
   // Determine default tab based on roles (will be updated after roles load)
+  // Priority: Admin roles > Business Owner > Employee > Customer
+  // Note: Users with multiple roles will see all their accessible tabs in the sidebar
   const getDefaultTab = (userRoles: AppRole[]) => {
+    // Admin/management roles get the overview dashboard
     if (userRoles.includes("super_admin") || userRoles.includes("global_operations_manager") || 
         userRoles.includes("finance_accounting") || userRoles.includes("regional_manager")) {
       return "overview";
     }
+    // Business owners get their business dashboard
     if (userRoles.includes("business_owner")) {
       return "business-overview";
     }
+    // Field operators get their route view
     if (userRoles.includes("employee_operator")) {
       return "my-route";
     }
-    return "my-orders"; // Default for customers
+    // Tech support leads
+    if (userRoles.includes("tech_support_lead")) {
+      return "technical-support";
+    }
+    // Event managers
+    if (userRoles.includes("event_manager")) {
+      return "events-rentals";
+    }
+    // Warehouse/logistics
+    if (userRoles.includes("warehouse_logistics")) {
+      return "inventory-logistics";
+    }
+    // Marketing/sales
+    if (userRoles.includes("marketing_sales")) {
+      return "marketing";
+    }
+    // Default for customers and any other role
+    return "my-orders";
   };
   
   const [activeTab, setActiveTab] = useState(tab || "my-orders");
