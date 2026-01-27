@@ -54,6 +54,7 @@ const Navigation = () => {
       links: [
         { name: "Partner With Us", path: "/business", icon: Briefcase },
         { name: "Locations", path: "/locations", icon: MapPin },
+        { name: "Events", path: "/locations/events", icon: Gamepad2 },
       ],
     },
     {
@@ -154,9 +155,27 @@ const Navigation = () => {
                       <NavListItem to="/locations" title="Find Locations" icon={MapPin}>
                         Discover VendX machines near you
                       </NavListItem>
-                      <NavListItem to="/locations/events" title="Events & Rentals" icon={Gamepad2}>
-                        Book machines for events and venues
+                      <NavListItem to="/locations/events" title="Events" icon={Gamepad2}>
+                        Find VendX at local events
                       </NavListItem>
+                      <li>
+                        <NavigationMenuLink asChild>
+                          <a
+                            href="https://hostheroz.com"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent/10 hover:text-accent-foreground focus:bg-accent/10 focus:text-accent-foreground"
+                          >
+                            <div className="flex items-center gap-2 text-sm font-medium leading-none">
+                              <Gamepad2 className="w-4 h-4 text-primary" />
+                              Party & Event Rentals
+                            </div>
+                            <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
+                              Rent arcade machines for parties and events
+                            </p>
+                          </a>
+                        </NavigationMenuLink>
+                      </li>
                     </ul>
                   </NavigationMenuContent>
                 </NavigationMenuItem>
