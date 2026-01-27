@@ -1055,6 +1055,72 @@ export type Database = {
         }
         Relationships: []
       }
+      partner_support_requests: {
+        Row: {
+          assigned_to: string | null
+          business_owner_id: string
+          created_at: string
+          description: string
+          id: string
+          location_id: string | null
+          machine_id: string | null
+          priority: string
+          request_type: string
+          resolution: string | null
+          resolved_at: string | null
+          status: string
+          subject: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          business_owner_id: string
+          created_at?: string
+          description: string
+          id?: string
+          location_id?: string | null
+          machine_id?: string | null
+          priority?: string
+          request_type: string
+          resolution?: string | null
+          resolved_at?: string | null
+          status?: string
+          subject: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_to?: string | null
+          business_owner_id?: string
+          created_at?: string
+          description?: string
+          id?: string
+          location_id?: string | null
+          machine_id?: string | null
+          priority?: string
+          request_type?: string
+          resolution?: string | null
+          resolved_at?: string | null
+          status?: string
+          subject?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_support_requests_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "partner_support_requests_machine_id_fkey"
+            columns: ["machine_id"]
+            isOneToOne: false
+            referencedRelation: "vendx_machines"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       payout_line_items: {
         Row: {
           created_at: string
