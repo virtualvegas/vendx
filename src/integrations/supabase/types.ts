@@ -89,6 +89,39 @@ export type Database = {
         }
         Relationships: []
       }
+      business_benefits: {
+        Row: {
+          created_at: string
+          description: string
+          display_order: number | null
+          icon: string
+          id: string
+          is_active: boolean | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          display_order?: number | null
+          icon?: string
+          id?: string
+          is_active?: boolean | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          display_order?: number | null
+          icon?: string
+          id?: string
+          is_active?: boolean | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       business_inquiries: {
         Row: {
           business_name: string
@@ -127,6 +160,81 @@ export type Database = {
           message?: string | null
           phone?: string | null
           status?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      business_services: {
+        Row: {
+          created_at: string
+          description: string
+          display_order: number | null
+          features: string[] | null
+          icon: string
+          id: string
+          is_active: boolean | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          display_order?: number | null
+          features?: string[] | null
+          icon?: string
+          id?: string
+          is_active?: boolean | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          display_order?: number | null
+          features?: string[] | null
+          icon?: string
+          id?: string
+          is_active?: boolean | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      business_testimonials: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean | null
+          is_featured: boolean | null
+          location: string
+          name: string
+          quote: string
+          rating: number | null
+          role: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          is_featured?: boolean | null
+          location: string
+          name: string
+          quote: string
+          rating?: number | null
+          role: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          is_featured?: boolean | null
+          location?: string
+          name?: string
+          quote?: string
+          rating?: number | null
+          role?: string
           updated_at?: string
         }
         Relationships: []
