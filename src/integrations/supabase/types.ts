@@ -3226,6 +3226,7 @@ export type Database = {
           cover_image_url: string | null
           created_at: string
           display_order: number | null
+          epic_games_store_url: string | null
           full_description: string | null
           google_play_url: string | null
           id: string
@@ -3253,6 +3254,7 @@ export type Database = {
           cover_image_url?: string | null
           created_at?: string
           display_order?: number | null
+          epic_games_store_url?: string | null
           full_description?: string | null
           google_play_url?: string | null
           id?: string
@@ -3280,6 +3282,7 @@ export type Database = {
           cover_image_url?: string | null
           created_at?: string
           display_order?: number | null
+          epic_games_store_url?: string | null
           full_description?: string | null
           google_play_url?: string | null
           id?: string
