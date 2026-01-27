@@ -13,7 +13,20 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Monitor, Plus, Key, RefreshCw, Copy, Eye, EyeOff, Wifi, WifiOff, MapPin, Package, Search, Settings, Trash2, Edit } from "lucide-react";
+import { Monitor, Plus, Key, RefreshCw, Copy, Eye, EyeOff, MapPin, Package, Search, Settings, Trash2, Edit } from "lucide-react";
+import { 
+  MachineStatsCards, 
+  MachineFilters, 
+  MachineStatusBadge,
+  getOnlineStatus,
+  getMachineTypeLabel,
+  filterMachines,
+  generateMachineCode as genMachineCode,
+  generateMachineApiKey,
+  BaseMachine,
+  MachineLocation,
+  MACHINE_TYPES
+} from "@/components/machines";
 
 interface Location {
   id: string;
@@ -62,16 +75,7 @@ interface Session {
   user_id: string | null;
 }
 
-const MACHINE_TYPES = [
-  { value: "snack", label: "Snack" },
-  { value: "beverage", label: "Beverage" },
-  { value: "combo", label: "Combo" },
-  { value: "fresh", label: "Fresh Food" },
-  { value: "digital", label: "Digital Kiosk" },
-  { value: "claw", label: "Claw Machine" },
-  { value: "arcade", label: "Arcade" },
-  { value: "other", label: "Other" },
-];
+// Use MACHINE_TYPES from universal components
 
 const MachineRegistry = () => {
   const [machines, setMachines] = useState<Machine[]>([]);
@@ -511,17 +515,12 @@ const MachineRegistry = () => {
                         />
                       </TableCell>
                       <TableCell>
-                        {isOnline ? (
-                          <div className="flex items-center gap-1 text-green-500">
-                            <Wifi className="w-4 h-4" />
-                            <span className="text-xs">Online</span>
-                          </div>
-                        ) : (
-                          <div className="flex items-center gap-1 text-muted-foreground">
-                            <WifiOff className="w-4 h-4" />
-                            <span className="text-xs">Offline</span>
-                          </div>
-                        )}
+                        <MachineStatusBadge 
+                          status={machine.status} 
+                          lastSeen={machine.last_seen}
+                          onlineCheckMode="last-seen"
+                          size="sm"
+                        />
                       </TableCell>
                       <TableCell>
                         <div className="flex gap-1">
