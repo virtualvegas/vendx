@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import StarField from "@/components/StarField";
@@ -133,12 +134,10 @@ const testimonials = [
   }
 ];
 
-const stats = [
-  { value: "500+", label: "Partner Locations" },
-  { value: "98%", label: "Uptime Guarantee" },
-  { value: "$2.5M+", label: "Paid to Partners" },
-  { value: "24/7", label: "Support Available" }
-];
+// Contact info
+const VENDX_PHONE = "(508) 235-8555";
+const VENDX_PHONE_TEL = "tel:+15082358555";
+const VENDX_EMAIL = "partners@vendx.space";
 
 const BusinessPage = () => {
   const [formData, setFormData] = useState({
@@ -151,6 +150,56 @@ const BusinessPage = () => {
     message: ""
   });
   const [submitting, setSubmitting] = useState(false);
+
+  // Fetch real stats from database
+  const { data: businessStats } = useQuery({
+    queryKey: ["business-stats"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("metrics")
+        .select("*")
+        .eq("metric_type", "business_stats")
+        .order("display_order");
+      
+      if (error) throw error;
+      return data;
+    }
+  });
+
+  // Fetch location count for Partner Locations
+  const { data: locationCount } = useQuery({
+    queryKey: ["location-count"],
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from("locations")
+        .select("*", { count: "exact", head: true })
+        .eq("status", "active");
+      
+      if (error) throw error;
+      return count || 0;
+    }
+  });
+
+  // Fetch machine count
+  const { data: machineCount } = useQuery({
+    queryKey: ["machine-count"],
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from("vendx_machines")
+        .select("*", { count: "exact", head: true });
+      
+      if (error) throw error;
+      return count || 0;
+    }
+  });
+
+  // Build stats array with real data
+  const stats = [
+    { value: locationCount ? `${locationCount}+` : "10+", label: "Partner Locations" },
+    { value: "98%", label: "Uptime Guarantee" },
+    { value: machineCount ? `${machineCount}+` : "5+", label: "Machines Deployed" },
+    { value: "24/7", label: "Support Available" }
+  ];
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -233,7 +282,7 @@ const BusinessPage = () => {
                   className="border-2 border-accent text-accent hover:bg-accent hover:text-accent-foreground text-lg px-8 py-6"
                   asChild
                 >
-                  <a href="tel:+18005551234">
+                  <a href={VENDX_PHONE_TEL}>
                     <Phone className="mr-2" />
                     Call Us Now
                   </a>
@@ -515,8 +564,8 @@ const BusinessPage = () => {
                     </div>
                     <div>
                       <div className="text-sm text-muted-foreground">Call Us</div>
-                      <a href="tel:+18005551234" className="text-lg font-bold hover:text-primary transition-colors">
-                        1-800-555-1234
+                      <a href={VENDX_PHONE_TEL} className="text-lg font-bold hover:text-primary transition-colors">
+                        {VENDX_PHONE}
                       </a>
                     </div>
                   </div>
@@ -526,8 +575,8 @@ const BusinessPage = () => {
                     </div>
                     <div>
                       <div className="text-sm text-muted-foreground">Email</div>
-                      <a href="mailto:partners@vendx.space" className="text-lg font-bold hover:text-primary transition-colors">
-                        partners@vendx.space
+                      <a href={`mailto:${VENDX_EMAIL}`} className="text-lg font-bold hover:text-primary transition-colors">
+                        {VENDX_EMAIL}
                       </a>
                     </div>
                   </div>
