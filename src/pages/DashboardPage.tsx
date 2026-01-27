@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { User, Session } from "@supabase/supabase-js";
 import { useToast } from "@/hooks/use-toast";
@@ -61,9 +61,23 @@ const DashboardPage = () => {
   const [session, setSession] = useState<Session | null>(null);
   const [roles, setRoles] = useState<AppRole[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState("my-orders");
+  const { tab } = useParams<{ tab?: string }>();
+  const [activeTab, setActiveTab] = useState(tab || "my-orders");
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  // Sync URL param with activeTab
+  useEffect(() => {
+    if (tab && tab !== activeTab) {
+      setActiveTab(tab);
+    }
+  }, [tab]);
+
+  // Update URL when tab changes (without full navigation)
+  const handleSetActiveTab = (newTab: string) => {
+    setActiveTab(newTab);
+    navigate(`/dashboard/${newTab}`, { replace: true });
+  };
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -221,7 +235,7 @@ const DashboardPage = () => {
       user={user}
       roles={roles}
       activeTab={activeTab}
-      setActiveTab={setActiveTab}
+      setActiveTab={handleSetActiveTab}
       hasAccess={hasAccess}
     >
       {renderTabContent()}
