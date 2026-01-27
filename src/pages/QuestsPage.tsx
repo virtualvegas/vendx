@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Map, List, User, Trophy } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { completeQuest, calculateDistance } from "@/lib/questUtils";
+import { completeQuest, calculateDistance, validateQuestStart } from "@/lib/questUtils";
 
 export interface QuestNode {
   id: string;
@@ -59,6 +59,7 @@ export interface Quest {
   is_featured: boolean;
   start_date: string | null;
   end_date: string | null;
+  max_completions_per_user: number | null;
 }
 
 export interface PlayerProgress {
@@ -118,9 +119,9 @@ const QuestsPage = () => {
         .from("quest_player_progress")
         .select("*")
         .eq("user_id", user.id)
-        .single();
+        .maybeSingle();
 
-      if (error && error.code !== "PGRST116") throw error;
+      if (error) throw error;
       return data as PlayerProgress | null;
     },
     enabled: !!user,
@@ -177,6 +178,17 @@ const QuestsPage = () => {
       return;
     }
 
+    // Validate quest start (cooldown, max completions, etc.)
+    const validation = await validateQuestStart(user.id, quest.id, node.id);
+    if (!validation.canStart) {
+      toast({
+        title: "Cannot Start Quest",
+        description: validation.reason,
+        variant: "destructive",
+      });
+      return;
+    }
+
     // Check if within range (if requires checkin)
     if (quest.requires_checkin && userLocation && node.latitude && node.longitude) {
       const distance = calculateDistance(
@@ -216,7 +228,7 @@ const QuestsPage = () => {
     if (error) {
       toast({
         title: "Error",
-        description: "Failed to start quest",
+        description: error.message || "Failed to start quest",
         variant: "destructive",
       });
       return;
@@ -227,19 +239,29 @@ const QuestsPage = () => {
       try {
         const result = await completeQuest(user.id, quest.id, node.id, completionData.id);
         
+        let description = `+${result.xpEarned} XP earned!`;
+        if (result.badgesEarned && result.badgesEarned.length > 0) {
+          description += ` 🏅 New badge: ${result.badgesEarned[0]}!`;
+        }
+
         toast({
           title: result.leveledUp ? "🎉 Level Up!" : "Quest Completed!",
           description: result.leveledUp 
-            ? `You reached level ${result.newLevel}! +${result.xpEarned} XP`
-            : `+${result.xpEarned} XP earned!`,
+            ? `You reached level ${result.newLevel}! ${description}`
+            : description,
         });
 
         // Refresh data
         queryClient.invalidateQueries({ queryKey: ["quest-player-progress"] });
         queryClient.invalidateQueries({ queryKey: ["quest-discoveries"] });
         queryClient.invalidateQueries({ queryKey: ["quest-completions"] });
-      } catch (err) {
+      } catch (err: any) {
         console.error("Error completing quest:", err);
+        toast({
+          title: "Warning",
+          description: "Quest started but rewards may need to be claimed manually",
+          variant: "destructive",
+        });
       }
     } else {
       toast({
@@ -247,6 +269,9 @@ const QuestsPage = () => {
         description: `You've started: ${quest.title}`,
       });
     }
+
+    // Refresh completions in the sheet
+    queryClient.invalidateQueries({ queryKey: ["quest-completions", node.id, user.id] });
   };
 
   return (

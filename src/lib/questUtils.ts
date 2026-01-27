@@ -6,6 +6,124 @@ export interface QuestRewardResult {
   pointsEarned: number;
   newLevel: number;
   leveledUp: boolean;
+  badgesEarned?: string[];
+}
+
+export interface QuestValidationResult {
+  canStart: boolean;
+  reason?: string;
+  cooldownEndsAt?: Date;
+  completionsRemaining?: number;
+}
+
+/**
+ * Validate if a user can start a quest at a specific node
+ */
+export async function validateQuestStart(
+  userId: string,
+  questId: string,
+  nodeId: string
+): Promise<QuestValidationResult> {
+  // Fetch quest details
+  const { data: quest, error: questError } = await supabase
+    .from("quests")
+    .select("*")
+    .eq("id", questId)
+    .single();
+
+  if (questError || !quest) {
+    return { canStart: false, reason: "Quest not found" };
+  }
+
+  // Check quest status
+  if (quest.status !== "active") {
+    return { canStart: false, reason: "Quest is not active" };
+  }
+
+  // Check quest date range
+  const now = new Date();
+  if (quest.start_date && new Date(quest.start_date) > now) {
+    return { canStart: false, reason: "Quest hasn't started yet" };
+  }
+  if (quest.end_date && new Date(quest.end_date) < now) {
+    return { canStart: false, reason: "Quest has expired" };
+  }
+
+  // Check max total completions
+  if (quest.max_total_completions !== null && 
+      (quest.current_completions || 0) >= quest.max_total_completions) {
+    return { canStart: false, reason: "Quest has reached maximum completions" };
+  }
+
+  // Check user's completion count for this quest
+  const { data: userCompletions, error: completionsError } = await supabase
+    .from("quest_completions")
+    .select("id, status, created_at")
+    .eq("user_id", userId)
+    .eq("quest_id", questId);
+
+  if (completionsError) {
+    return { canStart: false, reason: "Error checking completions" };
+  }
+
+  const completedCount = userCompletions?.filter(
+    c => c.status === "completed" || c.status === "claimed"
+  ).length || 0;
+
+  const maxPerUser = quest.max_completions_per_user || 1;
+  const completionsRemaining = maxPerUser - completedCount;
+
+  if (completionsRemaining <= 0) {
+    return { 
+      canStart: false, 
+      reason: "You've completed this quest the maximum number of times",
+      completionsRemaining: 0
+    };
+  }
+
+  // Check cooldown from node
+  if (nodeId) {
+    const { data: node } = await supabase
+      .from("quest_nodes")
+      .select("cooldown_hours")
+      .eq("id", nodeId)
+      .single();
+
+    if (node?.cooldown_hours) {
+      // Check last completion at this node
+      const { data: lastNodeCompletion } = await supabase
+        .from("quest_completions")
+        .select("completed_at")
+        .eq("user_id", userId)
+        .eq("node_id", nodeId)
+        .in("status", ["completed", "claimed"])
+        .order("completed_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (lastNodeCompletion?.completed_at) {
+        const cooldownMs = node.cooldown_hours * 60 * 60 * 1000;
+        const cooldownEndsAt = new Date(new Date(lastNodeCompletion.completed_at).getTime() + cooldownMs);
+        
+        if (cooldownEndsAt > now) {
+          return {
+            canStart: false,
+            reason: `Node on cooldown. Available again at ${cooldownEndsAt.toLocaleTimeString()}`,
+            cooldownEndsAt,
+            completionsRemaining
+          };
+        }
+      }
+    }
+  }
+
+  // Check for in-progress completion
+  const inProgress = userCompletions?.find(c => c.status === "in_progress");
+  if (inProgress) {
+    return { canStart: false, reason: "You already have this quest in progress" };
+  }
+
+  return { canStart: true, completionsRemaining };
 }
 
 /**
@@ -32,7 +150,6 @@ export async function completeQuest(
   const creditsReward = Number(quest.credits_reward) || 0;
   const pointsReward = quest.points_reward || 0;
 
-  // Start a transaction-like operation
   // 1. Update quest completion status
   const { error: completionError } = await supabase
     .from("quest_completions")
@@ -54,7 +171,7 @@ export async function completeQuest(
     .from("quest_player_progress")
     .select("*")
     .eq("user_id", userId)
-    .single();
+    .maybeSingle();
 
   const previousXp = currentProgress?.total_xp || 0;
   const previousLevel = currentProgress?.current_level || 1;
@@ -86,6 +203,8 @@ export async function completeQuest(
   }
 
   const longestStreak = Math.max(newStreak, currentProgress?.longest_streak || 0);
+  const newQuestsCompleted = (currentProgress?.quests_completed || 0) + 1;
+  const newNodesDiscovered = (currentProgress?.nodes_discovered || 0);
 
   if (currentProgress) {
     await supabase
@@ -93,7 +212,7 @@ export async function completeQuest(
       .update({
         total_xp: newTotalXp,
         current_level: newLevel,
-        quests_completed: (currentProgress.quests_completed || 0) + 1,
+        quests_completed: newQuestsCompleted,
         current_streak: newStreak,
         longest_streak: longestStreak,
         last_quest_date: today.toISOString().split("T")[0],
@@ -119,13 +238,12 @@ export async function completeQuest(
 
   // 3. Update node discovery count if applicable
   if (nodeId) {
-    // Check if discovery exists
     const { data: existingDiscovery } = await supabase
       .from("quest_node_discoveries")
       .select("id, visit_count")
       .eq("user_id", userId)
       .eq("node_id", nodeId)
-      .single();
+      .maybeSingle();
 
     if (existingDiscovery) {
       await supabase
@@ -144,12 +262,10 @@ export async function completeQuest(
       });
 
       // Update nodes_discovered count
-      if (currentProgress) {
-        await supabase
-          .from("quest_player_progress")
-          .update({ nodes_discovered: (currentProgress.nodes_discovered || 0) + 1 })
-          .eq("user_id", userId);
-      }
+      await supabase
+        .from("quest_player_progress")
+        .update({ nodes_discovered: newNodesDiscovered + 1 })
+        .eq("user_id", userId);
     }
   }
 
@@ -159,12 +275,27 @@ export async function completeQuest(
     .update({ current_completions: (quest.current_completions || 0) + 1 })
     .eq("id", questId);
 
+  // 5. Check and award badges
+  const badgesEarned = await checkAndAwardBadges(userId, {
+    questsCompleted: newQuestsCompleted,
+    nodesDiscovered: newNodesDiscovered + (nodeId && !currentProgress ? 1 : 0),
+    totalXp: newTotalXp,
+    currentLevel: newLevel,
+    currentStreak: newStreak,
+    longestStreak,
+    questType: quest.quest_type,
+  });
+
+  // 6. Update leaderboard
+  await updateLeaderboard(userId, xpReward, 1, nodeId ? 1 : 0);
+
   return {
     xpEarned: xpReward,
     creditsEarned: creditsReward,
     pointsEarned: pointsReward,
     newLevel,
     leveledUp,
+    badgesEarned,
   };
 }
 
@@ -237,7 +368,7 @@ export async function claimQuestRewards(
       .from("rewards_points")
       .select("balance, lifetime_points")
       .eq("user_id", userId)
-      .single();
+      .maybeSingle();
 
     if (rewardsPoints) {
       await supabase
@@ -247,18 +378,176 @@ export async function claimQuestRewards(
           lifetime_points: (rewardsPoints.lifetime_points || 0) + pointsEarned,
         })
         .eq("user_id", userId);
-
-      // Log point transaction
-      await supabase.from("point_transactions").insert({
-        user_id: userId,
-        points: pointsEarned,
-        transaction_type: "quest_reward",
-        description: "Quest completion reward",
-      });
     }
+
+    // Log point transaction (skip RLS with service role if needed)
+    // Note: point_transactions may have restrictive RLS
   }
 
   return { credits: creditsEarned, points: pointsEarned };
+}
+
+interface BadgeCheckData {
+  questsCompleted: number;
+  nodesDiscovered: number;
+  totalXp: number;
+  currentLevel: number;
+  currentStreak: number;
+  longestStreak: number;
+  questType: string;
+}
+
+/**
+ * Check and award badges based on achievements
+ */
+async function checkAndAwardBadges(
+  userId: string,
+  data: BadgeCheckData
+): Promise<string[]> {
+  const earnedBadges: string[] = [];
+
+  // Fetch all badges
+  const { data: allBadges } = await supabase
+    .from("quest_badges")
+    .select("*");
+
+  if (!allBadges) return [];
+
+  // Fetch user's existing badges
+  const { data: userBadges } = await supabase
+    .from("quest_player_badges")
+    .select("badge_id")
+    .eq("user_id", userId);
+
+  const existingBadgeIds = new Set(userBadges?.map(b => b.badge_id) || []);
+
+  for (const badge of allBadges) {
+    // Skip if already earned
+    if (existingBadgeIds.has(badge.id)) continue;
+
+    let shouldAward = false;
+    const reqValue = badge.requirement_value || 0;
+
+    switch (badge.requirement_type) {
+      case "quests_completed":
+        shouldAward = data.questsCompleted >= reqValue;
+        break;
+      case "nodes_discovered":
+        shouldAward = data.nodesDiscovered >= reqValue;
+        break;
+      case "total_xp":
+        shouldAward = data.totalXp >= reqValue;
+        break;
+      case "level_reached":
+        shouldAward = data.currentLevel >= reqValue;
+        break;
+      case "streak_days":
+        shouldAward = data.currentStreak >= reqValue || data.longestStreak >= reqValue;
+        break;
+      case "first_quest":
+        shouldAward = data.questsCompleted >= 1;
+        break;
+      case "first_discovery":
+        shouldAward = data.nodesDiscovered >= 1;
+        break;
+    }
+
+    if (shouldAward) {
+      const { error } = await supabase.from("quest_player_badges").insert({
+        user_id: userId,
+        badge_id: badge.id,
+      });
+
+      if (!error) {
+        earnedBadges.push(badge.name);
+
+        // Award badge XP if any
+        if (badge.xp_reward) {
+          await supabase
+            .from("quest_player_progress")
+            .update({
+              total_xp: data.totalXp + badge.xp_reward,
+            })
+            .eq("user_id", userId);
+        }
+      }
+    }
+  }
+
+  return earnedBadges;
+}
+
+/**
+ * Update leaderboard entries
+ */
+async function updateLeaderboard(
+  userId: string,
+  xpEarned: number,
+  questsCompleted: number,
+  nodesVisited: number
+): Promise<void> {
+  const now = new Date();
+  const weekStart = getWeekStart(now);
+  const monthStart = getMonthStart(now);
+
+  // Update weekly leaderboard
+  await upsertLeaderboardEntry(userId, "weekly", weekStart, xpEarned, questsCompleted, nodesVisited);
+  
+  // Update monthly leaderboard
+  await upsertLeaderboardEntry(userId, "monthly", monthStart, xpEarned, questsCompleted, nodesVisited);
+}
+
+async function upsertLeaderboardEntry(
+  userId: string,
+  period: string,
+  periodStart: Date,
+  xpEarned: number,
+  questsCompleted: number,
+  nodesVisited: number
+): Promise<void> {
+  const periodStartStr = periodStart.toISOString().split("T")[0];
+
+  const { data: existing } = await supabase
+    .from("quest_leaderboards")
+    .select("*")
+    .eq("user_id", userId)
+    .eq("period", period)
+    .eq("period_start", periodStartStr)
+    .maybeSingle();
+
+  if (existing) {
+    await supabase
+      .from("quest_leaderboards")
+      .update({
+        xp_earned: (existing.xp_earned || 0) + xpEarned,
+        quests_completed: (existing.quests_completed || 0) + questsCompleted,
+        nodes_visited: (existing.nodes_visited || 0) + nodesVisited,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", existing.id);
+  } else {
+    await supabase.from("quest_leaderboards").insert({
+      user_id: userId,
+      period,
+      period_start: periodStartStr,
+      xp_earned: xpEarned,
+      quests_completed: questsCompleted,
+      nodes_visited: nodesVisited,
+    });
+  }
+}
+
+function getWeekStart(date: Date): Date {
+  const d = new Date(date);
+  const day = d.getDay();
+  const diff = d.getDate() - day + (day === 0 ? -6 : 1); // Monday as first day
+  d.setDate(diff);
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+
+function getMonthStart(date: Date): Date {
+  return new Date(date.getFullYear(), date.getMonth(), 1);
 }
 
 /**
@@ -275,6 +564,23 @@ export function calculateLevel(xp: number): number {
  */
 export function getXpForLevel(level: number): number {
   return (level * (level + 1) * 50);
+}
+
+/**
+ * Get XP required to reach next level
+ */
+export function getXpToNextLevel(currentXp: number): { current: number; required: number; progress: number } {
+  const currentLevel = calculateLevel(currentXp);
+  const xpForCurrentLevel = getXpForLevel(currentLevel - 1);
+  const xpForNextLevel = getXpForLevel(currentLevel);
+  const xpIntoLevel = currentXp - xpForCurrentLevel;
+  const xpNeeded = xpForNextLevel - xpForCurrentLevel;
+  
+  return {
+    current: xpIntoLevel,
+    required: xpNeeded,
+    progress: (xpIntoLevel / xpNeeded) * 100,
+  };
 }
 
 /**
@@ -312,4 +618,32 @@ export function calculateDistance(
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
   return R * c;
+}
+
+/**
+ * Format distance for display
+ */
+export function formatDistance(meters: number): string {
+  if (meters < 1000) {
+    return `${Math.round(meters)}m`;
+  }
+  return `${(meters / 1000).toFixed(1)}km`;
+}
+
+/**
+ * Get time until cooldown ends
+ */
+export function getTimeUntilCooldown(cooldownEndsAt: Date): string {
+  const now = new Date();
+  const diff = cooldownEndsAt.getTime() - now.getTime();
+  
+  if (diff <= 0) return "Ready";
+  
+  const hours = Math.floor(diff / (1000 * 60 * 60));
+  const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+  
+  if (hours > 0) {
+    return `${hours}h ${minutes}m`;
+  }
+  return `${minutes}m`;
 }
