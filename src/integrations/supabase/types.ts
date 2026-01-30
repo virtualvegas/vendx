@@ -3457,6 +3457,7 @@ export type Database = {
           platforms: Json
           playstation_store_url: string | null
           release_status: string
+          roblox_url: string | null
           screenshots: Json | null
           short_description: string | null
           slug: string
@@ -3485,6 +3486,7 @@ export type Database = {
           platforms?: Json
           playstation_store_url?: string | null
           release_status?: string
+          roblox_url?: string | null
           screenshots?: Json | null
           short_description?: string | null
           slug: string
@@ -3513,6 +3515,7 @@ export type Database = {
           platforms?: Json
           playstation_store_url?: string | null
           release_status?: string
+          roblox_url?: string | null
           screenshots?: Json | null
           short_description?: string | null
           slug?: string
