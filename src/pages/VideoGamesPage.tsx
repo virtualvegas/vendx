@@ -15,10 +15,11 @@ import {
   SiApple,
   SiItchdotio,
   SiPlaystation,
-  SiNintendoswitch
+  SiNintendoswitch,
+  SiEpicgames,
+  SiRoblox
 } from "react-icons/si";
 import { FaXbox, FaAmazon } from "react-icons/fa";
-import { SiEpicgames } from "react-icons/si";
 import { Monitor, Globe } from "lucide-react";
 import { Gamepad2, ExternalLink, Play, Filter } from "lucide-react";
 import vendxInteractiveLogo from "@/assets/vendx-interactive-logo.png";
@@ -61,6 +62,7 @@ const platformIcons: Record<string, React.ReactNode> = {
   playstation: <SiPlaystation className="w-5 h-5" />,
   nintendo: <SiNintendoswitch className="w-5 h-5" />,
   epic: <SiEpicgames className="w-5 h-5" />,
+  roblox: <SiRoblox className="w-5 h-5" />,
   browser: <Globe className="w-5 h-5" />,
 };
 
@@ -78,6 +80,7 @@ const platformLabels: Record<string, string> = {
   playstation: "PlayStation Store",
   nintendo: "Nintendo eShop",
   epic: "Epic Games",
+  roblox: "Roblox",
   browser: "Play in Browser",
 };
 
@@ -127,7 +130,7 @@ const VideoGamesPage = () => {
     return normalizedPlatforms?.includes(selectedPlatform) || game.platforms?.includes(selectedPlatform);
   });
 
-  const platforms = ["steam", "android", "ios", "windows", "itchio", "amazon", "xbox", "playstation", "nintendo", "epic", "browser"];
+  const platforms = ["steam", "android", "ios", "windows", "itchio", "amazon", "xbox", "playstation", "nintendo", "epic", "roblox", "browser"];
 
   const getPlatformUrl = (game: VideoGame, platform: string) => {
     switch (platform) {
@@ -144,6 +147,7 @@ const VideoGamesPage = () => {
       case "playstation": return game.playstation_store_url;
       case "nintendo": return game.nintendo_eshop_url;
       case "epic": return game.epic_games_store_url;
+      case "roblox": return (game as any).roblox_url;
       case "browser": return game.browser_play_url ? "/games-player" : null;
       default: return null;
     }
