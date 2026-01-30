@@ -44,6 +44,7 @@ interface VideoGame {
   playstation_store_url: string | null;
   nintendo_eshop_url: string | null;
   epic_games_store_url: string | null;
+  roblox_url: string | null;
   browser_play_url: string | null;
   is_featured: boolean | null;
 }
@@ -147,7 +148,7 @@ const VideoGamesPage = () => {
       case "playstation": return game.playstation_store_url;
       case "nintendo": return game.nintendo_eshop_url;
       case "epic": return game.epic_games_store_url;
-      case "roblox": return (game as any).roblox_url;
+      case "roblox": return game.roblox_url;
       case "browser": return game.browser_play_url ? "/games-player" : null;
       default: return null;
     }
