@@ -56,6 +56,7 @@ const categories = [
   { id: "accessories", label: "Accessories", icon: Star },
   { id: "snacks", label: "Snacks", icon: Cookie },
   { id: "tech", label: "Tech & Arcade", icon: Cpu },
+  { id: "game-items", label: "Game Items", icon: Star },
 ];
 
 type SortOption = "featured" | "newest" | "price-asc" | "price-desc" | "name";

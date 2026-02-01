@@ -3160,6 +3160,7 @@ export type Database = {
           compare_at_price: number | null
           created_at: string | null
           description: string | null
+          game_id: string | null
           id: string
           images: string[] | null
           is_active: boolean | null
@@ -3185,6 +3186,7 @@ export type Database = {
           compare_at_price?: number | null
           created_at?: string | null
           description?: string | null
+          game_id?: string | null
           id?: string
           images?: string[] | null
           is_active?: boolean | null
@@ -3210,6 +3212,7 @@ export type Database = {
           compare_at_price?: number | null
           created_at?: string | null
           description?: string | null
+          game_id?: string | null
           id?: string
           images?: string[] | null
           is_active?: boolean | null
@@ -3230,7 +3233,15 @@ export type Database = {
           updated_at?: string | null
           waitlist_enabled?: boolean | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "store_products_game_id_fkey"
+            columns: ["game_id"]
+            isOneToOne: false
+            referencedRelation: "video_games"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       store_subscriptions: {
         Row: {
