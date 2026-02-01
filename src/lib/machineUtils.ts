@@ -28,11 +28,24 @@ export interface BaseMachine {
   machine_type: string;
   status: string;
   vendx_pay_enabled?: boolean;
+  accepts_cash?: boolean;
+  accepts_coins?: boolean;
+  accepts_cards?: boolean;
   last_seen?: string | null;
   location_id?: string | null;
   current_period_revenue?: number | null;
   lifetime_revenue?: number | null;
 }
+
+// Get payment methods display for a machine
+export const getPaymentMethodsDisplay = (machine: BaseMachine): string[] => {
+  const methods: string[] = [];
+  if (machine.accepts_cash) methods.push("Cash");
+  if (machine.accepts_coins) methods.push("Coins");
+  if (machine.accepts_cards) methods.push("Cards");
+  if (machine.vendx_pay_enabled) methods.push("VendX Pay");
+  return methods;
+};
 
 export interface MachineLocation {
   id: string;

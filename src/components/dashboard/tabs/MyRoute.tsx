@@ -19,7 +19,8 @@ import {
   Phone, Mail, FileText, Truck, Play, Pause, RotateCcw,
   Timer, Zap, TrendingUp, ChevronRight, MapPinned,
   Search, Filter, WifiOff, Wifi, Camera, MessageSquare,
-  ThumbsUp, AlertCircle, SkipForward, History, Target
+  ThumbsUp, AlertCircle, SkipForward, History, Target,
+  DollarSign, Coins, Banknote, CreditCard
 } from "lucide-react";
 
 interface RouteStop {
@@ -86,9 +87,11 @@ const MyRoute = () => {
   const [showStopDetailsDialog, setShowStopDetailsDialog] = useState(false);
   const [showRestockDialog, setShowRestockDialog] = useState(false);
   const [showIssueDialog, setShowIssueDialog] = useState(false);
+  const [showRevenueDialog, setShowRevenueDialog] = useState(false);
   const [selectedStop, setSelectedStop] = useState<RouteStop | null>(null);
   const [restockNotes, setRestockNotes] = useState("");
   const [issueDescription, setIssueDescription] = useState("");
+  const [revenueForm, setRevenueForm] = useState({ cashAmount: "", coinsAmount: "", notes: "" });
   const [activeView, setActiveView] = useState<"my-route" | "all-routes">("my-route");
   const [userRoles, setUserRoles] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -343,6 +346,53 @@ const MyRoute = () => {
       toast({ title: "Issue Reported", description: "Support ticket created" });
       setShowIssueDialog(false);
       setIssueDescription("");
+    },
+    onError: (error: any) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    },
+  });
+
+  // Revenue collection mutation
+  const collectRevenueMutation = useMutation({
+    mutationFn: async ({ 
+      machineId, 
+      locationId, 
+      stopId, 
+      cashAmount, 
+      coinsAmount, 
+      notes 
+    }: { 
+      machineId: string; 
+      locationId: string | null; 
+      stopId: string;
+      cashAmount: number; 
+      coinsAmount: number; 
+      notes: string 
+    }) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      const totalAmount = cashAmount + coinsAmount;
+      
+      const { error } = await supabase
+        .from("revenue_collections")
+        .insert({
+          machine_id: machineId,
+          location_id: locationId,
+          route_stop_id: stopId,
+          collected_by: user?.id,
+          cash_amount: cashAmount,
+          coins_amount: coinsAmount,
+          total_amount: totalAmount,
+          notes: notes || null,
+        });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast({ 
+        title: "Revenue Collected", 
+        description: `$${(parseFloat(revenueForm.cashAmount || "0") + parseFloat(revenueForm.coinsAmount || "0")).toFixed(2)} recorded` 
+      });
+      setShowRevenueDialog(false);
+      setRevenueForm({ cashAmount: "", coinsAmount: "", notes: "" });
     },
     onError: (error: any) => {
       toast({ title: "Error", description: error.message, variant: "destructive" });
@@ -658,17 +708,28 @@ const MyRoute = () => {
                     Complete Stop
                   </Button>
                   
-                  <div className="grid grid-cols-3 gap-2">
+                  <div className="grid grid-cols-2 gap-2">
                     {currentStop.machine && (
-                      <Button 
-                        variant="secondary"
-                        size="sm"
-                        className="h-10"
-                        onClick={() => { setSelectedStop(currentStop); setShowRestockDialog(true); }}
-                      >
-                        <Package className="w-4 h-4 mr-1" />
-                        Restock
-                      </Button>
+                      <>
+                        <Button 
+                          variant="secondary"
+                          size="sm"
+                          className="h-10"
+                          onClick={() => { setSelectedStop(currentStop); setShowRestockDialog(true); }}
+                        >
+                          <Package className="w-4 h-4 mr-1" />
+                          Restock
+                        </Button>
+                        <Button 
+                          variant="secondary"
+                          size="sm"
+                          className="h-10 bg-green-600 hover:bg-green-700 text-white"
+                          onClick={() => { setSelectedStop(currentStop); setShowRevenueDialog(true); }}
+                        >
+                          <DollarSign className="w-4 h-4 mr-1" />
+                          Collect $
+                        </Button>
+                      </>
                     )}
                     <Button 
                       variant="outline"
@@ -1025,6 +1086,96 @@ const MyRoute = () => {
             >
               <AlertCircle className="w-4 h-4 mr-2" />
               Submit Report
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Revenue Collection Dialog */}
+      <Dialog open={showRevenueDialog} onOpenChange={setShowRevenueDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <DollarSign className="w-5 h-5 text-green-600" />
+              Collect Revenue
+            </DialogTitle>
+            <DialogDescription>
+              {selectedStop?.machine?.name} - {selectedStop?.stop_name}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="cashAmount" className="flex items-center gap-2">
+                  <Banknote className="w-4 h-4" />
+                  Cash ($)
+                </Label>
+                <Input
+                  id="cashAmount"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  placeholder="0.00"
+                  value={revenueForm.cashAmount}
+                  onChange={(e) => setRevenueForm({ ...revenueForm, cashAmount: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="coinsAmount" className="flex items-center gap-2">
+                  <Coins className="w-4 h-4" />
+                  Coins ($)
+                </Label>
+                <Input
+                  id="coinsAmount"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  placeholder="0.00"
+                  value={revenueForm.coinsAmount}
+                  onChange={(e) => setRevenueForm({ ...revenueForm, coinsAmount: e.target.value })}
+                />
+              </div>
+            </div>
+            
+            <div className="p-3 bg-green-50 dark:bg-green-950/30 rounded-lg border border-green-200 dark:border-green-800">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium text-green-700 dark:text-green-300">Total Collection</span>
+                <span className="text-xl font-bold text-green-600 dark:text-green-400">
+                  ${(parseFloat(revenueForm.cashAmount || "0") + parseFloat(revenueForm.coinsAmount || "0")).toFixed(2)}
+                </span>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="revenueNotes">Notes (optional)</Label>
+              <Textarea
+                id="revenueNotes"
+                placeholder="Any notes about the collection..."
+                value={revenueForm.notes}
+                onChange={(e) => setRevenueForm({ ...revenueForm, notes: e.target.value })}
+                rows={2}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowRevenueDialog(false)}>Cancel</Button>
+            <Button 
+              className="bg-green-600 hover:bg-green-700"
+              onClick={() => selectedStop?.machine && collectRevenueMutation.mutate({ 
+                machineId: selectedStop.machine.id,
+                locationId: selectedStop.location_id,
+                stopId: selectedStop.id,
+                cashAmount: parseFloat(revenueForm.cashAmount || "0"),
+                coinsAmount: parseFloat(revenueForm.coinsAmount || "0"),
+                notes: revenueForm.notes
+              })}
+              disabled={
+                collectRevenueMutation.isPending || 
+                (parseFloat(revenueForm.cashAmount || "0") + parseFloat(revenueForm.coinsAmount || "0")) <= 0
+              }
+            >
+              <CheckCircle className="w-4 h-4 mr-2" />
+              Confirm Collection
             </Button>
           </DialogFooter>
         </DialogContent>

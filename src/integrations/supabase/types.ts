@@ -2240,6 +2240,82 @@ export type Database = {
           },
         ]
       }
+      revenue_collections: {
+        Row: {
+          cash_amount: number | null
+          coins_amount: number | null
+          collected_by: string | null
+          collection_date: string
+          created_at: string
+          id: string
+          location_id: string | null
+          machine_id: string
+          notes: string | null
+          route_stop_id: string | null
+          total_amount: number | null
+          updated_at: string
+          verification_status: string | null
+          verified_at: string | null
+          verified_by: string | null
+        }
+        Insert: {
+          cash_amount?: number | null
+          coins_amount?: number | null
+          collected_by?: string | null
+          collection_date?: string
+          created_at?: string
+          id?: string
+          location_id?: string | null
+          machine_id: string
+          notes?: string | null
+          route_stop_id?: string | null
+          total_amount?: number | null
+          updated_at?: string
+          verification_status?: string | null
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Update: {
+          cash_amount?: number | null
+          coins_amount?: number | null
+          collected_by?: string | null
+          collection_date?: string
+          created_at?: string
+          id?: string
+          location_id?: string | null
+          machine_id?: string
+          notes?: string | null
+          route_stop_id?: string | null
+          total_amount?: number | null
+          updated_at?: string
+          verification_status?: string | null
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "revenue_collections_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "revenue_collections_machine_id_fkey"
+            columns: ["machine_id"]
+            isOneToOne: false
+            referencedRelation: "vendx_machines"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "revenue_collections_route_stop_id_fkey"
+            columns: ["route_stop_id"]
+            isOneToOne: false
+            referencedRelation: "route_stops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       reward_catalog: {
         Row: {
           created_at: string
@@ -3374,6 +3450,9 @@ export type Database = {
       }
       vendx_machines: {
         Row: {
+          accepts_cards: boolean | null
+          accepts_cash: boolean | null
+          accepts_coins: boolean | null
           api_key: string
           created_at: string
           current_period_revenue: number | null
@@ -3392,6 +3471,9 @@ export type Database = {
           vendx_pay_enabled: boolean
         }
         Insert: {
+          accepts_cards?: boolean | null
+          accepts_cash?: boolean | null
+          accepts_coins?: boolean | null
           api_key: string
           created_at?: string
           current_period_revenue?: number | null
@@ -3410,6 +3492,9 @@ export type Database = {
           vendx_pay_enabled?: boolean
         }
         Update: {
+          accepts_cards?: boolean | null
+          accepts_cash?: boolean | null
+          accepts_coins?: boolean | null
           api_key?: string
           created_at?: string
           current_period_revenue?: number | null
