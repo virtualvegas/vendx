@@ -43,13 +43,21 @@ type Product = {
   waitlist_enabled: boolean | null;
   retail_links: unknown;
   created_at: string | null;
+  game_id: string | null;
+  video_game?: { id: string; name: string } | null;
 };
 
-const categories = ["subscriptions", "apparel", "accessories", "snacks", "tech", "merchandise"];
+const categories = ["subscriptions", "apparel", "accessories", "snacks", "tech", "merchandise", "game-items"];
 const subscriptionIntervals = ["week", "month", "year"];
+
+interface VideoGame {
+  id: string;
+  title: string;
+}
 
 const ProductsManager = () => {
   const [products, setProducts] = useState<Product[]>([]);
+  const [videoGames, setVideoGames] = useState<VideoGame[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -75,12 +83,23 @@ const ProductsManager = () => {
     subscription_price: 0,
     subscription_interval: "month",
     waitlist_enabled: false,
-    retail_links: [] as RetailLink[]
+    retail_links: [] as RetailLink[],
+    game_id: "" as string
   });
 
   useEffect(() => {
     fetchProducts();
+    fetchVideoGames();
   }, []);
+
+  const fetchVideoGames = async () => {
+    const { data } = await supabase
+      .from("video_games")
+      .select("id, title")
+      .eq("is_active", true)
+      .order("title");
+    if (data) setVideoGames(data);
+  };
 
   const fetchProducts = async () => {
     setLoading(true);
@@ -115,7 +134,8 @@ const ProductsManager = () => {
       subscription_price: 0,
       subscription_interval: "month",
       waitlist_enabled: false,
-      retail_links: []
+      retail_links: [],
+      game_id: ""
     });
     setEditingProduct(null);
   };
@@ -139,7 +159,8 @@ const ProductsManager = () => {
       subscription_price: product.subscription_price || 0,
       subscription_interval: product.subscription_interval || "month",
       waitlist_enabled: product.waitlist_enabled ?? false,
-      retail_links: Array.isArray(product.retail_links) ? (product.retail_links as RetailLink[]) : []
+      retail_links: Array.isArray(product.retail_links) ? (product.retail_links as RetailLink[]) : [],
+      game_id: product.game_id || ""
     });
     setDialogOpen(true);
   };
@@ -229,7 +250,8 @@ const ProductsManager = () => {
       subscription_price: form.is_subscription ? form.subscription_price : null,
       subscription_interval: form.is_subscription ? form.subscription_interval : null,
       waitlist_enabled: form.waitlist_enabled,
-      retail_links: validRetailLinks.length > 0 ? validRetailLinks : null
+      retail_links: validRetailLinks.length > 0 ? validRetailLinks : null,
+      game_id: form.category === "game-items" && form.game_id ? form.game_id : null
     };
 
     try {
@@ -403,7 +425,7 @@ const ProductsManager = () => {
                     <Label>Category *</Label>
                     <Select 
                       value={form.category}
-                      onValueChange={(v) => setForm({...form, category: v})}
+                      onValueChange={(v) => setForm({...form, category: v, game_id: v !== "game-items" ? "" : form.game_id})}
                     >
                       <SelectTrigger>
                         <SelectValue />
@@ -424,6 +446,27 @@ const ProductsManager = () => {
                     />
                   </div>
                 </div>
+
+                {/* Game Selector - Only show for game-items category */}
+                {form.category === "game-items" && (
+                  <div>
+                    <Label>Associated Game *</Label>
+                    <Select 
+                      value={form.game_id}
+                      onValueChange={(v) => setForm({...form, game_id: v})}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a game..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {videoGames.map(game => (
+                          <SelectItem key={game.id} value={game.id}>{game.title}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-muted-foreground mt-1">Link this item to a specific game from our Games library</p>
+                  </div>
+                )}
 
                 {/* Images */}
                 <div>
