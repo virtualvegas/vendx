@@ -17,6 +17,7 @@ export {
   generateMachineApiKey,
   formatRevenue,
   getLocationDisplayName,
+  getPaymentMethodsDisplay,
   type BaseMachine,
   type MachineLocation,
   type MachineType,

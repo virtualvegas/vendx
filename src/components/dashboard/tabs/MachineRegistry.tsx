@@ -43,6 +43,9 @@ interface Machine {
   machine_type: string;
   status: string;
   vendx_pay_enabled: boolean;
+  accepts_cash: boolean;
+  accepts_coins: boolean;
+  accepts_cards: boolean;
   api_key: string;
   last_seen: string | null;
   location_id: string | null;
@@ -103,6 +106,9 @@ const MachineRegistry = () => {
     machine_type: "snack",
     location_id: "",
     vendx_pay_enabled: true,
+    accepts_cash: true,
+    accepts_coins: true,
+    accepts_cards: true,
     notes: "",
   });
   
@@ -185,6 +191,9 @@ const MachineRegistry = () => {
             machine_type: machineForm.machine_type,
             location_id: machineForm.location_id && machineForm.location_id !== "none" ? machineForm.location_id : null,
             vendx_pay_enabled: machineForm.vendx_pay_enabled,
+            accepts_cash: machineForm.accepts_cash,
+            accepts_coins: machineForm.accepts_coins,
+            accepts_cards: machineForm.accepts_cards,
             notes: machineForm.notes || null,
           })
           .eq("id", editingMachine.id);
@@ -201,6 +210,9 @@ const MachineRegistry = () => {
             machine_type: machineForm.machine_type,
             location_id: machineForm.location_id && machineForm.location_id !== "none" ? machineForm.location_id : null,
             vendx_pay_enabled: machineForm.vendx_pay_enabled,
+            accepts_cash: machineForm.accepts_cash,
+            accepts_coins: machineForm.accepts_coins,
+            accepts_cards: machineForm.accepts_cards,
             notes: machineForm.notes || null,
             api_key: apiKey,
             installed_at: new Date().toISOString(),
@@ -314,7 +326,17 @@ const MachineRegistry = () => {
   };
 
   const resetMachineForm = () => {
-    setMachineForm({ name: "", machine_code: "", machine_type: "snack", location_id: "", vendx_pay_enabled: true, notes: "" });
+    setMachineForm({ 
+      name: "", 
+      machine_code: "", 
+      machine_type: "snack", 
+      location_id: "", 
+      vendx_pay_enabled: true, 
+      accepts_cash: true,
+      accepts_coins: true,
+      accepts_cards: true,
+      notes: "" 
+    });
     setEditingMachine(null);
   };
 
@@ -326,6 +348,9 @@ const MachineRegistry = () => {
       machine_type: machine.machine_type,
       location_id: machine.location_id || "",
       vendx_pay_enabled: machine.vendx_pay_enabled,
+      accepts_cash: machine.accepts_cash ?? true,
+      accepts_coins: machine.accepts_coins ?? true,
+      accepts_cards: machine.accepts_cards ?? true,
       notes: machine.notes || "",
     });
     setShowMachineDialog(true);
@@ -474,7 +499,7 @@ const MachineRegistry = () => {
                   <TableHead>Location</TableHead>
                   <TableHead>Type</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>VendX Pay</TableHead>
+                  <TableHead>Payment Methods</TableHead>
                   <TableHead>Online</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
@@ -509,10 +534,23 @@ const MachineRegistry = () => {
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        <Switch
-                          checked={machine.vendx_pay_enabled}
-                          onCheckedChange={() => toggleVendxPay(machine)}
-                        />
+                        <div className="flex flex-wrap gap-1">
+                          {machine.accepts_cash && (
+                            <Badge variant="outline" className="text-xs">Cash</Badge>
+                          )}
+                          {machine.accepts_coins && (
+                            <Badge variant="outline" className="text-xs">Coins</Badge>
+                          )}
+                          {machine.accepts_cards && (
+                            <Badge variant="outline" className="text-xs">Cards</Badge>
+                          )}
+                          {machine.vendx_pay_enabled && (
+                            <Badge className="text-xs bg-primary">VendX</Badge>
+                          )}
+                          {!machine.accepts_cash && !machine.accepts_coins && !machine.accepts_cards && !machine.vendx_pay_enabled && (
+                            <span className="text-xs text-muted-foreground">None</span>
+                          )}
+                        </div>
                       </TableCell>
                       <TableCell>
                         <MachineStatusBadge 
@@ -667,15 +705,51 @@ const MachineRegistry = () => {
                 rows={2}
               />
             </div>
-            <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-              <div>
-                <Label>Enable VendX Pay</Label>
-                <p className="text-xs text-muted-foreground">Allow wallet payments on this machine</p>
+            {/* Payment Methods Section */}
+            <div className="space-y-3">
+              <Label className="text-sm font-medium">Payment Methods Accepted</Label>
+              <div className="grid grid-cols-1 gap-2">
+                <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                  <div>
+                    <Label className="text-sm">Cash</Label>
+                    <p className="text-xs text-muted-foreground">Accept paper bills</p>
+                  </div>
+                  <Switch
+                    checked={machineForm.accepts_cash}
+                    onCheckedChange={(v) => setMachineForm({ ...machineForm, accepts_cash: v })}
+                  />
+                </div>
+                <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                  <div>
+                    <Label className="text-sm">Coins</Label>
+                    <p className="text-xs text-muted-foreground">Accept coin payments</p>
+                  </div>
+                  <Switch
+                    checked={machineForm.accepts_coins}
+                    onCheckedChange={(v) => setMachineForm({ ...machineForm, accepts_coins: v })}
+                  />
+                </div>
+                <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                  <div>
+                    <Label className="text-sm">Credit/Debit Cards</Label>
+                    <p className="text-xs text-muted-foreground">Accept card payments</p>
+                  </div>
+                  <Switch
+                    checked={machineForm.accepts_cards}
+                    onCheckedChange={(v) => setMachineForm({ ...machineForm, accepts_cards: v })}
+                  />
+                </div>
+                <div className="flex items-center justify-between p-3 bg-primary/10 rounded-lg border border-primary/20">
+                  <div>
+                    <Label className="text-sm">VendX Pay</Label>
+                    <p className="text-xs text-muted-foreground">Allow wallet payments</p>
+                  </div>
+                  <Switch
+                    checked={machineForm.vendx_pay_enabled}
+                    onCheckedChange={(v) => setMachineForm({ ...machineForm, vendx_pay_enabled: v })}
+                  />
+                </div>
               </div>
-              <Switch
-                checked={machineForm.vendx_pay_enabled}
-                onCheckedChange={(v) => setMachineForm({ ...machineForm, vendx_pay_enabled: v })}
-              />
             </div>
           </div>
           <DialogFooter>
