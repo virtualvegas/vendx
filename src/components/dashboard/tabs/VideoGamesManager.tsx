@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,7 +13,7 @@ import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Gamepad2, Trash2, Edit, Search, RefreshCw, Eye, EyeOff, ExternalLink } from "lucide-react";
+import { Plus, Gamepad2, Trash2, Edit, Search, RefreshCw, Eye, EyeOff, ExternalLink, Upload, X, ImageIcon } from "lucide-react";
 import { FaGooglePlay, FaApple, FaSteam, FaWindows, FaItchIo, FaAmazon, FaXbox, FaPlaystation } from "react-icons/fa";
 import { SiNintendoswitch, SiEpicgames, SiRoblox } from "react-icons/si";
 import { Globe } from "lucide-react";
@@ -57,6 +57,9 @@ const VideoGamesManager = () => {
   const [editingGame, setEditingGame] = useState<VideoGame | null>(null);
   const [selectedGame, setSelectedGame] = useState<VideoGame | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [uploading, setUploading] = useState(false);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [formData, setFormData] = useState({
     title: "",
@@ -201,6 +204,61 @@ const VideoGamesManager = () => {
       display_order: 0,
     });
     setEditingGame(null);
+    setImagePreview(null);
+  };
+
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith("image/")) {
+      toast({ title: "Invalid file type", description: "Please upload an image file", variant: "destructive" });
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast({ title: "File too large", description: "Max file size is 5MB", variant: "destructive" });
+      return;
+    }
+
+    setUploading(true);
+    try {
+      // Generate unique filename
+      const fileExt = file.name.split(".").pop();
+      const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+      const filePath = `covers/${fileName}`;
+
+      // Upload to storage
+      const { error: uploadError } = await supabase.storage
+        .from("game-images")
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from("game-images")
+        .getPublicUrl(filePath);
+
+      setFormData({ ...formData, cover_image_url: publicUrl });
+      setImagePreview(publicUrl);
+      toast({ title: "Image uploaded successfully" });
+    } catch (error: any) {
+      console.error("Upload error:", error);
+      toast({ title: "Upload failed", description: error.message, variant: "destructive" });
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const removeImage = () => {
+    setFormData({ ...formData, cover_image_url: "" });
+    setImagePreview(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
   };
 
   const handleEdit = (game: VideoGame) => {
@@ -229,6 +287,7 @@ const VideoGamesManager = () => {
       is_active: game.is_active,
       display_order: game.display_order || 0,
     });
+    setImagePreview(game.cover_image_url || null);
     setShowDialog(true);
   };
 
@@ -396,9 +455,66 @@ const VideoGamesManager = () => {
                 <Label>Full Description</Label>
                 <Textarea value={formData.full_description} onChange={(e) => setFormData({ ...formData, full_description: e.target.value })} rows={3} />
               </div>
-              <div className="space-y-2">
-                <Label>Cover Image URL</Label>
-                <Input value={formData.cover_image_url} onChange={(e) => setFormData({ ...formData, cover_image_url: e.target.value })} placeholder="https://..." />
+              <div className="col-span-2 space-y-2">
+                <Label>Cover Image</Label>
+                <div className="space-y-3">
+                  {/* Image Preview */}
+                  {(imagePreview || formData.cover_image_url) && (
+                    <div className="relative w-full max-w-xs">
+                      <img
+                        src={imagePreview || formData.cover_image_url}
+                        alt="Cover preview"
+                        className="w-full h-40 object-cover rounded-lg border"
+                      />
+                      <Button
+                        type="button"
+                        size="icon"
+                        variant="destructive"
+                        className="absolute top-2 right-2 h-6 w-6"
+                        onClick={removeImage}
+                      >
+                        <X className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  )}
+
+                  {/* Upload Button */}
+                  <div className="flex gap-2">
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      className="hidden"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={uploading}
+                      className="gap-2"
+                    >
+                      {uploading ? (
+                        <>
+                          <RefreshCw className="w-4 h-4 animate-spin" />
+                          Uploading...
+                        </>
+                      ) : (
+                        <>
+                          <Upload className="w-4 h-4" />
+                          Upload Image
+                        </>
+                      )}
+                    </Button>
+                    {!imagePreview && !formData.cover_image_url && (
+                      <div className="flex items-center text-sm text-muted-foreground">
+                        <ImageIcon className="w-4 h-4 mr-2" />
+                        No image uploaded
+                      </div>
+                    )}
+                  </div>
+                  <p className="text-xs text-muted-foreground">Max 5MB. JPG, PNG, WebP supported.</p>
+                </div>
               </div>
               <div className="space-y-2">
                 <Label>Trailer URL</Label>
