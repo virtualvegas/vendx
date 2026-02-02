@@ -1,95 +1,73 @@
-import { Users, MapPin, TrendingUp, Calendar, Zap, Shield, Building2, Clock } from "lucide-react";
+import { Users, MapPin, TrendingUp, Calendar } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-
 const iconMap: Record<string, any> = {
   users: Users,
   map_pin: MapPin,
   trending_up: TrendingUp,
-  calendar: Calendar,
-  zap: Zap,
-  shield: Shield,
-  building: Building2,
-  clock: Clock,
+  calendar: Calendar
 };
-
 const Stats = () => {
-  const { data: metrics, isLoading } = useQuery({
-    queryKey: ["homepage-metrics"],
+  const {
+    data: metrics,
+    isLoading
+  } = useQuery({
+    queryKey: ["metrics"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("metrics")
-        .select("*")
-        .in("metric_type", ["users", "map_pin", "trending_up", "calendar"])
-        .order("display_order", { ascending: true });
-      
+      const {
+        data,
+        error
+      } = await supabase.from("metrics").select("*").order("display_order", {
+        ascending: true
+      });
       if (error) throw error;
       return data;
-    },
+    }
   });
+  return <section className="py-24 relative">
+      <div className="container mx-auto px-4">
+        <div className="relative max-w-6xl mx-auto">
+          <div className="absolute inset-0 bg-gradient-primary opacity-10 blur-3xl rounded-full" />
+          
+          <div className="relative bg-card/50 backdrop-blur-sm border-2 border-primary/30 rounded-3xl p-8 lg:p-16 shadow-[0_0_60px_rgba(26,124,255,0.3)]">
+            <div className="text-center mb-12">
+              <h2 className="text-4xl lg:text-5xl font-bold mb-4">
+                VendX <span className="text-accent glow-green">By The Numbers</span>
+              </h2>
+              <p className="text-xl text-muted-foreground">
+                Growing every day to serve you better
+              </p>
+            </div>
 
-  const formatValue = (value: number, label: string) => {
-    if (label.toLowerCase().includes("uptime")) return `${value}%`;
-    if (label.toLowerCase().includes("support") || label.toLowerCase().includes("24")) return `${value}/7`;
-    if (value >= 1000000) return `${(value / 1000000).toFixed(1)}M`;
-    if (value >= 1000) return `${(value / 1000).toFixed(0)}K`;
-    return value.toLocaleString();
-  };
-
-  return (
-    <section className="py-20 relative overflow-hidden">
-      {/* Background gradient */}
-      <div className="absolute inset-0 bg-gradient-to-b from-background via-primary/5 to-background" />
-      
-      <div className="container mx-auto px-4 relative z-10">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl lg:text-4xl font-bold mb-3">
-            VendX <span className="text-primary">By The Numbers</span>
-          </h2>
-          <p className="text-muted-foreground max-w-2xl mx-auto">
-            Growing every day to serve you better
-          </p>
-        </div>
-
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-5xl mx-auto">
-          {isLoading ? (
-            Array.from({ length: 4 }).map((_, index) => (
-              <div key={index} className="text-center p-6 animate-pulse">
-                <div className="w-12 h-12 rounded-xl bg-muted mx-auto mb-4" />
-                <div className="h-8 bg-muted rounded w-20 mx-auto mb-2" />
-                <div className="h-4 bg-muted rounded w-28 mx-auto" />
-              </div>
-            ))
-          ) : (
-            metrics?.map((metric) => {
+            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+              {isLoading ? Array.from({
+              length: 4
+            }).map((_, index) => <div key={index} className="text-center space-y-4 animate-pulse">
+                    <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-muted" />
+                    
+                    <div className="h-4 bg-muted rounded w-32 mx-auto" />
+                  </div>) : metrics?.map((metric, index) => {
               const Icon = iconMap[metric.metric_type] || MapPin;
-              return (
-                <div
-                  key={metric.id}
-                  className="group relative p-6 rounded-2xl bg-card/50 backdrop-blur-sm border border-border/50 hover:border-primary/50 transition-all duration-300 hover:shadow-lg hover:shadow-primary/10"
-                >
-                  <div className="flex flex-col items-center text-center space-y-3">
-                    <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
-                      <Icon className="w-6 h-6 text-primary" />
-                    </div>
-                    
-                    <div className="text-3xl lg:text-4xl font-bold text-foreground">
-                      {formatValue(metric.metric_value, metric.metric_label)}
-                      {metric.metric_label.includes("Countries") && "+"}
-                    </div>
-                    
-                    <div className="text-sm text-muted-foreground font-medium">
-                      {metric.metric_label}
-                    </div>
-                  </div>
-                </div>
-              );
-            })
-          )}
+              return <div key={metric.id} className="text-center space-y-4 group">
+                      <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 border-2 border-primary group-hover:border-primary group-hover:shadow-[0_0_30px_rgba(26,124,255,0.6)] transition-smooth">
+                        <Icon className="w-8 h-8 text-primary" />
+                      </div>
+                      
+                      <div>
+                        <div className="text-4xl lg:text-5xl font-bold glow-blue mb-2">
+                          {metric.metric_value.toLocaleString()}
+                          {metric.metric_label.includes("Countries") && "+"}
+                        </div>
+                        <div className="text-muted-foreground font-medium">
+                          {metric.metric_label}
+                        </div>
+                      </div>
+                    </div>;
+            })}
+            </div>
+          </div>
         </div>
       </div>
-    </section>
-  );
+    </section>;
 };
-
 export default Stats;
