@@ -1,55 +1,55 @@
-import { Globe, Moon, Rocket } from "lucide-react";
+import { Cpu, Zap, Shield } from "lucide-react";
 
 const About = () => {
   return (
-    <section className="py-24 relative">
+    <section className="py-20 relative">
       <div className="container mx-auto px-4">
-        <div className="text-center mb-16 space-y-4">
-          <h2 className="text-5xl lg:text-6xl font-bold">
-            About <span className="glow-blue">VendX</span>
+        <div className="text-center mb-12 space-y-4">
+          <h2 className="text-4xl lg:text-5xl font-bold">
+            About <span className="text-primary glow-blue">VendX</span>
           </h2>
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-            Building the world's largest automated retail network, powered by AI robotics and sustainable energy.
+            Building the future of automated retail with smart technology and innovation
           </p>
         </div>
 
         <div className="max-w-5xl mx-auto">
-          <div className="bg-card/50 backdrop-blur-sm border border-primary/20 rounded-2xl p-8 lg:p-12 space-y-8">
-            <p className="text-lg text-foreground leading-relaxed">
-              VendX is revolutionizing the vending industry with cutting-edge technology, 
-              AI-powered automation, and a vision that extends beyond Earth. Our global network 
-              of smart vending machines provides 24/7 convenience with real-time inventory tracking, 
-              digital payments, and solar-powered sustainability.
+          <div className="bg-card/50 backdrop-blur-sm border border-primary/20 rounded-2xl p-8 lg:p-10">
+            <p className="text-lg text-foreground leading-relaxed mb-8">
+              VendX is revolutionizing convenience with cutting-edge smart vending technology. 
+              Our network combines AI-powered inventory management, digital payments, and real-time tracking 
+              to deliver a seamless experience. Beyond vending, we're expanding into gaming, retail, and 
+              business solutions — creating an ecosystem that serves everyone.
             </p>
 
-            <div className="border-t border-border pt-8">
-              <h3 className="text-2xl font-bold mb-8 text-center">
-                Expansion <span className="glow-green">Roadmap</span>
-              </h3>
-              
-              <div className="grid md:grid-cols-3 gap-8">
-                <div className="text-center space-y-4 group">
-                  <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-primary/10 border-2 border-primary group-hover:border-primary group-hover:shadow-[0_0_30px_rgba(26,124,255,0.6)] transition-smooth">
-                    <Globe className="w-10 h-10 text-primary" />
-                  </div>
-                  <h4 className="text-xl font-bold">Earth</h4>
-                  <p className="text-muted-foreground">Global coverage across 150+ countries</p>
+            <div className="grid md:grid-cols-3 gap-6">
+              <div className="flex items-start gap-4 p-4 rounded-xl bg-primary/5 border border-primary/20">
+                <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                  <Cpu className="w-6 h-6 text-primary" />
                 </div>
-
-                <div className="text-center space-y-4 group">
-                  <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-muted/50 border-2 border-muted-foreground/30 group-hover:border-muted-foreground group-hover:shadow-[0_0_20px_rgba(255,255,255,0.3)] transition-smooth">
-                    <Moon className="w-10 h-10 text-muted-foreground" />
-                  </div>
-                  <h4 className="text-xl font-bold">Moon</h4>
-                  <p className="text-muted-foreground">Research stations in development</p>
+                <div>
+                  <h4 className="font-semibold text-foreground mb-1">Smart Technology</h4>
+                  <p className="text-sm text-muted-foreground">AI-powered machines with real-time monitoring</p>
                 </div>
+              </div>
 
-                <div className="text-center space-y-4 group">
-                  <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-accent/10 border-2 border-accent group-hover:border-accent group-hover:shadow-[0_0_30px_rgba(57,255,136,0.6)] transition-smooth animate-glow-pulse">
-                    <Rocket className="w-10 h-10 text-accent" />
-                  </div>
-                  <h4 className="text-xl font-bold glow-green">Mars</h4>
-                  <p className="text-muted-foreground">First retailer on the red planet</p>
+              <div className="flex items-start gap-4 p-4 rounded-xl bg-accent/5 border border-accent/20">
+                <div className="w-12 h-12 rounded-lg bg-accent/10 flex items-center justify-center flex-shrink-0">
+                  <Zap className="w-6 h-6 text-accent" />
+                </div>
+                <div>
+                  <h4 className="font-semibold text-foreground mb-1">Instant Access</h4>
+                  <p className="text-sm text-muted-foreground">24/7 availability with digital payments</p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-4 p-4 rounded-xl bg-purple-500/5 border border-purple-500/20">
+                <div className="w-12 h-12 rounded-lg bg-purple-500/10 flex items-center justify-center flex-shrink-0">
+                  <Shield className="w-6 h-6 text-purple-400" />
+                </div>
+                <div>
+                  <h4 className="font-semibold text-foreground mb-1">Reliable Service</h4>
+                  <p className="text-sm text-muted-foreground">Dedicated support and quality products</p>
                 </div>
               </div>
             </div>

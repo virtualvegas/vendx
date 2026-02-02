@@ -30,11 +30,11 @@ const Stats = () => {
           
           <div className="relative bg-card/50 backdrop-blur-sm border-2 border-primary/30 rounded-3xl p-8 lg:p-16 shadow-[0_0_60px_rgba(26,124,255,0.3)]">
             <div className="text-center mb-12">
-              <h2 className="text-5xl lg:text-6xl font-bold mb-4">
-                Global <span className="glow-green">Impact</span>
+              <h2 className="text-4xl lg:text-5xl font-bold mb-4">
+                VendX <span className="text-accent glow-green">By The Numbers</span>
               </h2>
               <p className="text-xl text-muted-foreground">
-                Powering convenience across the planet
+                Growing every day to serve you better
               </p>
             </div>
 
