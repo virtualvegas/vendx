@@ -2,10 +2,12 @@ import Navigation from "@/components/Navigation";
 import StarField from "@/components/StarField";
 import Hero from "@/components/Hero";
 import About from "@/components/About";
-import Features from "@/components/Features";
+import ServicesOverview from "@/components/home/ServicesOverview";
+import FeaturedProducts from "@/components/home/FeaturedProducts";
+import FeaturedGames from "@/components/home/FeaturedGames";
 import Divisions from "@/components/Divisions";
 import Stats from "@/components/Stats";
-import MarsSection from "@/components/MarsSection";
+import QuickLinks from "@/components/home/QuickLinks";
 import Contact from "@/components/Contact";
 import Footer from "@/components/Footer";
 
@@ -18,10 +20,12 @@ const Index = () => {
       <div className="relative z-10">
         <Hero />
         <About />
-        <Features />
+        <ServicesOverview />
+        <FeaturedProducts />
+        <FeaturedGames />
         <Divisions />
         <Stats />
-        <MarsSection />
+        <QuickLinks />
         <Contact />
         <Footer />
       </div>
