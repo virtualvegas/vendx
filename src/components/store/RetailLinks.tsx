@@ -1,4 +1,4 @@
-import { ExternalLink, ShoppingBag, Store, Gamepad2, Disc3 } from "lucide-react";
+import { ExternalLink, ShoppingBag, Store, Gamepad2, Disc3, Pill, Coffee } from "lucide-react";
 import { FaAmazon } from "react-icons/fa";
 import { 
   SiWalmart, 
@@ -75,6 +75,24 @@ const storeConfig: Record<string, {
     color: "text-[#FF0000]",
     bgColor: "bg-[#FF0000]/10 hover:bg-[#FF0000]/20"
   },
+  cvs: {
+    name: "CVS",
+    icon: <Pill className="w-5 h-5" />,
+    color: "text-[#CC0000]",
+    bgColor: "bg-[#CC0000]/10 hover:bg-[#CC0000]/20"
+  },
+  walgreens: {
+    name: "Walgreens",
+    icon: <Pill className="w-5 h-5" />,
+    color: "text-[#E31837]",
+    bgColor: "bg-[#E31837]/10 hover:bg-[#E31837]/20"
+  },
+  "7eleven": {
+    name: "7-Eleven",
+    icon: <Coffee className="w-5 h-5" />,
+    color: "text-[#008061]",
+    bgColor: "bg-[#008061]/10 hover:bg-[#008061]/20"
+  },
   steam: {
     name: "Steam",
     icon: <SiSteam className="w-5 h-5" />,
@@ -111,11 +129,14 @@ export const AVAILABLE_STORES = [
   { value: "amazon", label: "Amazon" },
   { value: "walmart", label: "Walmart" },
   { value: "target", label: "Target" },
-  { value: "ebay", label: "eBay" },
-  { value: "etsy", label: "Etsy" },
+  { value: "gamestop", label: "GameStop" },
+  { value: "cvs", label: "CVS" },
+  { value: "walgreens", label: "Walgreens" },
+  { value: "7eleven", label: "7-Eleven" },
   { value: "bestbuy", label: "Best Buy" },
   { value: "costco", label: "Costco" },
-  { value: "gamestop", label: "GameStop" },
+  { value: "ebay", label: "eBay" },
+  { value: "etsy", label: "Etsy" },
   { value: "steam", label: "Steam" },
   { value: "playstation", label: "PlayStation Store" },
   { value: "xbox", label: "Xbox Store" },
