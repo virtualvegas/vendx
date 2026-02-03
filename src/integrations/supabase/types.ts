@@ -3170,6 +3170,7 @@ export type Database = {
           name: string
           price: number
           retail_links: Json | null
+          retail_status: string | null
           short_description: string | null
           slug: string
           stock: number | null
@@ -3196,6 +3197,7 @@ export type Database = {
           name: string
           price?: number
           retail_links?: Json | null
+          retail_status?: string | null
           short_description?: string | null
           slug: string
           stock?: number | null
@@ -3222,6 +3224,7 @@ export type Database = {
           name?: string
           price?: number
           retail_links?: Json | null
+          retail_status?: string | null
           short_description?: string | null
           slug?: string
           stock?: number | null

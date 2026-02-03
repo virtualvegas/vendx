@@ -42,10 +42,17 @@ type Product = {
   subscription_interval: string | null;
   waitlist_enabled: boolean | null;
   retail_links: unknown;
+  retail_status: string | null;
   created_at: string | null;
   game_id: string | null;
   video_game?: { id: string; name: string } | null;
 };
+
+const retailStatusOptions = [
+  { value: "online_only", label: "Online Only" },
+  { value: "in_store_only", label: "In Store Only" },
+  { value: "in_store_and_online", label: "In Store & Online" }
+];
 
 const categories = ["subscriptions", "apparel", "accessories", "snacks", "tech", "merchandise", "game-items"];
 const subscriptionIntervals = ["week", "month", "year"];
@@ -84,6 +91,7 @@ const ProductsManager = () => {
     subscription_interval: "month",
     waitlist_enabled: false,
     retail_links: [] as RetailLink[],
+    retail_status: "online_only",
     game_id: "" as string
   });
 
@@ -135,6 +143,7 @@ const ProductsManager = () => {
       subscription_interval: "month",
       waitlist_enabled: false,
       retail_links: [],
+      retail_status: "online_only",
       game_id: ""
     });
     setEditingProduct(null);
@@ -160,6 +169,7 @@ const ProductsManager = () => {
       subscription_interval: product.subscription_interval || "month",
       waitlist_enabled: product.waitlist_enabled ?? false,
       retail_links: Array.isArray(product.retail_links) ? (product.retail_links as RetailLink[]) : [],
+      retail_status: product.retail_status || "online_only",
       game_id: product.game_id || ""
     });
     setDialogOpen(true);
@@ -251,6 +261,7 @@ const ProductsManager = () => {
       subscription_interval: form.is_subscription ? form.subscription_interval : null,
       waitlist_enabled: form.waitlist_enabled,
       retail_links: validRetailLinks.length > 0 ? validRetailLinks : null,
+      retail_status: form.retail_status,
       game_id: form.category === "game-items" && form.game_id ? form.game_id : null
     };
 
@@ -587,13 +598,36 @@ const ProductsManager = () => {
                   </div>
                 )}
 
+                {/* Retail Availability Status */}
+                <div className="space-y-3">
+                  <Label className="flex items-center gap-2">
+                    <Store className="w-4 h-4" />
+                    Retail Availability Status
+                  </Label>
+                  <Select 
+                    value={form.retail_status}
+                    onValueChange={(v) => setForm({...form, retail_status: v})}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {retailStatusOptions.map(option => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground">
+                    Set where this product is available for purchase.
+                  </p>
+                </div>
+
                 {/* Retail Store Links */}
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <Label className="flex items-center gap-2">
-                      <Store className="w-4 h-4" />
-                      Retail Store Links
-                    </Label>
+                    <Label>Retail Store Links</Label>
                     <Button
                       type="button"
                       variant="outline"
