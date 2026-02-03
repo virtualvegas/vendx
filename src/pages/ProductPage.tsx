@@ -222,6 +222,16 @@ const ProductPage = () => {
               {product.compare_at_price && product.compare_at_price > product.price && (
                 <Badge className="bg-destructive">Sale</Badge>
               )}
+              {/* Retail availability status */}
+              {product.retail_links && Array.isArray(product.retail_links) && product.retail_links.length > 0 ? (
+                <Badge className="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                  In Store & Online
+                </Badge>
+              ) : (
+                <Badge className="bg-blue-500/20 text-blue-400 border border-blue-500/30">
+                  Online Only
+                </Badge>
+              )}
             </div>
 
             <h1 className="text-3xl md:text-4xl font-bold mb-4">{product.name}</h1>
