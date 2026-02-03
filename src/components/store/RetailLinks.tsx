@@ -1,10 +1,12 @@
-import { ExternalLink, ShoppingBag, Store } from "lucide-react";
+import { ExternalLink, ShoppingBag, Store, Gamepad2, Disc3 } from "lucide-react";
 import { FaAmazon } from "react-icons/fa";
 import { 
   SiWalmart, 
   SiTarget, 
   SiEbay, 
-  SiEtsy 
+  SiEtsy,
+  SiSteam,
+  SiPlaystation
 } from "react-icons/si";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -67,6 +69,36 @@ const storeConfig: Record<string, {
     color: "text-[#E31837]",
     bgColor: "bg-[#E31837]/10 hover:bg-[#E31837]/20"
   },
+  gamestop: {
+    name: "GameStop",
+    icon: <Gamepad2 className="w-5 h-5" />,
+    color: "text-[#FF0000]",
+    bgColor: "bg-[#FF0000]/10 hover:bg-[#FF0000]/20"
+  },
+  steam: {
+    name: "Steam",
+    icon: <SiSteam className="w-5 h-5" />,
+    color: "text-[#1B2838]",
+    bgColor: "bg-[#1B2838]/10 hover:bg-[#1B2838]/20"
+  },
+  playstation: {
+    name: "PlayStation Store",
+    icon: <SiPlaystation className="w-5 h-5" />,
+    color: "text-[#003087]",
+    bgColor: "bg-[#003087]/10 hover:bg-[#003087]/20"
+  },
+  xbox: {
+    name: "Xbox Store",
+    icon: <Gamepad2 className="w-5 h-5" />,
+    color: "text-[#107C10]",
+    bgColor: "bg-[#107C10]/10 hover:bg-[#107C10]/20"
+  },
+  physical: {
+    name: "Physical Copy",
+    icon: <Disc3 className="w-5 h-5" />,
+    color: "text-muted-foreground",
+    bgColor: "bg-muted hover:bg-muted/80"
+  },
   other: {
     name: "Other",
     icon: <ExternalLink className="w-5 h-5" />,
@@ -83,6 +115,11 @@ export const AVAILABLE_STORES = [
   { value: "etsy", label: "Etsy" },
   { value: "bestbuy", label: "Best Buy" },
   { value: "costco", label: "Costco" },
+  { value: "gamestop", label: "GameStop" },
+  { value: "steam", label: "Steam" },
+  { value: "playstation", label: "PlayStation Store" },
+  { value: "xbox", label: "Xbox Store" },
+  { value: "physical", label: "Physical Copy" },
   { value: "other", label: "Other" }
 ];
 
