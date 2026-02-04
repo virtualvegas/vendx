@@ -4,7 +4,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
 const logStep = (step: string, details?: any) => {
@@ -41,11 +41,11 @@ serve(async (req) => {
     if (!user?.email) throw new Error("User not authenticated or email not available");
     logStep("User authenticated", { userId: user.id, email: user.email });
 
-    const { cartItems } = await req.json();
+    const { cartItems, walletCredit } = await req.json();
     if (!cartItems || cartItems.length === 0) {
       throw new Error("Cart is empty");
     }
-    logStep("Cart items received", { count: cartItems.length });
+    logStep("Cart items received", { count: cartItems.length, walletCredit });
 
     // Initialize Stripe
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
@@ -78,6 +78,7 @@ serve(async (req) => {
     // Build line items for Stripe
     const lineItems = [];
     let hasSubscription = false;
+    let calculatedTotal = 0;
 
     for (const cartItem of cartItems) {
       const product = products.find((p: any) => p.id === cartItem.product_id);
@@ -99,6 +100,8 @@ serve(async (req) => {
           unitPrice += addons.reduce((sum: number, a: any) => sum + Number(a.price), 0);
         }
       }
+
+      calculatedTotal += unitPrice * cartItem.quantity;
 
       if (product.is_subscription) {
         hasSubscription = true;
@@ -154,7 +157,72 @@ serve(async (req) => {
       }
     }
 
-    logStep("Line items created", { count: lineItems.length, hasSubscription });
+    logStep("Line items created", { count: lineItems.length, hasSubscription, calculatedTotal });
+
+    // Handle wallet credit for partial payments
+    let pendingWalletTransactionId = null;
+    let actualWalletCredit = 0;
+
+    if (walletCredit && walletCredit > 0 && !hasSubscription) {
+      // Verify wallet balance
+      const { data: wallet, error: walletError } = await supabaseClient
+        .from("wallets")
+        .select("id, balance")
+        .eq("user_id", user.id)
+        .single();
+
+      if (walletError || !wallet) {
+        throw new Error("Wallet not found");
+      }
+
+      // Use the lesser of requested credit or available balance
+      actualWalletCredit = Math.min(walletCredit, wallet.balance, calculatedTotal);
+      
+      if (actualWalletCredit > 0) {
+        // Create pending wallet transaction
+        const { data: pendingTx, error: txError } = await supabaseClient
+          .from("wallet_transactions")
+          .insert({
+            wallet_id: wallet.id,
+            amount: -actualWalletCredit,
+            transaction_type: "store_purchase_pending",
+            description: "Pending store purchase - awaiting payment confirmation",
+            status: "pending"
+          })
+          .select()
+          .single();
+
+        if (txError) {
+          throw new Error("Failed to create pending wallet transaction");
+        }
+
+        pendingWalletTransactionId = pendingTx.id;
+
+        // Temporarily deduct from wallet
+        await supabaseClient
+          .from("wallets")
+          .update({ balance: wallet.balance - actualWalletCredit })
+          .eq("id", wallet.id);
+
+        logStep("Wallet credit reserved", { 
+          walletCredit: actualWalletCredit, 
+          pendingTxId: pendingWalletTransactionId 
+        });
+
+        // Add wallet credit as a discount line item
+        lineItems.push({
+          price_data: {
+            currency: "usd",
+            product_data: {
+              name: "VendX Pay Credit",
+              description: `Wallet balance applied`
+            },
+            unit_amount: -Math.round(actualWalletCredit * 100)
+          },
+          quantity: 1
+        });
+      }
+    }
 
     // Create checkout session
     const origin = req.headers.get("origin") || "https://vendx.space";
@@ -164,12 +232,14 @@ serve(async (req) => {
       line_items: lineItems,
       mode: hasSubscription ? "subscription" : "payment",
       success_url: `${origin}/store/order-success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${origin}/store/cart`,
+      cancel_url: `${origin}/store/cart?cancelled=true&pending_tx=${pendingWalletTransactionId || ''}`,
       shipping_address_collection: {
         allowed_countries: ["US", "CA", "GB", "AU"]
       },
       metadata: {
         supabase_user_id: user.id,
+        wallet_credit: actualWalletCredit.toString(),
+        pending_wallet_tx_id: pendingWalletTransactionId || "",
         cart_items: JSON.stringify(cartItems.map((item: any) => ({
           product_id: item.product_id,
           quantity: item.quantity,
@@ -209,7 +279,11 @@ serve(async (req) => {
     const session = await stripe.checkout.sessions.create(sessionConfig);
     logStep("Checkout session created", { sessionId: session.id });
 
-    return new Response(JSON.stringify({ url: session.url }), {
+    return new Response(JSON.stringify({ 
+      url: session.url,
+      pendingWalletTransactionId,
+      walletCreditApplied: actualWalletCredit
+    }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200
     });

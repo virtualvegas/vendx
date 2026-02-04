@@ -58,6 +58,8 @@ serve(async (req) => {
       const metadata = session.metadata || {};
       const userId = metadata.supabase_user_id;
       const cartItemsJson = metadata.cart_items;
+      const walletCredit = parseFloat(metadata.wallet_credit || "0");
+      const pendingWalletTxId = metadata.pending_wallet_tx_id;
 
       if (!userId) {
         logStep("No user ID in metadata");
@@ -65,6 +67,20 @@ serve(async (req) => {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
           status: 200
         });
+      }
+
+      // Confirm pending wallet transaction if exists
+      if (pendingWalletTxId && walletCredit > 0) {
+        await supabaseClient
+          .from("wallet_transactions")
+          .update({ 
+            status: "confirmed",
+            transaction_type: "store_purchase",
+            description: `VendX Pay credit applied to store purchase`
+          })
+          .eq("id", pendingWalletTxId);
+        
+        logStep("Wallet transaction confirmed", { txId: pendingWalletTxId, amount: walletCredit });
       }
 
       // Parse cart items
@@ -138,7 +154,7 @@ serve(async (req) => {
       const shipping = session.shipping_cost?.amount_total 
         ? session.shipping_cost.amount_total / 100 
         : 0;
-      const total = subtotal + shipping;
+      const total = subtotal + shipping - walletCredit;
 
       const { data: order, error: orderError } = await supabaseClient
         .from("store_orders")
@@ -148,6 +164,7 @@ serve(async (req) => {
           subtotal,
           shipping_cost: shipping,
           total,
+          wallet_credit_applied: walletCredit,
           stripe_checkout_session_id: session.id,
           stripe_payment_intent_id: session.payment_intent as string
         })
@@ -157,7 +174,7 @@ serve(async (req) => {
       if (orderError) {
         logStep("Order creation failed", { error: orderError.message });
       } else {
-        logStep("Order created", { orderId: order.id });
+        logStep("Order created", { orderId: order.id, walletCredit });
 
         // Create order items
         const itemsToInsert = orderItems.map(item => ({
@@ -181,8 +198,9 @@ serve(async (req) => {
         logStep("Cart cleared");
       }
 
-      // Award reward points (10 points per dollar spent)
-      const pointsToAward = Math.floor(total * 10);
+      // Award reward points (10 points per dollar spent, including on wallet credit portion)
+      const totalForPoints = subtotal; // Points based on full subtotal, not after wallet credit
+      const pointsToAward = Math.floor(totalForPoints * 10);
       const { data: rewardsPoints } = await supabaseClient
         .from("rewards_points")
         .select("*")
@@ -210,6 +228,19 @@ serve(async (req) => {
       }
     }
 
+    if (event.type === "checkout.session.expired" || event.type === "checkout.session.async_payment_failed") {
+      const session = event.data.object as Stripe.Checkout.Session;
+      const metadata = session.metadata || {};
+      const pendingWalletTxId = metadata.pending_wallet_tx_id;
+      const userId = metadata.supabase_user_id;
+
+      // Refund pending wallet transaction
+      if (pendingWalletTxId) {
+        await refundPendingWalletTransaction(supabaseClient, pendingWalletTxId);
+        logStep("Wallet transaction refunded due to session expiry/failure", { txId: pendingWalletTxId });
+      }
+    }
+
     if (event.type === "customer.subscription.deleted") {
       const subscription = event.data.object as Stripe.Subscription;
       
@@ -234,3 +265,41 @@ serve(async (req) => {
     });
   }
 });
+
+async function refundPendingWalletTransaction(supabaseClient: any, txId: string) {
+  try {
+    // Get the pending transaction
+    const { data: pendingTx } = await supabaseClient
+      .from("wallet_transactions")
+      .select("wallet_id, amount, status")
+      .eq("id", txId)
+      .single();
+
+    if (pendingTx && pendingTx.status === "pending") {
+      // Refund the wallet
+      const { data: wallet } = await supabaseClient
+        .from("wallets")
+        .select("balance")
+        .eq("id", pendingTx.wallet_id)
+        .single();
+
+      if (wallet) {
+        await supabaseClient
+          .from("wallets")
+          .update({ balance: wallet.balance + Math.abs(pendingTx.amount) })
+          .eq("id", pendingTx.wallet_id);
+      }
+
+      // Update transaction status
+      await supabaseClient
+        .from("wallet_transactions")
+        .update({ 
+          status: "refunded",
+          description: "Store purchase cancelled/expired - wallet refunded"
+        })
+        .eq("id", txId);
+    }
+  } catch (e) {
+    console.error("Failed to refund wallet transaction:", e);
+  }
+}

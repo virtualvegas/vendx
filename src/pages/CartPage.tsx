@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
@@ -12,14 +12,31 @@ import PaymentMethodSelector, { PaymentMethod } from "@/components/payment/Payme
 
 const CartPage = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { cartItems, loading, updateQuantity, removeFromCart, getCartTotal, refreshCart } = useCart();
   const [checkingOut, setCheckingOut] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("stripe");
   const [walletBalance, setWalletBalance] = useState<number>(0);
 
-  // Check if cart has subscription items (PayPal and VendX Pay don't support subscriptions)
+  // Check if cart has subscription items
   const hasSubscription = cartItems.some(item => item.product?.is_subscription);
+
+  const subtotal = getCartTotal();
+  const shipping = subtotal > 50 ? 0 : 5.99;
+  const total = subtotal + shipping;
+
+  // Calculate wallet credit for partial payments
+  const getWalletCredit = () => {
+    if (paymentMethod === "vendx") return walletBalance >= total ? total : 0;
+    if (paymentMethod === "vendx_stripe" || paymentMethod === "vendx_paypal") {
+      return Math.min(walletBalance, total);
+    }
+    return 0;
+  };
+
+  const walletCredit = getWalletCredit();
+  const remainingToPay = total - walletCredit;
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
@@ -38,6 +55,27 @@ const CartPage = () => {
     });
   }, []);
 
+  // Handle cancelled checkout - refund wallet if needed
+  useEffect(() => {
+    const cancelled = searchParams.get("cancelled");
+    const pendingTx = searchParams.get("pending_tx");
+
+    if (cancelled === "true" && pendingTx) {
+      // Refund the pending wallet transaction
+      supabase.functions.invoke("store-refund-wallet", {
+        body: { pendingTransactionId: pendingTx }
+      }).then(({ data, error }) => {
+        if (data?.success && data?.refundedAmount > 0) {
+          toast.info(`Your VendX Pay balance of $${data.refundedAmount.toFixed(2)} has been refunded.`);
+          setWalletBalance(data.newBalance);
+        }
+      });
+      
+      // Clear the URL params
+      navigate("/store/cart", { replace: true });
+    }
+  }, [searchParams, navigate]);
+
   const handleCheckout = async () => {
     if (!user) {
       toast.error("Please sign in to checkout");
@@ -45,17 +83,13 @@ const CartPage = () => {
       return;
     }
 
-    if (paymentMethod === "paypal" && hasSubscription) {
-      toast.error("PayPal is not available for subscription products. Please use Debit/Credit.");
+    // Validate payment method for subscriptions
+    if (hasSubscription && (paymentMethod === "paypal" || paymentMethod === "vendx" || paymentMethod === "vendx_paypal")) {
+      toast.error("Subscriptions require Debit/Credit card payment.");
       return;
     }
 
-    if (paymentMethod === "vendx" && hasSubscription) {
-      toast.error("VendX Pay is not available for subscription products. Please use Debit/Credit.");
-      return;
-    }
-
-    const total = getCartTotal() + (getCartTotal() > 50 ? 0 : 5.99);
+    // Validate VendX Pay full payment
     if (paymentMethod === "vendx" && walletBalance < total) {
       toast.error(`Insufficient wallet balance. You need $${total.toFixed(2)} but have $${walletBalance.toFixed(2)}.`);
       return;
@@ -65,7 +99,7 @@ const CartPage = () => {
     
     try {
       if (paymentMethod === "vendx") {
-        // Process VendX Pay checkout
+        // Full VendX Pay checkout
         const { data, error } = await supabase.functions.invoke("store-vendx-pay-checkout", {
           body: { cartItems }
         });
@@ -79,7 +113,34 @@ const CartPage = () => {
         } else {
           throw new Error(data?.error || "Failed to process payment");
         }
+      } else if (paymentMethod === "vendx_stripe") {
+        // Partial VendX Pay + Stripe
+        const { data, error } = await supabase.functions.invoke("store-create-checkout", {
+          body: { cartItems, walletCredit }
+        });
+
+        if (error) throw error;
+        
+        if (data?.url) {
+          window.location.href = data.url;
+        } else {
+          throw new Error(data?.error || "Failed to create checkout session");
+        }
+      } else if (paymentMethod === "vendx_paypal") {
+        // Partial VendX Pay + PayPal
+        const { data, error } = await supabase.functions.invoke("store-paypal-checkout", {
+          body: { cartItems, walletCredit }
+        });
+
+        if (error) throw error;
+        
+        if (data?.url) {
+          window.location.href = data.url;
+        } else {
+          throw new Error(data?.error || "Failed to create PayPal order");
+        }
       } else {
+        // Standard Stripe or PayPal checkout
         const functionName = paymentMethod === "paypal" ? "store-paypal-checkout" : "store-create-checkout";
         const { data, error } = await supabase.functions.invoke(functionName, {
           body: { cartItems }
@@ -98,9 +159,15 @@ const CartPage = () => {
     setCheckingOut(false);
   };
 
-  const subtotal = getCartTotal();
-  const shipping = subtotal > 50 ? 0 : 5.99;
-  const total = subtotal + shipping;
+  // Check if checkout is disabled
+  const isCheckoutDisabled = () => {
+    if (checkingOut) return true;
+    if (hasSubscription && (paymentMethod === "paypal" || paymentMethod === "vendx" || paymentMethod === "vendx_paypal" || paymentMethod === "vendx_stripe")) {
+      return true;
+    }
+    if (paymentMethod === "vendx" && walletBalance < total) return true;
+    return false;
+  };
 
   if (loading) {
     return (
@@ -239,10 +306,30 @@ const CartPage = () => {
                         Add ${(50 - subtotal).toFixed(2)} more for free shipping!
                       </p>
                     )}
+                    
+                    {/* Show wallet credit if using partial payment */}
+                    {walletCredit > 0 && (
+                      <div className="flex justify-between text-sm text-accent">
+                        <span>VendX Pay Credit</span>
+                        <span>-${walletCredit.toFixed(2)}</span>
+                      </div>
+                    )}
+                    
                     <div className="border-t border-border pt-3">
                       <div className="flex justify-between font-semibold text-lg">
                         <span>Total</span>
-                        <span className="text-primary">${total.toFixed(2)}</span>
+                        <div className="text-right">
+                          {walletCredit > 0 ? (
+                            <>
+                              <span className="text-primary">${remainingToPay.toFixed(2)}</span>
+                              <p className="text-xs text-muted-foreground font-normal">
+                                + ${walletCredit.toFixed(2)} from wallet
+                              </p>
+                            </>
+                          ) : (
+                            <span className="text-primary">${total.toFixed(2)}</span>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -256,20 +343,13 @@ const CartPage = () => {
                         disabled={checkingOut}
                         showVendxPay={!!user}
                         walletBalance={walletBalance}
+                        orderTotal={total}
                       />
-                      {hasSubscription && paymentMethod === "paypal" && (
+                      
+                      {/* Subscription warning */}
+                      {hasSubscription && (paymentMethod === "paypal" || paymentMethod === "vendx" || paymentMethod === "vendx_paypal" || paymentMethod === "vendx_stripe") && (
                         <p className="text-xs text-destructive mt-2">
-                          PayPal is not available for subscription products
-                        </p>
-                      )}
-                      {hasSubscription && paymentMethod === "vendx" && (
-                        <p className="text-xs text-destructive mt-2">
-                          VendX Pay is not available for subscription products
-                        </p>
-                      )}
-                      {paymentMethod === "vendx" && walletBalance < (getCartTotal() + (getCartTotal() > 50 ? 0 : 5.99)) && (
-                        <p className="text-xs text-destructive mt-2">
-                          Insufficient balance. <a href="/wallet" className="underline">Add funds</a>
+                          Subscriptions require Debit/Credit card payment only
                         </p>
                       )}
                     </div>
@@ -277,14 +357,19 @@ const CartPage = () => {
                     <Button 
                       className="w-full h-12" 
                       onClick={handleCheckout}
-                      disabled={checkingOut || (hasSubscription && (paymentMethod === "paypal" || paymentMethod === "vendx")) || (paymentMethod === "vendx" && walletBalance < (getCartTotal() + (getCartTotal() > 50 ? 0 : 5.99)))}
+                      disabled={isCheckoutDisabled()}
                     >
                       {checkingOut ? (
                         <Loader2 className="h-5 w-5 mr-2 animate-spin" />
                       ) : (
                         <ArrowRight className="h-5 w-5 mr-2" />
                       )}
-                      Proceed to Checkout
+                      {paymentMethod === "vendx" 
+                        ? "Pay with VendX Pay" 
+                        : remainingToPay < total && walletCredit > 0
+                          ? `Pay $${remainingToPay.toFixed(2)}`
+                          : "Proceed to Checkout"
+                      }
                     </Button>
 
                     {!user && (

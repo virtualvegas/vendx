@@ -3,7 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
 const PAYPAL_API_URL = Deno.env.get("PAYPAL_API_URL") || "https://api-m.paypal.com";
@@ -67,11 +67,11 @@ serve(async (req) => {
     if (!user?.email) throw new Error("User not authenticated or email not available");
     logStep("User authenticated", { userId: user.id, email: user.email });
 
-    const { cartItems } = await req.json();
+    const { cartItems, walletCredit } = await req.json();
     if (!cartItems || cartItems.length === 0) {
       throw new Error("Cart is empty");
     }
-    logStep("Cart items received", { count: cartItems.length });
+    logStep("Cart items received", { count: cartItems.length, walletCredit });
 
     // Fetch product details for cart items
     const productIds = cartItems.map((item: any) => item.product_id);
@@ -124,11 +124,81 @@ serve(async (req) => {
       });
     }
 
+    // Handle wallet credit for partial payments
+    let pendingWalletTransactionId = null;
+    let actualWalletCredit = 0;
+
+    if (walletCredit && walletCredit > 0) {
+      // Verify wallet balance
+      const { data: wallet, error: walletError } = await supabaseClient
+        .from("wallets")
+        .select("id, balance")
+        .eq("user_id", user.id)
+        .single();
+
+      if (walletError || !wallet) {
+        throw new Error("Wallet not found");
+      }
+
+      // Calculate total with shipping
+      const shipping = subtotal > 50 ? 0 : 5.99;
+      const totalWithShipping = subtotal + shipping;
+
+      // Use the lesser of requested credit or available balance
+      actualWalletCredit = Math.min(walletCredit, wallet.balance, totalWithShipping);
+      
+      if (actualWalletCredit > 0) {
+        // Create pending wallet transaction
+        const { data: pendingTx, error: txError } = await supabaseClient
+          .from("wallet_transactions")
+          .insert({
+            wallet_id: wallet.id,
+            amount: -actualWalletCredit,
+            transaction_type: "store_purchase_pending",
+            description: "Pending store purchase (PayPal) - awaiting payment confirmation",
+            status: "pending"
+          })
+          .select()
+          .single();
+
+        if (txError) {
+          throw new Error("Failed to create pending wallet transaction");
+        }
+
+        pendingWalletTransactionId = pendingTx.id;
+
+        // Temporarily deduct from wallet
+        await supabaseClient
+          .from("wallets")
+          .update({ balance: wallet.balance - actualWalletCredit })
+          .eq("id", wallet.id);
+
+        logStep("Wallet credit reserved", { 
+          walletCredit: actualWalletCredit, 
+          pendingTxId: pendingWalletTransactionId 
+        });
+
+        // Add VendX Pay credit as a discount item
+        items.push({
+          name: "VendX Pay Credit",
+          unit_amount: {
+            currency_code: "USD",
+            value: (-actualWalletCredit).toFixed(2),
+          },
+          quantity: "1",
+        });
+
+        // Reduce subtotal by wallet credit
+        subtotal -= actualWalletCredit;
+      }
+    }
+
     // Calculate shipping
-    const shipping = subtotal > 50 ? 0 : 5.99;
+    const originalSubtotal = subtotal + actualWalletCredit;
+    const shipping = originalSubtotal > 50 ? 0 : 5.99;
     const total = subtotal + shipping;
 
-    logStep("Order calculated", { subtotal, shipping, total, itemCount: items.length });
+    logStep("Order calculated", { subtotal, shipping, total, walletCredit: actualWalletCredit, itemCount: items.length });
 
     // Get PayPal access token
     const accessToken = await getPayPalAccessToken();
@@ -144,6 +214,8 @@ serve(async (req) => {
         description: "VendX Store Order",
         custom_id: JSON.stringify({
           supabase_user_id: user.id,
+          wallet_credit: actualWalletCredit,
+          pending_wallet_tx_id: pendingWalletTransactionId,
           cart_items: cartItems.map((item: any) => ({
             product_id: item.product_id,
             quantity: item.quantity,
@@ -164,14 +236,14 @@ serve(async (req) => {
             },
           },
         },
-        items,
+        items: items.filter(item => parseFloat(item.unit_amount.value) > 0), // Filter out negative items for PayPal
       }],
       application_context: {
         brand_name: "VendX",
         landing_page: "NO_PREFERENCE",
         user_action: "PAY_NOW",
-        return_url: `${origin}/store/order-success?paypal=true`,
-        cancel_url: `${origin}/store/cart`,
+        return_url: `${origin}/store/order-success?paypal=true&pending_tx=${pendingWalletTransactionId || ''}`,
+        cancel_url: `${origin}/store/cart?cancelled=true&pending_tx=${pendingWalletTransactionId || ''}`,
         shipping_preference: "GET_FROM_FILE",
       },
     };
@@ -187,6 +259,10 @@ serve(async (req) => {
 
     if (!orderResponse.ok) {
       const error = await orderResponse.text();
+      // Refund wallet if PayPal order creation fails
+      if (pendingWalletTransactionId) {
+        await refundPendingWalletTransaction(supabaseClient, pendingWalletTransactionId, user.id);
+      }
       throw new Error(`Failed to create PayPal order: ${error}`);
     }
 
@@ -196,12 +272,18 @@ serve(async (req) => {
     // Find the approval URL
     const approvalLink = order.links.find((link: any) => link.rel === "approve");
     if (!approvalLink) {
+      // Refund wallet if no approval link
+      if (pendingWalletTransactionId) {
+        await refundPendingWalletTransaction(supabaseClient, pendingWalletTransactionId, user.id);
+      }
       throw new Error("PayPal approval URL not found");
     }
 
     return new Response(JSON.stringify({ 
       url: approvalLink.href,
-      orderId: order.id 
+      orderId: order.id,
+      pendingWalletTransactionId,
+      walletCreditApplied: actualWalletCredit
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200
@@ -215,3 +297,41 @@ serve(async (req) => {
     });
   }
 });
+
+async function refundPendingWalletTransaction(supabaseClient: any, txId: string, userId: string) {
+  try {
+    // Get the pending transaction
+    const { data: pendingTx } = await supabaseClient
+      .from("wallet_transactions")
+      .select("wallet_id, amount")
+      .eq("id", txId)
+      .single();
+
+    if (pendingTx) {
+      // Refund the wallet
+      const { data: wallet } = await supabaseClient
+        .from("wallets")
+        .select("balance")
+        .eq("id", pendingTx.wallet_id)
+        .single();
+
+      if (wallet) {
+        await supabaseClient
+          .from("wallets")
+          .update({ balance: wallet.balance + Math.abs(pendingTx.amount) })
+          .eq("id", pendingTx.wallet_id);
+      }
+
+      // Update transaction status
+      await supabaseClient
+        .from("wallet_transactions")
+        .update({ 
+          status: "cancelled",
+          description: "Store purchase cancelled - wallet refunded"
+        })
+        .eq("id", txId);
+    }
+  } catch (e) {
+    console.error("Failed to refund wallet transaction:", e);
+  }
+}
