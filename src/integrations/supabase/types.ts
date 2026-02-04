@@ -3064,6 +3064,7 @@ export type Database = {
           total: number
           updated_at: string | null
           user_id: string | null
+          wallet_credit_applied: number | null
         }
         Insert: {
           created_at?: string | null
@@ -3083,6 +3084,7 @@ export type Database = {
           total?: number
           updated_at?: string | null
           user_id?: string | null
+          wallet_credit_applied?: number | null
         }
         Update: {
           created_at?: string | null
@@ -3102,6 +3104,7 @@ export type Database = {
           total?: number
           updated_at?: string | null
           user_id?: string | null
+          wallet_credit_applied?: number | null
         }
         Relationships: [
           {
@@ -3634,6 +3637,7 @@ export type Database = {
           id: string
           machine_id: string | null
           reference_id: string | null
+          status: string | null
           stripe_payment_intent_id: string | null
           transaction_type: string
           wallet_id: string
@@ -3645,6 +3649,7 @@ export type Database = {
           id?: string
           machine_id?: string | null
           reference_id?: string | null
+          status?: string | null
           stripe_payment_intent_id?: string | null
           transaction_type: string
           wallet_id: string
@@ -3656,6 +3661,7 @@ export type Database = {
           id?: string
           machine_id?: string | null
           reference_id?: string | null
+          status?: string | null
           stripe_payment_intent_id?: string | null
           transaction_type?: string
           wallet_id?: string
