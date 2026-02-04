@@ -1,24 +1,28 @@
-import { CreditCard } from "lucide-react";
+import { CreditCard, Wallet } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-export type PaymentMethod = "stripe" | "paypal";
+export type PaymentMethod = "stripe" | "paypal" | "vendx";
 
 interface PaymentMethodSelectorProps {
   selected: PaymentMethod;
   onSelect: (method: PaymentMethod) => void;
   disabled?: boolean;
   className?: string;
+  showVendxPay?: boolean;
+  walletBalance?: number;
 }
 
 const PaymentMethodSelector = ({ 
   selected, 
   onSelect, 
   disabled = false,
-  className 
+  className,
+  showVendxPay = true,
+  walletBalance,
 }: PaymentMethodSelectorProps) => {
   return (
-    <div className={cn("grid grid-cols-2 gap-3", className)}>
+    <div className={cn("grid gap-3", showVendxPay ? "grid-cols-3" : "grid-cols-2", className)}>
       <Button
         type="button"
         variant={selected === "stripe" ? "default" : "outline"}
@@ -53,6 +57,25 @@ const PaymentMethodSelector = ({
         </svg>
         <span className="text-xs font-medium">PayPal</span>
       </Button>
+
+      {showVendxPay && (
+        <Button
+          type="button"
+          variant={selected === "vendx" ? "default" : "outline"}
+          className={cn(
+            "h-14 flex flex-col items-center justify-center gap-1 transition-all",
+            selected === "vendx" && "ring-2 ring-accent ring-offset-2 ring-offset-background bg-accent text-accent-foreground hover:bg-accent/90"
+          )}
+          onClick={() => onSelect("vendx")}
+          disabled={disabled}
+        >
+          <Wallet className="w-5 h-5" />
+          <span className="text-xs font-medium">VendX Pay</span>
+          {walletBalance !== undefined && (
+            <span className="text-[10px] opacity-80">${walletBalance.toFixed(2)}</span>
+          )}
+        </Button>
+      )}
     </div>
   );
 };

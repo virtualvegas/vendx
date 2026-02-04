@@ -16,12 +16,26 @@ const CartPage = () => {
   const [checkingOut, setCheckingOut] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("stripe");
+  const [walletBalance, setWalletBalance] = useState<number>(0);
 
-  // Check if cart has subscription items (PayPal doesn't support subscriptions)
+  // Check if cart has subscription items (PayPal and VendX Pay don't support subscriptions)
   const hasSubscription = cartItems.some(item => item.product?.is_subscription);
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => setUser(data.user));
+    supabase.auth.getUser().then(({ data }) => {
+      setUser(data.user);
+      if (data.user) {
+        // Fetch wallet balance
+        supabase
+          .from("wallets")
+          .select("balance")
+          .eq("user_id", data.user.id)
+          .maybeSingle()
+          .then(({ data: wallet }) => {
+            if (wallet) setWalletBalance(wallet.balance);
+          });
+      }
+    });
   }, []);
 
   const handleCheckout = async () => {
@@ -36,18 +50,46 @@ const CartPage = () => {
       return;
     }
 
+    if (paymentMethod === "vendx" && hasSubscription) {
+      toast.error("VendX Pay is not available for subscription products. Please use Debit/Credit.");
+      return;
+    }
+
+    const total = getCartTotal() + (getCartTotal() > 50 ? 0 : 5.99);
+    if (paymentMethod === "vendx" && walletBalance < total) {
+      toast.error(`Insufficient wallet balance. You need $${total.toFixed(2)} but have $${walletBalance.toFixed(2)}.`);
+      return;
+    }
+
     setCheckingOut(true);
     
     try {
-      const functionName = paymentMethod === "paypal" ? "store-paypal-checkout" : "store-create-checkout";
-      const { data, error } = await supabase.functions.invoke(functionName, {
-        body: { cartItems }
-      });
+      if (paymentMethod === "vendx") {
+        // Process VendX Pay checkout
+        const { data, error } = await supabase.functions.invoke("store-vendx-pay-checkout", {
+          body: { cartItems }
+        });
 
-      if (error) throw error;
-      
-      if (data?.url) {
-        window.location.href = data.url;
+        if (error) throw error;
+        
+        if (data?.success) {
+          toast.success("Order placed successfully!");
+          refreshCart();
+          navigate(`/store/order-success?order=${data.orderNumber}`);
+        } else {
+          throw new Error(data?.error || "Failed to process payment");
+        }
+      } else {
+        const functionName = paymentMethod === "paypal" ? "store-paypal-checkout" : "store-create-checkout";
+        const { data, error } = await supabase.functions.invoke(functionName, {
+          body: { cartItems }
+        });
+
+        if (error) throw error;
+        
+        if (data?.url) {
+          window.location.href = data.url;
+        }
       }
     } catch (error: any) {
       toast.error(error.message || "Failed to create checkout session");
@@ -212,10 +254,22 @@ const CartPage = () => {
                         selected={paymentMethod}
                         onSelect={setPaymentMethod}
                         disabled={checkingOut}
+                        showVendxPay={!!user}
+                        walletBalance={walletBalance}
                       />
                       {hasSubscription && paymentMethod === "paypal" && (
                         <p className="text-xs text-destructive mt-2">
                           PayPal is not available for subscription products
+                        </p>
+                      )}
+                      {hasSubscription && paymentMethod === "vendx" && (
+                        <p className="text-xs text-destructive mt-2">
+                          VendX Pay is not available for subscription products
+                        </p>
+                      )}
+                      {paymentMethod === "vendx" && walletBalance < (getCartTotal() + (getCartTotal() > 50 ? 0 : 5.99)) && (
+                        <p className="text-xs text-destructive mt-2">
+                          Insufficient balance. <a href="/wallet" className="underline">Add funds</a>
                         </p>
                       )}
                     </div>
@@ -223,7 +277,7 @@ const CartPage = () => {
                     <Button 
                       className="w-full h-12" 
                       onClick={handleCheckout}
-                      disabled={checkingOut || (hasSubscription && paymentMethod === "paypal")}
+                      disabled={checkingOut || (hasSubscription && (paymentMethod === "paypal" || paymentMethod === "vendx")) || (paymentMethod === "vendx" && walletBalance < (getCartTotal() + (getCartTotal() > 50 ? 0 : 5.99)))}
                     >
                       {checkingOut ? (
                         <Loader2 className="h-5 w-5 mr-2 animate-spin" />
