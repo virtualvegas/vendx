@@ -66,6 +66,7 @@ const StorePage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [snackBoxProduct, setSnackBoxProduct] = useState<{ images: string[] | null } | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState<SortOption>("featured");
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
@@ -75,6 +76,18 @@ const StorePage = () => {
   useEffect(() => {
     fetchProducts();
   }, [activeCategory]);
+
+  useEffect(() => {
+    const fetchSnackBoxProduct = async () => {
+      const { data } = await supabase
+        .from("store_products")
+        .select("images")
+        .eq("slug", "snack-in-the-box")
+        .maybeSingle();
+      if (data) setSnackBoxProduct(data);
+    };
+    fetchSnackBoxProduct();
+  }, []);
 
   const fetchProducts = async () => {
     setLoading(true);
@@ -303,7 +316,7 @@ const StorePage = () => {
                   </div>
                   <div className="w-48 h-48 rounded-lg overflow-hidden">
                     <img 
-                      src="https://cdn.discordapp.com/attachments/1460835944260436093/1460836257541263506/OIP_10.jpg?ex=69685d48&is=69670bc8&hm=4d88a9210700476ba2e78dd45094355d54764b14a920ef9c362aeac482f2ff98&" 
+                      src={snackBoxProduct?.images?.[0] || "https://images.unsplash.com/photo-1621939514649-280e2ee25f60?w=800"}
                       alt="Snack Box"
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform"
                     />
