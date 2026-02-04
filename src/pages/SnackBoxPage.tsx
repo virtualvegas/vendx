@@ -163,8 +163,8 @@ const SnackBoxPage = () => {
             <div className="relative">
               <div className="aspect-square rounded-2xl overflow-hidden border-4 border-accent/30 shadow-2xl">
                 <img 
-                  src="https://images.unsplash.com/photo-1621939514649-280e2ee25f60?w=800" 
-                  alt="Snack Box"
+                  src={product?.image_url || "https://images.unsplash.com/photo-1621939514649-280e2ee25f60?w=800"} 
+                  alt={product?.name || "Snack Box"}
                   className="w-full h-full object-cover"
                 />
               </div>
