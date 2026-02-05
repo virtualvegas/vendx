@@ -149,7 +149,11 @@ interface TransferDialogProps {
   onTransferAmountChange: (amount: string) => void;
   onSubmit: () => void;
   isPending: boolean;
+  direction?: "to_child" | "to_parent";
+  onDirectionChange?: (direction: "to_child" | "to_parent") => void;
 }
+
+const quickAmounts = [5, 10, 20, 50];
 
 export const TransferDialog = ({
   open,
@@ -160,48 +164,108 @@ export const TransferDialog = ({
   onTransferAmountChange,
   onSubmit,
   isPending,
-}: TransferDialogProps) => (
-  <Dialog open={open} onOpenChange={onOpenChange}>
-    <DialogContent>
-      <DialogHeader>
-        <DialogTitle>Transfer to {selectedWallet?.child_name}</DialogTitle>
-      </DialogHeader>
-      <div className="space-y-4">
-        <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
-          <span className="text-sm text-muted-foreground">Your Balance</span>
-          <span className="font-bold">${parentBalance.toFixed(2)}</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="flex-1">
-            <Label>Amount to Transfer</Label>
-            <Input
-              type="number"
-              step="0.01"
-              min="0.01"
-              max={parentBalance}
-              value={transferAmount}
-              onChange={(e) => onTransferAmountChange(e.target.value)}
-              placeholder="0.00"
-            />
+  direction = "to_child",
+  onDirectionChange,
+}: TransferDialogProps) => {
+  const isToChild = direction === "to_child";
+  const maxAmount = isToChild ? parentBalance : (selectedWallet?.balance || 0);
+  const fromLabel = isToChild ? "Your Wallet" : selectedWallet?.child_name || "Child";
+  const toLabel = isToChild ? selectedWallet?.child_name || "Child" : "Your Wallet";
+  
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Transfer Funds</DialogTitle>
+          <DialogDescription>
+            Move money between your wallet and {selectedWallet?.child_name || "child"}'s wallet
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-4">
+          {/* Direction Toggle */}
+          {onDirectionChange && (
+            <div className="flex gap-2 p-1 bg-muted rounded-lg">
+              <Button
+                variant={isToChild ? "default" : "ghost"}
+                size="sm"
+                className="flex-1"
+                onClick={() => onDirectionChange("to_child")}
+              >
+                Give to {selectedWallet?.child_name || "Child"}
+              </Button>
+              <Button
+                variant={!isToChild ? "default" : "ghost"}
+                size="sm"
+                className="flex-1"
+                onClick={() => onDirectionChange("to_parent")}
+                disabled={(selectedWallet?.balance || 0) <= 0}
+              >
+                Reclaim Funds
+              </Button>
+            </div>
+          )}
+
+          {/* Balance Display */}
+          <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
+            <span className="text-sm text-muted-foreground">From: {fromLabel}</span>
+            <span className="font-bold">${maxAmount.toFixed(2)}</span>
           </div>
-          <ArrowRight className="w-6 h-6 text-muted-foreground mt-6" />
-          <div className="flex-1">
-            <Label>New Balance</Label>
-            <div className="h-10 flex items-center px-3 bg-muted rounded-md font-bold">
-              ${((selectedWallet?.balance || 0) + (parseFloat(transferAmount) || 0)).toFixed(2)}
+
+          {/* Quick Amounts */}
+          <div className="flex gap-2">
+            {quickAmounts.map((amt) => (
+              <Button
+                key={amt}
+                variant="outline"
+                size="sm"
+                className="flex-1"
+                onClick={() => onTransferAmountChange(amt.toString())}
+                disabled={amt > maxAmount}
+              >
+                ${amt}
+              </Button>
+            ))}
+          </div>
+
+          {/* Amount Input */}
+          <div className="flex items-center gap-2">
+            <div className="flex-1">
+              <Label>Amount</Label>
+              <Input
+                type="number"
+                step="0.01"
+                min="0.01"
+                max={maxAmount}
+                value={transferAmount}
+                onChange={(e) => onTransferAmountChange(e.target.value)}
+                placeholder="0.00"
+              />
+            </div>
+            <ArrowRight className="w-6 h-6 text-muted-foreground mt-6" />
+            <div className="flex-1">
+              <Label>To: {toLabel}</Label>
+              <div className="h-10 flex items-center px-3 bg-muted rounded-md font-bold">
+                ${(
+                  (isToChild ? (selectedWallet?.balance || 0) : parentBalance) +
+                  (parseFloat(transferAmount) || 0)
+                ).toFixed(2)}
+              </div>
             </div>
           </div>
         </div>
-      </div>
-      <DialogFooter>
-        <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-        <Button onClick={onSubmit} disabled={isPending || !transferAmount || parseFloat(transferAmount) <= 0}>
-          {isPending ? (
-            <Loader2 className="h-4 w-4 animate-spin mr-2" />
-          ) : null}
-          Transfer
-        </Button>
-      </DialogFooter>
-    </DialogContent>
-  </Dialog>
-);
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Cancel
+          </Button>
+          <Button
+            onClick={onSubmit}
+            disabled={isPending || !transferAmount || parseFloat(transferAmount) <= 0 || parseFloat(transferAmount) > maxAmount}
+          >
+            {isPending && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+            {isToChild ? "Send" : "Reclaim"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+};

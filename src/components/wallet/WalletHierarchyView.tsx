@@ -36,6 +36,7 @@ export const WalletHierarchyView = () => {
   const [selectedWallet, setSelectedWallet] = useState<ChildWallet | null>(null);
   const [form, setForm] = useState<ChildWalletForm>(emptyForm);
   const [transferAmount, setTransferAmount] = useState("");
+  const [transferDirection, setTransferDirection] = useState<"to_child" | "to_parent">("to_child");
 
   const openEdit = (wallet: ChildWallet) => {
     setSelectedWallet(wallet);
@@ -50,6 +51,7 @@ export const WalletHierarchyView = () => {
   const openTransfer = (wallet: ChildWallet) => {
     setSelectedWallet(wallet);
     setTransferAmount("");
+    setTransferDirection("to_child");
     setShowTransferDialog(true);
   };
 
@@ -74,12 +76,15 @@ export const WalletHierarchyView = () => {
   const handleTransfer = () => {
     if (!selectedWallet) return;
     const amount = parseFloat(transferAmount);
-    transferFunds.mutate({ childWallet: selectedWallet, amount }, {
-      onSuccess: () => {
-        setShowTransferDialog(false);
-        setTransferAmount("");
-      },
-    });
+    transferFunds.mutate(
+      { childWallet: selectedWallet, amount, direction: transferDirection },
+      {
+        onSuccess: () => {
+          setShowTransferDialog(false);
+          setTransferAmount("");
+        },
+      }
+    );
   };
 
   const handleUpgradeGuest = () => {
@@ -264,6 +269,8 @@ export const WalletHierarchyView = () => {
         onTransferAmountChange={setTransferAmount}
         onSubmit={handleTransfer}
         isPending={transferFunds.isPending}
+        direction={transferDirection}
+        onDirectionChange={setTransferDirection}
       />
 
       {/* Load Wallet Dialog */}
