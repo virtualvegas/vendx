@@ -4,7 +4,7 @@ import { KioskVerifying } from "@/components/kiosk/KioskVerifying";
 import { KioskArcadeMode } from "@/components/kiosk/KioskArcadeMode";
 import { KioskVendingMode } from "@/components/kiosk/KioskVendingMode";
 import { KioskError } from "@/components/kiosk/KioskError";
-import { KioskSuccess } from "@/components/kiosk/KioskSuccess";
+import { KioskSuccess, type PurchaseResult } from "@/components/kiosk/KioskSuccess";
 import { KioskMachineLoading } from "@/components/kiosk/KioskMachineLoading";
 import { KioskMachineOffline } from "@/components/kiosk/KioskMachineOffline";
 import { useKiosk } from "@/hooks/useKiosk";
@@ -14,6 +14,7 @@ type KioskState = "idle" | "entering" | "verifying" | "active" | "error" | "succ
 const KioskPage = () => {
   const [state, setState] = useState<KioskState>("idle");
   const [code, setCode] = useState("");
+  const [purchaseResult, setPurchaseResult] = useState<PurchaseResult | undefined>(undefined);
 
   // Get machine ID from URL or use demo
   const machineId = new URLSearchParams(window.location.search).get("machine") || "demo";
@@ -46,6 +47,7 @@ const KioskPage = () => {
 
   const handleStartOver = () => {
     setCode("");
+    setPurchaseResult(undefined);
     clearSession();
     clearError();
     setState("idle");
@@ -53,23 +55,27 @@ const KioskPage = () => {
 
   const handleVendingPurchase = async (amount: number, itemName: string): Promise<boolean> => {
     setState("verifying");
-    const success = await processVendingPurchase(amount, itemName);
-    if (success) {
+    const result = await processVendingPurchase(amount, itemName);
+    if (result) {
+      setPurchaseResult(result);
       setState("success");
       setTimeout(handleStartOver, 5000);
+      return true;
     } else {
       setState("error");
+      return false;
     }
-    return success;
   };
 
-  const handleArcadePurchase = async (plays: number, amount: number, bundleLabel?: string) => {
-    const success = await processArcadePurchase(plays, amount, bundleLabel);
-    if (success) {
+  const handleArcadePurchase = async (plays: number, amount: number, bundleLabel?: string): Promise<boolean> => {
+    const result = await processArcadePurchase(plays, amount, bundleLabel);
+    if (result) {
+      setPurchaseResult(result);
       setState("success");
       setTimeout(handleStartOver, 5000);
+      return true;
     }
-    return success;
+    return false;
   };
 
   // Loading state for machine info
@@ -148,7 +154,9 @@ const KioskPage = () => {
       )}
 
       {/* Success state */}
-      {state === "success" && <KioskSuccess onDone={handleStartOver} />}
+      {state === "success" && (
+        <KioskSuccess result={purchaseResult} onDone={handleStartOver} />
+      )}
     </div>
   );
 };

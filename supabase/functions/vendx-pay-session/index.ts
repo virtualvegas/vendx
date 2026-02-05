@@ -295,22 +295,40 @@ serve(async (req) => {
         });
       }
 
+      // Get user profile for name
+      const { data: userProfile } = await supabase
+        .from("profiles")
+        .select("full_name")
+        .eq("id", matchedUserId)
+        .single();
+
+      // Get wallet balance
+      const { data: demoWallet } = await supabase
+        .from("wallets")
+        .select("balance")
+        .eq("user_id", matchedUserId)
+        .eq("wallet_type", "standard")
+        .maybeSingle();
+
+      // Get ticket balance
+      const { data: demoTickets } = await supabase
+        .from("user_tickets")
+        .select("balance")
+        .eq("user_id", matchedUserId)
+        .maybeSingle();
+
       // In demo mode, skip session creation if no machine
       if (isDemoMode && !machineDbId) {
-        // Get wallet balance without creating session
-        const { data: wallet } = await supabase
-          .from("wallets")
-          .select("balance")
-          .eq("user_id", matchedUserId)
-          .maybeSingle();
-
         console.log("Demo TOTP verified for user:", matchedUserId);
 
         return new Response(
           JSON.stringify({
             success: true,
             session_code: "DEMO",
-            balance: wallet?.balance || 0,
+            user_id: matchedUserId,
+            user_name: userProfile?.full_name || "Customer",
+            balance: demoWallet?.balance || 0,
+            ticket_balance: demoTickets?.balance || 0,
           }),
           { headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
@@ -334,9 +352,17 @@ serve(async (req) => {
         .select("id, session_code")
         .single();
 
-      // Get wallet balance
+      // Get wallet balance for real machines
       const { data: wallet } = await supabase
         .from("wallets")
+        .select("balance")
+        .eq("user_id", matchedUserId)
+        .eq("wallet_type", "standard")
+        .maybeSingle();
+
+      // Get ticket balance
+      const { data: tickets } = await supabase
+        .from("user_tickets")
         .select("balance")
         .eq("user_id", matchedUserId)
         .maybeSingle();
@@ -347,7 +373,10 @@ serve(async (req) => {
         JSON.stringify({
           success: true,
           session_code: session?.session_code,
+          user_id: matchedUserId,
+          user_name: userProfile?.full_name || "Customer",
           balance: wallet?.balance || 0,
+          ticket_balance: tickets?.balance || 0,
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
