@@ -118,43 +118,60 @@ export const useWalletHierarchy = () => {
     onError: (err: Error) => toast.error(err.message),
   });
 
-  // Transfer funds
+  // Transfer funds (supports both directions)
   const transferFunds = useMutation({
-    mutationFn: async ({ childWallet, amount }: { childWallet: ChildWallet; amount: number }) => {
+    mutationFn: async ({ 
+      childWallet, 
+      amount, 
+      direction = "to_child" 
+    }: { 
+      childWallet: ChildWallet; 
+      amount: number; 
+      direction?: "to_child" | "to_parent";
+    }) => {
       if (!parentWallet) throw new Error("Parent wallet not found");
       
       if (!amount || amount <= 0) throw new Error("Enter a valid amount");
-      if (amount > parentWallet.balance) throw new Error("Insufficient balance");
+      
+      const isToChild = direction === "to_child";
+      const sourceBalance = isToChild ? parentWallet.balance : childWallet.balance;
+      
+      if (amount > sourceBalance) throw new Error("Insufficient balance");
 
-      // Deduct from parent
-      const { error: parentError } = await supabase
+      // Deduct from source
+      const { error: sourceError } = await supabase
         .from("wallets")
-        .update({ balance: parentWallet.balance - amount })
-        .eq("id", parentWallet.id);
+        .update({ balance: sourceBalance - amount })
+        .eq("id", isToChild ? parentWallet.id : childWallet.id);
 
-      if (parentError) throw parentError;
+      if (sourceError) throw sourceError;
 
-      // Add to child
-      const { error: childError } = await supabase
+      // Add to destination
+      const destBalance = isToChild ? childWallet.balance : parentWallet.balance;
+      const { error: destError } = await supabase
         .from("wallets")
-        .update({ balance: childWallet.balance + amount })
-        .eq("id", childWallet.id);
+        .update({ balance: destBalance + amount })
+        .eq("id", isToChild ? childWallet.id : parentWallet.id);
 
-      if (childError) throw childError;
+      if (destError) throw destError;
 
       // Record transactions
       const { error: txError } = await supabase.from("wallet_transactions").insert([
         {
-          wallet_id: parentWallet.id,
+          wallet_id: isToChild ? parentWallet.id : childWallet.id,
           amount: -amount,
-          transaction_type: "transfer_out",
-          description: `Transfer to ${childWallet.child_name}`,
+          transaction_type: isToChild ? "transfer_out" : "reclaim_out",
+          description: isToChild 
+            ? `Transfer to ${childWallet.child_name}` 
+            : `Reclaimed from ${childWallet.child_name}`,
         },
         {
-          wallet_id: childWallet.id,
+          wallet_id: isToChild ? childWallet.id : parentWallet.id,
           amount: amount,
-          transaction_type: "transfer_in",
-          description: "Transfer from parent wallet",
+          transaction_type: isToChild ? "transfer_in" : "reclaim_in",
+          description: isToChild 
+            ? "Transfer from parent wallet" 
+            : `Reclaimed from ${childWallet.child_name}`,
         },
       ]);
 
