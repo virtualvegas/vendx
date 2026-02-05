@@ -214,6 +214,22 @@ serve(async (req) => {
         });
     }
 
+    // Log machine activity
+    if (!isDemoMode) {
+      await supabase.rpc("log_machine_activity", {
+        p_machine_id: machine.id,
+        p_activity_type: "vend",
+        p_user_id: userId,
+        p_session_id: sessionId,
+        p_amount: amount,
+        p_item_name: item_name || null,
+        p_metadata: JSON.stringify({
+          points_earned: pointsEarned,
+          wallet_tx_id: walletTx.id,
+        }),
+      });
+    }
+
     // Mark session as used (skip for demo mode)
     if (!isDemoMode && sessionId) {
       await supabase
