@@ -14,6 +14,8 @@ interface TicketPrize {
   requires_approval: boolean;
   requires_shipping: boolean;
   min_age: number | null;
+  shipping_fee_type?: string;
+  shipping_fee_amount?: number;
 }
 
 interface TicketPrizeCardProps {
@@ -65,7 +67,11 @@ export const TicketPrizeCard = ({
           {prize.requires_shipping && (
             <Badge variant="outline" className="bg-background/80 text-xs">
               <Truck className="h-3 w-3 mr-1" />
-              Shipped
+              {prize.shipping_fee_type === "free" || !prize.shipping_fee_amount 
+                ? "Free Ship" 
+                : prize.shipping_fee_type === "tickets" 
+                  ? `+${prize.shipping_fee_amount} tix` 
+                  : `+$${prize.shipping_fee_amount}`}
             </Badge>
           )}
         </div>

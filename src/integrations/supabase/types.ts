@@ -3755,6 +3755,8 @@ export type Database = {
           name: string
           requires_approval: boolean | null
           requires_shipping: boolean | null
+          shipping_fee_amount: number | null
+          shipping_fee_type: string | null
           ticket_cost: number
           updated_at: string
         }
@@ -3769,6 +3771,8 @@ export type Database = {
           name: string
           requires_approval?: boolean | null
           requires_shipping?: boolean | null
+          shipping_fee_amount?: number | null
+          shipping_fee_type?: string | null
           ticket_cost: number
           updated_at?: string
         }
@@ -3783,6 +3787,8 @@ export type Database = {
           name?: string
           requires_approval?: boolean | null
           requires_shipping?: boolean | null
+          shipping_fee_amount?: number | null
+          shipping_fee_type?: string | null
           ticket_cost?: number
           updated_at?: string
         }

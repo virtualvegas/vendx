@@ -31,6 +31,8 @@ interface Prize {
   requires_approval: boolean;
   requires_shipping: boolean;
   min_age: number | null;
+  shipping_fee_type: string;
+  shipping_fee_amount: number;
   created_at: string;
 }
 
@@ -74,6 +76,8 @@ const TicketPrizesManager = () => {
     requires_approval: false,
     requires_shipping: false,
     min_age: null as number | null,
+    shipping_fee_type: "free" as string,
+    shipping_fee_amount: 0,
   });
 
   // Fetch prizes
@@ -203,6 +207,8 @@ const TicketPrizesManager = () => {
       requires_approval: false,
       requires_shipping: false,
       min_age: null,
+      shipping_fee_type: "free",
+      shipping_fee_amount: 0,
     });
   };
 
@@ -218,6 +224,8 @@ const TicketPrizesManager = () => {
       requires_approval: prize.requires_approval,
       requires_shipping: prize.requires_shipping,
       min_age: prize.min_age,
+      shipping_fee_type: prize.shipping_fee_type || "free",
+      shipping_fee_amount: prize.shipping_fee_amount || 0,
     });
     setIsAddDialogOpen(true);
   };
@@ -346,6 +354,37 @@ const TicketPrizesManager = () => {
                     onCheckedChange={(v) => setPrizeForm({ ...prizeForm, requires_shipping: v })}
                   />
                 </div>
+                {prizeForm.requires_shipping && (
+                  <div className="space-y-3 p-3 border rounded-lg bg-muted/50">
+                    <div className="space-y-2">
+                      <Label>Shipping Fee Type</Label>
+                      <Select
+                        value={prizeForm.shipping_fee_type}
+                        onValueChange={(v) => setPrizeForm({ ...prizeForm, shipping_fee_type: v })}
+                      >
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="free">Free Shipping</SelectItem>
+                          <SelectItem value="fixed">Fixed Fee ($)</SelectItem>
+                          <SelectItem value="tickets">Ticket Cost</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    {prizeForm.shipping_fee_type !== "free" && (
+                      <div className="space-y-2">
+                        <Label>
+                          {prizeForm.shipping_fee_type === "fixed" ? "Amount ($)" : "Tickets Required"}
+                        </Label>
+                        <Input
+                          type="number"
+                          value={prizeForm.shipping_fee_amount}
+                          onChange={(e) => setPrizeForm({ ...prizeForm, shipping_fee_amount: parseFloat(e.target.value) || 0 })}
+                          placeholder={prizeForm.shipping_fee_type === "fixed" ? "e.g., 5.99" : "e.g., 50"}
+                        />
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
               <DialogFooter>
                 <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>Cancel</Button>

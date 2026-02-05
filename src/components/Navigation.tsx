@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Menu, X, Facebook, Instagram, ChevronDown, ShoppingBag, Gamepad2, MapPin, Briefcase, Info, Phone, Newspaper, Users, Link2 } from "lucide-react";
+import { Menu, X, Facebook, Instagram, ChevronDown, ShoppingBag, Gamepad2, MapPin, Briefcase, Info, Phone, Newspaper, Users, Link2, Ticket } from "lucide-react";
 import vendxLogo from "@/assets/vendx-logo.png";
 import { SiTiktok, SiX } from "react-icons/si";
 import {
@@ -137,6 +137,9 @@ const Navigation = () => {
                       </NavListItem>
                       <NavListItem to="/rewards" title="Rewards Program" icon={Users}>
                         Earn points and unlock exclusive perks
+                      </NavListItem>
+                      <NavListItem to="/tickets/redeem" title="Prize Shop" icon={Ticket}>
+                        Redeem tickets for awesome prizes
                       </NavListItem>
                     </ul>
                   </NavigationMenuContent>
