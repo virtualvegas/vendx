@@ -37,15 +37,54 @@ export const useWalletHierarchy = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return null;
       
+      let parent: ParentWallet | null = null;
+
       const { data, error } = await supabase
         .from("wallets")
         .select("id, user_id, balance, wallet_type, is_guest, guest_expires_at")
         .eq("user_id", user.id)
-        .eq("wallet_type", "standard")
+        .in("wallet_type", ["standard", "guest"])
+        .is("parent_wallet_id", null)
         .maybeSingle();
-      
+
       if (error) throw error;
-      return data as ParentWallet | null;
+      parent = data as ParentWallet | null;
+
+      // Backfill: some older accounts may not have a wallet row yet
+      if (!parent) {
+        const { data: created, error: createError } = await supabase
+          .from("wallets")
+          .insert({
+            user_id: user.id,
+            wallet_type: "standard",
+            balance: 0,
+            status: "active",
+            is_guest: false,
+          })
+          .select("id, user_id, balance, wallet_type, is_guest, guest_expires_at")
+          .single();
+
+        if (createError) {
+          // If a race condition created it in another tab, refetch once
+          const maybeCode = (createError as unknown as { code?: string }).code;
+          if (maybeCode === "23505") {
+            const { data: existing, error: existingError } = await supabase
+              .from("wallets")
+              .select("id, user_id, balance, wallet_type, is_guest, guest_expires_at")
+              .eq("user_id", user.id)
+              .in("wallet_type", ["standard", "guest"])
+              .is("parent_wallet_id", null)
+              .maybeSingle();
+            if (existingError) throw existingError;
+            return existing as ParentWallet | null;
+          }
+          throw createError;
+        }
+
+        return created as ParentWallet;
+      }
+
+      return parent;
     },
   });
 
