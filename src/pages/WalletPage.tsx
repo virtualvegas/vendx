@@ -9,10 +9,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Wallet, Plus, History, Gift, QrCode, Star, TrendingUp, ArrowUpRight, ArrowDownRight, Gamepad2, Users } from "lucide-react";
+import { Wallet, Plus, History, Gift, QrCode, Star, TrendingUp, ArrowUpRight, ArrowDownRight, Gamepad2, Users, Ticket } from "lucide-react";
 import WalletLoadDialog from "@/components/vendx-pay/WalletLoadDialog";
 import QRCodeGenerator from "@/components/vendx-pay/QRCodeGenerator";
 import { ArcadePaymentFlow, ArcadeMachineScanner, ChildWalletManager } from "@/components/arcade";
+import { TicketBalanceCard } from "@/components/wallet";
 
 interface WalletData {
   balance: number;
@@ -288,6 +289,9 @@ const WalletPage = () => {
             </TabsList>
 
             <TabsContent value="overview" className="space-y-4">
+              {/* Ticket Balance Card */}
+              <TicketBalanceCard />
+              
               {/* Stats Row */}
               <div className="grid md:grid-cols-3 gap-4">
                 {/* Points Balance */}

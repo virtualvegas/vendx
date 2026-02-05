@@ -56,3 +56,6 @@ verify_jwt = true
 
 [functions.arcade-machine-info]
 verify_jwt = false
+
+[functions.tickets-redeem-prize]
+verify_jwt = true
