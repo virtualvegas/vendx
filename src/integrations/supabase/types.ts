@@ -47,6 +47,69 @@ export type Database = {
         }
         Relationships: []
       }
+      arcade_play_sessions: {
+        Row: {
+          amount: number
+          created_at: string
+          expires_at: string
+          id: string
+          machine_id: string
+          payment_method: string
+          plays_purchased: number
+          plays_used: number
+          pricing_type: string | null
+          status: string
+          used_at: string | null
+          user_id: string
+          wallet_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          expires_at?: string
+          id?: string
+          machine_id: string
+          payment_method?: string
+          plays_purchased?: number
+          plays_used?: number
+          pricing_type?: string | null
+          status?: string
+          used_at?: string | null
+          user_id: string
+          wallet_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          expires_at?: string
+          id?: string
+          machine_id?: string
+          payment_method?: string
+          plays_purchased?: number
+          plays_used?: number
+          pricing_type?: string | null
+          status?: string
+          used_at?: string | null
+          user_id?: string
+          wallet_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "arcade_play_sessions_machine_id_fkey"
+            columns: ["machine_id"]
+            isOneToOne: false
+            referencedRelation: "vendx_machines"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "arcade_play_sessions_wallet_id_fkey"
+            columns: ["wallet_id"]
+            isOneToOne: false
+            referencedRelation: "wallets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       arcade_pricing_templates: {
         Row: {
           bundles: Json | null
@@ -3949,32 +4012,61 @@ export type Database = {
       wallets: {
         Row: {
           balance: number
+          child_name: string | null
           created_at: string
+          daily_limit: number | null
+          guest_expires_at: string | null
           id: string
+          is_guest: boolean | null
           last_loaded: string | null
+          parent_wallet_id: string | null
+          spending_limit_per_transaction: number | null
           status: string
           updated_at: string
           user_id: string
+          wallet_type: string
         }
         Insert: {
           balance?: number
+          child_name?: string | null
           created_at?: string
+          daily_limit?: number | null
+          guest_expires_at?: string | null
           id?: string
+          is_guest?: boolean | null
           last_loaded?: string | null
+          parent_wallet_id?: string | null
+          spending_limit_per_transaction?: number | null
           status?: string
           updated_at?: string
           user_id: string
+          wallet_type?: string
         }
         Update: {
           balance?: number
+          child_name?: string | null
           created_at?: string
+          daily_limit?: number | null
+          guest_expires_at?: string | null
           id?: string
+          is_guest?: boolean | null
           last_loaded?: string | null
+          parent_wallet_id?: string | null
+          spending_limit_per_transaction?: number | null
           status?: string
           updated_at?: string
           user_id?: string
+          wallet_type?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "wallets_parent_wallet_id_fkey"
+            columns: ["parent_wallet_id"]
+            isOneToOne: false
+            referencedRelation: "wallets"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
@@ -4000,6 +4092,14 @@ export type Database = {
         }[]
       }
       calculate_quest_level: { Args: { xp: number }; Returns: number }
+      check_wallet_spending_limits: {
+        Args: { p_amount: number; p_wallet_id: string }
+        Returns: {
+          allowed: boolean
+          reason: string
+          remaining_daily: number
+        }[]
+      }
       generate_totp_secret: { Args: never; Returns: string }
       has_role: {
         Args: {

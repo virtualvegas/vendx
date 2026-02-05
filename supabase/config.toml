@@ -50,3 +50,9 @@ verify_jwt = true
 
 [functions.tickets-redeem]
 verify_jwt = true
+
+[functions.arcade-play-purchase]
+verify_jwt = true
+
+[functions.arcade-machine-info]
+verify_jwt = false

@@ -8,9 +8,11 @@ import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Wallet, Plus, History, Gift, QrCode, Star, TrendingUp, ArrowUpRight, ArrowDownRight } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Wallet, Plus, History, Gift, QrCode, Star, TrendingUp, ArrowUpRight, ArrowDownRight, Gamepad2, Users } from "lucide-react";
 import WalletLoadDialog from "@/components/vendx-pay/WalletLoadDialog";
 import QRCodeGenerator from "@/components/vendx-pay/QRCodeGenerator";
+import { ArcadePaymentFlow, ArcadeMachineScanner, ChildWalletManager } from "@/components/arcade";
 
 interface WalletData {
   balance: number;
@@ -46,6 +48,9 @@ const WalletPage = () => {
   const [loading, setLoading] = useState(true);
   const [showLoadDialog, setShowLoadDialog] = useState(false);
   const [showQRCode, setShowQRCode] = useState(false);
+  const [showArcadeScanner, setShowArcadeScanner] = useState(false);
+  const [showArcadePayment, setShowArcadePayment] = useState(false);
+  const [selectedMachineCode, setSelectedMachineCode] = useState("");
   const navigate = useNavigate();
   const { toast } = useToast();
   const [searchParams] = useSearchParams();
@@ -123,6 +128,26 @@ const WalletPage = () => {
     
     handlePayPalReturn();
   }, [searchParams, toast]);
+
+  const refreshWalletData = async () => {
+    if (!user) return;
+
+    try {
+      const { data: walletData } = await supabase
+        .from("wallets")
+        .select("balance, last_loaded")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      setWallet(walletData);
+    } catch (error) {
+      console.error("Refresh error:", error);
+    }
+  };
+
+  const handleMachineSelected = (code: string) => {
+    setSelectedMachineCode(code);
+    setShowArcadePayment(true);
+  };
 
   useEffect(() => {
     const fetchWalletData = async () => {
@@ -227,140 +252,176 @@ const WalletPage = () => {
                     </p>
                   )}
                 </div>
-                <div className="flex gap-3">
+                <div className="flex flex-wrap gap-3">
                   <Button onClick={() => setShowLoadDialog(true)} className="gap-2">
                     <Plus className="w-4 h-4" />
                     Add Funds
                   </Button>
                   <Button variant="outline" onClick={() => setShowQRCode(true)} className="gap-2">
                     <QrCode className="w-4 h-4" />
-                    Pay at Machine
+                    Vending
+                  </Button>
+                  <Button variant="outline" onClick={() => setShowArcadeScanner(true)} className="gap-2">
+                    <Gamepad2 className="w-4 h-4" />
+                    Arcade
                   </Button>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          {/* Stats Row */}
-          <div className="grid md:grid-cols-3 gap-4">
-            {/* Points Balance */}
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center gap-3">
-                  <div className="p-3 rounded-full bg-accent/20">
-                    <Gift className="w-5 h-5 text-accent" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Points Balance</p>
-                    <p className="text-2xl font-bold">{(rewards?.balance || 0).toLocaleString()}</p>
-                  </div>
-                </div>
-                <Button 
-                  variant="link" 
-                  className="mt-3 p-0 h-auto text-accent"
-                  onClick={() => navigate("/rewards")}
-                >
-                  Redeem Points →
-                </Button>
-              </CardContent>
-            </Card>
+          {/* Tabs for Wallet Content */}
+          <Tabs defaultValue="overview" className="space-y-4">
+            <TabsList className="grid grid-cols-3 w-full max-w-md">
+              <TabsTrigger value="overview" className="gap-2">
+                <Wallet className="w-4 h-4" />
+                Overview
+              </TabsTrigger>
+              <TabsTrigger value="transactions" className="gap-2">
+                <History className="w-4 h-4" />
+                History
+              </TabsTrigger>
+              <TabsTrigger value="family" className="gap-2">
+                <Users className="w-4 h-4" />
+                Family
+              </TabsTrigger>
+            </TabsList>
 
-            {/* Lifetime Points */}
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center gap-3">
-                  <div className="p-3 rounded-full bg-primary/20">
-                    <TrendingUp className="w-5 h-5 text-primary" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Lifetime Points</p>
-                    <p className="text-2xl font-bold">{(rewards?.lifetime_points || 0).toLocaleString()}</p>
-                  </div>
-                </div>
-                {tierInfo.nextTier && (
-                  <div className="mt-3">
-                    <div className="flex justify-between text-xs text-muted-foreground mb-1">
-                      <span>Progress to {tierInfo.nextTier}</span>
-                      <span>{progressToNextTier.toFixed(0)}%</span>
+            <TabsContent value="overview" className="space-y-4">
+              {/* Stats Row */}
+              <div className="grid md:grid-cols-3 gap-4">
+                {/* Points Balance */}
+                <Card>
+                  <CardContent className="p-6">
+                    <div className="flex items-center gap-3">
+                      <div className="p-3 rounded-full bg-accent/20">
+                        <Gift className="w-5 h-5 text-accent" />
+                      </div>
+                      <div>
+                        <p className="text-sm text-muted-foreground">Points Balance</p>
+                        <p className="text-2xl font-bold">{(rewards?.balance || 0).toLocaleString()}</p>
+                      </div>
                     </div>
-                    <div className="h-2 bg-muted rounded-full overflow-hidden">
-                      <div 
-                        className="h-full bg-primary transition-all"
-                        style={{ width: `${progressToNextTier}%` }}
-                      />
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+                    <Button 
+                      variant="link" 
+                      className="mt-3 p-0 h-auto text-accent"
+                      onClick={() => navigate("/rewards")}
+                    >
+                      Redeem Points →
+                    </Button>
+                  </CardContent>
+                </Card>
 
-            {/* Earn Rate */}
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center gap-3">
-                  <div className="p-3 rounded-full bg-green-500/20">
-                    <Star className="w-5 h-5 text-green-500" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Earn Rate</p>
-                    <p className="text-2xl font-bold">
-                      {rewards?.tier === "platinum" ? "20" : rewards?.tier === "gold" ? "15" : rewards?.tier === "silver" ? "12" : "10"}x
+                {/* Lifetime Points */}
+                <Card>
+                  <CardContent className="p-6">
+                    <div className="flex items-center gap-3">
+                      <div className="p-3 rounded-full bg-primary/20">
+                        <TrendingUp className="w-5 h-5 text-primary" />
+                      </div>
+                      <div>
+                        <p className="text-sm text-muted-foreground">Lifetime Points</p>
+                        <p className="text-2xl font-bold">{(rewards?.lifetime_points || 0).toLocaleString()}</p>
+                      </div>
+                    </div>
+                    {tierInfo.nextTier && (
+                      <div className="mt-3">
+                        <div className="flex justify-between text-xs text-muted-foreground mb-1">
+                          <span>Progress to {tierInfo.nextTier}</span>
+                          <span>{progressToNextTier.toFixed(0)}%</span>
+                        </div>
+                        <div className="h-2 bg-muted rounded-full overflow-hidden">
+                          <div 
+                            className="h-full bg-primary transition-all"
+                            style={{ width: `${progressToNextTier}%` }}
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+
+                {/* Earn Rate */}
+                <Card>
+                  <CardContent className="p-6">
+                    <div className="flex items-center gap-3">
+                      <div className="p-3 rounded-full bg-green-500/20">
+                        <Star className="w-5 h-5 text-green-500" />
+                      </div>
+                      <div>
+                        <p className="text-sm text-muted-foreground">Earn Rate</p>
+                        <p className="text-2xl font-bold">
+                          {rewards?.tier === "platinum" ? "20" : rewards?.tier === "gold" ? "15" : rewards?.tier === "silver" ? "12" : "10"}x
+                        </p>
+                      </div>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-3">
+                      Points per $1 spent
                     </p>
-                  </div>
-                </div>
-                <p className="text-xs text-muted-foreground mt-3">
-                  Points per $1 spent
-                </p>
-              </CardContent>
-            </Card>
-          </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </TabsContent>
 
-          {/* Recent Transactions */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <History className="w-5 h-5" />
-                Recent Transactions
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {transactions.length === 0 ? (
-                <p className="text-center text-muted-foreground py-8">
-                  No transactions yet. Add funds to get started!
-                </p>
-              ) : (
-                <div className="space-y-3">
-                  {transactions.map((tx) => (
-                    <div key={tx.id} className="flex items-center justify-between py-3 border-b border-border last:border-0">
-                      <div className="flex items-center gap-3">
-                        <div className={`p-2 rounded-full ${tx.amount > 0 ? "bg-green-500/20" : "bg-red-500/20"}`}>
-                          {tx.amount > 0 ? (
-                            <ArrowUpRight className="w-4 h-4 text-green-500" />
-                          ) : (
-                            <ArrowDownRight className="w-4 h-4 text-red-500" />
-                          )}
+            <TabsContent value="transactions" className="space-y-4">
+              {/* Recent Transactions */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <History className="w-5 h-5" />
+                    Recent Transactions
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {transactions.length === 0 ? (
+                    <p className="text-center text-muted-foreground py-8">
+                      No transactions yet. Add funds to get started!
+                    </p>
+                  ) : (
+                    <div className="space-y-3">
+                      {transactions.map((tx) => (
+                        <div key={tx.id} className="flex items-center justify-between py-3 border-b border-border last:border-0">
+                          <div className="flex items-center gap-3">
+                            <div className={`p-2 rounded-full ${tx.amount > 0 ? "bg-green-500/20" : "bg-destructive/20"}`}>
+                              {tx.amount > 0 ? (
+                                <ArrowUpRight className="w-4 h-4 text-green-500" />
+                              ) : (
+                                <ArrowDownRight className="w-4 h-4 text-destructive" />
+                              )}
+                            </div>
+                            <div>
+                              <p className="font-medium capitalize">{tx.transaction_type.replace(/_/g, " ")}</p>
+                              <p className="text-sm text-muted-foreground">
+                                {tx.description || "VendX transaction"}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <p className={`font-bold ${tx.amount > 0 ? "text-green-500" : "text-destructive"}`}>
+                              {tx.amount > 0 ? "+" : ""}${Math.abs(tx.amount).toFixed(2)}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {new Date(tx.created_at).toLocaleDateString()}
+                            </p>
+                          </div>
                         </div>
-                        <div>
-                          <p className="font-medium capitalize">{tx.transaction_type}</p>
-                          <p className="text-sm text-muted-foreground">
-                            {tx.description || "VendX transaction"}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className={`font-bold ${tx.amount > 0 ? "text-green-500" : "text-red-500"}`}>
-                          {tx.amount > 0 ? "+" : ""}${Math.abs(tx.amount).toFixed(2)}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {new Date(tx.created_at).toLocaleDateString()}
-                        </p>
-                      </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="family" className="space-y-4">
+              {user && (
+                <ChildWalletManager 
+                  user={user} 
+                  parentWalletBalance={wallet?.balance || 0}
+                  onRefresh={refreshWalletData}
+                />
               )}
-            </CardContent>
-          </Card>
+            </TabsContent>
+          </Tabs>
         </div>
       </main>
 
@@ -374,6 +435,19 @@ const WalletPage = () => {
       <QRCodeGenerator
         open={showQRCode}
         onOpenChange={setShowQRCode}
+      />
+
+      <ArcadeMachineScanner
+        open={showArcadeScanner}
+        onOpenChange={setShowArcadeScanner}
+        onMachineSelected={handleMachineSelected}
+      />
+
+      <ArcadePaymentFlow
+        open={showArcadePayment}
+        onOpenChange={setShowArcadePayment}
+        machineCode={selectedMachineCode}
+        onSuccess={() => refreshWalletData()}
       />
     </div>
   );
