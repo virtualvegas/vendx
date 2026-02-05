@@ -31,6 +31,7 @@ import {
   Swords,
   Ticket,
   BarChart3,
+  Trophy,
 } from "lucide-react";
 import { AppRole } from "@/pages/DashboardPage";
 import { cn } from "@/lib/utils";
@@ -113,6 +114,7 @@ const tabGroups: TabGroup[] = [
     tabs: [
       { id: "finance", label: "Finance", icon: DollarSign, requiredRoles: ["super_admin", "finance_accounting"] },
       { id: "arcade-analytics", label: "Arcade Analytics", icon: BarChart3, requiredRoles: ["super_admin", "finance_accounting"] },
+      { id: "prize-wins", label: "Prize Wins", icon: Trophy, requiredRoles: ["super_admin", "finance_accounting"] },
       { id: "vendx-pay", label: "VendX Pay", icon: Wallet, requiredRoles: ["super_admin", "finance_accounting"] },
       { id: "payouts", label: "Payouts", icon: DollarSign, requiredRoles: ["super_admin", "finance_accounting"] },
       { id: "profit-splits", label: "Profit Splits", icon: Percent, requiredRoles: ["super_admin", "finance_accounting"] },

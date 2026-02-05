@@ -1598,6 +1598,85 @@ export type Database = {
         }
         Relationships: []
       }
+      prize_wins: {
+        Row: {
+          created_at: string
+          id: string
+          location_id: string | null
+          machine_id: string | null
+          metadata: Json | null
+          notes: string | null
+          photo_url: string | null
+          prize_name: string
+          prize_type: string | null
+          prize_value: number | null
+          session_id: string | null
+          updated_at: string
+          user_id: string | null
+          verified: boolean | null
+          verified_at: string | null
+          verified_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          location_id?: string | null
+          machine_id?: string | null
+          metadata?: Json | null
+          notes?: string | null
+          photo_url?: string | null
+          prize_name: string
+          prize_type?: string | null
+          prize_value?: number | null
+          session_id?: string | null
+          updated_at?: string
+          user_id?: string | null
+          verified?: boolean | null
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          location_id?: string | null
+          machine_id?: string | null
+          metadata?: Json | null
+          notes?: string | null
+          photo_url?: string | null
+          prize_name?: string
+          prize_type?: string | null
+          prize_value?: number | null
+          session_id?: string | null
+          updated_at?: string
+          user_id?: string | null
+          verified?: boolean | null
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prize_wins_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prize_wins_machine_id_fkey"
+            columns: ["machine_id"]
+            isOneToOne: false
+            referencedRelation: "vendx_machines"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prize_wins_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "arcade_play_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       product_waitlist: {
         Row: {
           converted_at: string | null
