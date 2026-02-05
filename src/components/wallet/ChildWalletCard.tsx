@@ -83,7 +83,7 @@ export const ChildWalletCard = ({
                   <span>${wallet.spending_limit_per_transaction}/tx</span>
                 )}
                 {!wallet.daily_limit && !wallet.spending_limit_per_transaction && (
-                  <span className="text-amber-600 dark:text-amber-400">No limits set</span>
+                  <span className="text-destructive/70">No limits set</span>
                 )}
               </div>
             </div>
@@ -141,7 +141,7 @@ export const ChildWalletCard = ({
                         <span className="text-xs text-muted-foreground">
                           {format(new Date(tx.created_at), "MMM d, h:mm a")}
                         </span>
-                        <span className={tx.amount > 0 ? "text-green-500 font-medium" : "font-medium"}>
+                        <span className={tx.amount > 0 ? "text-primary font-medium" : "font-medium"}>
                           {tx.amount > 0 ? "+" : ""}${tx.amount.toFixed(2)}
                         </span>
                       </div>
