@@ -36,6 +36,7 @@ import QuestsPage from "./pages/QuestsPage";
 import NotFound from "./pages/NotFound";
 import BusinessPage from "./pages/BusinessPage";
 import TicketRedemptionPage from "./pages/TicketRedemptionPage";
+import ArcadePayPage from "./pages/ArcadePayPage";
 
 const queryClient = new QueryClient();
 
@@ -67,6 +68,7 @@ const App = () => (
             <Route path="/dashboard/:tab" element={<DashboardPage />} />
             <Route path="/wallet" element={<WalletPage />} />
             <Route path="/rewards" element={<RewardsPage />} />
+            <Route path="/arcade-pay" element={<ArcadePayPage />} />
             <Route path="/kiosk" element={<KioskPage />} />
             <Route path="/store" element={<StorePage />} />
             <Route path="/store/cart" element={<CartPage />} />

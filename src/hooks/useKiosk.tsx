@@ -1,6 +1,7 @@
 import { useState, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import type { PurchaseResult } from "@/components/kiosk/KioskSuccess";
 
 export type MachineType = "arcade" | "claw" | "snack" | "beverage" | "combo" | "fresh" | "digital" | "other";
 
@@ -52,6 +53,7 @@ export const useKiosk = (machineId: string) => {
   const [session, setSession] = useState<KioskSessionData | null>(null);
   const [isVerifying, setIsVerifying] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [lastPurchase, setLastPurchase] = useState<PurchaseResult | null>(null);
 
   // Fetch machine info
   const { data: machineInfo, isLoading: machineLoading } = useQuery({
@@ -176,8 +178,8 @@ export const useKiosk = (machineId: string) => {
   }, [machineInfo, machineId]);
 
   // Process vending purchase
-  const processVendingPurchase = useCallback(async (amount: number, itemName: string): Promise<boolean> => {
-    if (!session) return false;
+  const processVendingPurchase = useCallback(async (amount: number, itemName: string): Promise<PurchaseResult | null> => {
+    if (!session) return null;
     setIsVerifying(true);
     setError(null);
 
@@ -196,27 +198,36 @@ export const useKiosk = (machineId: string) => {
 
       if (error || !data?.success) {
         setError(data?.error || "Payment failed. Please try again.");
-        return false;
+        return null;
       }
+
+      const result: PurchaseResult = {
+        type: "vending",
+        amount,
+        newBalance: data.new_balance,
+        pointsEarned: data.points_earned || 0,
+        itemName,
+      };
 
       // Update session balance
       setSession(prev => prev ? {
         ...prev,
-        walletBalance: prev.walletBalance - amount
+        walletBalance: data.new_balance
       } : null);
-
-      return true;
+      
+      setLastPurchase(result);
+      return result;
     } catch (err) {
       setError("Connection error. Please try again.");
-      return false;
+      return null;
     } finally {
       setIsVerifying(false);
     }
   }, [session, machineInfo, machineId]);
 
   // Process arcade play purchase
-  const processArcadePurchase = useCallback(async (plays: number, amount: number, bundleLabel?: string): Promise<boolean> => {
-    if (!session) return false;
+  const processArcadePurchase = useCallback(async (plays: number, amount: number, bundleLabel?: string): Promise<PurchaseResult | null> => {
+    if (!session) return null;
     setIsVerifying(true);
     setError(null);
 
@@ -234,19 +245,29 @@ export const useKiosk = (machineId: string) => {
 
       if (error || !data?.success) {
         setError(data?.error || "Purchase failed. Please try again.");
-        return false;
+        return null;
       }
+
+      const result: PurchaseResult = {
+        type: "arcade",
+        amount: data.amount_charged,
+        newBalance: data.new_balance,
+        pointsEarned: data.points_earned || 0,
+        playsGranted: data.plays_purchased,
+        bundleLabel: data.pricing_label,
+      };
 
       // Update session balance
       setSession(prev => prev ? {
         ...prev,
-        walletBalance: prev.walletBalance - amount
+        walletBalance: data.new_balance
       } : null);
 
-      return true;
+      setLastPurchase(result);
+      return result;
     } catch (err) {
       setError("Connection error. Please try again.");
-      return false;
+      return null;
     } finally {
       setIsVerifying(false);
     }
@@ -255,6 +276,7 @@ export const useKiosk = (machineId: string) => {
   const clearSession = useCallback(() => {
     setSession(null);
     setError(null);
+    setLastPurchase(null);
   }, []);
 
   const clearError = useCallback(() => {
@@ -270,6 +292,7 @@ export const useKiosk = (machineId: string) => {
     session,
     isVerifying,
     error,
+    lastPurchase,
     verifyCode,
     processVendingPurchase,
     processArcadePurchase,
