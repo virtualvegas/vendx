@@ -8,11 +8,12 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Ticket, Search, Gift, Clock, CheckCircle, XCircle, Loader2 } from "lucide-react";
+import { Ticket, Search, Gift, Clock, CheckCircle, XCircle, Loader2, MapPin } from "lucide-react";
 import { format } from "date-fns";
 import { useTickets } from "@/hooks/useTickets";
 import TicketPrizeCard from "./TicketPrizeCard";
 import TicketRedemptionDialog from "./TicketRedemptionDialog";
+import LocationPrizeInventory from "./LocationPrizeInventory";
 
 interface TicketPrize {
   id: string;
@@ -153,7 +154,11 @@ export const TicketRedemptionPage = () => {
         <TabsList>
           <TabsTrigger value="prizes" className="flex items-center gap-2">
             <Gift className="h-4 w-4" />
-            Prizes
+            Online Prizes
+          </TabsTrigger>
+          <TabsTrigger value="locations" className="flex items-center gap-2">
+            <MapPin className="h-4 w-4" />
+            Find Nearby
           </TabsTrigger>
           <TabsTrigger value="history" className="flex items-center gap-2">
             <Clock className="h-4 w-4" />
@@ -214,6 +219,10 @@ export const TicketRedemptionPage = () => {
               <p className="text-muted-foreground mt-2">No prizes found</p>
             </div>
           )}
+        </TabsContent>
+
+        <TabsContent value="locations" className="mt-4">
+          <LocationPrizeInventory />
         </TabsContent>
 
         <TabsContent value="history" className="mt-4">
