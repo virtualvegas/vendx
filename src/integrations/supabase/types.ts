@@ -878,6 +878,62 @@ export type Database = {
           },
         ]
       }
+      machine_ticket_config: {
+        Row: {
+          base_payout: number
+          cooldown_seconds: number | null
+          created_at: string
+          daily_limit_per_user: number | null
+          id: string
+          is_active: boolean
+          jackpot_amount: number | null
+          jackpot_enabled: boolean
+          jackpot_odds: number | null
+          machine_id: string
+          max_payout: number
+          payout_multiplier: number
+          updated_at: string
+        }
+        Insert: {
+          base_payout?: number
+          cooldown_seconds?: number | null
+          created_at?: string
+          daily_limit_per_user?: number | null
+          id?: string
+          is_active?: boolean
+          jackpot_amount?: number | null
+          jackpot_enabled?: boolean
+          jackpot_odds?: number | null
+          machine_id: string
+          max_payout?: number
+          payout_multiplier?: number
+          updated_at?: string
+        }
+        Update: {
+          base_payout?: number
+          cooldown_seconds?: number | null
+          created_at?: string
+          daily_limit_per_user?: number | null
+          id?: string
+          is_active?: boolean
+          jackpot_amount?: number | null
+          jackpot_enabled?: boolean
+          jackpot_odds?: number | null
+          machine_id?: string
+          max_payout?: number
+          payout_multiplier?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "machine_ticket_config_machine_id_fkey"
+            columns: ["machine_id"]
+            isOneToOne: true
+            referencedRelation: "vendx_machines"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       machine_transactions: {
         Row: {
           amount: number
@@ -3411,6 +3467,79 @@ export type Database = {
         }
         Relationships: []
       }
+      ticket_transactions: {
+        Row: {
+          amount: number
+          balance_after: number
+          created_at: string
+          game_name: string | null
+          id: string
+          idempotency_key: string | null
+          location_id: string | null
+          machine_id: string | null
+          metadata: Json | null
+          multiplier: number | null
+          score: number | null
+          session_id: string | null
+          transaction_type: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          balance_after: number
+          created_at?: string
+          game_name?: string | null
+          id?: string
+          idempotency_key?: string | null
+          location_id?: string | null
+          machine_id?: string | null
+          metadata?: Json | null
+          multiplier?: number | null
+          score?: number | null
+          session_id?: string | null
+          transaction_type: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          balance_after?: number
+          created_at?: string
+          game_name?: string | null
+          id?: string
+          idempotency_key?: string | null
+          location_id?: string | null
+          machine_id?: string | null
+          metadata?: Json | null
+          multiplier?: number | null
+          score?: number | null
+          session_id?: string | null
+          transaction_type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ticket_transactions_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ticket_transactions_machine_id_fkey"
+            columns: ["machine_id"]
+            isOneToOne: false
+            referencedRelation: "vendx_machines"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ticket_transactions_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "machine_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       transaction_sync_status: {
         Row: {
           error_message: string | null
@@ -3461,6 +3590,36 @@ export type Database = {
           created_at?: string
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_tickets: {
+        Row: {
+          balance: number
+          created_at: string
+          id: string
+          lifetime_earned: number
+          lifetime_redeemed: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          balance?: number
+          created_at?: string
+          id?: string
+          lifetime_earned?: number
+          lifetime_redeemed?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          balance?: number
+          created_at?: string
+          id?: string
+          lifetime_earned?: number
+          lifetime_redeemed?: number
+          updated_at?: string
           user_id?: string
         }
         Relationships: []
@@ -3711,6 +3870,24 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      award_tickets: {
+        Args: {
+          p_amount: number
+          p_game_name?: string
+          p_idempotency_key?: string
+          p_machine_id: string
+          p_metadata?: Json
+          p_score?: number
+          p_session_id: string
+          p_user_id: string
+        }
+        Returns: {
+          message: string
+          new_balance: number
+          success: boolean
+          transaction_id: string
+        }[]
+      }
       calculate_quest_level: { Args: { xp: number }; Returns: number }
       generate_totp_secret: { Args: never; Returns: string }
       has_role: {
@@ -3721,6 +3898,20 @@ export type Database = {
         Returns: boolean
       }
       is_super_admin: { Args: { _user_id: string }; Returns: boolean }
+      redeem_tickets: {
+        Args: {
+          p_amount: number
+          p_metadata?: Json
+          p_reason?: string
+          p_user_id: string
+        }
+        Returns: {
+          message: string
+          new_balance: number
+          success: boolean
+          transaction_id: string
+        }[]
+      }
     }
     Enums: {
       app_role:

@@ -29,6 +29,7 @@ import {
   Users,
   Store,
   Swords,
+  Ticket,
 } from "lucide-react";
 import { AppRole } from "@/pages/DashboardPage";
 import { cn } from "@/lib/utils";
@@ -60,6 +61,7 @@ const tabGroups: TabGroup[] = [
       // Customer tabs are available to all authenticated users (customer role or any other role)
       { id: "my-orders", label: "My Orders", icon: Package, requiredRoles: ["customer", "business_owner", "employee_operator", "super_admin", "global_operations_manager", "regional_manager", "finance_accounting", "marketing_sales", "warehouse_logistics", "tech_support_lead", "event_manager"] },
       { id: "my-wallet", label: "My Wallet", icon: Wallet, requiredRoles: ["customer", "business_owner", "employee_operator", "super_admin", "global_operations_manager", "regional_manager", "finance_accounting", "marketing_sales", "warehouse_logistics", "tech_support_lead", "event_manager"] },
+      { id: "my-tickets", label: "My Tickets", icon: Ticket, requiredRoles: ["customer", "business_owner", "employee_operator", "super_admin", "global_operations_manager", "regional_manager", "finance_accounting", "marketing_sales", "warehouse_logistics", "tech_support_lead", "event_manager"] },
       { id: "my-rewards", label: "My Rewards", icon: Gift, requiredRoles: ["customer", "business_owner", "employee_operator", "super_admin", "global_operations_manager", "regional_manager", "finance_accounting", "marketing_sales", "warehouse_logistics", "tech_support_lead", "event_manager"] },
     ],
   },
@@ -97,6 +99,7 @@ const tabGroups: TabGroup[] = [
     label: "Operations",
     tabs: [
       { id: "machine-registry", label: "Machines", icon: Monitor, requiredRoles: ["super_admin", "tech_support_lead"] },
+      { id: "ticket-config", label: "Ticket Payouts", icon: Ticket, requiredRoles: ["super_admin"] },
       { id: "inventory-logistics", label: "Inventory", icon: Package, requiredRoles: ["super_admin", "warehouse_logistics"] },
       { id: "technical-support", label: "Tech Support", icon: Wrench, requiredRoles: ["super_admin", "tech_support_lead"] },
       { id: "kiosk-categories", label: "Kiosk Setup", icon: Layers, requiredRoles: ["super_admin", "tech_support_lead"] },
