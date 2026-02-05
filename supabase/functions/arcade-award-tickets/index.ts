@@ -133,6 +133,25 @@ serve(async (req) => {
       message: awardResult.message,
     });
 
+    // Log machine activity for arcade play
+    if (!isDemoMode) {
+      await supabase.rpc("log_machine_activity", {
+        p_machine_id: machine.id,
+        p_activity_type: "play",
+        p_user_id: user_id,
+        p_session_id: session_id || null,
+        p_amount: 0, // Revenue tracked separately via VendX Pay
+        p_credits_used: 1,
+        p_item_name: game_name || null,
+        p_metadata: JSON.stringify({
+          tickets_awarded: tickets,
+          score: score || null,
+          is_jackpot: awardResult.message === "JACKPOT!",
+          transaction_id: awardResult.transaction_id,
+        }),
+      });
+    }
+
     return new Response(
       JSON.stringify({
         success: true,

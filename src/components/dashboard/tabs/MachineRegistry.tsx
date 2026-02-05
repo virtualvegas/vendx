@@ -13,7 +13,7 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Monitor, Plus, Key, RefreshCw, Copy, Eye, EyeOff, MapPin, Package, Search, Settings, Trash2, Edit } from "lucide-react";
+import { Monitor, Plus, Key, RefreshCw, Copy, Eye, EyeOff, MapPin, Package, Search, Settings, Trash2, Edit, DollarSign, Activity, Gamepad2, ShoppingCart } from "lucide-react";
 import { 
   MachineStatsCards, 
   MachineFilters, 
@@ -27,6 +27,8 @@ import {
   MachineLocation,
   MACHINE_TYPES
 } from "@/components/machines";
+import { ArcadePricingTemplates, MachineActivityLog, MachineStatsOverview, MachinePricingEditor } from "./machines";
+import { formatDistanceToNow } from "date-fns";
 
 interface Location {
   id: string;
@@ -53,6 +55,16 @@ interface Machine {
   installed_at: string | null;
   created_at: string;
   location?: Location;
+  // New fields for pricing and stats
+  price_per_play: number | null;
+  plays_per_bundle: number | null;
+  bundle_price: number | null;
+  pricing_template_id: string | null;
+  total_plays: number;
+  total_vends: number;
+  last_activity_at: string | null;
+  current_period_revenue: number;
+  lifetime_revenue: number;
 }
 
 interface MachineInventoryItem {
@@ -89,12 +101,15 @@ const MachineRegistry = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [filterLocation, setFilterLocation] = useState<string>("all");
+  const [filterType, setFilterType] = useState<string>("all");
+  const [activeTab, setActiveTab] = useState("machines");
   
   // Dialogs
   const [showMachineDialog, setShowMachineDialog] = useState(false);
   const [showApiKeyDialog, setShowApiKeyDialog] = useState(false);
   const [showInventoryDialog, setShowInventoryDialog] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showPricingEditor, setShowPricingEditor] = useState(false);
   
   const [selectedMachine, setSelectedMachine] = useState<Machine | null>(null);
   const [editingMachine, setEditingMachine] = useState<Machine | null>(null);
@@ -380,17 +395,30 @@ const MachineRegistry = () => {
         m.machine_code.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesStatus = filterStatus === "all" || m.status === filterStatus;
       const matchesLocation = filterLocation === "all" || m.location_id === filterLocation;
-      return matchesSearch && matchesStatus && matchesLocation;
+      const matchesType = filterType === "all" || m.machine_type === filterType;
+      return matchesSearch && matchesStatus && matchesLocation && matchesType;
     });
-  }, [machines, searchTerm, filterStatus, filterLocation]);
+  }, [machines, searchTerm, filterStatus, filterLocation, filterType]);
 
   // Stats
-  const stats = useMemo(() => ({
-    total: machines.length,
-    active: machines.filter(m => m.status === "active").length,
-    vendxPayEnabled: machines.filter(m => m.vendx_pay_enabled).length,
-    online: machines.filter(m => getOnlineStatus(m.last_seen)).length,
-  }), [machines]);
+  const stats = useMemo(() => {
+    const fiveMinutesAgo = Date.now() - 5 * 60 * 1000;
+    const vendingTypes = ["snack", "beverage", "combo", "fresh", "digital"];
+    const arcadeTypes = ["arcade", "claw"];
+    
+    return {
+      total: machines.length,
+      active: machines.filter(m => m.status === "active").length,
+      vendxPayEnabled: machines.filter(m => m.vendx_pay_enabled).length,
+      online: machines.filter(m => m.last_seen && new Date(m.last_seen).getTime() > fiveMinutesAgo).length,
+      offline: machines.filter(m => m.status === "active" && (!m.last_seen || new Date(m.last_seen).getTime() <= fiveMinutesAgo)).length,
+      totalRevenue: machines.reduce((sum, m) => sum + (m.lifetime_revenue || 0), 0),
+      totalPlays: machines.reduce((sum, m) => sum + (m.total_plays || 0), 0),
+      totalVends: machines.reduce((sum, m) => sum + (m.total_vends || 0), 0),
+      vendingCount: machines.filter(m => vendingTypes.includes(m.machine_type)).length,
+      arcadeCount: machines.filter(m => arcadeTypes.includes(m.machine_type)).length,
+    };
+  }, [machines]);
 
   if (loading) {
     return <div className="text-center py-8 text-muted-foreground">Loading...</div>;
@@ -401,7 +429,7 @@ const MachineRegistry = () => {
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold flex items-center gap-2">
           <Monitor className="w-6 h-6 text-primary" />
-          Machine Registry
+          Machine Management
         </h2>
         <div className="flex gap-2">
           <Button onClick={fetchData} variant="outline" size="sm">
@@ -415,224 +443,252 @@ const MachineRegistry = () => {
         </div>
       </div>
 
-      {/* Stats */}
-      <div className="grid md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-6">
-            <p className="text-sm text-muted-foreground">Total Machines</p>
-            <p className="text-2xl font-bold">{stats.total}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-6">
-            <p className="text-sm text-muted-foreground">Active</p>
-            <p className="text-2xl font-bold text-green-500">{stats.active}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-6">
-            <p className="text-sm text-muted-foreground">VendX Pay Enabled</p>
-            <p className="text-2xl font-bold text-accent">{stats.vendxPayEnabled}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-6">
-            <p className="text-sm text-muted-foreground">Online Now</p>
-            <p className="text-2xl font-bold text-primary">{stats.online}</p>
-          </CardContent>
-        </Card>
-      </div>
+      {/* Enhanced Stats */}
+      <MachineStatsOverview stats={stats} />
 
-      {/* Filters */}
-      <Card>
-        <CardContent className="p-4">
-          <div className="flex flex-wrap gap-4">
-            <div className="flex-1 min-w-[200px]">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search machines..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
+      {/* Tabs for different sections */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+        <TabsList className="grid grid-cols-4 w-full max-w-2xl">
+          <TabsTrigger value="machines" className="flex items-center gap-2">
+            <Monitor className="w-4 h-4" />
+            Machines
+          </TabsTrigger>
+          <TabsTrigger value="pricing" className="flex items-center gap-2">
+            <DollarSign className="w-4 h-4" />
+            Pricing
+          </TabsTrigger>
+          <TabsTrigger value="activity" className="flex items-center gap-2">
+            <Activity className="w-4 h-4" />
+            Activity
+          </TabsTrigger>
+          <TabsTrigger value="sessions" className="flex items-center gap-2">
+            <Key className="w-4 h-4" />
+            Sessions
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="machines" className="space-y-4">
+          {/* Filters */}
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex flex-wrap gap-4">
+                <div className="flex-1 min-w-[200px]">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Search machines..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
+                </div>
+                <Select value={filterType} onValueChange={setFilterType}>
+                  <SelectTrigger className="w-[150px]">
+                    <SelectValue placeholder="Type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Types</SelectItem>
+                    {MACHINE_TYPES.map(t => (
+                      <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Select value={filterStatus} onValueChange={setFilterStatus}>
+                  <SelectTrigger className="w-[150px]">
+                    <SelectValue placeholder="Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Status</SelectItem>
+                    <SelectItem value="active">Active</SelectItem>
+                    <SelectItem value="inactive">Inactive</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Select value={filterLocation} onValueChange={setFilterLocation}>
+                  <SelectTrigger className="w-[200px]">
+                    <SelectValue placeholder="Location" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Locations</SelectItem>
+                    {locations.map(loc => (
+                      <SelectItem key={loc.id} value={loc.id}>
+                        {loc.name || `${loc.city}, ${loc.country}`}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
-            </div>
-            <Select value={filterStatus} onValueChange={setFilterStatus}>
-              <SelectTrigger className="w-[150px]">
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="active">Active</SelectItem>
-                <SelectItem value="inactive">Inactive</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={filterLocation} onValueChange={setFilterLocation}>
-              <SelectTrigger className="w-[200px]">
-                <SelectValue placeholder="Location" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Locations</SelectItem>
-                {locations.map(loc => (
-                  <SelectItem key={loc.id} value={loc.id}>
-                    {loc.name || `${loc.city}, ${loc.country}`}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </CardContent>
-      </Card>
+            </CardContent>
+          </Card>
 
-      {/* Machines Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Registered Machines ({filteredMachines.length})</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ScrollArea className="h-[500px]">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Machine</TableHead>
-                  <TableHead>Location</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Payment Methods</TableHead>
-                  <TableHead>Online</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredMachines.map((machine) => {
-                  const isOnline = getOnlineStatus(machine.last_seen);
-                  return (
-                    <TableRow key={machine.id}>
-                      <TableCell>
-                        <div>
-                          <p className="font-medium">{machine.name}</p>
-                          <p className="text-xs text-muted-foreground font-mono">{machine.machine_code}</p>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        {machine.location ? (
-                          <div className="flex items-center gap-1">
-                            <MapPin className="w-3 h-3 text-muted-foreground" />
-                            <span className="text-sm">{machine.location.name || `${machine.location.city}`}</span>
-                          </div>
-                        ) : (
-                          <span className="text-muted-foreground text-sm">Unassigned</span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className="capitalize">{machine.machine_type}</Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={machine.status === "active" ? "default" : "secondary"}>
-                          {machine.status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex flex-wrap gap-1">
-                          {machine.accepts_cash && (
-                            <Badge variant="outline" className="text-xs">Cash</Badge>
-                          )}
-                          {machine.accepts_coins && (
-                            <Badge variant="outline" className="text-xs">Coins</Badge>
-                          )}
-                          {machine.accepts_cards && (
-                            <Badge variant="outline" className="text-xs">Cards</Badge>
-                          )}
-                          {machine.vendx_pay_enabled && (
-                            <Badge className="text-xs bg-primary">VendX</Badge>
-                          )}
-                          {!machine.accepts_cash && !machine.accepts_coins && !machine.accepts_cards && !machine.vendx_pay_enabled && (
-                            <span className="text-xs text-muted-foreground">None</span>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <MachineStatusBadge 
-                          status={machine.status} 
-                          lastSeen={machine.last_seen}
-                          onlineCheckMode="last-seen"
-                          size="sm"
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex gap-1">
-                          <Button size="icon" variant="ghost" onClick={() => openEditMachine(machine)} title="Edit">
-                            <Edit className="w-4 h-4" />
-                          </Button>
-                          <Button size="icon" variant="ghost" onClick={() => openInventoryDialog(machine)} title="Inventory">
-                            <Package className="w-4 h-4" />
-                          </Button>
-                          <Button size="icon" variant="ghost" onClick={() => { setSelectedMachine(machine); setShowApiKeyDialog(true); }} title="API Key">
-                            <Key className="w-4 h-4" />
-                          </Button>
-                          <Button size="icon" variant="ghost" onClick={() => toggleMachineStatus(machine)} title={machine.status === "active" ? "Disable" : "Enable"}>
-                            <Settings className="w-4 h-4" />
-                          </Button>
-                          <Button size="icon" variant="ghost" onClick={() => { setSelectedMachine(machine); setShowDeleteConfirm(true); }} title="Delete">
-                            <Trash2 className="w-4 h-4 text-destructive" />
-                          </Button>
-                        </div>
-                      </TableCell>
+          {/* Machines Table */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Registered Machines ({filteredMachines.length})</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ScrollArea className="h-[500px]">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Machine</TableHead>
+                      <TableHead>Location</TableHead>
+                      <TableHead>Type</TableHead>
+                      <TableHead>Revenue</TableHead>
+                      <TableHead>Activity</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Actions</TableHead>
                     </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          </ScrollArea>
-        </CardContent>
-      </Card>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredMachines.map((machine) => {
+                      const isArcade = machine.machine_type === "arcade" || machine.machine_type === "claw";
+                      return (
+                        <TableRow key={machine.id}>
+                          <TableCell>
+                            <div>
+                              <p className="font-medium">{machine.name}</p>
+                              <p className="text-xs text-muted-foreground font-mono">{machine.machine_code}</p>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            {machine.location ? (
+                              <div className="flex items-center gap-1">
+                                <MapPin className="w-3 h-3 text-muted-foreground" />
+                                <span className="text-sm">{machine.location.name || `${machine.location.city}`}</span>
+                              </div>
+                            ) : (
+                              <span className="text-muted-foreground text-sm">Unassigned</span>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="outline" className="capitalize">{machine.machine_type}</Badge>
+                          </TableCell>
+                          <TableCell>
+                            <div className="text-sm">
+                              <p className="font-medium">${(machine.lifetime_revenue || 0).toLocaleString()}</p>
+                              <p className="text-xs text-muted-foreground">lifetime</p>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2 text-sm">
+                              {isArcade ? (
+                                <span className="flex items-center gap-1">
+                                  <Gamepad2 className="w-3 h-3 text-purple-500" />
+                                  {machine.total_plays || 0}
+                                </span>
+                              ) : (
+                                <span className="flex items-center gap-1">
+                                  <ShoppingCart className="w-3 h-3 text-green-500" />
+                                  {machine.total_vends || 0}
+                                </span>
+                              )}
+                              {machine.last_activity_at && (
+                                <span className="text-xs text-muted-foreground">
+                                  {formatDistanceToNow(new Date(machine.last_activity_at), { addSuffix: true })}
+                                </span>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <MachineStatusBadge 
+                              status={machine.status} 
+                              lastSeen={machine.last_seen}
+                              onlineCheckMode="last-seen"
+                              size="sm"
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex gap-1">
+                              <Button size="icon" variant="ghost" onClick={() => openEditMachine(machine)} title="Edit">
+                                <Edit className="w-4 h-4" />
+                              </Button>
+                              {isArcade && (
+                                <Button size="icon" variant="ghost" onClick={() => { setSelectedMachine(machine); setShowPricingEditor(true); }} title="Set Pricing">
+                                  <DollarSign className="w-4 h-4" />
+                                </Button>
+                              )}
+                              <Button size="icon" variant="ghost" onClick={() => openInventoryDialog(machine)} title="Inventory">
+                                <Package className="w-4 h-4" />
+                              </Button>
+                              <Button size="icon" variant="ghost" onClick={() => { setSelectedMachine(machine); setShowApiKeyDialog(true); }} title="API Key">
+                                <Key className="w-4 h-4" />
+                              </Button>
+                              <Button size="icon" variant="ghost" onClick={() => toggleMachineStatus(machine)} title={machine.status === "active" ? "Disable" : "Enable"}>
+                                <Settings className="w-4 h-4" />
+                              </Button>
+                              <Button size="icon" variant="ghost" onClick={() => { setSelectedMachine(machine); setShowDeleteConfirm(true); }} title="Delete">
+                                <Trash2 className="w-4 h-4 text-destructive" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </ScrollArea>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-      {/* Recent Sessions */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Recent VendX Pay Sessions</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ScrollArea className="h-[300px]">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Machine</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Created</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {sessions.slice(0, 20).map((session) => {
-                  const machine = machines.find((m) => m.id === session.machine_id);
-                  return (
-                    <TableRow key={session.id}>
-                      <TableCell className="font-medium">{machine?.name || "Unknown"}</TableCell>
-                      <TableCell className="capitalize">{session.session_type}</TableCell>
-                      <TableCell>
-                        <Badge
-                          variant={
-                            session.status === "verified" ? "default" :
-                            session.status === "used" ? "secondary" :
-                            session.status === "expired" ? "outline" : "outline"
-                          }
-                        >
-                          {session.status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-muted-foreground text-sm">
-                        {new Date(session.created_at).toLocaleString()}
-                      </TableCell>
+        <TabsContent value="pricing" className="space-y-4">
+          <ArcadePricingTemplates />
+        </TabsContent>
+
+        <TabsContent value="activity" className="space-y-4">
+          <MachineActivityLog 
+            machines={machines.map(m => ({ id: m.id, name: m.name, machine_code: m.machine_code }))} 
+          />
+        </TabsContent>
+
+        <TabsContent value="sessions" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Recent VendX Pay Sessions</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ScrollArea className="h-[400px]">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Machine</TableHead>
+                      <TableHead>Type</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Created</TableHead>
                     </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          </ScrollArea>
-        </CardContent>
-      </Card>
+                  </TableHeader>
+                  <TableBody>
+                    {sessions.slice(0, 50).map((session) => {
+                      const machine = machines.find((m) => m.id === session.machine_id);
+                      return (
+                        <TableRow key={session.id}>
+                          <TableCell className="font-medium">{machine?.name || "Unknown"}</TableCell>
+                          <TableCell className="capitalize">{session.session_type}</TableCell>
+                          <TableCell>
+                            <Badge
+                              variant={
+                                session.status === "verified" ? "default" :
+                                session.status === "used" ? "secondary" :
+                                session.status === "expired" ? "outline" : "outline"
+                              }
+                            >
+                              {session.status}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-muted-foreground text-sm">
+                            {new Date(session.created_at).toLocaleString()}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </ScrollArea>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
 
       {/* Add/Edit Machine Dialog */}
       <Dialog open={showMachineDialog} onOpenChange={setShowMachineDialog}>
@@ -933,6 +989,23 @@ const MachineRegistry = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Arcade Pricing Editor */}
+      <MachinePricingEditor
+        open={showPricingEditor}
+        onOpenChange={setShowPricingEditor}
+        machine={selectedMachine ? {
+          id: selectedMachine.id,
+          name: selectedMachine.name,
+          machine_code: selectedMachine.machine_code,
+          machine_type: selectedMachine.machine_type,
+          price_per_play: selectedMachine.price_per_play,
+          plays_per_bundle: selectedMachine.plays_per_bundle,
+          bundle_price: selectedMachine.bundle_price,
+          pricing_template_id: selectedMachine.pricing_template_id,
+        } : null}
+        onSaved={fetchData}
+      />
     </div>
   );
 };

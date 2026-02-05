@@ -47,6 +47,42 @@ export type Database = {
         }
         Relationships: []
       }
+      arcade_pricing_templates: {
+        Row: {
+          bundles: Json | null
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean | null
+          is_default: boolean | null
+          name: string
+          price_per_play: number
+          updated_at: string
+        }
+        Insert: {
+          bundles?: Json | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_default?: boolean | null
+          name: string
+          price_per_play?: number
+          updated_at?: string
+        }
+        Update: {
+          bundles?: Json | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_default?: boolean | null
+          name?: string
+          price_per_play?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       arcade_waitlist: {
         Row: {
           converted_at: string | null
@@ -703,6 +739,53 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      machine_activity_log: {
+        Row: {
+          activity_type: string
+          amount: number | null
+          created_at: string
+          credits_used: number | null
+          id: string
+          item_name: string | null
+          machine_id: string
+          metadata: Json | null
+          session_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          activity_type: string
+          amount?: number | null
+          created_at?: string
+          credits_used?: number | null
+          id?: string
+          item_name?: string | null
+          machine_id: string
+          metadata?: Json | null
+          session_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          activity_type?: string
+          amount?: number | null
+          created_at?: string
+          credits_used?: number | null
+          id?: string
+          item_name?: string | null
+          machine_id?: string
+          metadata?: Json | null
+          session_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "machine_activity_log_machine_id_fkey"
+            columns: ["machine_id"]
+            isOneToOne: false
+            referencedRelation: "vendx_machines"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       machine_inventory: {
         Row: {
@@ -3630,10 +3713,12 @@ export type Database = {
           accepts_cash: boolean | null
           accepts_coins: boolean | null
           api_key: string
+          bundle_price: number | null
           created_at: string
           current_period_revenue: number | null
           id: string
           installed_at: string | null
+          last_activity_at: string | null
           last_revenue_sync: string | null
           last_seen: string | null
           lifetime_revenue: number | null
@@ -3642,7 +3727,12 @@ export type Database = {
           machine_type: string
           name: string
           notes: string | null
+          plays_per_bundle: number | null
+          price_per_play: number | null
+          pricing_template_id: string | null
           status: string
+          total_plays: number | null
+          total_vends: number | null
           updated_at: string
           vendx_pay_enabled: boolean
         }
@@ -3651,10 +3741,12 @@ export type Database = {
           accepts_cash?: boolean | null
           accepts_coins?: boolean | null
           api_key: string
+          bundle_price?: number | null
           created_at?: string
           current_period_revenue?: number | null
           id?: string
           installed_at?: string | null
+          last_activity_at?: string | null
           last_revenue_sync?: string | null
           last_seen?: string | null
           lifetime_revenue?: number | null
@@ -3663,7 +3755,12 @@ export type Database = {
           machine_type: string
           name: string
           notes?: string | null
+          plays_per_bundle?: number | null
+          price_per_play?: number | null
+          pricing_template_id?: string | null
           status?: string
+          total_plays?: number | null
+          total_vends?: number | null
           updated_at?: string
           vendx_pay_enabled?: boolean
         }
@@ -3672,10 +3769,12 @@ export type Database = {
           accepts_cash?: boolean | null
           accepts_coins?: boolean | null
           api_key?: string
+          bundle_price?: number | null
           created_at?: string
           current_period_revenue?: number | null
           id?: string
           installed_at?: string | null
+          last_activity_at?: string | null
           last_revenue_sync?: string | null
           last_seen?: string | null
           lifetime_revenue?: number | null
@@ -3684,11 +3783,23 @@ export type Database = {
           machine_type?: string
           name?: string
           notes?: string | null
+          plays_per_bundle?: number | null
+          price_per_play?: number | null
+          pricing_template_id?: string | null
           status?: string
+          total_plays?: number | null
+          total_vends?: number | null
           updated_at?: string
           vendx_pay_enabled?: boolean
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_pricing_template"
+            columns: ["pricing_template_id"]
+            isOneToOne: false
+            referencedRelation: "arcade_pricing_templates"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "vendx_machines_location_id_fkey"
             columns: ["location_id"]
@@ -3898,6 +4009,19 @@ export type Database = {
         Returns: boolean
       }
       is_super_admin: { Args: { _user_id: string }; Returns: boolean }
+      log_machine_activity: {
+        Args: {
+          p_activity_type: string
+          p_amount?: number
+          p_credits_used?: number
+          p_item_name?: string
+          p_machine_id: string
+          p_metadata?: Json
+          p_session_id?: string
+          p_user_id?: string
+        }
+        Returns: string
+      }
       redeem_tickets: {
         Args: {
           p_amount: number
