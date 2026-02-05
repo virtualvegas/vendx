@@ -3,11 +3,12 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Wallet, Plus, ArrowUpRight, ArrowDownLeft, Clock, Copy, Check, KeyRound } from "lucide-react";
+import { Wallet, KeyRound, Clock, Copy, Check } from "lucide-react";
 import { format } from "date-fns";
 import WalletLoadDialog from "@/components/vendx-pay/WalletLoadDialog";
+import { WalletHierarchyView } from "@/components/wallet";
 import { useToast } from "@/hooks/use-toast";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 // TOTP generation utilities
 function base32ToBytes(base32: string): Uint8Array {
@@ -79,22 +80,8 @@ const CustomerWallet = () => {
         .from("wallets")
         .select("*")
         .eq("user_id", user.id)
+        .eq("wallet_type", "standard")
         .maybeSingle();
-      if (error) throw error;
-      return data;
-    },
-  });
-
-  const { data: transactions, isLoading: transactionsLoading } = useQuery({
-    queryKey: ["wallet-transactions", wallet?.id],
-    enabled: !!wallet?.id,
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("wallet_transactions")
-        .select("*")
-        .eq("wallet_id", wallet!.id)
-        .order("created_at", { ascending: false })
-        .limit(20);
       if (error) throw error;
       return data;
     },
@@ -148,8 +135,8 @@ const CustomerWallet = () => {
   };
 
   const getProgressColor = () => {
-    if (timeRemaining <= 10) return "text-red-500";
-    if (timeRemaining <= 20) return "text-yellow-500";
+    if (timeRemaining <= 10) return "text-destructive";
+    if (timeRemaining <= 20) return "text-amber-500";
     return "text-primary";
   };
 
@@ -158,131 +145,95 @@ const CustomerWallet = () => {
       <div>
         <h2 className="text-3xl font-bold text-foreground mb-2">My Wallet</h2>
         <p className="text-muted-foreground">
-          Manage your VendX Pay balance and view transactions
+          Manage your VendX Pay balance, child wallets, and transactions
         </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className="bg-gradient-to-br from-primary/20 to-primary/5">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Wallet className="w-5 h-5" />
-              Wallet Balance
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {walletLoading ? (
-              <div className="animate-pulse h-12 bg-muted rounded w-32" />
-            ) : (
-              <>
-                <p className="text-4xl font-bold text-foreground mb-4">
-                  ${Number(wallet?.balance || 0).toFixed(2)}
-                </p>
-                <Button onClick={() => setLoadDialogOpen(true)} className="w-full sm:w-auto">
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Funds
-                </Button>
-                {wallet?.last_loaded && (
-                  <p className="text-xs text-muted-foreground mt-3 flex items-center gap-1">
-                    <Clock className="w-3 h-3" />
-                    Last loaded: {format(new Date(wallet.last_loaded), "MMM d, yyyy")}
-                  </p>
-                )}
-              </>
-            )}
-          </CardContent>
-        </Card>
+      <Tabs defaultValue="hierarchy" className="w-full">
+        <TabsList>
+          <TabsTrigger value="hierarchy" className="flex items-center gap-2">
+            <Wallet className="h-4 w-4" />
+            Wallets
+          </TabsTrigger>
+          <TabsTrigger value="pay" className="flex items-center gap-2">
+            <KeyRound className="h-4 w-4" />
+            Payment Code
+          </TabsTrigger>
+        </TabsList>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <KeyRound className="w-5 h-5" />
-              Payment Code
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-center space-y-4">
-              <div className="p-6 bg-gradient-to-br from-primary/10 to-accent/10 rounded-xl border border-primary/20">
-                <p className="text-sm text-muted-foreground mb-2">Enter this code at VendX machines</p>
-                <div className="flex items-center justify-center gap-2">
-                  <p className="text-4xl font-mono font-bold tracking-[0.2em] text-foreground">
-                    {currentCode}
-                  </p>
-                  <Button variant="ghost" size="icon" onClick={copyCode}>
-                    {copied ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
-                  </Button>
-                </div>
-              </div>
-              <div className="flex items-center justify-center gap-2">
-                <Clock className={`w-4 h-4 ${getProgressColor()}`} />
-                <span className={`text-sm font-medium ${getProgressColor()}`}>
-                  New code in {timeRemaining}s
-                </span>
-              </div>
-              <div className="h-1.5 bg-muted rounded-full overflow-hidden">
-                <div 
-                  className="h-full bg-primary transition-all duration-1000 ease-linear"
-                  style={{ width: `${(timeRemaining / TIME_STEP) * 100}%` }}
-                />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+        <TabsContent value="hierarchy" className="mt-4">
+          <WalletHierarchyView />
+        </TabsContent>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Transaction History</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {transactionsLoading ? (
-            <p className="text-muted-foreground">Loading transactions...</p>
-          ) : transactions && transactions.length > 0 ? (
-            <div className="space-y-3">
-              {transactions.map((tx) => (
-                <div
-                  key={tx.id}
-                  className="flex items-center justify-between p-3 border border-border rounded-lg"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                      tx.transaction_type === "load" ? "bg-green-500/10" : "bg-red-500/10"
-                    }`}>
-                      {tx.transaction_type === "load" ? (
-                        <ArrowDownLeft className="w-4 h-4 text-green-500" />
-                      ) : (
-                        <ArrowUpRight className="w-4 h-4 text-red-500" />
-                      )}
-                    </div>
-                    <div>
-                      <p className="font-medium text-foreground capitalize">
-                        {tx.transaction_type}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {format(new Date(tx.created_at), "MMM d, h:mm a")}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className={`font-bold ${
-                      tx.transaction_type === "load" ? "text-green-500" : "text-foreground"
-                    }`}>
-                      {tx.transaction_type === "load" ? "+" : "-"}${Math.abs(Number(tx.amount)).toFixed(2)}
+        <TabsContent value="pay" className="mt-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Card className="bg-gradient-to-br from-primary/20 to-primary/5">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Wallet className="w-5 h-5" />
+                  Wallet Balance
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {walletLoading ? (
+                  <div className="animate-pulse h-12 bg-muted rounded w-32" />
+                ) : (
+                  <>
+                    <p className="text-4xl font-bold text-foreground mb-4">
+                      ${Number(wallet?.balance || 0).toFixed(2)}
                     </p>
-                    {tx.description && (
-                      <p className="text-xs text-muted-foreground">{tx.description}</p>
+                    <Button onClick={() => setLoadDialogOpen(true)} className="w-full sm:w-auto">
+                      Add Funds
+                    </Button>
+                    {wallet?.last_loaded && (
+                      <p className="text-xs text-muted-foreground mt-3 flex items-center gap-1">
+                        <Clock className="w-3 h-3" />
+                        Last loaded: {format(new Date(wallet.last_loaded), "MMM d, yyyy")}
+                      </p>
                     )}
+                  </>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <KeyRound className="w-5 h-5" />
+                  Payment Code
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-center space-y-4">
+                  <div className="p-6 bg-gradient-to-br from-primary/10 to-accent/10 rounded-xl border border-primary/20">
+                    <p className="text-sm text-muted-foreground mb-2">Enter this code at VendX machines</p>
+                    <div className="flex items-center justify-center gap-2">
+                      <p className="text-4xl font-mono font-bold tracking-[0.2em] text-foreground">
+                        {currentCode}
+                      </p>
+                      <Button variant="ghost" size="icon" onClick={copyCode}>
+                        {copied ? <Check className="w-4 h-4 text-primary" /> : <Copy className="w-4 h-4" />}
+                      </Button>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-center gap-2">
+                    <Clock className={`w-4 h-4 ${getProgressColor()}`} />
+                    <span className={`text-sm font-medium ${getProgressColor()}`}>
+                      New code in {timeRemaining}s
+                    </span>
+                  </div>
+                  <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-primary transition-all duration-1000 ease-linear"
+                      style={{ width: `${(timeRemaining / TIME_STEP) * 100}%` }}
+                    />
                   </div>
                 </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-center text-muted-foreground py-8">
-              No transactions yet. Add funds to get started!
-            </p>
-          )}
-        </CardContent>
-      </Card>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+      </Tabs>
 
       <WalletLoadDialog open={loadDialogOpen} onOpenChange={setLoadDialogOpen} />
     </div>
