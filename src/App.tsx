@@ -35,6 +35,7 @@ import FunnelPage from "./pages/FunnelPage";
 import QuestsPage from "./pages/QuestsPage";
 import NotFound from "./pages/NotFound";
 import BusinessPage from "./pages/BusinessPage";
+import TicketRedemptionPage from "./pages/TicketRedemptionPage";
 
 const queryClient = new QueryClient();
 
@@ -77,6 +78,7 @@ const App = () => (
             <Route path="/news" element={<NewsPage />} />
             <Route path="/news/:slug" element={<NewsArticlePage />} />
             <Route path="/quests" element={<QuestsPage />} />
+            <Route path="/tickets/redeem" element={<TicketRedemptionPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
