@@ -339,18 +339,32 @@ export async function claimQuestRewards(
     .eq("id", completionId);
 
   // Add credits to wallet if any
-  if (creditsEarned > 0) {
-    const { data: wallet } = await supabase
-      .from("wallets")
-      .select("id, balance")
-      .eq("user_id", userId)
-      .single();
+    if (creditsEarned > 0) {
+      // Always credit the parent wallet
+      let { data: wallet, error: walletError } = await supabase
+        .from("wallets")
+        .select("id, balance")
+        .eq("user_id", userId)
+        .in("wallet_type", ["standard", "guest"])
+        .is("parent_wallet_id", null)
+        .maybeSingle();
 
-    if (wallet) {
+      if (walletError) throw walletError;
+
+      if (!wallet) {
+        const { data: created, error: createError } = await supabase
+          .from("wallets")
+          .insert({ user_id: userId, wallet_type: "standard", balance: 0 })
+          .select("id, balance")
+          .single();
+        if (createError) throw createError;
+        wallet = created;
+      }
+
       await supabase
         .from("wallets")
         .update({ balance: (Number(wallet.balance) || 0) + creditsEarned })
-        .eq("user_id", userId);
+        .eq("id", wallet.id);
 
       // Log transaction
       await supabase.from("wallet_transactions").insert({
@@ -360,7 +374,6 @@ export async function claimQuestRewards(
         description: "Quest reward",
       });
     }
-  }
 
   // Add points if any
   if (pointsEarned > 0) {

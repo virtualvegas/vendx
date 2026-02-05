@@ -205,11 +205,13 @@ serve(async (req) => {
 
       if (updateError) throw updateError;
 
-      // Get user wallet balance
+      // Get user wallet balance (parent wallet)
       const { data: wallet } = await supabase
         .from("wallets")
         .select("balance")
         .eq("user_id", userData.user.id)
+        .in("wallet_type", ["standard", "guest"])
+        .is("parent_wallet_id", null)
         .maybeSingle();
 
       console.log("Session verified for user:", userData.user.id);
@@ -307,7 +309,8 @@ serve(async (req) => {
         .from("wallets")
         .select("balance")
         .eq("user_id", matchedUserId)
-        .eq("wallet_type", "standard")
+        .in("wallet_type", ["standard", "guest"])
+        .is("parent_wallet_id", null)
         .maybeSingle();
 
       // Get ticket balance
@@ -357,7 +360,8 @@ serve(async (req) => {
         .from("wallets")
         .select("balance")
         .eq("user_id", matchedUserId)
-        .eq("wallet_type", "standard")
+        .in("wallet_type", ["standard", "guest"])
+        .is("parent_wallet_id", null)
         .maybeSingle();
 
       // Get ticket balance
@@ -416,6 +420,8 @@ serve(async (req) => {
           .from("wallets")
           .select("balance")
           .eq("user_id", session.user_id)
+          .in("wallet_type", ["standard", "guest"])
+          .is("parent_wallet_id", null)
           .maybeSingle();
 
         return new Response(

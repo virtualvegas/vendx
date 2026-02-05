@@ -107,14 +107,31 @@ export const ArcadePaymentFlow = ({
           return;
         }
 
-        const { data: wallet } = await supabase
-          .from("wallets")
-          .select("balance")
-          .eq("user_id", user.id)
-          .eq("wallet_type", childWalletId ? "child" : "standard")
-          .maybeSingle();
+        let walletBalanceRow: { balance: number } | null = null;
 
-        setWalletBalance(wallet?.balance || 0);
+        if (childWalletId) {
+          const { data: childWallet, error: childWalletError } = await supabase
+            .from("wallets")
+            .select("balance")
+            .eq("id", childWalletId)
+            .eq("user_id", user.id)
+            .eq("wallet_type", "child")
+            .maybeSingle();
+          if (childWalletError) throw childWalletError;
+          walletBalanceRow = childWallet;
+        } else {
+          const { data: parentWallet, error: parentWalletError } = await supabase
+            .from("wallets")
+            .select("balance")
+            .eq("user_id", user.id)
+            .in("wallet_type", ["standard", "guest"])
+            .is("parent_wallet_id", null)
+            .maybeSingle();
+          if (parentWalletError) throw parentWalletError;
+          walletBalanceRow = parentWallet;
+        }
+
+        setWalletBalance(walletBalanceRow?.balance || 0);
         setState("select");
       } catch (err: any) {
         console.error("Error fetching machine info:", err);

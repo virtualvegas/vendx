@@ -156,7 +156,8 @@ serve(async (req) => {
         .from("wallets")
         .select("id, user_id")
         .eq("user_id", user.id)
-        .eq("wallet_type", "standard")
+        .in("wallet_type", ["standard", "guest"])
+        .is("parent_wallet_id", null)
         .maybeSingle();
 
       if (!parentWallet || childWallet.parent_wallet_id !== parentWallet.id) {

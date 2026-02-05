@@ -41,19 +41,49 @@ export const ChildWalletManager = ({ user, parentWalletBalance, onRefresh }: Chi
   const [transferAmount, setTransferAmount] = useState("");
   const { toast } = useToast();
 
+  const getOrCreateParentWallet = async (): Promise<{ id: string; balance: number } | null> => {
+    const { data: existing, error } = await supabase
+      .from("wallets")
+      .select("id, balance")
+      .eq("user_id", user.id)
+      .in("wallet_type", ["standard", "guest"])
+      .is("parent_wallet_id", null)
+      .maybeSingle();
+
+    if (error) throw error;
+    if (existing) return existing;
+
+    const { data: created, error: createError } = await supabase
+      .from("wallets")
+      .insert({ user_id: user.id, wallet_type: "standard", balance: 0 })
+      .select("id, balance")
+      .single();
+
+    if (createError) {
+      const maybeCode = (createError as unknown as { code?: string }).code;
+      if (maybeCode === "23505") {
+        const { data: refetched, error: refetchError } = await supabase
+          .from("wallets")
+          .select("id, balance")
+          .eq("user_id", user.id)
+          .in("wallet_type", ["standard", "guest"])
+          .is("parent_wallet_id", null)
+          .maybeSingle();
+        if (refetchError) throw refetchError;
+        return refetched;
+      }
+      throw createError;
+    }
+
+    return created;
+  };
+
   const fetchChildWallets = async () => {
     setLoading(true);
     try {
-      // Get parent wallet
-      const { data: parentWallet } = await supabase
-        .from("wallets")
-        .select("id")
-        .eq("user_id", user.id)
-        .eq("wallet_type", "standard")
-        .single();
-
+      const parentWallet = await getOrCreateParentWallet();
       if (!parentWallet) {
-        setLoading(false);
+        setChildWallets([]);
         return;
       }
 
@@ -80,14 +110,7 @@ export const ChildWalletManager = ({ user, parentWalletBalance, onRefresh }: Chi
 
   const handleCreateWallet = async () => {
     try {
-      // Get parent wallet
-      const { data: parentWallet } = await supabase
-        .from("wallets")
-        .select("id")
-        .eq("user_id", user.id)
-        .eq("wallet_type", "standard")
-        .single();
-
+      const parentWallet = await getOrCreateParentWallet();
       if (!parentWallet) throw new Error("Parent wallet not found");
 
       const { error } = await supabase
@@ -155,14 +178,7 @@ export const ChildWalletManager = ({ user, parentWalletBalance, onRefresh }: Chi
     }
 
     try {
-      // Get parent wallet
-      const { data: parentWallet } = await supabase
-        .from("wallets")
-        .select("id, balance")
-        .eq("user_id", user.id)
-        .eq("wallet_type", "standard")
-        .single();
-
+      const parentWallet = await getOrCreateParentWallet();
       if (!parentWallet) throw new Error("Parent wallet not found");
 
       // Deduct from parent

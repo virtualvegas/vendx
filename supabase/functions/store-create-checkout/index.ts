@@ -164,12 +164,14 @@ serve(async (req) => {
     let actualWalletCredit = 0;
 
     if (walletCredit && walletCredit > 0 && !hasSubscription) {
-      // Verify wallet balance
+      // Verify parent wallet balance
       const { data: wallet, error: walletError } = await supabaseClient
         .from("wallets")
         .select("id, balance")
         .eq("user_id", user.id)
-        .single();
+        .in("wallet_type", ["standard", "guest"])
+        .is("parent_wallet_id", null)
+        .maybeSingle();
 
       if (walletError || !wallet) {
         throw new Error("Wallet not found");
