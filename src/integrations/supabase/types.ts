@@ -1598,6 +1598,57 @@ export type Database = {
         }
         Relationships: []
       }
+      prize_inventory: {
+        Row: {
+          created_at: string
+          id: string
+          last_restocked: string | null
+          location_id: string
+          low_stock_threshold: number | null
+          prize_id: string
+          quantity: number
+          reserved_quantity: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          last_restocked?: string | null
+          location_id: string
+          low_stock_threshold?: number | null
+          prize_id: string
+          quantity?: number
+          reserved_quantity?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          last_restocked?: string | null
+          location_id?: string
+          low_stock_threshold?: number | null
+          prize_id?: string
+          quantity?: number
+          reserved_quantity?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prize_inventory_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prize_inventory_prize_id_fkey"
+            columns: ["prize_id"]
+            isOneToOne: false
+            referencedRelation: "ticket_prizes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       prize_wins: {
         Row: {
           created_at: string
@@ -3692,6 +3743,136 @@ export type Database = {
         }
         Relationships: []
       }
+      ticket_prizes: {
+        Row: {
+          category: string | null
+          created_at: string
+          description: string | null
+          id: string
+          image_url: string | null
+          is_active: boolean | null
+          min_age: number | null
+          name: string
+          requires_approval: boolean | null
+          requires_shipping: boolean | null
+          ticket_cost: number
+          updated_at: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          min_age?: number | null
+          name: string
+          requires_approval?: boolean | null
+          requires_shipping?: boolean | null
+          ticket_cost: number
+          updated_at?: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          min_age?: number | null
+          name?: string
+          requires_approval?: boolean | null
+          requires_shipping?: boolean | null
+          ticket_cost?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      ticket_redemptions: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          completed_at: string | null
+          completed_by: string | null
+          created_at: string
+          id: string
+          location_id: string | null
+          metadata: Json | null
+          notes: string | null
+          prize_id: string
+          redemption_code: string | null
+          redemption_type: string | null
+          rejection_reason: string | null
+          shipping_address_id: string | null
+          status: string | null
+          tickets_spent: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          completed_at?: string | null
+          completed_by?: string | null
+          created_at?: string
+          id?: string
+          location_id?: string | null
+          metadata?: Json | null
+          notes?: string | null
+          prize_id: string
+          redemption_code?: string | null
+          redemption_type?: string | null
+          rejection_reason?: string | null
+          shipping_address_id?: string | null
+          status?: string | null
+          tickets_spent: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          completed_at?: string | null
+          completed_by?: string | null
+          created_at?: string
+          id?: string
+          location_id?: string | null
+          metadata?: Json | null
+          notes?: string | null
+          prize_id?: string
+          redemption_code?: string | null
+          redemption_type?: string | null
+          rejection_reason?: string | null
+          shipping_address_id?: string | null
+          status?: string | null
+          tickets_spent?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ticket_redemptions_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ticket_redemptions_prize_id_fkey"
+            columns: ["prize_id"]
+            isOneToOne: false
+            referencedRelation: "ticket_prizes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ticket_redemptions_shipping_address_id_fkey"
+            columns: ["shipping_address_id"]
+            isOneToOne: false
+            referencedRelation: "shipping_addresses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ticket_transactions: {
         Row: {
           amount: number
@@ -4179,6 +4360,13 @@ export type Database = {
           remaining_daily: number
         }[]
       }
+      complete_redemption: {
+        Args: { p_redemption_id: string; p_staff_id: string }
+        Returns: {
+          message: string
+          success: boolean
+        }[]
+      }
       generate_totp_secret: { Args: never; Returns: string }
       has_role: {
         Args: {
@@ -4200,6 +4388,22 @@ export type Database = {
           p_user_id?: string
         }
         Returns: string
+      }
+      process_ticket_redemption: {
+        Args: {
+          p_location_id?: string
+          p_prize_id: string
+          p_redemption_type?: string
+          p_shipping_address_id?: string
+          p_user_id: string
+        }
+        Returns: {
+          message: string
+          new_balance: number
+          redemption_code: string
+          redemption_id: string
+          success: boolean
+        }[]
       }
       redeem_tickets: {
         Args: {

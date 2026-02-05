@@ -47,6 +47,7 @@ import TicketConfigManager from "@/components/dashboard/tabs/TicketConfigManager
 import CustomerTickets from "@/components/dashboard/tabs/CustomerTickets";
 import ArcadeAnalytics from "@/components/dashboard/tabs/ArcadeAnalytics";
 import PrizeWinsManager from "@/components/dashboard/tabs/PrizeWinsManager";
+import TicketPrizesManager from "@/components/dashboard/tabs/TicketPrizesManager";
 export type AppRole =
   | "super_admin"
   | "global_operations_manager"
@@ -272,6 +273,8 @@ const DashboardPage = () => {
         return <ArcadeAnalytics />;
       case "prize-wins":
         return <PrizeWinsManager />;
+      case "ticket-prizes":
+        return <TicketPrizesManager />;
       default:
         return <CustomerOrders />;
     }
