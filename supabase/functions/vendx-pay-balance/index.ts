@@ -63,11 +63,13 @@ serve(async (req) => {
       });
     }
 
-    // Get wallet balance
+    // Get wallet balance (parent wallet)
     const { data: wallet } = await supabase
       .from("wallets")
       .select("balance")
       .eq("user_id", session.user_id)
+      .in("wallet_type", ["standard", "guest"])
+      .is("parent_wallet_id", null)
       .maybeSingle();
 
     // Get rewards info

@@ -110,11 +110,13 @@ serve(async (req) => {
       sessionId = session.id;
     }
 
-    // Get user's wallet
+    // Get user's parent wallet
     const { data: wallet } = await supabase
       .from("wallets")
       .select("id, balance")
       .eq("user_id", userId)
+      .in("wallet_type", ["standard", "guest"])
+      .is("parent_wallet_id", null)
       .maybeSingle();
 
     if (!wallet) {

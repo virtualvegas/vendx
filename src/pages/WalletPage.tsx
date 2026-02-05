@@ -16,6 +16,7 @@ import { ArcadePaymentFlow, ArcadeMachineScanner, ChildWalletManager } from "@/c
 import { TicketBalanceCard } from "@/components/wallet";
 
 interface WalletData {
+  id: string;
   balance: number;
   last_loaded: string | null;
 }
@@ -134,11 +135,45 @@ const WalletPage = () => {
     if (!user) return;
 
     try {
-      const { data: walletData } = await supabase
+      const { data: existingWallet, error } = await supabase
         .from("wallets")
-        .select("balance, last_loaded")
+        .select("id, balance, last_loaded")
         .eq("user_id", user.id)
+        .in("wallet_type", ["standard", "guest"])
+        .is("parent_wallet_id", null)
         .maybeSingle();
+
+      if (error) throw error;
+
+      let walletData = existingWallet as WalletData | null;
+
+      if (!walletData) {
+        const { data: created, error: createError } = await supabase
+          .from("wallets")
+          .insert({ user_id: user.id, wallet_type: "standard", balance: 0 })
+          .select("id, balance, last_loaded")
+          .single();
+
+        if (createError) {
+          const maybeCode = (createError as unknown as { code?: string }).code;
+          if (maybeCode === "23505") {
+            const { data: refetched, error: refetchError } = await supabase
+              .from("wallets")
+              .select("id, balance, last_loaded")
+              .eq("user_id", user.id)
+              .in("wallet_type", ["standard", "guest"])
+              .is("parent_wallet_id", null)
+              .maybeSingle();
+            if (refetchError) throw refetchError;
+            walletData = refetched as WalletData | null;
+          } else {
+            throw createError;
+          }
+        } else {
+          walletData = created as WalletData;
+        }
+      }
+
       setWallet(walletData);
     } catch (error) {
       console.error("Refresh error:", error);
@@ -155,14 +190,46 @@ const WalletPage = () => {
       if (!user) return;
 
       try {
-        // Fetch wallet
-        const { data: walletData, error: walletError } = await supabase
+        // Fetch parent wallet
+        const { data: existingWallet, error: walletError } = await supabase
           .from("wallets")
-          .select("balance, last_loaded")
+          .select("id, balance, last_loaded")
           .eq("user_id", user.id)
+          .in("wallet_type", ["standard", "guest"])
+          .is("parent_wallet_id", null)
           .maybeSingle();
 
         if (walletError) throw walletError;
+
+        let walletData = existingWallet as WalletData | null;
+
+        if (!walletData) {
+          const { data: created, error: createError } = await supabase
+            .from("wallets")
+            .insert({ user_id: user.id, wallet_type: "standard", balance: 0 })
+            .select("id, balance, last_loaded")
+            .single();
+
+          if (createError) {
+            const maybeCode = (createError as unknown as { code?: string }).code;
+            if (maybeCode === "23505") {
+              const { data: refetched, error: refetchError } = await supabase
+                .from("wallets")
+                .select("id, balance, last_loaded")
+                .eq("user_id", user.id)
+                .in("wallet_type", ["standard", "guest"])
+                .is("parent_wallet_id", null)
+                .maybeSingle();
+              if (refetchError) throw refetchError;
+              walletData = refetched as WalletData | null;
+            } else {
+              throw createError;
+            }
+          } else {
+            walletData = created as WalletData;
+          }
+        }
+
         setWallet(walletData);
 
         // Fetch rewards
@@ -175,24 +242,18 @@ const WalletPage = () => {
         if (rewardsError) throw rewardsError;
         setRewards(rewardsData);
 
-        // Fetch transactions
+        // Fetch transactions for parent wallet
         if (walletData) {
-          const { data: walletRecord } = await supabase
-            .from("wallets")
-            .select("id")
-            .eq("user_id", user.id)
-            .single();
+          const { data: txData } = await supabase
+            .from("wallet_transactions")
+            .select("id, amount, transaction_type, description, created_at")
+            .eq("wallet_id", walletData.id)
+            .order("created_at", { ascending: false })
+            .limit(10);
 
-          if (walletRecord) {
-            const { data: txData } = await supabase
-              .from("wallet_transactions")
-              .select("id, amount, transaction_type, description, created_at")
-              .eq("wallet_id", walletRecord.id)
-              .order("created_at", { ascending: false })
-              .limit(10);
-
-            setTransactions(txData || []);
-          }
+          setTransactions(txData || []);
+        } else {
+          setTransactions([]);
         }
       } catch (error: unknown) {
         console.error("Error fetching wallet data:", error);

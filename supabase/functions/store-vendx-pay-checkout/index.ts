@@ -95,12 +95,14 @@ serve(async (req) => {
 
     console.log("Order total:", total, "Shipping:", shipping);
 
-    // Get user's wallet
+    // Get user's parent wallet
     const { data: wallet, error: walletError } = await supabase
       .from("wallets")
       .select("id, balance")
       .eq("user_id", user.id)
-      .single();
+      .in("wallet_type", ["standard", "guest"])
+      .is("parent_wallet_id", null)
+      .maybeSingle();
 
     if (walletError || !wallet) {
       throw new Error("Wallet not found. Please set up your VendX Pay wallet first.");

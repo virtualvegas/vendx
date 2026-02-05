@@ -91,14 +91,16 @@ serve(async (req) => {
 
       console.log("Processing wallet load for user:", userId, "amount:", amount);
 
-      // Update wallet balance
+      // Update wallet balance (parent wallet)
       const { data: wallet, error: walletError } = await supabaseClient
         .from("wallets")
-        .select("balance")
+        .select("id, balance")
         .eq("user_id", userId)
-        .single();
+        .in("wallet_type", ["standard", "guest"])
+        .is("parent_wallet_id", null)
+        .maybeSingle();
 
-      if (walletError) {
+      if (walletError || !wallet) {
         console.error("Error fetching wallet:", walletError);
         throw new Error("Failed to fetch wallet");
       }
@@ -107,11 +109,11 @@ serve(async (req) => {
 
       const { error: updateError } = await supabaseClient
         .from("wallets")
-        .update({ 
+        .update({
           balance: newBalance,
-          last_loaded: new Date().toISOString()
+          last_loaded: new Date().toISOString(),
         })
-        .eq("user_id", userId);
+        .eq("id", wallet.id);
 
       if (updateError) {
         console.error("Error updating wallet:", updateError);
@@ -122,11 +124,11 @@ serve(async (req) => {
       await supabaseClient
         .from("wallet_transactions")
         .insert({
-          wallet_id: (await supabaseClient.from("wallets").select("id").eq("user_id", userId).single()).data?.id,
+          wallet_id: wallet.id,
           amount,
           transaction_type: "load",
           description: `PayPal wallet load - Order ${orderId}`,
-          reference_id: orderId
+          reference_id: orderId,
         });
 
       console.log("Wallet updated successfully. New balance:", newBalance);

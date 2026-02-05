@@ -56,13 +56,15 @@ const ArcadePayPage = () => {
         }
         setUser(user);
 
-        // Get wallet balance
-        const { data: wallet } = await supabase
+        // Get wallet balance (parent wallet)
+        const { data: wallet, error: walletError } = await supabase
           .from("wallets")
           .select("balance")
           .eq("user_id", user.id)
-          .eq("wallet_type", "standard")
+          .in("wallet_type", ["standard", "guest"])
+          .is("parent_wallet_id", null)
           .maybeSingle();
+        if (walletError) throw walletError;
         setWalletBalance(wallet?.balance || 0);
 
         // Get ticket balance
@@ -126,7 +128,8 @@ const ArcadePayPage = () => {
       .from("wallets")
       .select("balance")
       .eq("user_id", user?.id)
-      .eq("wallet_type", "standard")
+      .in("wallet_type", ["standard", "guest"])
+      .is("parent_wallet_id", null)
       .maybeSingle()
       .then(({ data }) => setWalletBalance(data?.balance || 0));
   };
