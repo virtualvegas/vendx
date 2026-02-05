@@ -43,6 +43,8 @@ import DivisionsManager from "@/components/dashboard/tabs/DivisionsManager";
 import StandsManager from "@/components/dashboard/tabs/StandsManager";
 import QuestsManager from "@/components/dashboard/tabs/QuestsManager";
 import BusinessContentManager from "@/components/dashboard/tabs/BusinessContentManager";
+import TicketConfigManager from "@/components/dashboard/tabs/TicketConfigManager";
+import CustomerTickets from "@/components/dashboard/tabs/CustomerTickets";
 export type AppRole =
   | "super_admin"
   | "global_operations_manager"
@@ -198,6 +200,8 @@ const DashboardPage = () => {
         return <CustomerOrders />;
       case "my-wallet":
         return <CustomerWallet />;
+      case "my-tickets":
+        return <CustomerTickets />;
       case "my-rewards":
         return <CustomerRewards />;
       case "global-operations":
@@ -260,6 +264,8 @@ const DashboardPage = () => {
         return <QuestsManager />;
       case "business-content":
         return <BusinessContentManager />;
+      case "ticket-config":
+        return <TicketConfigManager />;
       default:
         return <CustomerOrders />;
     }
