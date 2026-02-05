@@ -19,6 +19,8 @@ interface TicketPrize {
   category: string;
   requires_approval: boolean;
   requires_shipping: boolean;
+  shipping_fee_type?: string;
+  shipping_fee_amount?: number;
 }
 
 interface ShippingAddress {
@@ -260,15 +262,38 @@ export const TicketRedemptionDialog = ({
               <span className="text-sm text-muted-foreground">Prize Cost:</span>
               <span className="font-bold">{prize.ticket_cost.toLocaleString()} tickets</span>
             </div>
+            {prize.requires_shipping && prize.shipping_fee_type === "tickets" && prize.shipping_fee_amount ? (
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-muted-foreground">Shipping (tickets):</span>
+                <span className="font-medium">+{prize.shipping_fee_amount.toLocaleString()} tickets</span>
+              </div>
+            ) : prize.requires_shipping && prize.shipping_fee_type === "fixed" && prize.shipping_fee_amount ? (
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-muted-foreground">Shipping Fee:</span>
+                <span className="font-medium">${prize.shipping_fee_amount.toFixed(2)}</span>
+              </div>
+            ) : prize.requires_shipping ? (
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-muted-foreground">Shipping:</span>
+                <span className="font-medium text-primary">FREE</span>
+              </div>
+            ) : null}
             <div className="flex justify-between items-center">
               <span className="text-sm text-muted-foreground">Your Balance:</span>
               <span className="font-medium">{userBalance.toLocaleString()} tickets</span>
             </div>
             <div className="flex justify-between items-center pt-2 border-t">
               <span className="text-sm text-muted-foreground">After Redemption:</span>
-              <span className={userBalance >= prize.ticket_cost ? "font-medium text-green-500" : "text-destructive"}>
-                {(userBalance - prize.ticket_cost).toLocaleString()} tickets
-              </span>
+              {(() => {
+                const shippingTickets = prize.shipping_fee_type === "tickets" ? (prize.shipping_fee_amount || 0) : 0;
+                const totalCost = prize.ticket_cost + shippingTickets;
+                const remaining = userBalance - totalCost;
+                return (
+                  <span className={remaining >= 0 ? "font-medium text-primary" : "text-destructive"}>
+                    {remaining.toLocaleString()} tickets
+                  </span>
+                );
+              })()}
             </div>
           </div>
 

@@ -24,6 +24,8 @@ interface TicketPrize {
   requires_approval: boolean;
   requires_shipping: boolean;
   min_age: number | null;
+  shipping_fee_type?: string;
+  shipping_fee_amount?: number;
 }
 
 interface Redemption {
