@@ -3442,6 +3442,8 @@ export type Database = {
           shipping_address: Json | null
           shipping_address_id: string | null
           shipping_cost: number | null
+          shopify_order_id: string | null
+          shopify_order_number: string | null
           status: string
           stripe_checkout_session_id: string | null
           stripe_payment_intent_id: string | null
@@ -3462,6 +3464,8 @@ export type Database = {
           shipping_address?: Json | null
           shipping_address_id?: string | null
           shipping_cost?: number | null
+          shopify_order_id?: string | null
+          shopify_order_number?: string | null
           status?: string
           stripe_checkout_session_id?: string | null
           stripe_payment_intent_id?: string | null
@@ -3482,6 +3486,8 @@ export type Database = {
           shipping_address?: Json | null
           shipping_address_id?: string | null
           shipping_cost?: number | null
+          shopify_order_id?: string | null
+          shopify_order_number?: string | null
           status?: string
           stripe_checkout_session_id?: string | null
           stripe_payment_intent_id?: string | null
