@@ -43,7 +43,6 @@ const Navigation = () => {
     {
       title: "Products & Services",
       links: [
-        { name: "Our Divisions", path: "/divisions", icon: Briefcase },
         { name: "Store", path: "/store", icon: ShoppingBag },
         { name: "Interactive", path: "/games", icon: Gamepad2 },
         { name: "VendX Pay", path: "/wallet", icon: Wallet },
@@ -62,6 +61,7 @@ const Navigation = () => {
     {
       title: "Company",
       links: [
+        { name: "Our Divisions", path: "/divisions", icon: Briefcase },
         { name: "About VendX", path: "/about", icon: Info },
         { name: "News", path: "/news", icon: Newspaper },
         { name: "Careers", path: "/careers", icon: Users },
@@ -110,24 +110,8 @@ const Navigation = () => {
                   <NavigationMenuTrigger className="bg-transparent hover:bg-primary/5 data-[state=open]:bg-primary/10">
                     Products
                   </NavigationMenuTrigger>
-                  <NavigationMenuContent>
+                <NavigationMenuContent>
                     <ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-2 bg-popover">
-                      <li className="row-span-3">
-                        <NavigationMenuLink asChild>
-                          <Link
-                            to="/divisions"
-                            className="flex h-full w-full select-none flex-col justify-end rounded-md bg-gradient-to-b from-primary/20 to-primary/5 p-6 no-underline outline-none focus:shadow-md hover:from-primary/30 hover:to-primary/10 transition-colors"
-                          >
-                            <Briefcase className="h-6 w-6 text-primary" />
-                            <div className="mb-2 mt-4 text-lg font-medium text-foreground">
-                              Our Divisions
-                            </div>
-                            <p className="text-sm leading-tight text-muted-foreground">
-                              Explore VendX Mini, Max, Fresh, Digital & more
-                            </p>
-                          </Link>
-                        </NavigationMenuLink>
-                      </li>
                       <NavListItem to="/store" title="Online Store" icon={ShoppingBag}>
                         Shop vending machines and equipment
                       </NavListItem>
@@ -193,8 +177,11 @@ const Navigation = () => {
                   <NavigationMenuTrigger className="bg-transparent hover:bg-primary/5 data-[state=open]:bg-primary/10">
                     Company
                   </NavigationMenuTrigger>
-                  <NavigationMenuContent>
+                <NavigationMenuContent>
                     <ul className="grid gap-3 p-4 w-[400px] md:w-[500px] md:grid-cols-2 bg-popover">
+                      <NavListItem to="/divisions" title="Our Divisions" icon={Briefcase}>
+                        Explore VendX Mini, Max, Fresh, Digital & more
+                      </NavListItem>
                       <NavListItem to="/about" title="About VendX" icon={Info}>
                         Our mission to revolutionize vending
                       </NavListItem>
