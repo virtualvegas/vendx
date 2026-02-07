@@ -221,6 +221,21 @@ const StorePage = () => {
       {activeCategory !== "subscriptions" && (
       <section className="py-8 px-4">
         <div className="container mx-auto">
+          {/* Section Header for Products */}
+          {(activeCategory === "all" || activeCategory === "subscriptions") && filteredAndSortedProducts.length > 0 && (
+            <div className="flex items-center gap-3 mb-8">
+              <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center">
+                <Package className="w-5 h-5 text-primary" />
+              </div>
+              <div>
+                <h2 className="text-2xl font-bold">Shop Products</h2>
+                <p className="text-muted-foreground text-sm">
+                  {filteredAndSortedProducts.length} product{filteredAndSortedProducts.length !== 1 ? "s" : ""} available
+                </p>
+              </div>
+            </div>
+          )}
+
           {loading ? (
             <div className="flex items-center justify-center py-12">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
