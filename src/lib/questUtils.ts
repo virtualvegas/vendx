@@ -660,3 +660,230 @@ export function getTimeUntilCooldown(cooldownEndsAt: Date): string {
   }
   return `${minutes}m`;
 }
+
+/**
+ * Check and award chain completion bonus when all steps are done
+ */
+export async function checkAndAwardChainBonus(
+  userId: string,
+  questId: string
+): Promise<{ chainCompleted: boolean; chainName?: string; bonusXp?: number; bonusCredits?: number }> {
+  // Find chains that include this quest
+  const { data: chainSteps } = await supabase
+    .from("quest_chain_steps")
+    .select(`
+      *,
+      chain:quest_chains(*)
+    `)
+    .eq("quest_id", questId);
+
+  if (!chainSteps || chainSteps.length === 0) {
+    return { chainCompleted: false };
+  }
+
+  for (const step of chainSteps) {
+    const chain = step.chain as any;
+    if (!chain || !chain.is_active) continue;
+
+    // Get all quests in this chain
+    const { data: allSteps } = await supabase
+      .from("quest_chain_steps")
+      .select("quest_id")
+      .eq("chain_id", chain.id);
+
+    if (!allSteps || allSteps.length === 0) continue;
+
+    const questIds = allSteps.map(s => s.quest_id);
+
+    // Check how many the user has completed
+    const { data: completions } = await supabase
+      .from("quest_completions")
+      .select("quest_id")
+      .eq("user_id", userId)
+      .in("quest_id", questIds)
+      .in("status", ["completed", "claimed"]);
+
+    const completedQuestIds = new Set(completions?.map(c => c.quest_id) || []);
+    const allCompleted = questIds.every(qid => completedQuestIds.has(qid));
+
+    if (!allCompleted) continue;
+
+    // Check if bonus already claimed using raw query
+    const { data: existingClaim } = await supabase
+      .from("quest_chain_claims" as any)
+      .select("id")
+      .eq("user_id", userId)
+      .eq("chain_id", chain.id)
+      .maybeSingle();
+
+    if (existingClaim) continue; // Already claimed
+
+    // Award bonus!
+    const bonusXp = chain.bonus_xp || 0;
+    const bonusCredits = Number(chain.bonus_credits) || 0;
+
+    // Record the claim
+    await supabase.from("quest_chain_claims" as any).insert({
+      user_id: userId,
+      chain_id: chain.id,
+      bonus_xp_awarded: bonusXp,
+      bonus_credits_awarded: bonusCredits,
+    });
+
+    // Update player progress with bonus XP
+    if (bonusXp > 0) {
+      const { data: progress } = await supabase
+        .from("quest_player_progress")
+        .select("total_xp, current_level")
+        .eq("user_id", userId)
+        .maybeSingle();
+
+      if (progress) {
+        const newXp = (progress.total_xp || 0) + bonusXp;
+        await supabase
+          .from("quest_player_progress")
+          .update({
+            total_xp: newXp,
+            current_level: calculateLevel(newXp),
+          })
+          .eq("user_id", userId);
+      }
+    }
+
+    // Add bonus credits to wallet
+    if (bonusCredits > 0) {
+      const { data: wallet } = await supabase
+        .from("wallets")
+        .select("id, balance")
+        .eq("user_id", userId)
+        .in("wallet_type", ["standard", "guest"])
+        .is("parent_wallet_id", null)
+        .maybeSingle();
+
+      if (wallet) {
+        await supabase
+          .from("wallets")
+          .update({ balance: (Number(wallet.balance) || 0) + bonusCredits })
+          .eq("id", wallet.id);
+
+        await supabase.from("wallet_transactions").insert({
+          wallet_id: wallet.id,
+          amount: bonusCredits,
+          transaction_type: "chain_bonus",
+          description: `Chain bonus: ${chain.name}`,
+        });
+      }
+    }
+
+    return {
+      chainCompleted: true,
+      chainName: chain.name,
+      bonusXp,
+      bonusCredits,
+    };
+  }
+
+  return { chainCompleted: false };
+}
+
+/**
+ * Check and award daily challenge rewards
+ */
+export async function checkDailyChallengeRewards(
+  userId: string
+): Promise<{ challengesCompleted: string[]; totalBonusXp: number }> {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const todayStr = today.toISOString().split("T")[0];
+
+  // Check if already claimed today using raw query
+  const { data: existingClaim } = await supabase
+    .from("quest_daily_claims" as any)
+    .select("id, challenges_claimed")
+    .eq("user_id", userId)
+    .eq("claim_date", todayStr)
+    .maybeSingle();
+
+  const alreadyClaimed = new Set<string>((existingClaim as any)?.challenges_claimed || []);
+
+  // Get today's stats
+  const { data: completions } = await supabase
+    .from("quest_completions")
+    .select("id, node_id")
+    .eq("user_id", userId)
+    .gte("completed_at", today.toISOString())
+    .in("status", ["completed", "claimed"]);
+
+  const questsCompleted = completions?.length || 0;
+  const nodesVisited = new Set(completions?.map(c => c.node_id).filter(Boolean)).size;
+
+  // Get player progress for streak
+  const { data: progress } = await supabase
+    .from("quest_player_progress")
+    .select("current_streak")
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  const currentStreak = progress?.current_streak || 0;
+
+  // Define challenges and check which are newly completed
+  const challenges = [
+    { id: "daily-quest-1", target: 1, current: questsCompleted, reward: 50 },
+    { id: "daily-quest-3", target: 3, current: questsCompleted, reward: 150 },
+    { id: "daily-explore-2", target: 2, current: nodesVisited, reward: 100 },
+    { id: "daily-streak", target: 1, current: currentStreak > 0 ? 1 : 0, reward: 50 },
+  ];
+
+  const newlyCompleted: string[] = [];
+  let totalBonusXp = 0;
+
+  for (const challenge of challenges) {
+    if (challenge.current >= challenge.target && !alreadyClaimed.has(challenge.id)) {
+      newlyCompleted.push(challenge.id);
+      totalBonusXp += challenge.reward;
+    }
+  }
+
+  if (newlyCompleted.length === 0) {
+    return { challengesCompleted: [], totalBonusXp: 0 };
+  }
+
+  // Record claims
+  const allClaimed = [...alreadyClaimed, ...newlyCompleted];
+
+  if (existingClaim) {
+    await supabase
+      .from("quest_daily_claims" as any)
+      .update({ challenges_claimed: allClaimed, total_xp_awarded: totalBonusXp })
+      .eq("id", (existingClaim as any).id);
+  } else {
+    await supabase.from("quest_daily_claims" as any).insert({
+      user_id: userId,
+      claim_date: todayStr,
+      challenges_claimed: allClaimed,
+      total_xp_awarded: totalBonusXp,
+    });
+  }
+
+  // Award bonus XP
+  if (totalBonusXp > 0) {
+    const { data: playerProgress } = await supabase
+      .from("quest_player_progress")
+      .select("total_xp")
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    if (playerProgress) {
+      const newXp = (playerProgress.total_xp || 0) + totalBonusXp;
+      await supabase
+        .from("quest_player_progress")
+        .update({
+          total_xp: newXp,
+          current_level: calculateLevel(newXp),
+        })
+        .eq("user_id", userId);
+    }
+  }
+
+  return { challengesCompleted: newlyCompleted, totalBonusXp };
+}

@@ -12,6 +12,7 @@ import FeaturedQuests from "@/components/quests/FeaturedQuests";
 import QuestChainProgress from "@/components/quests/QuestChainProgress";
 import LevelUpModal from "@/components/quests/LevelUpModal";
 import AchievementToast, { Achievement } from "@/components/quests/AchievementToast";
+import Leaderboard from "@/components/quests/Leaderboard";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -19,7 +20,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Map, List, User, Trophy, Flame, Star, Sparkles } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { completeQuest, calculateDistance, validateQuestStart, getXpToNextLevel } from "@/lib/questUtils";
+import { completeQuest, calculateDistance, validateQuestStart, getXpToNextLevel, checkAndAwardChainBonus, checkDailyChallengeRewards } from "@/lib/questUtils";
 
 export interface QuestNode {
   id: string;
@@ -258,6 +259,28 @@ const QuestsPage = () => {
       try {
         const result = await completeQuest(user.id, quest.id, node.id, completionData.id);
         
+        // Check for chain completion bonus
+        const chainResult = await checkAndAwardChainBonus(user.id, quest.id);
+        if (chainResult.chainCompleted) {
+          setTimeout(() => {
+            toast({
+              title: `🏆 Chain Complete: ${chainResult.chainName}!`,
+              description: `Bonus: +${chainResult.bonusXp} XP${chainResult.bonusCredits ? ` + $${chainResult.bonusCredits}` : ""}`,
+            });
+          }, 2500);
+        }
+
+        // Check for daily challenge completion
+        const dailyResult = await checkDailyChallengeRewards(user.id);
+        if (dailyResult.challengesCompleted.length > 0) {
+          setTimeout(() => {
+            toast({
+              title: "⭐ Daily Challenge Complete!",
+              description: `+${dailyResult.totalBonusXp} bonus XP`,
+            });
+          }, 4000);
+        }
+
         // Show level up modal if leveled up
         if (result.leveledUp) {
           setLevelUpData({
@@ -295,6 +318,8 @@ const QuestsPage = () => {
         queryClient.invalidateQueries({ queryKey: ["quest-discoveries"] });
         queryClient.invalidateQueries({ queryKey: ["quest-completions"] });
         queryClient.invalidateQueries({ queryKey: ["today-quest-stats"] });
+        queryClient.invalidateQueries({ queryKey: ["quest-chains"] });
+        queryClient.invalidateQueries({ queryKey: ["leaderboard-weekly"] });
       } catch (err: any) {
         console.error("Error completing quest:", err);
         toast({
@@ -358,7 +383,7 @@ const QuestsPage = () => {
                       </Badge>
                       {playerProgress.current_streak > 0 && (
                         <Badge variant="outline" className="gap-1 h-5">
-                          <Flame className="w-3 h-3 text-orange-400" />
+                          <Flame className="w-3 h-3 text-accent" />
                           {playerProgress.current_streak}d
                         </Badge>
                       )}
@@ -481,6 +506,9 @@ const QuestsPage = () => {
                 {/* Quest Chains */}
                 <QuestChainProgress userId={user.id} />
 
+                {/* Leaderboard */}
+                <Leaderboard userId={user.id} />
+
                 {/* Quick Stats */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                   <div className="p-4 rounded-xl bg-card border border-border text-center">
@@ -496,7 +524,7 @@ const QuestsPage = () => {
                     <p className="text-xs text-muted-foreground">Best Streak</p>
                   </div>
                   <div className="p-4 rounded-xl bg-card border border-border text-center">
-                    <p className="text-2xl font-bold text-primary">${(playerProgress?.total_credits_earned || 0).toFixed(2)}</p>
+                    <p className="text-2xl font-bold text-primary">${Number(playerProgress?.total_credits_earned || 0).toFixed(2)}</p>
                     <p className="text-xs text-muted-foreground">Earned</p>
                   </div>
                 </div>
