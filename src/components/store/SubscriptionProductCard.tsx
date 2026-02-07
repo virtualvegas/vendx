@@ -91,7 +91,10 @@ export const SubscriptionProductCard = ({ product }: SubscriptionProductCardProp
                   /{product.subscription_interval || "month"}
                 </span>
               </div>
-              <Button size="sm" variant="secondary" className="group-hover:bg-primary group-hover:text-primary-foreground">
+              <Button 
+                size="sm" 
+                className="bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+              >
                 {isArcade ? "View Plans" : "Subscribe"}
               </Button>
             </div>
