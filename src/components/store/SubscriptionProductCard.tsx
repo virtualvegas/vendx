@@ -42,58 +42,47 @@ export const SubscriptionProductCard = ({ product }: SubscriptionProductCardProp
   const linkPath = isArcade ? "/store/arcade-subscription" : `/store/${product.slug}`;
 
   return (
-    <Link to={linkPath}>
+    <Link to={linkPath} className="block h-full">
       <Card className={`group bg-gradient-to-br ${getTierStyle()} border hover:shadow-lg transition-all h-full`}>
-        <CardContent className="p-6 flex flex-col h-full">
+        <CardContent className="p-6 flex flex-col h-full min-h-[320px]">
           {/* Header */}
           <div className="flex items-start justify-between mb-4">
-            <div className="w-12 h-12 rounded-xl bg-background/50 flex items-center justify-center">
+            <div className="w-12 h-12 rounded-xl bg-background/50 flex items-center justify-center flex-shrink-0">
               <Icon className="w-6 h-6 text-primary" />
             </div>
             {product.is_featured && (
-              <Badge className="bg-accent text-accent-foreground gap-1">
+              <Badge className="bg-accent text-accent-foreground gap-1 flex-shrink-0">
                 <Star className="w-3 h-3" /> Featured
               </Badge>
             )}
           </div>
 
-          {/* Image (if available) */}
-          {product.images && product.images[0] && (
-            <div className="aspect-video rounded-lg overflow-hidden mb-4 bg-background/30">
-              <img
-                src={product.images[0]}
-                alt={product.name}
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-              />
-            </div>
-          )}
-
           {/* Content */}
-          <div className="flex-1">
-            <h3 className="text-xl font-bold text-foreground group-hover:text-primary transition-colors mb-2">
+          <div className="flex-1 flex flex-col">
+            <h3 className="text-lg font-bold text-foreground group-hover:text-primary transition-colors mb-2 line-clamp-2">
               {product.name}
             </h3>
             {product.short_description && (
-              <p className="text-sm text-muted-foreground line-clamp-2 mb-4">
+              <p className="text-sm text-muted-foreground line-clamp-3 flex-1">
                 {product.short_description}
               </p>
             )}
           </div>
 
           {/* Pricing */}
-          <div className="mt-auto pt-4 border-t border-border/50">
-            <div className="flex items-end justify-between">
-              <div>
+          <div className="mt-4 pt-4 border-t border-border/50">
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-baseline gap-1">
                 <span className="text-2xl font-bold text-primary">
                   ${(product.subscription_price || product.price).toFixed(0)}
                 </span>
-                <span className="text-muted-foreground">
+                <span className="text-sm text-muted-foreground">
                   /{product.subscription_interval || "month"}
                 </span>
               </div>
               <Button 
                 size="sm" 
-                className="bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+                className="bg-primary text-primary-foreground hover:bg-primary/90 transition-colors flex-shrink-0"
               >
                 {isArcade ? "View Plans" : "Subscribe"}
               </Button>
