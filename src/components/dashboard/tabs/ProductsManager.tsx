@@ -10,12 +10,15 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { 
   Package, Plus, Edit, Trash2, Loader2, RefreshCw, 
-  Upload, X, Image as ImageIcon, Eye, Store, ExternalLink 
+  Upload, X, Image as ImageIcon, Eye, Store, ExternalLink,
+  Gift, ShoppingBag
 } from "lucide-react";
 import { AVAILABLE_STORES } from "@/components/store/RetailLinks";
+import { useShopifyProducts } from "@/hooks/useShopifyProducts";
 
 interface RetailLink {
   store: string;
@@ -330,12 +333,19 @@ const ProductsManager = () => {
     );
   }
 
+  // Shopify products
+  const { products: shopifyProducts, loading: shopifyLoading, refetch: refetchShopify } = useShopifyProducts();
+
+  // Filter products
+  const subscriptionProducts = products.filter(p => p.is_subscription);
+  const regularProducts = products.filter(p => !p.is_subscription);
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-2xl font-bold">Products Manager</h2>
-          <p className="text-muted-foreground">Manage store products with image uploads</p>
+          <p className="text-muted-foreground">Manage subscriptions and view Shopify products</p>
         </div>
         <div className="flex gap-2">
           <Button onClick={fetchProducts} variant="outline" size="sm">
@@ -713,162 +723,333 @@ const ProductsManager = () => {
         </div>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <Package className="h-8 w-8 text-primary" />
-              <div>
-                <p className="text-sm text-muted-foreground">Total Products</p>
-                <p className="text-2xl font-bold">{products.length}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <Eye className="h-8 w-8 text-green-500" />
-              <div>
-                <p className="text-sm text-muted-foreground">Active</p>
-                <p className="text-2xl font-bold">{products.filter(p => p.is_active).length}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <ImageIcon className="h-8 w-8 text-accent" />
-              <div>
-                <p className="text-sm text-muted-foreground">With Images</p>
-                <p className="text-2xl font-bold">{products.filter(p => p.images && p.images.length > 0).length}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <RefreshCw className="h-8 w-8 text-purple-500" />
-              <div>
-                <p className="text-sm text-muted-foreground">Subscriptions</p>
-                <p className="text-2xl font-bold">{products.filter(p => p.is_subscription).length}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      {/* Tabs for different product types */}
+      <Tabs defaultValue="subscriptions" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="subscriptions" className="gap-2">
+            <Gift className="h-4 w-4" />
+            Subscriptions ({subscriptionProducts.length})
+          </TabsTrigger>
+          <TabsTrigger value="shopify" className="gap-2">
+            <ShoppingBag className="h-4 w-4" />
+            Shopify Products ({shopifyProducts.length})
+          </TabsTrigger>
+          <TabsTrigger value="other" className="gap-2">
+            <Package className="h-4 w-4" />
+            Other Products ({regularProducts.length})
+          </TabsTrigger>
+        </TabsList>
 
-      {/* Products Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle>All Products ({products.length})</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Image</TableHead>
-                <TableHead>Name</TableHead>
-                <TableHead>Category</TableHead>
-                <TableHead>Price</TableHead>
-                <TableHead>Stock</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {products.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
-                    No products found. Create your first product above.
-                  </TableCell>
-                </TableRow>
-              ) : (
-                products.map((product) => (
-                  <TableRow key={product.id}>
-                    <TableCell>
-                      {product.images && product.images.length > 0 ? (
-                        <img 
-                          src={product.images[0]} 
-                          alt={product.name}
-                          className="w-12 h-12 object-cover rounded-lg border border-border"
-                        />
-                      ) : (
-                        <div className="w-12 h-12 bg-muted rounded-lg flex items-center justify-center">
-                          <ImageIcon className="h-5 w-5 text-muted-foreground" />
-                        </div>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <div>
-                        <p className="font-medium">{product.name}</p>
-                        <p className="text-xs text-muted-foreground">{product.slug}</p>
-                      </div>
-                    </TableCell>
-                    <TableCell className="capitalize">{product.category}</TableCell>
-                    <TableCell>
-                      <div>
-                        <p>${product.price.toFixed(2)}</p>
-                        {product.compare_at_price && (
-                          <p className="text-xs text-muted-foreground line-through">
-                            ${product.compare_at_price.toFixed(2)}
-                          </p>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell>{product.stock ?? 0}</TableCell>
-                    <TableCell>
-                      <div className="flex gap-1 flex-wrap">
-                        <Badge 
-                          variant="outline" 
-                          className={product.is_active ? "text-green-400 border-green-400/30" : "text-red-400 border-red-400/30"}
-                        >
-                          {product.is_active ? "Active" : "Inactive"}
-                        </Badge>
-                        {product.is_featured && (
-                          <Badge variant="outline" className="text-primary border-primary/30">Featured</Badge>
-                        )}
-                        {product.is_subscription && (
-                          <Badge variant="outline" className="text-accent border-accent/30">Sub</Badge>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex gap-1">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleEdit(product)}
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => toggleActive(product)}
-                        >
-                          <Eye className={`h-4 w-4 ${product.is_active ? "text-green-400" : "text-muted-foreground"}`} />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleDelete(product.id)}
-                          className="text-destructive hover:text-destructive"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
+        {/* Subscriptions Tab */}
+        <TabsContent value="subscriptions">
+          {/* Stats */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3">
+                  <Gift className="h-8 w-8 text-accent" />
+                  <div>
+                    <p className="text-sm text-muted-foreground">Subscriptions</p>
+                    <p className="text-2xl font-bold">{subscriptionProducts.length}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3">
+                  <Eye className="h-8 w-8 text-accent" />
+                  <div>
+                    <p className="text-sm text-muted-foreground">Active</p>
+                    <p className="text-2xl font-bold">{subscriptionProducts.filter(p => p.is_active).length}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Subscription Products</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Image</TableHead>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Price</TableHead>
+                    <TableHead>Interval</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Actions</TableHead>
                   </TableRow>
-                ))
+                </TableHeader>
+                <TableBody>
+                  {subscriptionProducts.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                        No subscription products found. Create one using the Add Product button.
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    subscriptionProducts.map((product) => (
+                      <TableRow key={product.id}>
+                        <TableCell>
+                          {product.images && product.images.length > 0 ? (
+                            <img 
+                              src={product.images[0]} 
+                              alt={product.name}
+                              className="w-12 h-12 object-cover rounded-lg border border-border"
+                            />
+                          ) : (
+                            <div className="w-12 h-12 bg-muted rounded-lg flex items-center justify-center">
+                              <Gift className="h-5 w-5 text-muted-foreground" />
+                            </div>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <div>
+                            <p className="font-medium">{product.name}</p>
+                            <p className="text-xs text-muted-foreground">{product.slug}</p>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <span className="font-semibold text-primary">
+                            ${(product.subscription_price || product.price).toFixed(2)}
+                          </span>
+                        </TableCell>
+                        <TableCell className="capitalize">
+                          {product.subscription_interval || "month"}ly
+                        </TableCell>
+                        <TableCell>
+                          <Badge 
+                            variant="outline" 
+                            className={product.is_active ? "text-accent border-accent/30" : "text-muted-foreground border-muted-foreground/30"}
+                          >
+                            {product.is_active ? "Active" : "Inactive"}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex gap-1">
+                            <Button variant="ghost" size="icon" onClick={() => handleEdit(product)}>
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button variant="ghost" size="icon" onClick={() => toggleActive(product)}>
+                              <Eye className={`h-4 w-4 ${product.is_active ? "text-accent" : "text-muted-foreground"}`} />
+                            </Button>
+                            <Button variant="ghost" size="icon" onClick={() => handleDelete(product.id)} className="text-destructive hover:text-destructive">
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Shopify Products Tab */}
+        <TabsContent value="shopify">
+          <div className="flex justify-between items-center mb-4">
+            <p className="text-muted-foreground">
+              These products are managed in your Shopify admin panel.
+            </p>
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" onClick={() => refetchShopify()}>
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Refresh
+              </Button>
+              <Button variant="outline" size="sm" asChild>
+                <a href="https://admin.shopify.com" target="_blank" rel="noopener noreferrer">
+                  <ExternalLink className="h-4 w-4 mr-2" />
+                  Shopify Admin
+                </a>
+              </Button>
+            </div>
+          </div>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Shopify Catalog ({shopifyProducts.length})</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {shopifyLoading ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                </div>
+              ) : shopifyProducts.length === 0 ? (
+                <div className="text-center py-12 text-muted-foreground">
+                  <ShoppingBag className="h-12 w-12 mx-auto mb-4 opacity-30" />
+                  <p>No products in Shopify yet.</p>
+                  <p className="text-sm">Add products in your Shopify admin panel.</p>
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Image</TableHead>
+                      <TableHead>Title</TableHead>
+                      <TableHead>Type</TableHead>
+                      <TableHead>Price</TableHead>
+                      <TableHead>Variants</TableHead>
+                      <TableHead>Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {shopifyProducts.map((product) => {
+                      const firstImage = product.node.images.edges[0]?.node;
+                      const price = parseFloat(product.node.priceRange.minVariantPrice.amount);
+                      const currencyCode = product.node.priceRange.minVariantPrice.currencyCode;
+                      const variantCount = product.node.variants.edges.length;
+
+                      return (
+                        <TableRow key={product.node.id}>
+                          <TableCell>
+                            {firstImage ? (
+                              <img 
+                                src={firstImage.url} 
+                                alt={firstImage.altText || product.node.title}
+                                className="w-12 h-12 object-cover rounded-lg border border-border"
+                              />
+                            ) : (
+                              <div className="w-12 h-12 bg-muted rounded-lg flex items-center justify-center">
+                                <ImageIcon className="h-5 w-5 text-muted-foreground" />
+                              </div>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <div>
+                              <p className="font-medium">{product.node.title}</p>
+                              <p className="text-xs text-muted-foreground">{product.node.handle}</p>
+                            </div>
+                          </TableCell>
+                          <TableCell className="capitalize">
+                            {product.node.productType || "-"}
+                          </TableCell>
+                          <TableCell>
+                            <span className="font-semibold text-primary">
+                              {currencyCode} {price.toFixed(2)}
+                            </span>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="outline">{variantCount} variant{variantCount !== 1 ? "s" : ""}</Badge>
+                          </TableCell>
+                          <TableCell>
+                            <Button variant="ghost" size="sm" asChild>
+                              <a href={`/store/product/${product.node.handle}`} target="_blank" rel="noopener noreferrer">
+                                <Eye className="h-4 w-4 mr-2" />
+                                View
+                              </a>
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
               )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Other Products Tab (game items, etc.) */}
+        <TabsContent value="other">
+          <Card>
+            <CardHeader>
+              <CardTitle>Other Products ({regularProducts.length})</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Image</TableHead>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Category</TableHead>
+                    <TableHead>Price</TableHead>
+                    <TableHead>Stock</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {regularProducts.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                        No products found. Create your first product above.
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    regularProducts.map((product) => (
+                      <TableRow key={product.id}>
+                        <TableCell>
+                          {product.images && product.images.length > 0 ? (
+                            <img 
+                              src={product.images[0]} 
+                              alt={product.name}
+                              className="w-12 h-12 object-cover rounded-lg border border-border"
+                            />
+                          ) : (
+                            <div className="w-12 h-12 bg-muted rounded-lg flex items-center justify-center">
+                              <ImageIcon className="h-5 w-5 text-muted-foreground" />
+                            </div>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <div>
+                            <p className="font-medium">{product.name}</p>
+                            <p className="text-xs text-muted-foreground">{product.slug}</p>
+                          </div>
+                        </TableCell>
+                        <TableCell className="capitalize">{product.category}</TableCell>
+                        <TableCell>
+                          <div>
+                            <p>${product.price.toFixed(2)}</p>
+                            {product.compare_at_price && (
+                              <p className="text-xs text-muted-foreground line-through">
+                                ${product.compare_at_price.toFixed(2)}
+                              </p>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell>{product.stock ?? 0}</TableCell>
+                        <TableCell>
+                          <div className="flex gap-1 flex-wrap">
+                            <Badge 
+                              variant="outline" 
+                              className={product.is_active ? "text-accent border-accent/30" : "text-destructive border-destructive/30"}
+                            >
+                              {product.is_active ? "Active" : "Inactive"}
+                            </Badge>
+                            {product.is_featured && (
+                              <Badge variant="outline" className="text-primary border-primary/30">Featured</Badge>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex gap-1">
+                            <Button variant="ghost" size="icon" onClick={() => handleEdit(product)}>
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button variant="ghost" size="icon" onClick={() => toggleActive(product)}>
+                              <Eye className={`h-4 w-4 ${product.is_active ? "text-accent" : "text-muted-foreground"}`} />
+                            </Button>
+                            <Button variant="ghost" size="icon" onClick={() => handleDelete(product.id)} className="text-destructive hover:text-destructive">
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
 
       {/* Preview Dialog */}
       <Dialog open={!!previewProduct} onOpenChange={(open) => !open && setPreviewProduct(null)}>
