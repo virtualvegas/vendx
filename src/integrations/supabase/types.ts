@@ -1907,6 +1907,44 @@ export type Database = {
         }
         Relationships: []
       }
+      quest_chain_claims: {
+        Row: {
+          bonus_credits_awarded: number | null
+          bonus_xp_awarded: number | null
+          chain_id: string
+          claimed_at: string
+          created_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          bonus_credits_awarded?: number | null
+          bonus_xp_awarded?: number | null
+          chain_id: string
+          claimed_at?: string
+          created_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          bonus_credits_awarded?: number | null
+          bonus_xp_awarded?: number | null
+          chain_id?: string
+          claimed_at?: string
+          created_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quest_chain_claims_chain_id_fkey"
+            columns: ["chain_id"]
+            isOneToOne: false
+            referencedRelation: "quest_chains"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       quest_chain_steps: {
         Row: {
           chain_id: string
@@ -2059,6 +2097,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      quest_daily_claims: {
+        Row: {
+          challenges_claimed: string[] | null
+          claim_date: string
+          created_at: string
+          id: string
+          total_xp_awarded: number | null
+          user_id: string
+        }
+        Insert: {
+          challenges_claimed?: string[] | null
+          claim_date: string
+          created_at?: string
+          id?: string
+          total_xp_awarded?: number | null
+          user_id: string
+        }
+        Update: {
+          challenges_claimed?: string[] | null
+          claim_date?: string
+          created_at?: string
+          id?: string
+          total_xp_awarded?: number | null
+          user_id?: string
+        }
+        Relationships: []
       }
       quest_leaderboards: {
         Row: {
@@ -4440,6 +4505,10 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      increment_player_xp: {
+        Args: { p_user_id: string; p_xp: number }
+        Returns: undefined
       }
       is_super_admin: { Args: { _user_id: string }; Returns: boolean }
       log_machine_activity: {
