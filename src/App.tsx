@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -5,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { CartProvider } from "@/hooks/useCart";
 import { useShopifyCartSync } from "@/hooks/useShopifyCartSync";
+import { toast } from "sonner";
 import Index from "./pages/Index";
 import AboutPage from "./pages/AboutPage";
 import DivisionsPage from "./pages/DivisionsPage";
@@ -42,9 +44,22 @@ import ArcadePayPage from "./pages/ArcadePayPage";
 
 const queryClient = new QueryClient();
 
-// Component to initialize Shopify cart sync
+// Component to initialize Shopify cart sync and global error handling
 const ShopifyCartSyncInitializer = ({ children }: { children: React.ReactNode }) => {
   useShopifyCartSync();
+  
+  // Global unhandled rejection handler to prevent blank pages from async errors
+  useEffect(() => {
+    const handleRejection = (event: PromiseRejectionEvent) => {
+      console.error("Unhandled promise rejection:", event.reason);
+      toast.error("An unexpected error occurred. Please try again.");
+      event.preventDefault(); // Prevent default console error logging
+    };
+
+    window.addEventListener("unhandledrejection", handleRejection);
+    return () => window.removeEventListener("unhandledrejection", handleRejection);
+  }, []);
+  
   return <>{children}</>;
 };
 
