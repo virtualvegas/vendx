@@ -10,23 +10,14 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { 
-  Package, Plus, Edit, Trash2, Loader2, RefreshCw, 
-  Upload, X, Image as ImageIcon, Eye, Store, ExternalLink,
-  Gift, ShoppingBag
+  Gift, Plus, Edit, Trash2, Loader2, RefreshCw, 
+  Upload, X, Image as ImageIcon, Eye, Star
 } from "lucide-react";
-import { AVAILABLE_STORES } from "@/components/store/RetailLinks";
-import { useShopifyProducts } from "@/hooks/useShopifyProducts";
 
-interface RetailLink {
-  store: string;
-  url: string;
-}
-
-// Product type from Supabase - uses Json for retail_links
-type Product = {
+// Subscription Product type
+type SubscriptionProduct = {
   id: string;
   name: string;
   slug: string;
@@ -36,7 +27,6 @@ type Product = {
   compare_at_price: number | null;
   category: string;
   subcategory: string | null;
-  stock: number | null;
   images: string[] | null;
   is_active: boolean | null;
   is_featured: boolean | null;
@@ -44,36 +34,18 @@ type Product = {
   subscription_price: number | null;
   subscription_interval: string | null;
   waitlist_enabled: boolean | null;
-  retail_links: unknown;
-  retail_status: string | null;
   created_at: string | null;
-  game_id: string | null;
-  video_game?: { id: string; name: string } | null;
 };
 
-const retailStatusOptions = [
-  { value: "online_only", label: "Online Only" },
-  { value: "in_store_only", label: "In Store Only" },
-  { value: "in_store_and_online", label: "In Store & Online" }
-];
-
-const categories = ["subscriptions", "apparel", "accessories", "snacks", "tech", "merchandise", "game-items"];
 const subscriptionIntervals = ["week", "month", "year"];
 
-interface VideoGame {
-  id: string;
-  title: string;
-}
-
 const ProductsManager = () => {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [videoGames, setVideoGames] = useState<VideoGame[]>([]);
+  const [products, setProducts] = useState<SubscriptionProduct[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [editingProduct, setEditingProduct] = useState<SubscriptionProduct | null>(null);
   const [uploadingImage, setUploadingImage] = useState(false);
-  const [previewProduct, setPreviewProduct] = useState<Product | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   const [form, setForm] = useState({
@@ -83,40 +55,18 @@ const ProductsManager = () => {
     short_description: "",
     price: 0,
     compare_at_price: 0,
-    category: "apparel",
     subcategory: "",
-    stock: 0,
     images: [] as string[],
     is_active: true,
     is_featured: false,
-    is_subscription: false,
     subscription_price: 0,
     subscription_interval: "month",
     waitlist_enabled: false,
-    retail_links: [] as RetailLink[],
-    retail_status: "online_only",
-    game_id: "" as string
   });
 
   useEffect(() => {
     fetchProducts();
-    fetchVideoGames();
   }, []);
-
-  const fetchVideoGames = async () => {
-    try {
-      const { data, error } = await supabase
-        .from("video_games")
-        .select("id, title")
-        .eq("is_active", true)
-        .order("title");
-      if (error) throw error;
-      if (data) setVideoGames(data);
-    } catch (error: any) {
-      console.error("Failed to fetch video games:", error);
-      toast.error("Failed to load video games");
-    }
-  };
 
   const fetchProducts = async () => {
     setLoading(true);
@@ -124,13 +74,14 @@ const ProductsManager = () => {
       const { data, error } = await supabase
         .from("store_products")
         .select("*")
+        .eq("is_subscription", true)
         .order("created_at", { ascending: false });
       
       if (error) throw error;
       setProducts(data || []);
     } catch (error: any) {
-      console.error("Failed to fetch products:", error);
-      toast.error("Failed to load products");
+      console.error("Failed to fetch subscription products:", error);
+      toast.error("Failed to load subscription products");
     } finally {
       setLoading(false);
     }
@@ -144,24 +95,18 @@ const ProductsManager = () => {
       short_description: "",
       price: 0,
       compare_at_price: 0,
-      category: "apparel",
       subcategory: "",
-      stock: 0,
       images: [],
       is_active: true,
       is_featured: false,
-      is_subscription: false,
       subscription_price: 0,
       subscription_interval: "month",
       waitlist_enabled: false,
-      retail_links: [],
-      retail_status: "online_only",
-      game_id: ""
     });
     setEditingProduct(null);
   };
 
-  const handleEdit = (product: Product) => {
+  const handleEdit = (product: SubscriptionProduct) => {
     setEditingProduct(product);
     setForm({
       name: product.name,
@@ -170,19 +115,13 @@ const ProductsManager = () => {
       short_description: product.short_description || "",
       price: product.price,
       compare_at_price: product.compare_at_price || 0,
-      category: product.category,
       subcategory: product.subcategory || "",
-      stock: product.stock || 0,
       images: product.images || [],
       is_active: product.is_active ?? true,
       is_featured: product.is_featured ?? false,
-      is_subscription: product.is_subscription ?? false,
       subscription_price: product.subscription_price || 0,
       subscription_interval: product.subscription_interval || "month",
       waitlist_enabled: product.waitlist_enabled ?? false,
-      retail_links: Array.isArray(product.retail_links) ? (product.retail_links as RetailLink[]) : [],
-      retail_status: product.retail_status || "online_only",
-      game_id: product.game_id || ""
     });
     setDialogOpen(true);
   };
@@ -191,13 +130,11 @@ const ProductsManager = () => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Validate file type
     if (!file.type.startsWith("image/")) {
       toast.error("Please select an image file");
       return;
     }
 
-    // Validate file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
       toast.error("Image must be less than 5MB");
       return;
@@ -253,75 +190,70 @@ const ProductsManager = () => {
     setSaving(true);
     const slug = form.slug || form.name.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
     
-    const validRetailLinks = form.retail_links.filter(link => link.store && link.url);
-    
-    const productData: Record<string, unknown> = {
+    const productData = {
       name: form.name.trim(),
       slug,
       description: form.description || null,
       short_description: form.short_description || null,
       price: form.price,
       compare_at_price: form.compare_at_price > 0 ? form.compare_at_price : null,
-      category: form.category,
+      category: "subscriptions",
       subcategory: form.subcategory || null,
-      stock: form.stock,
       images: form.images.length > 0 ? form.images : null,
       is_active: form.is_active,
       is_featured: form.is_featured,
-      is_subscription: form.is_subscription,
-      subscription_price: form.is_subscription ? form.subscription_price : null,
-      subscription_interval: form.is_subscription ? form.subscription_interval : null,
+      is_subscription: true,
+      subscription_price: form.subscription_price,
+      subscription_interval: form.subscription_interval,
       waitlist_enabled: form.waitlist_enabled,
-      retail_links: validRetailLinks.length > 0 ? validRetailLinks : null,
-      retail_status: form.retail_status,
-      game_id: form.category === "game-items" && form.game_id ? form.game_id : null
     };
 
     try {
       if (editingProduct) {
         const { error } = await supabase
           .from("store_products")
-          .update(productData as any)
+          .update(productData)
           .eq("id", editingProduct.id);
         
         if (error) throw error;
-        toast.success("Product updated successfully");
+        toast.success("Subscription updated successfully");
       } else {
         const { error } = await supabase
           .from("store_products")
-          .insert(productData as any);
+          .insert(productData);
         
         if (error) throw error;
-        toast.success("Product created successfully");
+        toast.success("Subscription created successfully");
       }
 
       setDialogOpen(false);
       resetForm();
       fetchProducts();
     } catch (error: any) {
-      toast.error(error.message || "Failed to save product");
+      console.error("Save error:", error);
+      toast.error(error.message || "Failed to save subscription");
     } finally {
       setSaving(false);
     }
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this product? This action cannot be undone.")) return;
+    if (!confirm("Are you sure you want to delete this subscription? This action cannot be undone.")) return;
     
     try {
       const { error } = await supabase.from("store_products").delete().eq("id", id);
       
       if (error) throw error;
       
-      toast.success("Product deleted successfully");
+      toast.success("Subscription deleted successfully");
       fetchProducts();
     } catch (error: any) {
-      console.error("Failed to delete product:", error);
-      toast.error("Failed to delete product");
+      console.error("Failed to delete subscription:", error);
+      toast.error("Failed to delete subscription");
     }
   };
 
-  const toggleActive = async (product: Product) => {
+  const toggleActive = async (product: SubscriptionProduct) => {
     try {
       const { error } = await supabase
         .from("store_products")
@@ -330,20 +262,13 @@ const ProductsManager = () => {
       
       if (error) throw error;
       
-      toast.success(product.is_active ? "Product deactivated" : "Product activated");
+      toast.success(product.is_active ? "Subscription deactivated" : "Subscription activated");
       fetchProducts();
     } catch (error: any) {
-      console.error("Failed to update product status:", error);
-      toast.error("Failed to update product status");
+      console.error("Failed to update subscription status:", error);
+      toast.error("Failed to update subscription status");
     }
   };
-
-  // Shopify products (must be before any conditional returns)
-  const {
-    products: shopifyProducts,
-    loading: shopifyLoading,
-    refetch: refetchShopify,
-  } = useShopifyProducts();
 
   if (loading) {
     return (
@@ -353,16 +278,15 @@ const ProductsManager = () => {
     );
   }
 
-  // Filter products
-  const subscriptionProducts = products.filter(p => p.is_subscription);
-  const regularProducts = products.filter(p => !p.is_subscription);
+  const activeCount = products.filter(p => p.is_active).length;
+  const featuredCount = products.filter(p => p.is_featured).length;
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-2xl font-bold">Products Manager</h2>
-          <p className="text-muted-foreground">Manage subscriptions and view Shopify products</p>
+          <h2 className="text-2xl font-bold">Subscriptions Manager</h2>
+          <p className="text-muted-foreground">Manage subscription products and plans</p>
         </div>
         <div className="flex gap-2">
           <Button onClick={fetchProducts} variant="outline" size="sm">
@@ -376,22 +300,22 @@ const ProductsManager = () => {
             <DialogTrigger asChild>
               <Button>
                 <Plus className="h-4 w-4 mr-2" />
-                Add Product
+                Add Subscription
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
-                <DialogTitle>{editingProduct ? "Edit Product" : "Add New Product"}</DialogTitle>
+                <DialogTitle>{editingProduct ? "Edit Subscription" : "Add New Subscription"}</DialogTitle>
               </DialogHeader>
               <div className="grid gap-4 py-4">
                 {/* Basic Info */}
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label>Product Name *</Label>
+                    <Label>Subscription Name *</Label>
                     <Input 
                       value={form.name}
                       onChange={(e) => setForm({...form, name: e.target.value})}
-                      placeholder="e.g., VendX T-Shirt"
+                      placeholder="e.g., Snack In The Box"
                     />
                   </div>
                   <div>
@@ -409,7 +333,7 @@ const ProductsManager = () => {
                   <Input 
                     value={form.short_description}
                     onChange={(e) => setForm({...form, short_description: e.target.value})}
-                    placeholder="Brief product description for listings"
+                    placeholder="Brief subscription description for listings"
                   />
                 </div>
 
@@ -418,21 +342,21 @@ const ProductsManager = () => {
                   <Textarea 
                     value={form.description}
                     onChange={(e) => setForm({...form, description: e.target.value})}
-                    placeholder="Detailed product description..."
-                    rows={4}
+                    placeholder="Detailed subscription description..."
+                    rows={3}
                   />
                 </div>
 
                 {/* Pricing */}
                 <div className="grid grid-cols-3 gap-4">
                   <div>
-                    <Label>Price ($) *</Label>
+                    <Label>Subscription Price ($) *</Label>
                     <Input 
                       type="number"
                       step="0.01"
                       min="0"
-                      value={form.price}
-                      onChange={(e) => setForm({...form, price: parseFloat(e.target.value) || 0})}
+                      value={form.subscription_price}
+                      onChange={(e) => setForm({...form, subscription_price: parseFloat(e.target.value) || 0, price: parseFloat(e.target.value) || 0})}
                     />
                   </div>
                   <div>
@@ -443,74 +367,40 @@ const ProductsManager = () => {
                       min="0"
                       value={form.compare_at_price}
                       onChange={(e) => setForm({...form, compare_at_price: parseFloat(e.target.value) || 0})}
-                      placeholder="Original price for sale items"
+                      placeholder="Original price"
                     />
                   </div>
                   <div>
-                    <Label>Stock</Label>
-                    <Input 
-                      type="number"
-                      min="0"
-                      value={form.stock}
-                      onChange={(e) => setForm({...form, stock: parseInt(e.target.value) || 0})}
-                    />
-                  </div>
-                </div>
-
-                {/* Category */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label>Category *</Label>
+                    <Label>Billing Interval</Label>
                     <Select 
-                      value={form.category}
-                      onValueChange={(v) => setForm({...form, category: v, game_id: v !== "game-items" ? "" : form.game_id})}
+                      value={form.subscription_interval}
+                      onValueChange={(v) => setForm({...form, subscription_interval: v})}
                     >
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        {categories.map(cat => (
-                          <SelectItem key={cat} value={cat} className="capitalize">{cat}</SelectItem>
+                        {subscriptionIntervals.map(interval => (
+                          <SelectItem key={interval} value={interval} className="capitalize">{interval}ly</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
-                  </div>
-                  <div>
-                    <Label>Subcategory</Label>
-                    <Input 
-                      value={form.subcategory}
-                      onChange={(e) => setForm({...form, subcategory: e.target.value})}
-                      placeholder="e.g., t-shirts, hoodies"
-                    />
                   </div>
                 </div>
 
-                {/* Game Selector - Only show for game-items category */}
-                {form.category === "game-items" && (
-                  <div>
-                    <Label>Associated Game *</Label>
-                    <Select 
-                      value={form.game_id}
-                      onValueChange={(v) => setForm({...form, game_id: v})}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a game..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {videoGames.map(game => (
-                          <SelectItem key={game.id} value={game.id}>{game.title}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <p className="text-xs text-muted-foreground mt-1">Link this item to a specific game from our Games library</p>
-                  </div>
-                )}
+                <div>
+                  <Label>Subcategory</Label>
+                  <Input 
+                    value={form.subcategory}
+                    onChange={(e) => setForm({...form, subcategory: e.target.value})}
+                    placeholder="e.g., snack-box, arcade"
+                  />
+                </div>
 
                 {/* Images */}
                 <div>
                   <Label>Product Images</Label>
                   <div className="mt-2 space-y-3">
-                    {/* Image Grid */}
                     {form.images.length > 0 && (
                       <div className="grid grid-cols-4 gap-2">
                         {form.images.map((url, index) => (
@@ -518,21 +408,22 @@ const ProductsManager = () => {
                             <img 
                               src={url} 
                               alt={`Product ${index + 1}`}
-                              className="w-full h-24 object-cover rounded-lg border border-border"
+                              className="w-full h-20 object-cover rounded-lg border border-border"
                             />
-                            <button
+                            <Button
                               type="button"
+                              variant="destructive"
+                              size="icon"
+                              className="absolute -top-2 -right-2 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
                               onClick={() => removeImage(index)}
-                              className="absolute top-1 right-1 p-1 bg-destructive rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
                             >
-                              <X className="h-3 w-3 text-white" />
-                            </button>
+                              <X className="h-3 w-3" />
+                            </Button>
                           </div>
                         ))}
                       </div>
                     )}
                     
-                    {/* Upload Button */}
                     <div className="flex gap-2">
                       <input
                         ref={fileInputRef}
@@ -548,180 +439,44 @@ const ProductsManager = () => {
                         disabled={uploadingImage}
                       >
                         {uploadingImage ? (
-                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          <>
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                            Uploading...
+                          </>
                         ) : (
-                          <Upload className="h-4 w-4 mr-2" />
+                          <>
+                            <Upload className="h-4 w-4 mr-2" />
+                            Upload Image
+                          </>
                         )}
-                        {uploadingImage ? "Uploading..." : "Upload Image"}
                       </Button>
-                      <p className="text-xs text-muted-foreground self-center">Max 5MB per image</p>
                     </div>
                   </div>
                 </div>
 
                 {/* Toggles */}
-                <div className="flex items-center gap-6 flex-wrap">
-                  <div className="flex items-center gap-2">
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                    <Label>Active</Label>
                     <Switch 
                       checked={form.is_active}
-                      onCheckedChange={(v) => setForm({...form, is_active: v})}
+                      onCheckedChange={(checked) => setForm({...form, is_active: checked})}
                     />
-                    <Label>Active</Label>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                    <Label>Featured</Label>
                     <Switch 
                       checked={form.is_featured}
-                      onCheckedChange={(v) => setForm({...form, is_featured: v})}
+                      onCheckedChange={(checked) => setForm({...form, is_featured: checked})}
                     />
-                    <Label>Featured</Label>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Switch 
-                      checked={form.is_subscription}
-                      onCheckedChange={(v) => setForm({...form, is_subscription: v})}
-                    />
-                    <Label>Subscription Product</Label>
-                  </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                    <Label>Waitlist</Label>
                     <Switch 
                       checked={form.waitlist_enabled}
-                      onCheckedChange={(v) => setForm({...form, waitlist_enabled: v})}
+                      onCheckedChange={(checked) => setForm({...form, waitlist_enabled: checked})}
                     />
-                    <Label>Waitlist Enabled</Label>
                   </div>
-                </div>
-
-                {/* Subscription Options */}
-                {form.is_subscription && (
-                  <div className="grid grid-cols-2 gap-4 p-4 border border-border rounded-lg bg-muted/30">
-                    <div>
-                      <Label>Subscription Price ($)</Label>
-                      <Input 
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        value={form.subscription_price}
-                        onChange={(e) => setForm({...form, subscription_price: parseFloat(e.target.value) || 0})}
-                      />
-                    </div>
-                    <div>
-                      <Label>Billing Interval</Label>
-                      <Select 
-                        value={form.subscription_interval}
-                        onValueChange={(v) => setForm({...form, subscription_interval: v})}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {subscriptionIntervals.map(interval => (
-                            <SelectItem key={interval} value={interval} className="capitalize">
-                              {interval}ly
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                )}
-
-                {/* Retail Availability Status */}
-                <div className="space-y-3">
-                  <Label className="flex items-center gap-2">
-                    <Store className="w-4 h-4" />
-                    Retail Availability Status
-                  </Label>
-                  <Select 
-                    value={form.retail_status}
-                    onValueChange={(v) => setForm({...form, retail_status: v})}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {retailStatusOptions.map(option => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <p className="text-xs text-muted-foreground">
-                    Set where this product is available for purchase.
-                  </p>
-                </div>
-
-                {/* Retail Store Links */}
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <Label>Retail Store Links</Label>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setForm({
-                        ...form,
-                        retail_links: [...form.retail_links, { store: "amazon", url: "" }]
-                      })}
-                    >
-                      <Plus className="w-3 h-3 mr-1" />
-                      Add Store
-                    </Button>
-                  </div>
-                  
-                  {form.retail_links.length > 0 && (
-                    <div className="space-y-2 p-4 border border-border rounded-lg bg-muted/30">
-                      {form.retail_links.map((link, index) => (
-                        <div key={index} className="flex gap-2 items-center">
-                          <Select
-                            value={link.store}
-                            onValueChange={(v) => {
-                              const newLinks = [...form.retail_links];
-                              newLinks[index].store = v;
-                              setForm({ ...form, retail_links: newLinks });
-                            }}
-                          >
-                            <SelectTrigger className="w-[140px]">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {AVAILABLE_STORES.map(store => (
-                                <SelectItem key={store.value} value={store.value}>
-                                  {store.label}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <Input
-                            value={link.url}
-                            onChange={(e) => {
-                              const newLinks = [...form.retail_links];
-                              newLinks[index].url = e.target.value;
-                              setForm({ ...form, retail_links: newLinks });
-                            }}
-                            placeholder="https://..."
-                            className="flex-1"
-                          />
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => {
-                              const newLinks = form.retail_links.filter((_, i) => i !== index);
-                              setForm({ ...form, retail_links: newLinks });
-                            }}
-                            className="text-destructive hover:text-destructive"
-                          >
-                            <X className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                  
-                  <p className="text-xs text-muted-foreground">
-                    Add links to external retail stores where customers can also purchase this product.
-                  </p>
                 </div>
 
                 <Button onClick={handleSave} disabled={saving} className="w-full">
@@ -731,7 +486,7 @@ const ProductsManager = () => {
                       Saving...
                     </>
                   ) : (
-                    editingProduct ? "Update Product" : "Create Product"
+                    editingProduct ? "Update Subscription" : "Create Subscription"
                   )}
                 </Button>
               </div>
@@ -740,356 +495,149 @@ const ProductsManager = () => {
         </div>
       </div>
 
-      {/* Tabs for different product types */}
-      <Tabs defaultValue="subscriptions" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="subscriptions" className="gap-2">
-            <Gift className="h-4 w-4" />
-            Subscriptions ({subscriptionProducts.length})
-          </TabsTrigger>
-          <TabsTrigger value="shopify" className="gap-2">
-            <ShoppingBag className="h-4 w-4" />
-            Shopify Products ({shopifyProducts.length})
-          </TabsTrigger>
-          <TabsTrigger value="other" className="gap-2">
-            <Package className="h-4 w-4" />
-            Other Products ({regularProducts.length})
-          </TabsTrigger>
-        </TabsList>
-
-        {/* Subscriptions Tab */}
-        <TabsContent value="subscriptions">
-          {/* Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center gap-3">
-                  <Gift className="h-8 w-8 text-accent" />
-                  <div>
-                    <p className="text-sm text-muted-foreground">Subscriptions</p>
-                    <p className="text-2xl font-bold">{subscriptionProducts.length}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center gap-3">
-                  <Eye className="h-8 w-8 text-accent" />
-                  <div>
-                    <p className="text-sm text-muted-foreground">Active</p>
-                    <p className="text-2xl font-bold">{subscriptionProducts.filter(p => p.is_active).length}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Subscription Products</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Image</TableHead>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Price</TableHead>
-                    <TableHead>Interval</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {subscriptionProducts.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                        No subscription products found. Create one using the Add Product button.
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    subscriptionProducts.map((product) => (
-                      <TableRow key={product.id}>
-                        <TableCell>
-                          {product.images && product.images.length > 0 ? (
-                            <img 
-                              src={product.images[0]} 
-                              alt={product.name}
-                              className="w-12 h-12 object-cover rounded-lg border border-border"
-                            />
-                          ) : (
-                            <div className="w-12 h-12 bg-muted rounded-lg flex items-center justify-center">
-                              <Gift className="h-5 w-5 text-muted-foreground" />
-                            </div>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          <div>
-                            <p className="font-medium">{product.name}</p>
-                            <p className="text-xs text-muted-foreground">{product.slug}</p>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <span className="font-semibold text-primary">
-                            ${(product.subscription_price || product.price).toFixed(2)}
-                          </span>
-                        </TableCell>
-                        <TableCell className="capitalize">
-                          {product.subscription_interval || "month"}ly
-                        </TableCell>
-                        <TableCell>
-                          <Badge 
-                            variant="outline" 
-                            className={product.is_active ? "text-accent border-accent/30" : "text-muted-foreground border-muted-foreground/30"}
-                          >
-                            {product.is_active ? "Active" : "Inactive"}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex gap-1">
-                            <Button variant="ghost" size="icon" onClick={() => handleEdit(product)}>
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button variant="ghost" size="icon" onClick={() => toggleActive(product)}>
-                              <Eye className={`h-4 w-4 ${product.is_active ? "text-accent" : "text-muted-foreground"}`} />
-                            </Button>
-                            <Button variant="ghost" size="icon" onClick={() => handleDelete(product.id)} className="text-destructive hover:text-destructive">
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Shopify Products Tab */}
-        <TabsContent value="shopify">
-          <div className="flex justify-between items-center mb-4">
-            <p className="text-muted-foreground">
-              These products are managed in your Shopify admin panel.
-            </p>
-            <div className="flex gap-2">
-              <Button variant="outline" size="sm" onClick={() => refetchShopify()}>
-                <RefreshCw className="h-4 w-4 mr-2" />
-                Refresh
-              </Button>
-              <Button variant="outline" size="sm" asChild>
-                <a href="https://admin.shopify.com" target="_blank" rel="noopener noreferrer">
-                  <ExternalLink className="h-4 w-4 mr-2" />
-                  Shopify Admin
-                </a>
-              </Button>
+      {/* Stats */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <Gift className="h-8 w-8 text-primary" />
+              <div>
+                <p className="text-sm text-muted-foreground">Total</p>
+                <p className="text-2xl font-bold">{products.length}</p>
+              </div>
             </div>
-          </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <Eye className="h-8 w-8 text-accent" />
+              <div>
+                <p className="text-sm text-muted-foreground">Active</p>
+                <p className="text-2xl font-bold">{activeCount}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <Star className="h-8 w-8 text-yellow-500" />
+              <div>
+                <p className="text-sm text-muted-foreground">Featured</p>
+                <p className="text-2xl font-bold">{featuredCount}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <Gift className="h-8 w-8 text-muted-foreground" />
+              <div>
+                <p className="text-sm text-muted-foreground">Inactive</p>
+                <p className="text-2xl font-bold">{products.length - activeCount}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Shopify Catalog ({shopifyProducts.length})</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {shopifyLoading ? (
-                <div className="flex items-center justify-center py-12">
-                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                </div>
-              ) : shopifyProducts.length === 0 ? (
-                <div className="text-center py-12 text-muted-foreground">
-                  <ShoppingBag className="h-12 w-12 mx-auto mb-4 opacity-30" />
-                  <p>No products in Shopify yet.</p>
-                  <p className="text-sm">Add products in your Shopify admin panel.</p>
-                </div>
+      {/* Subscriptions Table */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Subscription Products</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Image</TableHead>
+                <TableHead>Name</TableHead>
+                <TableHead>Price</TableHead>
+                <TableHead>Interval</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {products.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center py-12 text-muted-foreground">
+                    <Gift className="h-12 w-12 mx-auto mb-4 opacity-30" />
+                    <p>No subscription products found.</p>
+                    <p className="text-sm">Create one using the "Add Subscription" button above.</p>
+                  </TableCell>
+                </TableRow>
               ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Image</TableHead>
-                      <TableHead>Title</TableHead>
-                      <TableHead>Type</TableHead>
-                      <TableHead>Price</TableHead>
-                      <TableHead>Variants</TableHead>
-                      <TableHead>Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {shopifyProducts.map((product) => {
-                      const firstImage = product.node.images.edges[0]?.node;
-                      const price = parseFloat(product.node.priceRange.minVariantPrice.amount);
-                      const currencyCode = product.node.priceRange.minVariantPrice.currencyCode;
-                      const variantCount = product.node.variants.edges.length;
-
-                      return (
-                        <TableRow key={product.node.id}>
-                          <TableCell>
-                            {firstImage ? (
-                              <img 
-                                src={firstImage.url} 
-                                alt={firstImage.altText || product.node.title}
-                                className="w-12 h-12 object-cover rounded-lg border border-border"
-                              />
-                            ) : (
-                              <div className="w-12 h-12 bg-muted rounded-lg flex items-center justify-center">
-                                <ImageIcon className="h-5 w-5 text-muted-foreground" />
-                              </div>
-                            )}
-                          </TableCell>
-                          <TableCell>
-                            <div>
-                              <p className="font-medium">{product.node.title}</p>
-                              <p className="text-xs text-muted-foreground">{product.node.handle}</p>
-                            </div>
-                          </TableCell>
-                          <TableCell className="capitalize">
-                            {product.node.productType || "-"}
-                          </TableCell>
-                          <TableCell>
-                            <span className="font-semibold text-primary">
-                              {currencyCode} {price.toFixed(2)}
-                            </span>
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant="outline">{variantCount} variant{variantCount !== 1 ? "s" : ""}</Badge>
-                          </TableCell>
-                          <TableCell>
-                            <Button variant="ghost" size="sm" asChild>
-                              <a href={`/store/product/${product.node.handle}`} target="_blank" rel="noopener noreferrer">
-                                <Eye className="h-4 w-4 mr-2" />
-                                View
-                              </a>
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Other Products Tab (game items, etc.) */}
-        <TabsContent value="other">
-          <Card>
-            <CardHeader>
-              <CardTitle>Other Products ({regularProducts.length})</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Image</TableHead>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Category</TableHead>
-                    <TableHead>Price</TableHead>
-                    <TableHead>Stock</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Actions</TableHead>
+                products.map((product) => (
+                  <TableRow key={product.id}>
+                    <TableCell>
+                      {product.images && product.images.length > 0 ? (
+                        <img 
+                          src={product.images[0]} 
+                          alt={product.name}
+                          className="w-12 h-12 object-cover rounded-lg border border-border"
+                        />
+                      ) : (
+                        <div className="w-12 h-12 bg-muted rounded-lg flex items-center justify-center">
+                          <Gift className="h-5 w-5 text-muted-foreground" />
+                        </div>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <div>
+                        <p className="font-medium">{product.name}</p>
+                        <p className="text-xs text-muted-foreground">{product.slug}</p>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <span className="font-semibold text-primary">
+                        ${(product.subscription_price || product.price).toFixed(2)}
+                      </span>
+                    </TableCell>
+                    <TableCell className="capitalize">
+                      {product.subscription_interval || "month"}ly
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex gap-1 flex-wrap">
+                        <Badge 
+                          variant="outline" 
+                          className={product.is_active ? "text-accent border-accent/30" : "text-muted-foreground border-muted-foreground/30"}
+                        >
+                          {product.is_active ? "Active" : "Inactive"}
+                        </Badge>
+                        {product.is_featured && (
+                          <Badge variant="outline" className="text-yellow-500 border-yellow-500/30">
+                            <Star className="h-3 w-3 mr-1" />
+                            Featured
+                          </Badge>
+                        )}
+                        {product.waitlist_enabled && (
+                          <Badge variant="secondary">Waitlist</Badge>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex gap-1">
+                        <Button variant="ghost" size="icon" onClick={() => handleEdit(product)}>
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="icon" onClick={() => toggleActive(product)}>
+                          <Eye className={`h-4 w-4 ${product.is_active ? "text-accent" : "text-muted-foreground"}`} />
+                        </Button>
+                        <Button variant="ghost" size="icon" onClick={() => handleDelete(product.id)} className="text-destructive hover:text-destructive">
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
                   </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {regularProducts.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
-                        No products found. Create your first product above.
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    regularProducts.map((product) => (
-                      <TableRow key={product.id}>
-                        <TableCell>
-                          {product.images && product.images.length > 0 ? (
-                            <img 
-                              src={product.images[0]} 
-                              alt={product.name}
-                              className="w-12 h-12 object-cover rounded-lg border border-border"
-                            />
-                          ) : (
-                            <div className="w-12 h-12 bg-muted rounded-lg flex items-center justify-center">
-                              <ImageIcon className="h-5 w-5 text-muted-foreground" />
-                            </div>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          <div>
-                            <p className="font-medium">{product.name}</p>
-                            <p className="text-xs text-muted-foreground">{product.slug}</p>
-                          </div>
-                        </TableCell>
-                        <TableCell className="capitalize">{product.category}</TableCell>
-                        <TableCell>
-                          <div>
-                            <p>${product.price.toFixed(2)}</p>
-                            {product.compare_at_price && (
-                              <p className="text-xs text-muted-foreground line-through">
-                                ${product.compare_at_price.toFixed(2)}
-                              </p>
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell>{product.stock ?? 0}</TableCell>
-                        <TableCell>
-                          <div className="flex gap-1 flex-wrap">
-                            <Badge 
-                              variant="outline" 
-                              className={product.is_active ? "text-accent border-accent/30" : "text-destructive border-destructive/30"}
-                            >
-                              {product.is_active ? "Active" : "Inactive"}
-                            </Badge>
-                            {product.is_featured && (
-                              <Badge variant="outline" className="text-primary border-primary/30">Featured</Badge>
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex gap-1">
-                            <Button variant="ghost" size="icon" onClick={() => handleEdit(product)}>
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button variant="ghost" size="icon" onClick={() => toggleActive(product)}>
-                              <Eye className={`h-4 w-4 ${product.is_active ? "text-accent" : "text-muted-foreground"}`} />
-                            </Button>
-                            <Button variant="ghost" size="icon" onClick={() => handleDelete(product.id)} className="text-destructive hover:text-destructive">
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
-
-      {/* Preview Dialog */}
-      <Dialog open={!!previewProduct} onOpenChange={(open) => !open && setPreviewProduct(null)}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle>Product Preview</DialogTitle>
-          </DialogHeader>
-          {previewProduct && (
-            <div className="space-y-4">
-              {previewProduct.images && previewProduct.images.length > 0 && (
-                <img 
-                  src={previewProduct.images[0]} 
-                  alt={previewProduct.name}
-                  className="w-full h-64 object-cover rounded-lg"
-                />
+                ))
               )}
-              <h3 className="text-xl font-bold">{previewProduct.name}</h3>
-              <p className="text-muted-foreground">{previewProduct.description}</p>
-              <p className="text-2xl font-bold text-primary">${previewProduct.price.toFixed(2)}</p>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
     </div>
   );
 };
