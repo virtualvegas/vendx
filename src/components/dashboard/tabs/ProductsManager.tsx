@@ -104,27 +104,36 @@ const ProductsManager = () => {
   }, []);
 
   const fetchVideoGames = async () => {
-    const { data } = await supabase
-      .from("video_games")
-      .select("id, title")
-      .eq("is_active", true)
-      .order("title");
-    if (data) setVideoGames(data);
+    try {
+      const { data, error } = await supabase
+        .from("video_games")
+        .select("id, title")
+        .eq("is_active", true)
+        .order("title");
+      if (error) throw error;
+      if (data) setVideoGames(data);
+    } catch (error: any) {
+      console.error("Failed to fetch video games:", error);
+      toast.error("Failed to load video games");
+    }
   };
 
   const fetchProducts = async () => {
     setLoading(true);
-    const { data, error } = await supabase
-      .from("store_products")
-      .select("*")
-      .order("created_at", { ascending: false });
-    
-    if (error) {
-      toast.error("Failed to load products");
-    } else {
+    try {
+      const { data, error } = await supabase
+        .from("store_products")
+        .select("*")
+        .order("created_at", { ascending: false });
+      
+      if (error) throw error;
       setProducts(data || []);
+    } catch (error: any) {
+      console.error("Failed to fetch products:", error);
+      toast.error("Failed to load products");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const resetForm = () => {
@@ -299,30 +308,34 @@ const ProductsManager = () => {
   const handleDelete = async (id: string) => {
     if (!confirm("Are you sure you want to delete this product? This action cannot be undone.")) return;
     
-    const { error } = await supabase.from("store_products").delete().eq("id", id);
-    
-    if (error) {
+    try {
+      const { error } = await supabase.from("store_products").delete().eq("id", id);
+      
+      if (error) throw error;
+      
+      toast.success("Product deleted successfully");
+      fetchProducts();
+    } catch (error: any) {
+      console.error("Failed to delete product:", error);
       toast.error("Failed to delete product");
-      return;
     }
-    
-    toast.success("Product deleted successfully");
-    fetchProducts();
   };
 
   const toggleActive = async (product: Product) => {
-    const { error } = await supabase
-      .from("store_products")
-      .update({ is_active: !product.is_active })
-      .eq("id", product.id);
-    
-    if (error) {
+    try {
+      const { error } = await supabase
+        .from("store_products")
+        .update({ is_active: !product.is_active })
+        .eq("id", product.id);
+      
+      if (error) throw error;
+      
+      toast.success(product.is_active ? "Product deactivated" : "Product activated");
+      fetchProducts();
+    } catch (error: any) {
+      console.error("Failed to update product status:", error);
       toast.error("Failed to update product status");
-      return;
     }
-    
-    toast.success(product.is_active ? "Product deactivated" : "Product activated");
-    fetchProducts();
   };
 
   if (loading) {
