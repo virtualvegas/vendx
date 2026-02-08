@@ -198,10 +198,13 @@ const NodeDialog = ({ open, onOpenChange, node, locations }: NodeDialogProps) =>
 
             <div className="col-span-2">
               <Label>Link to Location</Label>
-              <Select value={formData.location_id} onValueChange={(v) => setFormData({ ...formData, location_id: v })}>
+              <Select 
+                value={formData.location_id || "none"} 
+                onValueChange={(v) => setFormData({ ...formData, location_id: v === "none" ? "" : v })}
+              >
                 <SelectTrigger><SelectValue placeholder="Select location..." /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">None</SelectItem>
+                  <SelectItem value="none">None</SelectItem>
                   {locations.map((loc: any) => (
                     <SelectItem key={loc.id} value={loc.id}>
                       {loc.name || loc.city} - {loc.city}
