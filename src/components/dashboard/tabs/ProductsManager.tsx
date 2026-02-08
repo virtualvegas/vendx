@@ -338,6 +338,13 @@ const ProductsManager = () => {
     }
   };
 
+  // Shopify products (must be before any conditional returns)
+  const {
+    products: shopifyProducts,
+    loading: shopifyLoading,
+    refetch: refetchShopify,
+  } = useShopifyProducts();
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -345,9 +352,6 @@ const ProductsManager = () => {
       </div>
     );
   }
-
-  // Shopify products
-  const { products: shopifyProducts, loading: shopifyLoading, refetch: refetchShopify } = useShopifyProducts();
 
   // Filter products
   const subscriptionProducts = products.filter(p => p.is_subscription);
