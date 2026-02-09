@@ -56,17 +56,19 @@ interface TabGroup {
 // Organized tab groups by role/function
 // Note: Users can have multiple roles and will see all tabs their roles grant access to
 const tabGroups: TabGroup[] = [
+  // === CUSTOMER TABS (Everyone) ===
   {
     id: "customer",
     label: "My Account",
     tabs: [
-      // Customer tabs are available to all authenticated users (customer role or any other role)
       { id: "my-orders", label: "My Orders", icon: Package, requiredRoles: ["customer", "business_owner", "employee_operator", "super_admin", "global_operations_manager", "regional_manager", "finance_accounting", "marketing_sales", "warehouse_logistics", "tech_support_lead", "event_manager"] },
       { id: "my-wallet", label: "My Wallet", icon: Wallet, requiredRoles: ["customer", "business_owner", "employee_operator", "super_admin", "global_operations_manager", "regional_manager", "finance_accounting", "marketing_sales", "warehouse_logistics", "tech_support_lead", "event_manager"] },
       { id: "my-tickets", label: "My Tickets", icon: Ticket, requiredRoles: ["customer", "business_owner", "employee_operator", "super_admin", "global_operations_manager", "regional_manager", "finance_accounting", "marketing_sales", "warehouse_logistics", "tech_support_lead", "event_manager"] },
       { id: "my-rewards", label: "My Rewards", icon: Gift, requiredRoles: ["customer", "business_owner", "employee_operator", "super_admin", "global_operations_manager", "regional_manager", "finance_accounting", "marketing_sales", "warehouse_logistics", "tech_support_lead", "event_manager"] },
     ],
   },
+
+  // === BUSINESS OWNER TABS ===
   {
     id: "business",
     label: "My Business",
@@ -78,6 +80,8 @@ const tabGroups: TabGroup[] = [
       { id: "business-support", label: "Support", icon: Wrench, requiredRoles: ["business_owner"] },
     ],
   },
+
+  // === EMPLOYEE/OPERATOR TABS ===
   {
     id: "field-ops",
     label: "Field Operations",
@@ -86,74 +90,126 @@ const tabGroups: TabGroup[] = [
       { id: "daily-tasks", label: "Daily Tasks", icon: CheckSquare, requiredRoles: ["super_admin", "employee_operator"] },
     ],
   },
+
+  // === ARCADE & PRIZES (Employee/Operator focus) ===
+  {
+    id: "arcade-prizes",
+    label: "Arcade & Prizes",
+    tabs: [
+      { id: "ticket-prizes", label: "Prize Catalog", icon: Gift, requiredRoles: ["super_admin", "employee_operator"] },
+      { id: "prize-inventory", label: "Prize Inventory", icon: Package, requiredRoles: ["super_admin", "warehouse_logistics", "employee_operator"] },
+      { id: "prize-wins", label: "Prize Wins Log", icon: Trophy, requiredRoles: ["super_admin", "finance_accounting", "employee_operator"] },
+    ],
+  },
+
+  // === MANAGEMENT OVERVIEW ===
   {
     id: "management",
-    label: "Management",
+    label: "Overview & Reports",
     tabs: [
       { id: "overview", label: "Dashboard", icon: LayoutDashboard, requiredRoles: ["super_admin", "global_operations_manager", "finance_accounting", "regional_manager"] },
       { id: "global-operations", label: "Global Operations", icon: Globe, requiredRoles: ["super_admin", "global_operations_manager"] },
       { id: "regional-reports", label: "Regional Reports", icon: MapPin, requiredRoles: ["super_admin", "regional_manager"] },
-      { id: "route-manager", label: "Route Manager", icon: Route, requiredRoles: ["super_admin", "global_operations_manager"] },
+      { id: "arcade-analytics", label: "Arcade Analytics", icon: BarChart3, requiredRoles: ["super_admin", "finance_accounting"] },
     ],
   },
+
+  // === MACHINES & TECHNICAL ===
   {
-    id: "operations",
-    label: "Operations",
+    id: "machines-tech",
+    label: "Machines & Technical",
     tabs: [
-      { id: "machine-registry", label: "Machines", icon: Monitor, requiredRoles: ["super_admin", "tech_support_lead"] },
+      { id: "machine-registry", label: "Machine Registry", icon: Monitor, requiredRoles: ["super_admin", "tech_support_lead"] },
       { id: "ticket-config", label: "Ticket Payouts", icon: Ticket, requiredRoles: ["super_admin"] },
-      { id: "inventory-logistics", label: "Inventory", icon: Package, requiredRoles: ["super_admin", "warehouse_logistics"] },
-      { id: "technical-support", label: "Tech Support", icon: Wrench, requiredRoles: ["super_admin", "tech_support_lead"] },
       { id: "kiosk-categories", label: "Kiosk Setup", icon: Layers, requiredRoles: ["super_admin", "tech_support_lead"] },
+      { id: "technical-support", label: "Tech Support", icon: Wrench, requiredRoles: ["super_admin", "tech_support_lead"] },
+    ],
+  },
+
+  // === ROUTES & LOGISTICS ===
+  {
+    id: "routes-logistics",
+    label: "Routes & Logistics",
+    tabs: [
+      { id: "route-manager", label: "Route Manager", icon: Route, requiredRoles: ["super_admin", "global_operations_manager"] },
+      { id: "inventory-logistics", label: "Inventory", icon: Package, requiredRoles: ["super_admin", "warehouse_logistics"] },
+    ],
+  },
+
+  // === EVENTS ===
+  {
+    id: "events-group",
+    label: "Events",
+    tabs: [
       { id: "events-rentals", label: "Events & Rentals", icon: Calendar, requiredRoles: ["super_admin", "event_manager"] },
     ],
   },
+
+  // === FINANCE & PAYOUTS ===
   {
     id: "finance-group",
-    label: "Finance",
+    label: "Finance & Payouts",
     tabs: [
-      { id: "finance", label: "Finance", icon: DollarSign, requiredRoles: ["super_admin", "finance_accounting"] },
-      { id: "arcade-analytics", label: "Arcade Analytics", icon: BarChart3, requiredRoles: ["super_admin", "finance_accounting"] },
-      { id: "prize-wins", label: "Prize Wins", icon: Trophy, requiredRoles: ["super_admin", "finance_accounting"] },
-      { id: "ticket-prizes", label: "Ticket Prizes", icon: Gift, requiredRoles: ["super_admin", "employee_operator"] },
-      { id: "prize-inventory", label: "Prize Inventory", icon: Package, requiredRoles: ["super_admin", "warehouse_logistics", "employee_operator"] },
+      { id: "finance", label: "Finance Overview", icon: DollarSign, requiredRoles: ["super_admin", "finance_accounting"] },
       { id: "vendx-pay", label: "VendX Pay", icon: Wallet, requiredRoles: ["super_admin", "finance_accounting"] },
-      { id: "payouts", label: "Payouts", icon: DollarSign, requiredRoles: ["super_admin", "finance_accounting"] },
+      { id: "payouts", label: "Partner Payouts", icon: DollarSign, requiredRoles: ["super_admin", "finance_accounting"] },
       { id: "profit-splits", label: "Profit Splits", icon: Percent, requiredRoles: ["super_admin", "finance_accounting"] },
     ],
   },
+
+  // === MARKETING & REWARDS ===
   {
     id: "marketing-group",
-    label: "Marketing & Sales",
+    label: "Marketing & Rewards",
     tabs: [
       { id: "marketing", label: "Campaigns", icon: TrendingUp, requiredRoles: ["super_admin", "marketing_sales"] },
-      { id: "rewards-manager", label: "Rewards", icon: Gift, requiredRoles: ["super_admin", "marketing_sales"] },
+      { id: "rewards-manager", label: "Rewards Program", icon: Gift, requiredRoles: ["super_admin", "marketing_sales"] },
       { id: "partner-offers", label: "Partner Offers", icon: Percent, requiredRoles: ["super_admin", "marketing_sales"] },
-      { id: "news", label: "News", icon: Newspaper, requiredRoles: ["super_admin"] },
+      { id: "quests-manager", label: "Quests", icon: Swords, requiredRoles: ["super_admin", "marketing_sales"] },
     ],
   },
+
+  // === ONLINE STORE ===
   {
     id: "store-group",
     label: "Online Store",
     tabs: [
       { id: "store-manager", label: "Orders", icon: ShoppingCart, requiredRoles: ["super_admin"] },
-      { id: "products-manager", label: "Products", icon: Package, requiredRoles: ["super_admin"] },
+      { id: "products-manager", label: "Subscriptions", icon: Package, requiredRoles: ["super_admin"] },
       { id: "waitlist-manager", label: "Waitlist", icon: Users, requiredRoles: ["super_admin"] },
       { id: "funnels", label: "Funnels", icon: GitBranch, requiredRoles: ["super_admin"] },
     ],
   },
+
+  // === CONTENT & CMS ===
+  {
+    id: "content-group",
+    label: "Content & CMS",
+    tabs: [
+      { id: "news", label: "News Articles", icon: Newspaper, requiredRoles: ["super_admin"] },
+      { id: "business-content", label: "Business Page", icon: Briefcase, requiredRoles: ["super_admin"] },
+      { id: "video-games", label: "Video Games", icon: Gamepad2, requiredRoles: ["super_admin"] },
+    ],
+  },
+
+  // === LOCATIONS & SITES ===
+  {
+    id: "locations-group",
+    label: "Locations & Sites",
+    tabs: [
+      { id: "locations", label: "Global Locations", icon: Map, requiredRoles: ["super_admin"] },
+      { id: "stands-manager", label: "Stands", icon: Store, requiredRoles: ["super_admin"] },
+      { id: "divisions-manager", label: "Divisions", icon: Layers, requiredRoles: ["super_admin"] },
+    ],
+  },
+
+  // === ADMIN SETTINGS ===
   {
     id: "admin",
     label: "Administration",
     tabs: [
-      { id: "locations", label: "Locations", icon: Map, requiredRoles: ["super_admin"] },
-      { id: "stands-manager", label: "Stands", icon: Store, requiredRoles: ["super_admin"] },
-      { id: "divisions-manager", label: "Divisions", icon: Layers, requiredRoles: ["super_admin"] },
-      { id: "business-content", label: "Business Page", icon: Briefcase, requiredRoles: ["super_admin"] },
-      { id: "quests-manager", label: "Quests", icon: Swords, requiredRoles: ["super_admin"] },
       { id: "careers", label: "Careers", icon: Briefcase, requiredRoles: ["super_admin"] },
-      { id: "video-games", label: "Games", icon: Gamepad2, requiredRoles: ["super_admin"] },
-      { id: "admin-settings", label: "Settings", icon: Settings, requiredRoles: ["super_admin"] },
+      { id: "admin-settings", label: "System Settings", icon: Settings, requiredRoles: ["super_admin"] },
     ],
   },
 ];
