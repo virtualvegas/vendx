@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Gift, Star, Wallet, Package, Percent, CheckCircle, Clock, Truck } from "lucide-react";
 import RedeemDialog from "@/components/vendx-pay/RedeemDialog";
+import { PartnerOffersSection } from "@/components/rewards";
 
 interface RewardsData {
   balance: number;
@@ -148,9 +149,9 @@ const RewardsPage = () => {
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case "completed": return <CheckCircle className="w-4 h-4 text-green-500" />;
-      case "shipped": return <Truck className="w-4 h-4 text-blue-500" />;
-      default: return <Clock className="w-4 h-4 text-yellow-500" />;
+      case "completed": return <CheckCircle className="w-4 h-4 text-primary" />;
+      case "shipped": return <Truck className="w-4 h-4 text-accent" />;
+      default: return <Clock className="w-4 h-4 text-muted-foreground" />;
     }
   };
 
@@ -213,6 +214,7 @@ const RewardsPage = () => {
           <Tabs defaultValue="catalog" className="space-y-6">
             <TabsList>
               <TabsTrigger value="catalog">Reward Catalog</TabsTrigger>
+              <TabsTrigger value="offers">Partner Offers</TabsTrigger>
               <TabsTrigger value="history">My Redemptions</TabsTrigger>
             </TabsList>
 
@@ -290,6 +292,13 @@ const RewardsPage = () => {
                   );
                 })}
               </div>
+            </TabsContent>
+
+            <TabsContent value="offers">
+              <PartnerOffersSection 
+                userPoints={rewards?.balance || 0} 
+                onPointsUpdate={handleRedeemSuccess} 
+              />
             </TabsContent>
 
             <TabsContent value="history">
