@@ -136,14 +136,6 @@ const tabGroups: TabGroup[] = [
     ],
   },
 
-  // === EVENTS ===
-  {
-    id: "events-group",
-    label: "Events",
-    tabs: [
-      { id: "events-rentals", label: "Events & Rentals", icon: Calendar, requiredRoles: ["super_admin", "event_manager"] },
-    ],
-  },
 
   // === FINANCE & PAYOUTS ===
   {
@@ -198,6 +190,7 @@ const tabGroups: TabGroup[] = [
     label: "Locations & Sites",
     tabs: [
       { id: "locations", label: "Global Locations", icon: Map, requiredRoles: ["super_admin"] },
+      { id: "events-rentals", label: "Events & Rentals", icon: Calendar, requiredRoles: ["super_admin", "event_manager"] },
       { id: "stands-manager", label: "Stands", icon: Store, requiredRoles: ["super_admin"] },
       { id: "divisions-manager", label: "Divisions", icon: Layers, requiredRoles: ["super_admin"] },
     ],
