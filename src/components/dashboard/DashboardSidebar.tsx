@@ -149,15 +149,23 @@ const tabGroups: TabGroup[] = [
     ],
   },
 
-  // === MARKETING & REWARDS ===
+  // === MARKETING & ENGAGEMENT ===
   {
     id: "marketing-group",
-    label: "Marketing & Rewards",
+    label: "Marketing & Engagement",
     tabs: [
       { id: "marketing", label: "Campaigns", icon: TrendingUp, requiredRoles: ["super_admin", "marketing_sales"] },
-      { id: "rewards-manager", label: "Rewards Program", icon: Gift, requiredRoles: ["super_admin", "marketing_sales"] },
+      { id: "rewards-manager", label: "Rewards Catalog", icon: Gift, requiredRoles: ["super_admin", "marketing_sales"] },
       { id: "partner-offers", label: "Partner Offers", icon: Percent, requiredRoles: ["super_admin", "marketing_sales"] },
-      { id: "quests-manager", label: "Quests", icon: Swords, requiredRoles: ["super_admin", "marketing_sales"] },
+    ],
+  },
+
+  // === QUESTS & GAMIFICATION ===
+  {
+    id: "quests-group",
+    label: "Quests & Gamification",
+    tabs: [
+      { id: "quests-manager", label: "Quest Builder", icon: Swords, requiredRoles: ["super_admin", "marketing_sales"] },
     ],
   },
 
