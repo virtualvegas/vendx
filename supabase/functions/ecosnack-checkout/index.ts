@@ -125,7 +125,9 @@ serve(async (req) => {
 
       const lockerCode = generateLockerCode();
 
-      // Create pending purchase
+      // Create pending purchase with 5-minute expiry
+      const expiresAt = new Date(Date.now() + 5 * 60 * 1000).toISOString();
+
       const { data: purchase } = await supabaseAdmin.from("ecosnack_locker_purchases").insert({
         machine_code,
         locker_number,
@@ -135,6 +137,7 @@ serve(async (req) => {
         payment_method: "stripe",
         payment_status: "pending",
         user_id: userId,
+        expires_at: expiresAt,
       }).select().single();
 
       const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
@@ -192,6 +195,13 @@ serve(async (req) => {
         });
       }
 
+      // If already failed, return error
+      if (purchase.payment_status === "failed") {
+        return new Response(JSON.stringify({ error: "Payment expired. Please try again." }), {
+          status: 410, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
       if (purchase.payment_status === "completed") {
         return new Response(JSON.stringify({
           success: true,
@@ -201,6 +211,21 @@ serve(async (req) => {
         }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
+      }
+
+      // Check if pending purchase has expired (5-minute window)
+      if (purchase.payment_status === "pending" && purchase.expires_at) {
+        const expiresAt = new Date(purchase.expires_at).getTime();
+        if (Date.now() > expiresAt) {
+          // Mark as failed
+          await supabaseAdmin.from("ecosnack_locker_purchases")
+            .update({ payment_status: "failed" })
+            .eq("id", purchase_id);
+
+          return new Response(JSON.stringify({ error: "Payment expired. Please try again." }), {
+            status: 410, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
       }
 
       // Verify with Stripe
