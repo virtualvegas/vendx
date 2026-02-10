@@ -51,16 +51,16 @@ const Navigation = () => {
       ],
     },
     {
-      title: "For Business",
+      title: "Locations",
       links: [
-        { name: "Partner With Us", path: "/business", icon: Briefcase },
-        { name: "Locations", path: "/locations", icon: MapPin },
+        { name: "Find Locations", path: "/locations", icon: MapPin },
         { name: "Events", path: "/locations/events", icon: Gamepad2 },
       ],
     },
     {
-      title: "Company",
+      title: "More VendX",
       links: [
+        { name: "Partner With Us", path: "/business", icon: Briefcase },
         { name: "Our Divisions", path: "/divisions", icon: Briefcase },
         { name: "About VendX", path: "/about", icon: Info },
         { name: "News", path: "/news", icon: Newspaper },
@@ -134,21 +134,46 @@ const Navigation = () => {
                   </NavigationMenuContent>
                 </NavigationMenuItem>
 
-                {/* Business Dropdown */}
+                {/* Locations Link */}
+                <NavigationMenuItem>
+                  <Link
+                    to="/locations"
+                    className={cn(
+                      "group inline-flex h-10 w-max items-center justify-center rounded-md bg-transparent px-4 py-2 text-sm font-medium transition-colors hover:bg-primary/5 hover:text-accent-foreground focus:bg-primary/5 focus:text-accent-foreground focus:outline-none",
+                      location.pathname === "/locations" && "text-primary"
+                    )}
+                  >
+                    Locations
+                  </Link>
+                </NavigationMenuItem>
+
+                {/* More VendX Dropdown */}
                 <NavigationMenuItem>
                   <NavigationMenuTrigger className="bg-transparent hover:bg-primary/5 data-[state=open]:bg-primary/10">
-                    Business
+                    More VendX
                   </NavigationMenuTrigger>
                   <NavigationMenuContent>
-                    <ul className="grid gap-3 p-4 w-[400px] bg-popover">
+                    <ul className="grid gap-3 p-4 w-[400px] md:w-[500px] md:grid-cols-2 bg-popover">
                       <NavListItem to="/business" title="Partner With Us" icon={Briefcase}>
                         Host VendX machines at your location
                       </NavListItem>
-                      <NavListItem to="/locations" title="Find Locations" icon={MapPin}>
-                        Discover VendX machines near you
+                      <NavListItem to="/divisions" title="Our Divisions" icon={Briefcase}>
+                        Explore VendX Mini, Max, Fresh, Digital & more
+                      </NavListItem>
+                      <NavListItem to="/about" title="About VendX" icon={Info}>
+                        Our mission to revolutionize vending
                       </NavListItem>
                       <NavListItem to="/locations/events" title="Events" icon={Gamepad2}>
                         Find VendX at local events
+                      </NavListItem>
+                      <NavListItem to="/news" title="News & Updates" icon={Newspaper}>
+                        Latest announcements and articles
+                      </NavListItem>
+                      <NavListItem to="/careers" title="Careers" icon={Users}>
+                        Join the VendX team
+                      </NavListItem>
+                      <NavListItem to="/contact" title="Contact Us" icon={Phone}>
+                        Get in touch with our team
                       </NavListItem>
                       <li>
                         <NavigationMenuLink asChild>
@@ -168,32 +193,6 @@ const Navigation = () => {
                           </a>
                         </NavigationMenuLink>
                       </li>
-                    </ul>
-                  </NavigationMenuContent>
-                </NavigationMenuItem>
-
-                {/* Company Dropdown */}
-                <NavigationMenuItem>
-                  <NavigationMenuTrigger className="bg-transparent hover:bg-primary/5 data-[state=open]:bg-primary/10">
-                    Company
-                  </NavigationMenuTrigger>
-                <NavigationMenuContent>
-                    <ul className="grid gap-3 p-4 w-[400px] md:w-[500px] md:grid-cols-2 bg-popover">
-                      <NavListItem to="/divisions" title="Our Divisions" icon={Briefcase}>
-                        Explore VendX Mini, Max, Fresh, Digital & more
-                      </NavListItem>
-                      <NavListItem to="/about" title="About VendX" icon={Info}>
-                        Our mission to revolutionize vending
-                      </NavListItem>
-                      <NavListItem to="/news" title="News & Updates" icon={Newspaper}>
-                        Latest announcements and articles
-                      </NavListItem>
-                      <NavListItem to="/careers" title="Careers" icon={Users}>
-                        Join the VendX team
-                      </NavListItem>
-                      <NavListItem to="/contact" title="Contact Us" icon={Phone}>
-                        Get in touch with our team
-                      </NavListItem>
                     </ul>
                   </NavigationMenuContent>
                 </NavigationMenuItem>
