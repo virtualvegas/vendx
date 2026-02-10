@@ -184,6 +184,23 @@ serve(async (req) => {
 
         await supabaseClient.from("store_order_items").insert(itemsToInsert);
         logStep("Order items created", { count: itemsToInsert.length });
+
+        // Log to synced_transactions for unified finance view
+        await supabaseClient.from("synced_transactions").insert({
+          provider: "vendx_pay",
+          provider_transaction_id: `store_${order.id}`,
+          transaction_type: "revenue",
+          amount: total,
+          currency: "usd",
+          status: "completed",
+          description: `Store order #${order.id.substring(0, 8)} (${orderItems.length} items)`,
+          customer_email: session.customer_details?.email || null,
+          customer_name: session.customer_details?.name || null,
+          transaction_date: new Date().toISOString(),
+          metadata: { source: "store", order_id: order.id, wallet_credit: walletCredit, items_count: orderItems.length },
+          synced_at: new Date().toISOString(),
+        });
+        logStep("Synced transaction logged for store order");
       }
 
       // Clear user's cart

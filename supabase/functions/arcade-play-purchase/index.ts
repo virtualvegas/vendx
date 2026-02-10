@@ -318,6 +318,22 @@ serve(async (req) => {
       }),
     });
 
+    // Log to synced_transactions for unified finance view
+    await supabase.from("synced_transactions").insert({
+      provider: "vendx_pay",
+      provider_transaction_id: `arcade_${walletTx.id}`,
+      transaction_type: "revenue",
+      amount: amount,
+      currency: "usd",
+      status: "completed",
+      description: `Arcade: ${pricingLabel} at ${machine.name}`,
+      customer_email: user.email || null,
+      customer_name: null,
+      transaction_date: new Date().toISOString(),
+      metadata: { source: "arcade", machine_code: machine.machine_code, plays, pricing_type, session_id: playSession.id },
+      synced_at: new Date().toISOString(),
+    });
+
     console.log("Arcade play purchased:", {
       user_id: user.id,
       machine: machine.machine_code,

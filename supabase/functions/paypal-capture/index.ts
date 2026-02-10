@@ -131,6 +131,22 @@ serve(async (req) => {
           reference_id: orderId,
         });
 
+      // Log to synced_transactions for unified finance view
+      await supabaseClient.from("synced_transactions").insert({
+        provider: "vendx_pay",
+        provider_transaction_id: `wallet_load_paypal_${orderId}`,
+        transaction_type: "wallet_load",
+        amount: amount,
+        currency: "usd",
+        status: "completed",
+        description: `Wallet load via PayPal - $${amount.toFixed(2)}`,
+        customer_email: null,
+        customer_name: null,
+        transaction_date: new Date().toISOString(),
+        metadata: { source: "wallet_load", payment_method: "paypal", paypal_order_id: orderId },
+        synced_at: new Date().toISOString(),
+      });
+
       console.log("Wallet updated successfully. New balance:", newBalance);
 
       return new Response(JSON.stringify({ 
@@ -241,6 +257,22 @@ serve(async (req) => {
             reference_id: order.id
           });
       }
+
+      // Log to synced_transactions for unified finance view
+      await supabaseClient.from("synced_transactions").insert({
+        provider: "vendx_pay",
+        provider_transaction_id: `store_paypal_${order.id}`,
+        transaction_type: "revenue",
+        amount: totalAmount,
+        currency: "usd",
+        status: "completed",
+        description: `Store order #${order.id.substring(0, 8)} via PayPal (${cartItems.length} items)`,
+        customer_email: captureData.payer?.email_address || null,
+        customer_name: captureData.payer?.name ? `${captureData.payer.name.given_name} ${captureData.payer.name.surname}` : null,
+        transaction_date: new Date().toISOString(),
+        metadata: { source: "store", payment_method: "paypal", order_id: order.id, paypal_order_id: orderId },
+        synced_at: new Date().toISOString(),
+      });
 
       console.log("Store order created:", order.id);
 

@@ -232,13 +232,21 @@ serve(async (req) => {
       });
     }
 
-    // Mark session as used (skip for demo mode)
-    if (!isDemoMode && sessionId) {
-      await supabase
-        .from("machine_sessions")
-        .update({ status: "used" })
-        .eq("id", sessionId);
-    }
+    // Log to synced_transactions for unified finance view
+    await supabase.from("synced_transactions").insert({
+      provider: "vendx_pay",
+      provider_transaction_id: `vend_${walletTx.id}`,
+      transaction_type: "revenue",
+      amount: amount,
+      currency: "usd",
+      status: "completed",
+      description: item_name ? `Vending: ${item_name} at ${machine.name}` : `Vending purchase at ${machine.name}`,
+      customer_email: null,
+      customer_name: null,
+      transaction_date: new Date().toISOString(),
+      metadata: { source: "vending", machine_code: machine.machine_code, wallet_tx_id: walletTx.id, points_earned: pointsEarned },
+      synced_at: new Date().toISOString(),
+    });
 
     console.log("Transaction processed:", {
       machine: machine.machine_code,
