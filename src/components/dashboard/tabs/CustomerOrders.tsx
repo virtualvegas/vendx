@@ -380,7 +380,7 @@ const CustomerOrders = () => {
                     const isFailed = purchase.payment_status === "failed";
                     const isPending = purchase.payment_status === "pending";
                     const isCompleted = purchase.payment_status === "completed";
-                    const isExpired = !isRedeemed && !isFailed && new Date(purchase.expires_at) < new Date();
+                    const isExpired = isPending && new Date(purchase.expires_at) < new Date();
                     
                     const getEcoSnackStatus = () => {
                       if (isFailed) return { label: "Failed", color: "bg-destructive/20 text-destructive" };
