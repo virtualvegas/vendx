@@ -15,8 +15,9 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 import {
   Leaf, Lock, Copy, Search, RefreshCw, AlertTriangle,
-  KeyRound, PackageCheck, Eye, Loader2, CheckCircle, XCircle, Clock,
+  KeyRound, PackageCheck, Eye, Loader2, CheckCircle, XCircle, Clock, MoreHorizontal,
 } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 const EcoSnackLockersManager = () => {
   const queryClient = useQueryClient();
@@ -118,6 +119,22 @@ const EcoSnackLockersManager = () => {
     onError: (err: any) => toast.error(err.message),
   });
 
+  // Change payment status mutation
+  const changeStatus = useMutation({
+    mutationFn: async ({ purchaseId, newStatus }: { purchaseId: string; newStatus: string }) => {
+      const { error } = await supabase
+        .from("ecosnack_locker_purchases")
+        .update({ payment_status: newStatus })
+        .eq("id", purchaseId);
+      if (error) throw error;
+    },
+    onSuccess: (_, { newStatus }) => {
+      toast.success(`Status changed to ${newStatus}`);
+      queryClient.invalidateQueries({ queryKey: ["ecosnack-purchases"] });
+    },
+    onError: (err: any) => toast.error(err.message),
+  });
+
   const copyCode = (code: string) => {
     navigator.clipboard.writeText(code);
     toast.success("Code copied!");
@@ -137,6 +154,7 @@ const EcoSnackLockersManager = () => {
   const getStatusBadge = (status: string, redeemedAt: string | null, expiresAt: string) => {
     if (redeemedAt) return <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30"><CheckCircle className="h-3 w-3 mr-1" />Redeemed</Badge>;
     if (new Date(expiresAt) < new Date()) return <Badge variant="destructive"><XCircle className="h-3 w-3 mr-1" />Expired</Badge>;
+    if (status === "failed") return <Badge variant="destructive"><XCircle className="h-3 w-3 mr-1" />Failed</Badge>;
     if (status === "completed") return <Badge className="bg-accent/20 text-accent border-accent/30"><Clock className="h-3 w-3 mr-1" />Active</Badge>;
     if (status === "pending") return <Badge variant="secondary"><Loader2 className="h-3 w-3 mr-1 animate-spin" />Pending</Badge>;
     return <Badge variant="outline">{status}</Badge>;
@@ -217,6 +235,7 @@ const EcoSnackLockersManager = () => {
             <SelectItem value="all">All Statuses</SelectItem>
             <SelectItem value="completed">Completed</SelectItem>
             <SelectItem value="pending">Pending</SelectItem>
+            <SelectItem value="failed">Failed</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -277,30 +296,44 @@ const EcoSnackLockersManager = () => {
                       {format(new Date(purchase.created_at), "MMM d, h:mm a")}
                     </TableCell>
                     <TableCell>
-                      <div className="flex gap-1">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7"
-                          onClick={() => {
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-7 w-7">
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => setSelectedPurchase(purchase)}>
+                            <Eye className="h-3.5 w-3.5 mr-2" />View Details
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => {
                             setSelectedPurchase(purchase);
                             setNewCode(purchase.locker_code);
                             setEditCodeDialog(true);
-                          }}
-                          title="Edit locker code"
-                        >
-                          <KeyRound className="h-3.5 w-3.5" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7"
-                          onClick={() => setSelectedPurchase(purchase)}
-                          title="View details"
-                        >
-                          <Eye className="h-3.5 w-3.5" />
-                        </Button>
-                      </div>
+                          }}>
+                            <KeyRound className="h-3.5 w-3.5 mr-2" />Edit Code
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => copyCode(purchase.locker_code)}>
+                            <Copy className="h-3.5 w-3.5 mr-2" />Copy Code
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          {purchase.payment_status !== "completed" && (
+                            <DropdownMenuItem onClick={() => changeStatus.mutate({ purchaseId: purchase.id, newStatus: "completed" })}>
+                              <CheckCircle className="h-3.5 w-3.5 mr-2 text-emerald-400" />Mark Completed
+                            </DropdownMenuItem>
+                          )}
+                          {purchase.payment_status !== "pending" && (
+                            <DropdownMenuItem onClick={() => changeStatus.mutate({ purchaseId: purchase.id, newStatus: "pending" })}>
+                              <Clock className="h-3.5 w-3.5 mr-2 text-yellow-400" />Mark Pending
+                            </DropdownMenuItem>
+                          )}
+                          {purchase.payment_status !== "failed" && (
+                            <DropdownMenuItem onClick={() => changeStatus.mutate({ purchaseId: purchase.id, newStatus: "failed" })}>
+                              <XCircle className="h-3.5 w-3.5 mr-2 text-destructive" />Mark Failed
+                            </DropdownMenuItem>
+                          )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </TableCell>
                   </TableRow>
                 ))}
