@@ -919,6 +919,7 @@ export type Database = {
           created_at: string
           id: string
           last_restocked: string | null
+          locker_code: string | null
           machine_id: string
           max_capacity: number
           product_name: string
@@ -934,6 +935,7 @@ export type Database = {
           created_at?: string
           id?: string
           last_restocked?: string | null
+          locker_code?: string | null
           machine_id: string
           max_capacity?: number
           product_name: string
@@ -949,6 +951,7 @@ export type Database = {
           created_at?: string
           id?: string
           last_restocked?: string | null
+          locker_code?: string | null
           machine_id?: string
           max_capacity?: number
           product_name?: string
