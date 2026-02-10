@@ -5,10 +5,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Leaf, Lock, CreditCard, Wallet, CheckCircle, Copy, Loader2, ArrowLeft, TreePine } from "lucide-react";
+import { Leaf, Lock, CreditCard, Wallet, Loader2, TreePine } from "lucide-react";
 import { toast } from "sonner";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
+import EcoSnackPostPaymentFlow from "@/components/ecosnack/EcoSnackPostPaymentFlow";
 
 interface LockerItem {
   locker_number: string;
@@ -164,42 +165,17 @@ const EcoSnackCheckoutPage = () => {
   }
 
   // Success screen
-  if (purchaseComplete && lockerCode) {
+  if (purchaseComplete && lockerCode && selectedLocker) {
     return (
       <div className="min-h-screen bg-background">
         <Navigation />
         <div className="container mx-auto px-4 pt-32 pb-16 flex items-center justify-center">
-          <Card className="max-w-md w-full border-accent/30 bg-card">
-            <CardContent className="pt-8 pb-8 text-center space-y-6">
-              <div className="w-20 h-20 mx-auto rounded-full bg-accent/20 flex items-center justify-center">
-                <CheckCircle className="h-10 w-10 text-accent" />
-              </div>
-              <div>
-                <h2 className="text-2xl font-bold text-foreground mb-1">Payment Successful!</h2>
-                <p className="text-muted-foreground">Your locker is ready to open</p>
-              </div>
-              <div className="bg-muted rounded-xl p-6 space-y-3">
-                <p className="text-sm text-muted-foreground uppercase tracking-wider">Your Locker Code</p>
-                <div className="flex items-center justify-center gap-3">
-                  <span className="text-5xl font-mono font-bold tracking-[0.3em] text-accent">
-                    {lockerCode}
-                  </span>
-                  <Button variant="ghost" size="icon" onClick={copyCode}>
-                    <Copy className="h-5 w-5" />
-                  </Button>
-                </div>
-                <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-                  <Lock className="h-4 w-4" />
-                  <span>Locker #{selectedLocker?.locker_number}</span>
-                </div>
-              </div>
-              <div className="text-sm text-muted-foreground space-y-1">
-                <p><strong className="text-foreground">{selectedLocker?.item_name}</strong></p>
-                <p>Enter the 3-digit code on the locker dial to unlock your item.</p>
-                <p className="text-xs">Code expires in 24 hours.</p>
-              </div>
-            </CardContent>
-          </Card>
+          <EcoSnackPostPaymentFlow
+            lockerCode={lockerCode}
+            lockerNumber={selectedLocker.locker_number}
+            itemName={selectedLocker.item_name}
+            machineCode={machineCode || ""}
+          />
         </div>
         <Footer />
       </div>

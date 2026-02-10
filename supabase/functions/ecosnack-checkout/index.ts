@@ -244,6 +244,7 @@ serve(async (req) => {
           locker_code: purchase.locker_code,
           locker_number: purchase.locker_number,
           item_name: purchase.item_name,
+          machine_code: purchase.machine_code,
         }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
@@ -306,6 +307,7 @@ serve(async (req) => {
             locker_code: purchase.locker_code,
             locker_number: purchase.locker_number,
             item_name: purchase.item_name,
+            machine_code: purchase.machine_code,
           }), {
             headers: { ...corsHeaders, "Content-Type": "application/json" },
           });
