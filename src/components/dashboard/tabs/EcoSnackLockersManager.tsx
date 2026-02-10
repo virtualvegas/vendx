@@ -87,6 +87,14 @@ const EcoSnackLockersManager = () => {
   // Bulk regenerate codes for a machine (restock scenario)
   const regenerateCodes = useMutation({
     mutationFn: async (machineCode: string) => {
+      // Get the machine to find its ID
+      const { data: machineRow } = await supabase
+        .from("vendx_machines")
+        .select("id")
+        .eq("machine_code", machineCode)
+        .eq("machine_type", "ecosnack")
+        .maybeSingle();
+
       // Get all active (non-redeemed, non-expired) purchases for this machine
       const { data: activePurchases, error: fetchErr } = await supabase
         .from("ecosnack_locker_purchases")
@@ -107,10 +115,18 @@ const EcoSnackLockersManager = () => {
           .eq("id", p.id);
       }
 
+      // Restore all inventory quantities for this machine back to 1 (restocked)
+      if (machineRow?.id) {
+        await supabase
+          .from("machine_inventory")
+          .update({ quantity: 1, last_restocked: new Date().toISOString() })
+          .eq("machine_id", machineRow.id);
+      }
+
       return (activePurchases || []).length;
     },
     onSuccess: (count) => {
-      toast.success(`${count} locker code(s) regenerated for restocking`);
+      toast.success(`Restocked! ${count} locker code(s) regenerated & inventory restored`);
       queryClient.invalidateQueries({ queryKey: ["ecosnack-purchases"] });
       setRestockDialog(false);
       setRestockMachineId(null);
