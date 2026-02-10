@@ -96,7 +96,12 @@ const EcoSnackCheckoutPage = () => {
           },
         });
 
-        if (error || !data?.success) {
+        if (error) {
+          const errorBody = error?.context ? await error.context.json().catch(() => null) : null;
+          toast.error(errorBody?.error || "Insufficient wallet balance. Please load funds or use a card.");
+          return;
+        }
+        if (!data?.success) {
           toast.error(data?.error || "Payment failed");
           return;
         }
