@@ -38,6 +38,7 @@ interface SyncedTransaction {
   customer_name: string | null;
   transaction_date: string;
   synced_at: string;
+  metadata: Record<string, unknown> | null;
 }
 
 interface SyncStatus {
@@ -247,6 +248,7 @@ const Finance = () => {
 
   const syncedRevenue = syncedTransactions?.filter(t => t.transaction_type === "revenue").reduce((sum, t) => sum + t.amount, 0) || 0;
   const syncedRefunds = syncedTransactions?.filter(t => t.transaction_type === "refund").reduce((sum, t) => sum + Math.abs(t.amount), 0) || 0;
+  const syncedWalletLoads = syncedTransactions?.filter(t => t.transaction_type === "wallet_load").reduce((sum, t) => sum + t.amount, 0) || 0;
 
   const isSyncing = syncMutation.isPending || 
     getStripeStatus()?.sync_status === "syncing" || 
@@ -539,13 +541,21 @@ const Finance = () => {
           </Card>
 
           {/* Synced Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium text-muted-foreground">Synced Revenue</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-2xl font-bold text-green-500">${syncedRevenue.toLocaleString()}</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">Wallet Loads</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-2xl font-bold text-blue-500">${syncedWalletLoads.toLocaleString()}</p>
               </CardContent>
             </Card>
             <Card>
@@ -572,13 +582,14 @@ const Finance = () => {
               <div className="flex items-center justify-between">
                 <CardTitle>Synced Transactions</CardTitle>
                 <Select value={providerFilter} onValueChange={setProviderFilter}>
-                  <SelectTrigger className="w-32">
+                  <SelectTrigger className="w-40">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All</SelectItem>
+                    <SelectItem value="all">All Sources</SelectItem>
                     <SelectItem value="stripe">Stripe</SelectItem>
                     <SelectItem value="paypal">PayPal</SelectItem>
+                    <SelectItem value="vendx_pay">VendX Pay</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -597,14 +608,21 @@ const Finance = () => {
                   {syncedTransactions?.map((txn) => (
                     <div key={txn.id} className="flex items-center justify-between border-b border-border pb-3">
                       <div className="flex-1">
-                        <div className="flex items-center gap-3">
-                          <Badge variant={txn.provider === "stripe" ? "default" : "secondary"}>
-                            {txn.provider}
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <Badge variant={txn.provider === "stripe" ? "default" : txn.provider === "vendx_pay" ? "outline" : "secondary"}>
+                            {txn.provider === "vendx_pay" ? "VendX Pay" : txn.provider}
                           </Badge>
+                          {txn.metadata && typeof txn.metadata === "object" && (txn.metadata as any).source && (
+                            <Badge variant="outline" className="text-xs capitalize">
+                              {(txn.metadata as any).source}
+                            </Badge>
+                          )}
                           <span className={`text-xs px-2 py-1 rounded-full ${
-                            txn.transaction_type === "revenue" ? "bg-green-500/10 text-green-500" : "bg-red-500/10 text-red-500"
+                            txn.transaction_type === "revenue" ? "bg-green-500/10 text-green-500" : 
+                            txn.transaction_type === "wallet_load" ? "bg-blue-500/10 text-blue-500" :
+                            "bg-red-500/10 text-red-500"
                           }`}>
-                            {txn.transaction_type}
+                            {txn.transaction_type === "wallet_load" ? "wallet load" : txn.transaction_type}
                           </span>
                           <Badge variant="outline" className="text-xs">
                             {txn.status}

@@ -105,6 +105,22 @@ serve(async (req) => {
           console.error("Error creating transaction:", txError);
         }
 
+        // Log to synced_transactions for unified finance view
+        await supabase.from("synced_transactions").insert({
+          provider: "vendx_pay",
+          provider_transaction_id: `wallet_load_${session.payment_intent || session.id}`,
+          transaction_type: "wallet_load",
+          amount: amount,
+          currency: "usd",
+          status: "completed",
+          description: `Wallet load via Stripe - $${amount.toFixed(2)}`,
+          customer_email: null,
+          customer_name: null,
+          transaction_date: new Date().toISOString(),
+          metadata: { source: "wallet_load", payment_method: "stripe", stripe_session_id: session.id },
+          synced_at: new Date().toISOString(),
+        });
+
         console.log("Wallet loaded successfully. New balance:", newBalance);
       }
     } else if (event.type === "charge.refunded") {

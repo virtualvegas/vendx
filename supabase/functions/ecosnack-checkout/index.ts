@@ -79,6 +79,22 @@ serve(async (req) => {
         user_id: userData.user.id,
       }).select().single();
 
+      // Log to synced_transactions for unified finance view
+      await supabaseAdmin.from("synced_transactions").insert({
+        provider: "vendx_pay",
+        provider_transaction_id: `ecosnack_${purchase?.id || crypto.randomUUID()}`,
+        transaction_type: "revenue",
+        amount: amount,
+        currency: "usd",
+        status: "completed",
+        description: `EcoSnack: ${item_name} (Locker ${locker_number}) at ${machine_code}`,
+        customer_email: userData.user.email || null,
+        customer_name: null,
+        transaction_date: new Date().toISOString(),
+        metadata: { source: "ecosnack", machine_code, locker_number, purchase_id: purchase?.id },
+        synced_at: new Date().toISOString(),
+      });
+
       return new Response(JSON.stringify({
         success: true,
         locker_code: lockerCode,
@@ -198,6 +214,22 @@ serve(async (req) => {
           await supabaseAdmin.from("ecosnack_locker_purchases")
             .update({ payment_status: "completed" })
             .eq("id", purchase_id);
+
+          // Log to synced_transactions for unified finance view
+          await supabaseAdmin.from("synced_transactions").insert({
+            provider: "stripe",
+            provider_transaction_id: `ecosnack_stripe_${purchase_id}`,
+            transaction_type: "revenue",
+            amount: purchase.amount,
+            currency: "usd",
+            status: "completed",
+            description: `EcoSnack: ${purchase.item_name} (Locker ${purchase.locker_number}) at ${purchase.machine_code}`,
+            customer_email: null,
+            customer_name: null,
+            transaction_date: new Date().toISOString(),
+            metadata: { source: "ecosnack", machine_code: purchase.machine_code, locker_number: purchase.locker_number, purchase_id },
+            synced_at: new Date().toISOString(),
+          });
 
           return new Response(JSON.stringify({
             success: true,
