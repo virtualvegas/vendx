@@ -29,6 +29,9 @@ const EcoSnackLockersManager = () => {
   const [restockDialog, setRestockDialog] = useState(false);
   const [restockMachineId, setRestockMachineId] = useState<string | null>(null);
   const [restockNotes, setRestockNotes] = useState("");
+  const [activeTab, setActiveTab] = useState("purchases");
+  const [selectedCodeMachine, setSelectedCodeMachine] = useState<string>("");
+  const [editingSlot, setEditingSlot] = useState<{ id: string; code: string } | null>(null);
 
   // Fetch all EcoSnack purchases
   const { data: purchases, isLoading } = useQuery({
@@ -64,7 +67,64 @@ const EcoSnackLockersManager = () => {
     },
   });
 
-  // Update locker code mutation
+  // Fetch inventory slots with locker codes for selected machine
+  const { data: inventorySlots, isLoading: slotsLoading } = useQuery({
+    queryKey: ["ecosnack-inventory-slots", selectedCodeMachine],
+    queryFn: async () => {
+      if (!selectedCodeMachine) return [];
+      const { data, error } = await supabase
+        .from("machine_inventory")
+        .select("id, slot_number, product_name, quantity, locker_code")
+        .eq("machine_id", selectedCodeMachine)
+        .order("slot_number");
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!selectedCodeMachine,
+  });
+
+  // Update locker code on inventory slot
+  const updateSlotCode = useMutation({
+    mutationFn: async ({ slotId, code }: { slotId: string; code: string }) => {
+      const finalCode = code.trim() === "" ? null : code;
+      if (finalCode && !/^\d{3}$/.test(finalCode)) throw new Error("Code must be exactly 3 digits");
+      const { error } = await supabase
+        .from("machine_inventory")
+        .update({ locker_code: finalCode } as any)
+        .eq("id", slotId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Locker code saved");
+      queryClient.invalidateQueries({ queryKey: ["ecosnack-inventory-slots"] });
+      setEditingSlot(null);
+    },
+    onError: (err: any) => toast.error(err.message),
+  });
+
+  // Bulk set all codes for a machine
+  const bulkSetCodes = useMutation({
+    mutationFn: async (machineId: string) => {
+      const { data: slots, error } = await supabase
+        .from("machine_inventory")
+        .select("id")
+        .eq("machine_id", machineId);
+      if (error) throw error;
+      for (const slot of slots || []) {
+        const code = String(Math.floor(100 + Math.random() * 900));
+        await supabase
+          .from("machine_inventory")
+          .update({ locker_code: code } as any)
+          .eq("id", slot.id);
+      }
+      return (slots || []).length;
+    },
+    onSuccess: (count) => {
+      toast.success(`Generated codes for ${count} slots`);
+      queryClient.invalidateQueries({ queryKey: ["ecosnack-inventory-slots"] });
+    },
+    onError: (err: any) => toast.error(err.message),
+  });
   const updateCode = useMutation({
     mutationFn: async ({ purchaseId, code }: { purchaseId: string; code: string }) => {
       if (!/^\d{3}$/.test(code)) throw new Error("Code must be exactly 3 digits");
@@ -203,6 +263,14 @@ const EcoSnackLockersManager = () => {
           Restock Machine
         </Button>
       </div>
+
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList>
+          <TabsTrigger value="purchases">Purchases</TabsTrigger>
+          <TabsTrigger value="locker-codes">Pre-Set Locker Codes</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="purchases" className="space-y-6 mt-4">
 
       {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
@@ -358,6 +426,138 @@ const EcoSnackLockersManager = () => {
           )}
         </CardContent>
       </Card>
+        </TabsContent>
+
+        <TabsContent value="locker-codes" className="space-y-6 mt-4">
+          <Card className="border-border bg-card">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <KeyRound className="h-5 w-5 text-accent" />
+                Pre-Set Locker Codes
+              </CardTitle>
+              <p className="text-sm text-muted-foreground">
+                Set locker codes on inventory slots before customers purchase. The checkout will use these codes instead of generating random ones.
+              </p>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex flex-wrap gap-3 items-end">
+                <div className="flex-1 min-w-[200px] space-y-2">
+                  <Label>Select Machine</Label>
+                  <Select value={selectedCodeMachine} onValueChange={setSelectedCodeMachine}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Choose EcoSnack machine..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {(ecosnackMachines || []).map((m: any) => (
+                        <SelectItem key={m.id} value={m.id}>
+                          {m.name} ({m.machine_code}) — {(m.location as any)?.name || (m.location as any)?.city || "Unknown"}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                {selectedCodeMachine && (
+                  <Button
+                    variant="outline"
+                    onClick={() => bulkSetCodes.mutate(selectedCodeMachine)}
+                    disabled={bulkSetCodes.isPending}
+                    className="border-accent/50 text-accent hover:bg-accent/10"
+                  >
+                    {bulkSetCodes.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <RefreshCw className="h-4 w-4 mr-2" />}
+                    Auto-Generate All Codes
+                  </Button>
+                )}
+              </div>
+
+              {selectedCodeMachine && (
+                slotsLoading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="h-6 w-6 animate-spin text-accent" />
+                  </div>
+                ) : (inventorySlots || []).length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <PackageCheck className="h-10 w-10 mx-auto mb-2 opacity-50" />
+                    <p>No inventory slots found for this machine. Add inventory first.</p>
+                  </div>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Slot</TableHead>
+                        <TableHead>Product</TableHead>
+                        <TableHead>Stock</TableHead>
+                        <TableHead>Locker Code</TableHead>
+                        <TableHead>Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {(inventorySlots || []).map((slot: any) => (
+                        <TableRow key={slot.id}>
+                          <TableCell>
+                            <Badge variant="outline">#{(slot.slot_number || "?").toString().padStart(2, "0")}</Badge>
+                          </TableCell>
+                          <TableCell className="font-medium">{slot.product_name}</TableCell>
+                          <TableCell>
+                            <Badge variant={slot.quantity > 0 ? "default" : "destructive"}>
+                              {slot.quantity > 0 ? "In Stock" : "Sold"}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            {editingSlot?.id === slot.id ? (
+                              <Input
+                                value={editingSlot.code}
+                                onChange={(e) => {
+                                  const val = e.target.value.replace(/\D/g, "").slice(0, 3);
+                                  setEditingSlot({ ...editingSlot, code: val });
+                                }}
+                                placeholder="3 digits"
+                                maxLength={3}
+                                className="w-24 text-center font-mono tracking-wider"
+                                autoFocus
+                              />
+                            ) : (
+                              <span className={`font-mono font-bold tracking-wider ${slot.locker_code ? "text-accent" : "text-muted-foreground italic"}`}>
+                                {slot.locker_code || "Not set"}
+                              </span>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            {editingSlot?.id === slot.id ? (
+                              <div className="flex gap-1">
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => updateSlotCode.mutate({ slotId: slot.id, code: editingSlot.code })}
+                                  disabled={updateSlotCode.isPending}
+                                  className="text-accent"
+                                >
+                                  {updateSlotCode.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CheckCircle className="h-3.5 w-3.5" />}
+                                </Button>
+                                <Button size="sm" variant="ghost" onClick={() => setEditingSlot(null)}>
+                                  <XCircle className="h-3.5 w-3.5" />
+                                </Button>
+                              </div>
+                            ) : (
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => setEditingSlot({ id: slot.id, code: slot.locker_code || "" })}
+                              >
+                                <KeyRound className="h-3.5 w-3.5 mr-1" />
+                                {slot.locker_code ? "Edit" : "Set Code"}
+                              </Button>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
 
       {/* Edit Code Dialog */}
       <Dialog open={editCodeDialog} onOpenChange={(open) => { setEditCodeDialog(open); if (!open) setSelectedPurchase(null); }}>
@@ -484,7 +684,7 @@ const EcoSnackLockersManager = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Detail View (when purchase selected but not editing code) */}
+      {/* Detail View */}
       {selectedPurchase && !editCodeDialog && (
         <Dialog open={!!selectedPurchase} onOpenChange={(open) => { if (!open) setSelectedPurchase(null); }}>
           <DialogContent>

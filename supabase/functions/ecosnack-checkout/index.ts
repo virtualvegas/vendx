@@ -53,7 +53,19 @@ serve(async (req) => {
         });
       }
 
-      const lockerCode = generateLockerCode();
+      // Check for pre-set locker code from inventory
+      let lockerCode = generateLockerCode();
+      if (machineRow?.id) {
+        const { data: inventorySlot } = await supabaseAdmin
+          .from("machine_inventory")
+          .select("locker_code")
+          .eq("machine_id", machineRow.id)
+          .eq("slot_number", locker_number)
+          .maybeSingle();
+        if (inventorySlot?.locker_code) {
+          lockerCode = inventorySlot.locker_code;
+        }
+      }
 
       // Deduct wallet
       await supabaseAdmin.from("wallets").update({ balance: wallet.balance - amount }).eq("id", wallet.id);
@@ -141,8 +153,6 @@ serve(async (req) => {
         userEmail = userData.user?.email;
       }
 
-      const lockerCode = generateLockerCode();
-
       // Get machine ID for inventory update
       const { data: machineRow } = await supabaseAdmin
         .from("vendx_machines")
@@ -150,6 +160,20 @@ serve(async (req) => {
         .eq("machine_code", machine_code)
         .eq("machine_type", "ecosnack")
         .maybeSingle();
+
+      // Check for pre-set locker code from inventory
+      let lockerCode = generateLockerCode();
+      if (machineRow?.id) {
+        const { data: inventorySlot } = await supabaseAdmin
+          .from("machine_inventory")
+          .select("locker_code")
+          .eq("machine_id", machineRow.id)
+          .eq("slot_number", locker_number)
+          .maybeSingle();
+        if (inventorySlot?.locker_code) {
+          lockerCode = inventorySlot.locker_code;
+        }
+      }
 
       // Create pending purchase with 5-minute expiry
       const expiresAt = new Date(Date.now() + 5 * 60 * 1000).toISOString();
