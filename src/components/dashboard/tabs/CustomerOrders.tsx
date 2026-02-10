@@ -377,7 +377,21 @@ const CustomerOrders = () => {
                 <div className="space-y-4">
                   {ecosnackPurchases.map((purchase) => {
                     const isRedeemed = !!purchase.redeemed_at;
-                    const isExpired = !isRedeemed && new Date(purchase.expires_at) < new Date();
+                    const isFailed = purchase.payment_status === "failed";
+                    const isPending = purchase.payment_status === "pending";
+                    const isCompleted = purchase.payment_status === "completed";
+                    const isExpired = !isRedeemed && !isFailed && new Date(purchase.expires_at) < new Date();
+                    
+                    const getEcoSnackStatus = () => {
+                      if (isFailed) return { label: "Failed", color: "bg-destructive/20 text-destructive" };
+                      if (isRedeemed) return { label: "Redeemed", color: "bg-green-500/20 text-green-400" };
+                      if (isExpired) return { label: "Expired", color: "bg-destructive/20 text-destructive" };
+                      if (isPending) return { label: "Pending", color: "bg-yellow-500/20 text-yellow-400" };
+                      if (isCompleted) return { label: "Active", color: "bg-accent/20 text-accent" };
+                      return { label: purchase.payment_status, color: "bg-muted text-muted-foreground" };
+                    };
+                    const status = getEcoSnackStatus();
+                    
                     return (
                       <div key={purchase.id} className="flex items-center justify-between p-4 border border-border rounded-lg">
                         <div className="flex items-center gap-4">
@@ -393,19 +407,22 @@ const CustomerOrders = () => {
                               <Calendar className="w-3 h-3" />
                               {format(new Date(purchase.created_at), "MMM d, yyyy h:mm a")}
                             </p>
+                            <p className="text-xs text-muted-foreground">
+                              via {purchase.payment_method === "wallet" ? "VendX Pay" : "Card"}
+                            </p>
                           </div>
                         </div>
                         <div className="text-right">
                           <p className="font-bold text-foreground">${Number(purchase.amount).toFixed(2)}</p>
-                          {!isRedeemed && !isExpired && (
+                          {isCompleted && !isRedeemed && !isExpired && (
                             <div className="mt-1">
                               <Badge variant="outline" className="font-mono text-primary border-primary/30">
                                 Code: {purchase.locker_code}
                               </Badge>
                             </div>
                           )}
-                          <Badge className={isRedeemed ? "bg-green-500/20 text-green-400" : isExpired ? "bg-destructive/20 text-destructive" : "bg-yellow-500/20 text-yellow-400"}>
-                            {isRedeemed ? "Redeemed" : isExpired ? "Expired" : "Active"}
+                          <Badge className={status.color}>
+                            {status.label}
                           </Badge>
                         </div>
                       </div>
