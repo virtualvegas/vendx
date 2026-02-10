@@ -134,7 +134,8 @@ const tabGroups: TabGroup[] = [
     label: "Routes & Logistics",
     tabs: [
       { id: "route-manager", label: "Route Manager", icon: Route, requiredRoles: ["super_admin", "global_operations_manager"] },
-      { id: "inventory-logistics", label: "Inventory", icon: Package, requiredRoles: ["super_admin", "warehouse_logistics"] },
+      { id: "inventory-logistics", label: "Warehouse", icon: Package, requiredRoles: ["super_admin", "warehouse_logistics"] },
+      { id: "machine-inventory", label: "Machine Inventory", icon: Monitor, requiredRoles: ["super_admin", "warehouse_logistics", "employee_operator"] },
     ],
   },
 

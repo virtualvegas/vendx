@@ -50,6 +50,7 @@ import PrizeWinsManager from "@/components/dashboard/tabs/PrizeWinsManager";
 import TicketPrizesManager from "@/components/dashboard/tabs/TicketPrizesManager";
 import PrizeInventoryManager from "@/components/dashboard/tabs/PrizeInventoryManager";
 import EcoSnackLockersManager from "@/components/dashboard/tabs/EcoSnackLockersManager";
+import MachineInventoryManager from "@/components/dashboard/tabs/MachineInventoryManager";
 export type AppRole =
   | "super_admin"
   | "global_operations_manager"
@@ -281,6 +282,8 @@ const DashboardPage = () => {
         return <PrizeInventoryManager />;
       case "ecosnack-lockers":
         return <EcoSnackLockersManager />;
+      case "machine-inventory":
+        return <MachineInventoryManager />;
       default:
         return <CustomerOrders />;
     }
