@@ -1,4 +1,4 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@14.21.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
@@ -67,6 +67,14 @@ serve(async (req) => {
         status: "completed",
       });
 
+      // Get machine ID for inventory update
+      const { data: machineRow } = await supabaseAdmin
+        .from("vendx_machines")
+        .select("id")
+        .eq("machine_code", machine_code)
+        .eq("machine_type", "ecosnack")
+        .maybeSingle();
+
       // Create purchase record
       const { data: purchase } = await supabaseAdmin.from("ecosnack_locker_purchases").insert({
         machine_code,
@@ -77,7 +85,17 @@ serve(async (req) => {
         payment_method: "wallet",
         payment_status: "completed",
         user_id: userData.user.id,
+        machine_id: machineRow?.id || null,
       }).select().single();
+
+      // Decrement inventory so locker shows as sold
+      if (machineRow?.id) {
+        await supabaseAdmin
+          .from("machine_inventory")
+          .update({ quantity: 0 })
+          .eq("machine_id", machineRow.id)
+          .eq("slot_number", locker_number);
+      }
 
       // Log to synced_transactions for unified finance view
       await supabaseAdmin.from("synced_transactions").insert({
@@ -125,6 +143,14 @@ serve(async (req) => {
 
       const lockerCode = generateLockerCode();
 
+      // Get machine ID for inventory update
+      const { data: machineRow } = await supabaseAdmin
+        .from("vendx_machines")
+        .select("id")
+        .eq("machine_code", machine_code)
+        .eq("machine_type", "ecosnack")
+        .maybeSingle();
+
       // Create pending purchase with 5-minute expiry
       const expiresAt = new Date(Date.now() + 5 * 60 * 1000).toISOString();
 
@@ -138,7 +164,17 @@ serve(async (req) => {
         payment_status: "pending",
         user_id: userId,
         expires_at: expiresAt,
+        machine_id: machineRow?.id || null,
       }).select().single();
+
+      // Decrement inventory immediately so no one else can buy this locker
+      if (machineRow?.id) {
+        await supabaseAdmin
+          .from("machine_inventory")
+          .update({ quantity: 0 })
+          .eq("machine_id", machineRow.id)
+          .eq("slot_number", locker_number);
+      }
 
       const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
         apiVersion: "2023-10-16",
@@ -221,6 +257,15 @@ serve(async (req) => {
           await supabaseAdmin.from("ecosnack_locker_purchases")
             .update({ payment_status: "failed" })
             .eq("id", purchase_id);
+
+          // Restore inventory so locker becomes available again
+          if (purchase.machine_id) {
+            await supabaseAdmin
+              .from("machine_inventory")
+              .update({ quantity: 1 })
+              .eq("machine_id", purchase.machine_id)
+              .eq("slot_number", purchase.locker_number);
+          }
 
           return new Response(JSON.stringify({ error: "Payment expired. Please try again." }), {
             status: 410, headers: { ...corsHeaders, "Content-Type": "application/json" },
