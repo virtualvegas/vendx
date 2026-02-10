@@ -413,6 +413,68 @@ export type Database = {
         }
         Relationships: []
       }
+      ecosnack_locker_purchases: {
+        Row: {
+          amount: number
+          created_at: string
+          expires_at: string
+          id: string
+          item_name: string
+          locker_code: string
+          locker_number: string
+          machine_code: string
+          machine_id: string | null
+          payment_method: string
+          payment_status: string
+          redeemed_at: string | null
+          stripe_session_id: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          expires_at?: string
+          id?: string
+          item_name: string
+          locker_code: string
+          locker_number: string
+          machine_code: string
+          machine_id?: string | null
+          payment_method?: string
+          payment_status?: string
+          redeemed_at?: string | null
+          stripe_session_id?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          expires_at?: string
+          id?: string
+          item_name?: string
+          locker_code?: string
+          locker_number?: string
+          machine_code?: string
+          machine_id?: string | null
+          payment_method?: string
+          payment_status?: string
+          redeemed_at?: string | null
+          stripe_session_id?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ecosnack_locker_purchases_machine_id_fkey"
+            columns: ["machine_id"]
+            isOneToOne: false
+            referencedRelation: "vendx_machines"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       events: {
         Row: {
           contact_email: string | null
