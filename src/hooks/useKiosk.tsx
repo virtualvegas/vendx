@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { PurchaseResult } from "@/components/kiosk/KioskSuccess";
 
-export type MachineType = "arcade" | "claw" | "snack" | "beverage" | "combo" | "fresh" | "digital" | "other";
+export type MachineType = "arcade" | "claw" | "snack" | "beverage" | "combo" | "fresh" | "digital" | "ecosnack" | "other";
 
 export interface KioskMachineInfo {
   id: string;

@@ -8,6 +8,7 @@ export const MACHINE_TYPES = [
   { value: "digital", label: "Digital Kiosk" },
   { value: "claw", label: "Claw Machine" },
   { value: "arcade", label: "Arcade" },
+  { value: "ecosnack", label: "EcoSnack" },
   { value: "other", label: "Other" },
 ] as const;
 

@@ -41,6 +41,8 @@ import NotFound from "./pages/NotFound";
 import BusinessPage from "./pages/BusinessPage";
 import TicketRedemptionPage from "./pages/TicketRedemptionPage";
 import ArcadePayPage from "./pages/ArcadePayPage";
+import EcoSnackCheckoutPage from "./pages/EcoSnackCheckoutPage";
+import EcoSnackSuccessPage from "./pages/EcoSnackSuccessPage";
 
 const queryClient = new QueryClient();
 
@@ -106,6 +108,8 @@ const App = () => (
               <Route path="/news/:slug" element={<NewsArticlePage />} />
               <Route path="/quests" element={<QuestsPage />} />
               <Route path="/tickets/redeem" element={<TicketRedemptionPage />} />
+              <Route path="/ecosnack/:machineCode" element={<EcoSnackCheckoutPage />} />
+              <Route path="/ecosnack/success" element={<EcoSnackSuccessPage />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
