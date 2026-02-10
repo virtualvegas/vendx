@@ -32,6 +32,7 @@ import {
   Ticket,
   BarChart3,
   Trophy,
+  Leaf,
 } from "lucide-react";
 import { AppRole } from "@/pages/DashboardPage";
 import { cn } from "@/lib/utils";
@@ -120,6 +121,7 @@ const tabGroups: TabGroup[] = [
     label: "Machines & Technical",
     tabs: [
       { id: "machine-registry", label: "Machine Registry", icon: Monitor, requiredRoles: ["super_admin", "tech_support_lead"] },
+      { id: "ecosnack-lockers", label: "EcoSnack Lockers", icon: Leaf, requiredRoles: ["super_admin", "employee_operator", "tech_support_lead"] },
       { id: "ticket-config", label: "Ticket Payouts", icon: Ticket, requiredRoles: ["super_admin"] },
       { id: "kiosk-categories", label: "Kiosk Setup", icon: Layers, requiredRoles: ["super_admin", "tech_support_lead"] },
       { id: "technical-support", label: "Tech Support", icon: Wrench, requiredRoles: ["super_admin", "tech_support_lead"] },
