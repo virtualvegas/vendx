@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import Navigation from "@/components/Navigation";
 import StarField from "@/components/StarField";
@@ -22,7 +23,7 @@ import {
   SiAppletv,
 } from "react-icons/si";
 import { FaAmazon, FaFilm } from "react-icons/fa";
-import { Music, ExternalLink, Play, Filter, Film, Disc3 } from "lucide-react";
+import { Music, ExternalLink, Play, Filter, Film, Disc3, ShoppingCart } from "lucide-react";
 
 interface MediaRelease {
   id: string;
@@ -145,9 +146,21 @@ const MediaPage = () => {
             <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-4">
               VendX Music & Film
             </h1>
-            <p className="text-muted-foreground max-w-2xl mx-auto mb-8">
+            <p className="text-muted-foreground max-w-2xl mx-auto mb-6">
               Discover original music and films from VendX — available on all major streaming and purchase platforms
             </p>
+            <div className="flex items-center justify-center gap-3 mb-8">
+              <Link to="/media/shop">
+                <Button variant="outline" className="gap-2">
+                  <ShoppingCart className="w-4 h-4" /> Merch Shop
+                </Button>
+              </Link>
+              <Link to="/media/track-shop">
+                <Button variant="outline" className="gap-2">
+                  <Music className="w-4 h-4" /> Track Shop
+                </Button>
+              </Link>
+            </div>
 
             {/* Type Filter */}
             <Tabs value={mediaFilter} onValueChange={(v) => setMediaFilter(v as typeof mediaFilter)} className="inline-flex">

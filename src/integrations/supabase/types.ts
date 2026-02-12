@@ -188,6 +188,137 @@ export type Database = {
         }
         Relationships: []
       }
+      beat_purchases: {
+        Row: {
+          amount: number
+          beat_id: string
+          created_at: string
+          download_count: number | null
+          download_expires_at: string | null
+          download_token: string | null
+          email: string
+          id: string
+          payment_method: string
+          payment_status: string
+          stripe_session_id: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          amount: number
+          beat_id: string
+          created_at?: string
+          download_count?: number | null
+          download_expires_at?: string | null
+          download_token?: string | null
+          email: string
+          id?: string
+          payment_method?: string
+          payment_status?: string
+          stripe_session_id?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          amount?: number
+          beat_id?: string
+          created_at?: string
+          download_count?: number | null
+          download_expires_at?: string | null
+          download_token?: string | null
+          email?: string
+          id?: string
+          payment_method?: string
+          payment_status?: string
+          stripe_session_id?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "beat_purchases_beat_id_fkey"
+            columns: ["beat_id"]
+            isOneToOne: false
+            referencedRelation: "beat_tracks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      beat_tracks: {
+        Row: {
+          bpm: number | null
+          cover_image_url: string | null
+          created_at: string
+          description: string | null
+          display_order: number | null
+          duration_seconds: number | null
+          full_file_url: string | null
+          genre: string[] | null
+          id: string
+          is_active: boolean | null
+          is_featured: boolean | null
+          key: string | null
+          license_type: string | null
+          play_count: number | null
+          preview_url: string | null
+          price: number
+          producer: string | null
+          purchase_count: number | null
+          slug: string
+          tags: string[] | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          bpm?: number | null
+          cover_image_url?: string | null
+          created_at?: string
+          description?: string | null
+          display_order?: number | null
+          duration_seconds?: number | null
+          full_file_url?: string | null
+          genre?: string[] | null
+          id?: string
+          is_active?: boolean | null
+          is_featured?: boolean | null
+          key?: string | null
+          license_type?: string | null
+          play_count?: number | null
+          preview_url?: string | null
+          price?: number
+          producer?: string | null
+          purchase_count?: number | null
+          slug: string
+          tags?: string[] | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          bpm?: number | null
+          cover_image_url?: string | null
+          created_at?: string
+          description?: string | null
+          display_order?: number | null
+          duration_seconds?: number | null
+          full_file_url?: string | null
+          genre?: string[] | null
+          id?: string
+          is_active?: boolean | null
+          is_featured?: boolean | null
+          key?: string | null
+          license_type?: string | null
+          play_count?: number | null
+          preview_url?: string | null
+          price?: number
+          producer?: string | null
+          purchase_count?: number | null
+          slug?: string
+          tags?: string[] | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       business_benefits: {
         Row: {
           created_at: string
@@ -1367,6 +1498,74 @@ export type Database = {
           youtube_url?: string | null
         }
         Relationships: []
+      }
+      media_shop_products: {
+        Row: {
+          compare_at_price: number | null
+          created_at: string
+          description: string | null
+          display_order: number | null
+          file_url: string | null
+          id: string
+          image_url: string | null
+          is_active: boolean | null
+          is_featured: boolean | null
+          media_release_id: string | null
+          price: number
+          product_type: string
+          slug: string
+          stock_quantity: number | null
+          tags: string[] | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          compare_at_price?: number | null
+          created_at?: string
+          description?: string | null
+          display_order?: number | null
+          file_url?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          is_featured?: boolean | null
+          media_release_id?: string | null
+          price?: number
+          product_type: string
+          slug: string
+          stock_quantity?: number | null
+          tags?: string[] | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          compare_at_price?: number | null
+          created_at?: string
+          description?: string | null
+          display_order?: number | null
+          file_url?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          is_featured?: boolean | null
+          media_release_id?: string | null
+          price?: number
+          product_type?: string
+          slug?: string
+          stock_quantity?: number | null
+          tags?: string[] | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "media_shop_products_media_release_id_fkey"
+            columns: ["media_release_id"]
+            isOneToOne: false
+            referencedRelation: "media_releases"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       metrics: {
         Row: {
