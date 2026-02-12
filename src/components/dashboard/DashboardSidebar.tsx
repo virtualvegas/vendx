@@ -18,6 +18,7 @@ import {
   Navigation,
   ShoppingCart,
   Gamepad2,
+  Disc3,
   LayoutDashboard,
   Building2,
   Layers,
@@ -192,6 +193,7 @@ const tabGroups: TabGroup[] = [
       { id: "news", label: "News Articles", icon: Newspaper, requiredRoles: ["super_admin"] },
       { id: "business-content", label: "Business Page", icon: Briefcase, requiredRoles: ["super_admin"] },
       { id: "video-games", label: "Video Games", icon: Gamepad2, requiredRoles: ["super_admin"] },
+      { id: "media-manager", label: "Music & Film", icon: Disc3, requiredRoles: ["super_admin"] },
     ],
   },
 

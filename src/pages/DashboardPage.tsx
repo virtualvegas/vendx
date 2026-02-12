@@ -51,6 +51,7 @@ import TicketPrizesManager from "@/components/dashboard/tabs/TicketPrizesManager
 import PrizeInventoryManager from "@/components/dashboard/tabs/PrizeInventoryManager";
 import EcoSnackLockersManager from "@/components/dashboard/tabs/EcoSnackLockersManager";
 import MachineInventoryManager from "@/components/dashboard/tabs/MachineInventoryManager";
+import MediaManager from "@/components/dashboard/tabs/MediaManager";
 export type AppRole =
   | "super_admin"
   | "global_operations_manager"
@@ -284,6 +285,8 @@ const DashboardPage = () => {
         return <EcoSnackLockersManager />;
       case "machine-inventory":
         return <MachineInventoryManager />;
+      case "media-manager":
+        return <MediaManager />;
       default:
         return <CustomerOrders />;
     }

@@ -1248,6 +1248,126 @@ export type Database = {
         }
         Relationships: []
       }
+      media_releases: {
+        Row: {
+          amazon_music_url: string | null
+          apple_music_url: string | null
+          apple_tv_url: string | null
+          artist_director: string | null
+          bandcamp_url: string | null
+          cover_image_url: string | null
+          created_at: string
+          deezer_url: string | null
+          disney_plus_url: string | null
+          display_order: number | null
+          full_description: string | null
+          genre: string[] | null
+          google_play_url: string | null
+          hulu_url: string | null
+          id: string
+          is_active: boolean | null
+          is_featured: boolean | null
+          itunes_url: string | null
+          media_type: string
+          netflix_url: string | null
+          paramount_plus_url: string | null
+          peacock_url: string | null
+          prime_video_url: string | null
+          release_date: string | null
+          release_status: string
+          short_description: string | null
+          slug: string
+          soundcloud_url: string | null
+          spotify_url: string | null
+          tidal_url: string | null
+          title: string
+          trailer_url: string | null
+          tubi_url: string | null
+          updated_at: string
+          vudu_url: string | null
+          youtube_music_url: string | null
+          youtube_url: string | null
+        }
+        Insert: {
+          amazon_music_url?: string | null
+          apple_music_url?: string | null
+          apple_tv_url?: string | null
+          artist_director?: string | null
+          bandcamp_url?: string | null
+          cover_image_url?: string | null
+          created_at?: string
+          deezer_url?: string | null
+          disney_plus_url?: string | null
+          display_order?: number | null
+          full_description?: string | null
+          genre?: string[] | null
+          google_play_url?: string | null
+          hulu_url?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_featured?: boolean | null
+          itunes_url?: string | null
+          media_type: string
+          netflix_url?: string | null
+          paramount_plus_url?: string | null
+          peacock_url?: string | null
+          prime_video_url?: string | null
+          release_date?: string | null
+          release_status?: string
+          short_description?: string | null
+          slug: string
+          soundcloud_url?: string | null
+          spotify_url?: string | null
+          tidal_url?: string | null
+          title: string
+          trailer_url?: string | null
+          tubi_url?: string | null
+          updated_at?: string
+          vudu_url?: string | null
+          youtube_music_url?: string | null
+          youtube_url?: string | null
+        }
+        Update: {
+          amazon_music_url?: string | null
+          apple_music_url?: string | null
+          apple_tv_url?: string | null
+          artist_director?: string | null
+          bandcamp_url?: string | null
+          cover_image_url?: string | null
+          created_at?: string
+          deezer_url?: string | null
+          disney_plus_url?: string | null
+          display_order?: number | null
+          full_description?: string | null
+          genre?: string[] | null
+          google_play_url?: string | null
+          hulu_url?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_featured?: boolean | null
+          itunes_url?: string | null
+          media_type?: string
+          netflix_url?: string | null
+          paramount_plus_url?: string | null
+          peacock_url?: string | null
+          prime_video_url?: string | null
+          release_date?: string | null
+          release_status?: string
+          short_description?: string | null
+          slug?: string
+          soundcloud_url?: string | null
+          spotify_url?: string | null
+          tidal_url?: string | null
+          title?: string
+          trailer_url?: string | null
+          tubi_url?: string | null
+          updated_at?: string
+          vudu_url?: string | null
+          youtube_music_url?: string | null
+          youtube_url?: string | null
+        }
+        Relationships: []
+      }
       metrics: {
         Row: {
           display_order: number | null
