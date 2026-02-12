@@ -89,6 +89,7 @@ const statusColors: Record<string, string> = {
   live: "bg-accent text-accent-foreground",
   coming_soon: "bg-primary/20 text-primary border-primary/30",
   in_production: "bg-blue-500/20 text-blue-400 border-blue-500/30",
+  past_release: "bg-muted text-muted-foreground border-border",
 };
 
 const statusLabels: Record<string, string> = {
@@ -96,6 +97,7 @@ const statusLabels: Record<string, string> = {
   live: "Out Now",
   coming_soon: "Coming Soon",
   in_production: "In Production",
+  past_release: "Past Release",
 };
 
 const MediaPage = () => {

@@ -296,6 +296,7 @@ const MediaManager = () => {
                       <SelectItem value="released">Released</SelectItem>
                       <SelectItem value="coming_soon">Coming Soon</SelectItem>
                       <SelectItem value="in_production">In Production</SelectItem>
+                      <SelectItem value="past_release">Past Release</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

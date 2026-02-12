@@ -11,12 +11,18 @@ const statusColors: Record<string, string> = {
   released: "bg-accent text-accent-foreground",
   coming_soon: "bg-primary/20 text-primary border-primary/30",
   pre_release: "bg-yellow-500/20 text-yellow-400 border-yellow-500/30",
+  past_release: "bg-muted text-muted-foreground border-border",
+  live: "bg-accent text-accent-foreground",
+  in_production: "bg-blue-500/20 text-blue-400 border-blue-500/30",
 };
 
 const statusLabels: Record<string, string> = {
   released: "Out Now",
   coming_soon: "Coming Soon",
   pre_release: "Pre-Release",
+  past_release: "Past Release",
+  live: "Out Now",
+  in_production: "In Production",
 };
 
 const FeaturedMedia = () => {
