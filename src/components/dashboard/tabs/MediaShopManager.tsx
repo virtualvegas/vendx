@@ -43,7 +43,20 @@ const MediaShopManager = () => {
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [form, setForm] = useState(defaultForm);
+  const [form, setForm] = useState({ ...defaultForm, media_release_id: "" });
+
+  const { data: releases } = useQuery({
+    queryKey: ["media-releases-for-shop"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("media_releases")
+        .select("id, title, media_type")
+        .eq("is_active", true)
+        .order("title");
+      if (error) throw error;
+      return data;
+    },
+  });
 
   const { data: products, isLoading } = useQuery({
     queryKey: ["admin-media-shop-products"],
@@ -73,6 +86,7 @@ const MediaShopManager = () => {
         stock_quantity: parseInt(values.stock_quantity) || 0,
         display_order: parseInt(values.display_order) || 0,
         tags: values.tags ? values.tags.split(",").map((t) => t.trim()).filter(Boolean) : null,
+        media_release_id: values.media_release_id || null,
       };
 
       if (editingId) {
@@ -104,7 +118,7 @@ const MediaShopManager = () => {
   });
 
   const resetForm = () => {
-    setForm(defaultForm);
+    setForm({ ...defaultForm, media_release_id: "" });
     setEditingId(null);
   };
 
@@ -124,6 +138,7 @@ const MediaShopManager = () => {
       stock_quantity: String(product.stock_quantity ?? 0),
       display_order: String(product.display_order ?? 0),
       tags: product.tags?.join(", ") || "",
+      media_release_id: product.media_release_id || "",
     });
     setDialogOpen(true);
   };
@@ -189,6 +204,20 @@ const MediaShopManager = () => {
                   <Input value={form.file_url} onChange={(e) => setForm({ ...form, file_url: e.target.value })} />
                 </div>
               )}
+              <div>
+                <Label>Linked Release</Label>
+                <Select value={form.media_release_id} onValueChange={(v) => setForm({ ...form, media_release_id: v === "none" ? "" : v })}>
+                  <SelectTrigger><SelectValue placeholder="None (standalone product)" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">None</SelectItem>
+                    {releases?.map((r) => (
+                      <SelectItem key={r.id} value={r.id}>
+                        {r.title} ({r.media_type})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
               <div>
                 <Label>Tags (comma separated)</Label>
                 <Input value={form.tags} onChange={(e) => setForm({ ...form, tags: e.target.value })} />

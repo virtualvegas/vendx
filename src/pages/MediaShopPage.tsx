@@ -25,6 +25,13 @@ interface MediaShopProduct {
   stock_quantity: number;
   tags: string[] | null;
   media_release_id: string | null;
+  media_release: {
+    id: string;
+    title: string;
+    media_type: string;
+    cover_image_url: string | null;
+    slug: string;
+  } | null;
 }
 
 const typeLabels: Record<string, string> = {
@@ -53,11 +60,11 @@ const MediaShopPage = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("media_shop_products")
-        .select("*")
+        .select("*, media_release:media_releases(id, title, media_type, cover_image_url, slug)")
         .eq("is_active", true)
         .order("display_order", { ascending: true });
       if (error) throw error;
-      return data as MediaShopProduct[];
+      return data as unknown as MediaShopProduct[];
     },
   });
 
@@ -137,9 +144,9 @@ const MediaShopPage = () => {
                   className="group bg-card/50 border-border/50 hover:border-primary/50 transition-all duration-300 overflow-hidden"
                 >
                   <div className="relative h-56 bg-muted overflow-hidden">
-                    {product.image_url ? (
+                    {product.image_url || product.media_release?.cover_image_url ? (
                       <img
-                        src={product.image_url}
+                        src={product.image_url || product.media_release?.cover_image_url || ""}
                         alt={product.title}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       />
@@ -166,6 +173,12 @@ const MediaShopPage = () => {
                   </div>
 
                   <CardContent className="p-5">
+                    {product.media_release && (
+                      <Link to={`/media`} className="inline-flex items-center gap-1 text-xs text-primary hover:underline mb-2">
+                        {product.media_release.media_type === "music" ? <Music className="w-3 h-3" /> : <Film className="w-3 h-3" />}
+                        {product.media_release.title}
+                      </Link>
+                    )}
                     <h3 className="text-lg font-semibold text-foreground mb-1 group-hover:text-primary transition-colors">
                       {product.title}
                     </h3>
