@@ -46,8 +46,7 @@ const DashboardOverview = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("locations")
-        .select("id, name, city, country, status, machine_count")
-        .eq("is_visible", true);
+        .select("id, name, city, country, status, machine_count");
       if (error) throw error;
       return data || [];
     },
@@ -70,10 +69,10 @@ const DashboardOverview = () => {
   const revenue = useMemo(() => {
     if (!transactions) return { today: 0, week: 0, month: 0 };
 
-    const now = new Date();
-    const todayStart = new Date(now.setHours(0, 0, 0, 0));
-    const weekStart = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-    const monthStart = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    const now = Date.now();
+    const todayStart = new Date(new Date().setHours(0, 0, 0, 0));
+    const weekStart = new Date(now - 7 * 24 * 60 * 60 * 1000);
+    const monthStart = new Date(now - 30 * 24 * 60 * 60 * 1000);
 
     return {
       today: transactions
