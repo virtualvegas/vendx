@@ -89,7 +89,7 @@ async function syncStripeTransactions(supabase: any, startDate?: string): Promis
         const transaction = {
           provider: "stripe",
           provider_transaction_id: charge.id,
-          transaction_type: charge.refunded ? "refund" : "revenue",
+          transaction_type: "revenue",
           amount: charge.amount / 100,
           currency: charge.currency,
           status: charge.status,
