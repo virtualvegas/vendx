@@ -7,6 +7,8 @@ import {
   Building2, 
   Package, 
   Wallet,
+  Music,
+  Film,
   ArrowRight,
   Sparkles
 } from "lucide-react";
@@ -22,7 +24,7 @@ const services = [
   {
     icon: Gamepad2,
     title: "VendX Interactive",
-    description: "Play our games across Steam, mobile, Roblox, and more platforms",
+    description: "Games across Steam, mobile, Roblox, arcade machines, and more",
     href: "/games",
     color: "purple",
   },
@@ -32,6 +34,20 @@ const services = [
     description: "Locate VendX vending machines and arcades near you",
     href: "/locations",
     color: "accent",
+  },
+  {
+    icon: Music,
+    title: "VendX Music",
+    description: "Helping artists release music, merch, CDs & more — not a label, just support",
+    href: "/media",
+    color: "purple",
+  },
+  {
+    icon: Film,
+    title: "VendX Film",
+    description: "Original films and content produced by our in-house creative team",
+    href: "/media",
+    color: "red",
   },
   {
     icon: Building2,
@@ -86,6 +102,11 @@ const colorClasses: Record<string, { border: string; icon: string; hover: string
     border: "border-green-500/30 hover:border-green-500/60",
     icon: "bg-green-500/10 text-green-400",
     hover: "hover:shadow-[0_0_30px_rgba(34,197,94,0.2)]",
+  },
+  red: {
+    border: "border-red-500/30 hover:border-red-500/60",
+    icon: "bg-red-500/10 text-red-400",
+    hover: "hover:shadow-[0_0_30px_rgba(239,68,68,0.2)]",
   },
 };
 
