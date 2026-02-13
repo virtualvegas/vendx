@@ -34,7 +34,7 @@ const DashboardOverview = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("vendx_machines")
-        .select("id, name, machine_code, status, location_id, last_seen, current_period_revenue, lifetime_revenue");
+        .select("id, name, machine_code, machine_type, status, location_id, last_seen, current_period_revenue, lifetime_revenue, vendx_pay_enabled, accepts_cash, accepts_coins, accepts_cards");
       if (error) throw error;
       return data || [];
     },
