@@ -13,7 +13,7 @@ const Hero = () => {
           <div className="space-y-8 animate-in fade-in slide-in-from-left duration-1000">
             <div className="inline-block">
               <span className="text-accent text-sm font-semibold tracking-wider uppercase border border-accent/30 px-4 py-2 rounded-full bg-accent/10">
-                Smart Vending • Gaming • Retail
+                Vending • Gaming • Music • Film • Retail
               </span>
             </div>
             
@@ -26,7 +26,7 @@ const Hero = () => {
             </h1>
             
             <p className="text-xl lg:text-2xl text-muted-foreground max-w-2xl">
-              Smart vending machines, premium products, and an innovative gaming division — all in one ecosystem.
+              Smart vending, gaming, music distribution, film production, and retail — all in one ecosystem.
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4">
