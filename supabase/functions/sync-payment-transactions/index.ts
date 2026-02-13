@@ -144,7 +144,6 @@ async function syncStripeTransactions(supabase: any, startDate?: string): Promis
           provider: "stripe",
           provider_transaction_id: `refund_${refund.id}`,
           transaction_type: "expense",
-          transaction_type: "expense",
           amount: -(refund.amount / 100),
           currency: refund.currency,
           status: refund.status || "succeeded",
