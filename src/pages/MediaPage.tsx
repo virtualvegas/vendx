@@ -23,13 +23,22 @@ import {
   SiAppletv,
 } from "react-icons/si";
 import { FaAmazon, FaFilm } from "react-icons/fa";
-import { Music, ExternalLink, Play, Filter, Film, Disc3, ShoppingCart } from "lucide-react";
+import { Music, ExternalLink, Play, Filter, Film, Disc3, ShoppingCart, ListMusic, Clock } from "lucide-react";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+
+interface TracklistItem {
+  number: number;
+  title: string;
+  duration: string;
+  featured_artist: string;
+}
 
 interface MediaRelease {
   id: string;
   title: string;
   slug: string;
   media_type: string;
+  music_release_type: string | null;
   short_description: string | null;
   full_description: string | null;
   cover_image_url: string | null;
@@ -39,6 +48,7 @@ interface MediaRelease {
   genre: string[] | null;
   artist_director: string | null;
   is_featured: boolean | null;
+  tracklist: any[] | null;
   spotify_url: string | null;
   apple_music_url: string | null;
   youtube_music_url: string | null;
@@ -112,7 +122,7 @@ const MediaPage = () => {
         .eq("is_active", true)
         .order("display_order", { ascending: true });
       if (error) throw error;
-      return data as MediaRelease[];
+      return data as unknown as MediaRelease[];
     },
   });
 
@@ -231,7 +241,9 @@ const MediaPage = () => {
 
                       <Badge className="absolute bottom-3 left-3 bg-background/80 text-foreground capitalize">
                         {release.media_type === "music" ? <Music className="w-3 h-3 mr-1" /> : <Film className="w-3 h-3 mr-1" />}
-                        {release.media_type}
+                        {release.media_type === "music" && release.music_release_type
+                          ? release.music_release_type === "ep" ? "EP" : release.music_release_type
+                          : release.media_type}
                       </Badge>
 
                       {release.trailer_url && (
@@ -267,6 +279,38 @@ const MediaPage = () => {
                             <Badge key={g} variant="outline" className="text-xs">{g}</Badge>
                           ))}
                         </div>
+                      )}
+
+                      {/* Tracklist for Albums/EPs */}
+                      {release.media_type === "music" && release.tracklist && release.tracklist.length > 0 && (
+                        <Accordion type="single" collapsible className="mb-3">
+                          <AccordionItem value="tracklist" className="border-border/50">
+                            <AccordionTrigger className="text-sm py-2 hover:no-underline">
+                              <span className="flex items-center gap-2">
+                                <ListMusic className="w-4 h-4" />
+                                Tracklist ({release.tracklist.length} tracks)
+                              </span>
+                            </AccordionTrigger>
+                            <AccordionContent>
+                              <div className="space-y-1">
+                                {release.tracklist.map((track, i) => (
+                                  <div key={i} className="flex items-center gap-2 text-sm py-1 px-2 rounded hover:bg-muted/50">
+                                    <span className="text-muted-foreground w-5 text-right">{track.number || i + 1}.</span>
+                                    <span className="flex-1 text-foreground">{track.title}</span>
+                                    {track.featured_artist && (
+                                      <span className="text-muted-foreground text-xs">feat. {track.featured_artist}</span>
+                                    )}
+                                    {track.duration && (
+                                      <span className="text-muted-foreground text-xs flex items-center gap-1">
+                                        <Clock className="w-3 h-3" />{track.duration}
+                                      </span>
+                                    )}
+                                  </div>
+                                ))}
+                              </div>
+                            </AccordionContent>
+                          </AccordionItem>
+                        </Accordion>
                       )}
 
                       {/* Platform Links */}

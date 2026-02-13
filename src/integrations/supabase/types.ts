@@ -1400,6 +1400,7 @@ export type Database = {
           is_featured: boolean | null
           itunes_url: string | null
           media_type: string
+          music_release_type: string | null
           netflix_url: string | null
           paramount_plus_url: string | null
           peacock_url: string | null
@@ -1412,6 +1413,7 @@ export type Database = {
           spotify_url: string | null
           tidal_url: string | null
           title: string
+          tracklist: Json | null
           trailer_url: string | null
           tubi_url: string | null
           updated_at: string
@@ -1439,6 +1441,7 @@ export type Database = {
           is_featured?: boolean | null
           itunes_url?: string | null
           media_type: string
+          music_release_type?: string | null
           netflix_url?: string | null
           paramount_plus_url?: string | null
           peacock_url?: string | null
@@ -1451,6 +1454,7 @@ export type Database = {
           spotify_url?: string | null
           tidal_url?: string | null
           title: string
+          tracklist?: Json | null
           trailer_url?: string | null
           tubi_url?: string | null
           updated_at?: string
@@ -1478,6 +1482,7 @@ export type Database = {
           is_featured?: boolean | null
           itunes_url?: string | null
           media_type?: string
+          music_release_type?: string | null
           netflix_url?: string | null
           paramount_plus_url?: string | null
           peacock_url?: string | null
@@ -1490,6 +1495,7 @@ export type Database = {
           spotify_url?: string | null
           tidal_url?: string | null
           title?: string
+          tracklist?: Json | null
           trailer_url?: string | null
           tubi_url?: string | null
           updated_at?: string
