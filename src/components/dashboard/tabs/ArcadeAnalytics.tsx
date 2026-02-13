@@ -649,9 +649,6 @@ const ArcadeAnalytics = () => {
                         <TableCell className="text-right text-muted-foreground">
                           ${(loc.total_revenue / loc.machine_count || 0).toFixed(2)}
                         </TableCell>
-                        <TableCell className="text-right text-muted-foreground">
-                          ${(loc.total_revenue / loc.machine_count || 0).toFixed(2)}
-                        </TableCell>
                       </TableRow>
                     ))}
                     {locationData.length === 0 && (

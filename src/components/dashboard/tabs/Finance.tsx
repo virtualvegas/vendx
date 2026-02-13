@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,9 +11,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, DollarSign, Trash2, Edit, RefreshCw, CreditCard, Loader2 } from "lucide-react";
-import { format } from "date-fns";
+import { Plus, DollarSign, Trash2, Edit, RefreshCw, CreditCard, Loader2, Download, TrendingUp } from "lucide-react";
+import { format, subDays } from "date-fns";
 import { formatDisplayDate } from "@/lib/dateUtils";
+import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+  PieChart, Pie, Cell, Legend, AreaChart, Area, LineChart, Line,
+} from "recharts";
 
 interface Transaction {
   id: string;
@@ -49,6 +53,8 @@ interface SyncStatus {
   error_message: string | null;
   transactions_synced: number;
 }
+
+const COLORS = ["hsl(var(--primary))", "#10b981", "#8b5cf6", "#f59e0b", "#ef4444", "#06b6d4"];
 
 const Finance = () => {
   const [open, setOpen] = useState(false);
@@ -104,7 +110,7 @@ const Finance = () => {
       if (error) throw error;
       return data as SyncStatus[];
     },
-    refetchInterval: 5000, // Refresh every 5 seconds to check sync status
+    refetchInterval: 5000,
   });
 
   const { data: divisions } = useQuery({
@@ -131,7 +137,6 @@ const Finance = () => {
       queryClient.invalidateQueries({ queryKey: ["synced-transactions"] });
       queryClient.invalidateQueries({ queryKey: ["sync-status"] });
       
-      // Show success with any warnings
       if (data.stripe_error || data.paypal_error) {
         toast({
           title: "Sync Completed with Warnings",
@@ -253,6 +258,80 @@ const Finance = () => {
   const isSyncing = syncMutation.isPending || 
     getStripeStatus()?.sync_status === "syncing" || 
     getPayPalStatus()?.sync_status === "syncing";
+
+  // Chart: Revenue vs Expenses by day
+  const dailyFinanceData = useMemo(() => {
+    if (!transactions) return [];
+    const dayMap = new Map<string, { day: string; revenue: number; expenses: number }>();
+    
+    transactions.forEach(t => {
+      const day = t.transaction_date;
+      if (!dayMap.has(day)) dayMap.set(day, { day, revenue: 0, expenses: 0 });
+      const entry = dayMap.get(day)!;
+      if (t.transaction_type === "revenue") entry.revenue += t.amount;
+      else entry.expenses += t.amount;
+    });
+
+    return Array.from(dayMap.values())
+      .sort((a, b) => a.day.localeCompare(b.day))
+      .slice(-30)
+      .map(d => ({ ...d, day: format(new Date(d.day + "T12:00:00"), "MM/dd") }));
+  }, [transactions]);
+
+  // Chart: Category breakdown
+  const categoryBreakdown = useMemo(() => {
+    if (!transactions) return [];
+    const catMap = new Map<string, number>();
+    transactions.forEach(t => {
+      catMap.set(t.category, (catMap.get(t.category) || 0) + t.amount);
+    });
+    return Array.from(catMap.entries())
+      .map(([name, value]) => ({ name, value }))
+      .sort((a, b) => b.value - a.value)
+      .slice(0, 8);
+  }, [transactions]);
+
+  // Chart: Provider breakdown for synced transactions
+  const providerBreakdown = useMemo(() => {
+    if (!syncedTransactions) return [];
+    const provMap = new Map<string, number>();
+    syncedTransactions.forEach(t => {
+      if (t.amount > 0) {
+        const label = t.provider === "vendx_pay" ? "VendX Pay" : t.provider.charAt(0).toUpperCase() + t.provider.slice(1);
+        provMap.set(label, (provMap.get(label) || 0) + t.amount);
+      }
+    });
+    return Array.from(provMap.entries()).map(([name, value]) => ({ name, value }));
+  }, [syncedTransactions]);
+
+  // CSV Export
+  const exportCSV = (type: "manual" | "synced") => {
+    let csv = "";
+    let filename = "";
+
+    if (type === "manual" && transactions) {
+      filename = `finance-transactions-${format(new Date(), "yyyy-MM-dd")}.csv`;
+      csv = "Date,Type,Category,Amount,Description\n";
+      transactions.forEach(t => {
+        csv += `"${t.transaction_date}","${t.transaction_type}","${t.category}",${t.amount},"${t.description || ""}"\n`;
+      });
+    } else if (type === "synced" && syncedTransactions) {
+      filename = `synced-transactions-${format(new Date(), "yyyy-MM-dd")}.csv`;
+      csv = "Date,Provider,Type,Amount,Currency,Status,Customer,Description\n";
+      syncedTransactions.forEach(t => {
+        csv += `"${t.transaction_date}","${t.provider}","${t.transaction_type}",${t.amount},"${t.currency}","${t.status}","${t.customer_email || ""}","${t.description || ""}"\n`;
+      });
+    }
+
+    if (csv) {
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = filename;
+      link.click();
+      toast({ title: "Exported", description: `${filename} downloaded` });
+    }
+  };
 
   if (isLoading) {
     return <div className="flex items-center justify-center h-64"><p className="text-muted-foreground">Loading...</p></div>;
@@ -377,16 +456,157 @@ const Finance = () => {
         </Card>
       </div>
 
-      <Tabs defaultValue="manual" className="space-y-4">
+      <Tabs defaultValue="charts" className="space-y-4">
         <TabsList>
+          <TabsTrigger value="charts">Charts & Analytics</TabsTrigger>
           <TabsTrigger value="manual">Manual Transactions</TabsTrigger>
           <TabsTrigger value="synced">Synced Payments</TabsTrigger>
         </TabsList>
 
+        {/* Charts Tab */}
+        <TabsContent value="charts" className="space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Revenue vs Expenses Trend */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <TrendingUp className="w-5 h-5" />
+                  Revenue vs Expenses (Last 30 entries)
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="h-[300px]">
+                  {dailyFinanceData.length > 0 ? (
+                    <ResponsiveContainer width="100%" height="100%">
+                      <AreaChart data={dailyFinanceData}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                        <XAxis dataKey="day" tick={{ fontSize: 12 }} stroke="hsl(var(--muted-foreground))" />
+                        <YAxis tickFormatter={(v) => `$${v}`} tick={{ fontSize: 12 }} stroke="hsl(var(--muted-foreground))" />
+                        <Tooltip formatter={(v: number) => `$${v.toLocaleString()}`} contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))" }} />
+                        <Legend />
+                        <Area type="monotone" dataKey="revenue" fill="#10b981" stroke="#10b981" fillOpacity={0.3} name="Revenue" />
+                        <Area type="monotone" dataKey="expenses" fill="#ef4444" stroke="#ef4444" fillOpacity={0.3} name="Expenses" />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  ) : (
+                    <div className="flex items-center justify-center h-full text-muted-foreground">No transaction data</div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Category Breakdown */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Spending by Category</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="h-[300px]">
+                  {categoryBreakdown.length > 0 ? (
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={categoryBreakdown}
+                          cx="50%"
+                          cy="50%"
+                          outerRadius={100}
+                          dataKey="value"
+                          label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                        >
+                          {categoryBreakdown.map((_, i) => (
+                            <Cell key={i} fill={COLORS[i % COLORS.length]} />
+                          ))}
+                        </Pie>
+                        <Tooltip formatter={(v: number) => `$${v.toLocaleString()}`} />
+                        <Legend />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  ) : (
+                    <div className="flex items-center justify-center h-full text-muted-foreground">No category data</div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Provider Revenue Breakdown */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Revenue by Payment Provider</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="h-[300px]">
+                  {providerBreakdown.length > 0 ? (
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={providerBreakdown}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                        <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" />
+                        <YAxis tickFormatter={(v) => `$${v}`} stroke="hsl(var(--muted-foreground))" />
+                        <Tooltip formatter={(v: number) => `$${v.toLocaleString()}`} contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))" }} />
+                        <Bar dataKey="value" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} name="Revenue" />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  ) : (
+                    <div className="flex items-center justify-center h-full text-muted-foreground">No synced data</div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Net Profit Summary */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Financial Summary</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center p-4 bg-green-500/10 rounded-lg">
+                    <div>
+                      <p className="text-sm text-muted-foreground">Total Revenue</p>
+                      <p className="text-2xl font-bold text-green-500">${totalRevenue.toLocaleString()}</p>
+                    </div>
+                    <DollarSign className="h-8 w-8 text-green-500/50" />
+                  </div>
+                  <div className="flex justify-between items-center p-4 bg-red-500/10 rounded-lg">
+                    <div>
+                      <p className="text-sm text-muted-foreground">Total Expenses</p>
+                      <p className="text-2xl font-bold text-red-500">${totalExpenses.toLocaleString()}</p>
+                    </div>
+                    <TrendingUp className="h-8 w-8 text-red-500/50" />
+                  </div>
+                  <div className="flex justify-between items-center p-4 border-2 border-primary/30 rounded-lg bg-primary/5">
+                    <div>
+                      <p className="text-sm text-muted-foreground">Net Profit</p>
+                      <p className="text-2xl font-bold text-primary">${netProfit.toLocaleString()}</p>
+                    </div>
+                    <Badge className="text-lg px-4 py-1">{profitMargin}%</Badge>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2 pt-2">
+                    <div className="p-3 border rounded-lg text-center">
+                      <p className="text-xs text-muted-foreground">Synced Revenue</p>
+                      <p className="font-bold text-green-500">${syncedRevenue.toLocaleString()}</p>
+                    </div>
+                    <div className="p-3 border rounded-lg text-center">
+                      <p className="text-xs text-muted-foreground">Wallet Loads</p>
+                      <p className="font-bold text-blue-500">${syncedWalletLoads.toLocaleString()}</p>
+                    </div>
+                    <div className="p-3 border rounded-lg text-center">
+                      <p className="text-xs text-muted-foreground">Refunds</p>
+                      <p className="font-bold text-red-500">${syncedRefunds.toLocaleString()}</p>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
         <TabsContent value="manual">
           <Card>
-            <CardHeader>
+            <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle>Recent Transactions</CardTitle>
+              <Button variant="outline" size="sm" onClick={() => exportCSV("manual")}>
+                <Download className="w-4 h-4 mr-2" />Export CSV
+              </Button>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
@@ -464,9 +684,7 @@ const Finance = () => {
                     <p className="text-xs text-destructive">{getStripeStatus()!.error_message}</p>
                   )}
                   <Button 
-                    size="sm" 
-                    variant="outline" 
-                    className="w-full"
+                    size="sm" variant="outline" className="w-full"
                     disabled={isSyncing}
                     onClick={() => syncMutation.mutate("stripe")}
                   >
@@ -498,9 +716,7 @@ const Finance = () => {
                     <p className="text-xs text-destructive">{getPayPalStatus()!.error_message}</p>
                   )}
                   <Button 
-                    size="sm" 
-                    variant="outline" 
-                    className="w-full"
+                    size="sm" variant="outline" className="w-full"
                     disabled={isSyncing}
                     onClick={() => syncMutation.mutate("paypal")}
                   >
@@ -523,8 +739,7 @@ const Finance = () => {
                     Sync transactions from all payment providers
                   </p>
                   <Button 
-                    size="sm" 
-                    className="w-full"
+                    size="sm" className="w-full"
                     disabled={isSyncing}
                     onClick={() => syncMutation.mutate(undefined)}
                   >
@@ -581,17 +796,22 @@ const Finance = () => {
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle>Synced Transactions</CardTitle>
-                <Select value={providerFilter} onValueChange={setProviderFilter}>
-                  <SelectTrigger className="w-40">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Sources</SelectItem>
-                    <SelectItem value="stripe">Stripe</SelectItem>
-                    <SelectItem value="paypal">PayPal</SelectItem>
-                    <SelectItem value="vendx_pay">VendX Pay</SelectItem>
-                  </SelectContent>
-                </Select>
+                <div className="flex gap-2">
+                  <Select value={providerFilter} onValueChange={setProviderFilter}>
+                    <SelectTrigger className="w-40">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Sources</SelectItem>
+                      <SelectItem value="stripe">Stripe</SelectItem>
+                      <SelectItem value="paypal">PayPal</SelectItem>
+                      <SelectItem value="vendx_pay">VendX Pay</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Button variant="outline" size="sm" onClick={() => exportCSV("synced")}>
+                    <Download className="w-4 h-4 mr-2" />Export
+                  </Button>
+                </div>
               </div>
             </CardHeader>
             <CardContent>
