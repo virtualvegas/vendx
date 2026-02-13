@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { ShoppingBag, Calendar, DollarSign, Package, Eye, Truck, Star, Gamepad2, Leaf, Zap } from "lucide-react";
+import { ShoppingBag, Calendar, DollarSign, Package, Eye, Truck, Star, Gamepad2, Leaf, Zap, ExternalLink, MapPin } from "lucide-react";
 import { format } from "date-fns";
 
 interface OrderItem {
@@ -26,6 +26,13 @@ interface StoreOrder {
   shipping_cost: number;
   total: number;
   created_at: string;
+  tracking_number: string | null;
+  tracking_url: string | null;
+  shipped_at: string | null;
+  delivered_at: string | null;
+  estimated_delivery: string | null;
+  wallet_credit_applied: number;
+  shopify_order_number: string | null;
   store_order_items: OrderItem[];
 }
 
@@ -42,6 +49,8 @@ const CustomerOrders = () => {
         .from("store_orders")
         .select(`
           id, order_number, status, subtotal, shipping_cost, total, created_at,
+          tracking_number, tracking_url, shipped_at, delivered_at, estimated_delivery,
+          wallet_credit_applied, shopify_order_number,
           store_order_items (id, product_name, product_price, quantity, total, addon_details)
         `)
         .eq("user_id", user.id)
@@ -490,9 +499,56 @@ const CustomerOrders = () => {
           {selectedOrder && (
             <div className="space-y-4">
               <div className="flex justify-between items-center">
-                <span className="font-mono text-sm">{selectedOrder.order_number}</span>
+                <span className="font-mono text-sm">{selectedOrder.order_number}{selectedOrder.shopify_order_number && <span className="text-muted-foreground ml-1">(Shopify #{selectedOrder.shopify_order_number})</span>}</span>
                 <Badge className={getStatusColor(selectedOrder.status)}>{selectedOrder.status}</Badge>
               </div>
+
+              {/* Tracking Info */}
+              {(selectedOrder.tracking_number || selectedOrder.estimated_delivery) && (
+                <div className="bg-primary/5 border border-primary/20 rounded-lg p-3 space-y-2">
+                  <p className="font-semibold text-sm flex items-center gap-2"><Truck className="w-4 h-4 text-primary" /> Shipping Update</p>
+                  {selectedOrder.tracking_number && (
+                    <div className="flex items-center gap-2 text-sm">
+                      <span className="text-muted-foreground">Tracking:</span>
+                      {selectedOrder.tracking_url ? (
+                        <a href={selectedOrder.tracking_url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline flex items-center gap-1">
+                          {selectedOrder.tracking_number} <ExternalLink className="w-3 h-3" />
+                        </a>
+                      ) : (
+                        <span className="font-mono">{selectedOrder.tracking_number}</span>
+                      )}
+                    </div>
+                  )}
+                  {selectedOrder.estimated_delivery && (
+                    <p className="text-sm"><span className="text-muted-foreground">Est. Delivery:</span> {selectedOrder.estimated_delivery}</p>
+                  )}
+                  {selectedOrder.shipped_at && (
+                    <p className="text-xs text-muted-foreground">Shipped on {format(new Date(selectedOrder.shipped_at), "MMM d, yyyy")}</p>
+                  )}
+                  {selectedOrder.delivered_at && (
+                    <p className="text-xs text-accent">Delivered on {format(new Date(selectedOrder.delivered_at), "MMM d, yyyy")}</p>
+                  )}
+                </div>
+              )}
+
+              {/* Order Timeline */}
+              <div className="flex gap-2 items-center text-xs text-muted-foreground">
+                <div className="flex items-center gap-1">
+                  <div className="w-2 h-2 rounded-full bg-primary" />
+                  <span>Ordered</span>
+                </div>
+                <div className={`flex-1 h-px ${selectedOrder.shipped_at ? "bg-primary" : "bg-border"}`} />
+                <div className="flex items-center gap-1">
+                  <div className={`w-2 h-2 rounded-full ${selectedOrder.shipped_at ? "bg-primary" : "bg-border"}`} />
+                  <span>Shipped</span>
+                </div>
+                <div className={`flex-1 h-px ${selectedOrder.delivered_at ? "bg-primary" : "bg-border"}`} />
+                <div className="flex items-center gap-1">
+                  <div className={`w-2 h-2 rounded-full ${selectedOrder.delivered_at ? "bg-accent" : "bg-border"}`} />
+                  <span>Delivered</span>
+                </div>
+              </div>
+
               <div className="border border-border rounded-lg divide-y divide-border">
                 {selectedOrder.store_order_items?.map((item) => (
                   <div key={item.id} className="p-3 flex justify-between">
@@ -516,6 +572,12 @@ const CustomerOrders = () => {
                   <span className="text-muted-foreground">Shipping</span>
                   <span>${Number(selectedOrder.shipping_cost || 0).toFixed(2)}</span>
                 </div>
+                {Number(selectedOrder.wallet_credit_applied) > 0 && (
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">VendX Pay Credit</span>
+                    <span className="text-accent">-${Number(selectedOrder.wallet_credit_applied).toFixed(2)}</span>
+                  </div>
+                )}
                 <div className="flex justify-between font-bold text-lg border-t border-border pt-2">
                   <span>Total</span>
                   <span className="text-primary">${Number(selectedOrder.total).toFixed(2)}</span>

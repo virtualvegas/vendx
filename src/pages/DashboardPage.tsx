@@ -54,6 +54,7 @@ import MachineInventoryManager from "@/components/dashboard/tabs/MachineInventor
 import MediaManager from "@/components/dashboard/tabs/MediaManager";
 import MediaShopManager from "@/components/dashboard/tabs/MediaShopManager";
 import TrackShopManager from "@/components/dashboard/tabs/TrackShopManager";
+import GlobalAnalytics from "@/components/dashboard/tabs/GlobalAnalytics";
 export type AppRole =
   | "super_admin"
   | "global_operations_manager"
@@ -293,6 +294,8 @@ const DashboardPage = () => {
         return <MediaShopManager />;
       case "track-shop-manager":
         return <TrackShopManager />;
+      case "global-analytics":
+        return <GlobalAnalytics />;
       default:
         return <CustomerOrders />;
     }

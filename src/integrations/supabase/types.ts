@@ -3888,12 +3888,18 @@ export type Database = {
       }
       store_orders: {
         Row: {
+          admin_notes: string | null
           created_at: string | null
+          customer_email: string | null
+          customer_name: string | null
+          delivered_at: string | null
+          estimated_delivery: string | null
           id: string
           notes: string | null
           order_number: string
           payment_method: string | null
           paypal_order_id: string | null
+          shipped_at: string | null
           shipping_address: Json | null
           shipping_address_id: string | null
           shipping_cost: number | null
@@ -3905,17 +3911,25 @@ export type Database = {
           subtotal: number
           tax: number | null
           total: number
+          tracking_number: string | null
+          tracking_url: string | null
           updated_at: string | null
           user_id: string | null
           wallet_credit_applied: number | null
         }
         Insert: {
+          admin_notes?: string | null
           created_at?: string | null
+          customer_email?: string | null
+          customer_name?: string | null
+          delivered_at?: string | null
+          estimated_delivery?: string | null
           id?: string
           notes?: string | null
           order_number: string
           payment_method?: string | null
           paypal_order_id?: string | null
+          shipped_at?: string | null
           shipping_address?: Json | null
           shipping_address_id?: string | null
           shipping_cost?: number | null
@@ -3927,17 +3941,25 @@ export type Database = {
           subtotal?: number
           tax?: number | null
           total?: number
+          tracking_number?: string | null
+          tracking_url?: string | null
           updated_at?: string | null
           user_id?: string | null
           wallet_credit_applied?: number | null
         }
         Update: {
+          admin_notes?: string | null
           created_at?: string | null
+          customer_email?: string | null
+          customer_name?: string | null
+          delivered_at?: string | null
+          estimated_delivery?: string | null
           id?: string
           notes?: string | null
           order_number?: string
           payment_method?: string | null
           paypal_order_id?: string | null
+          shipped_at?: string | null
           shipping_address?: Json | null
           shipping_address_id?: string | null
           shipping_cost?: number | null
@@ -3949,6 +3971,8 @@ export type Database = {
           subtotal?: number
           tax?: number | null
           total?: number
+          tracking_number?: string | null
+          tracking_url?: string | null
           updated_at?: string | null
           user_id?: string | null
           wallet_credit_applied?: number | null

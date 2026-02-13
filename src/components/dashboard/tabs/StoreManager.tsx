@@ -36,9 +36,23 @@ interface Order {
   order_number: string;
   status: string;
   total: number;
+  subtotal: number;
+  shipping_cost: number;
+  wallet_credit_applied: number;
   created_at: string;
   user_id: string;
+  tracking_number: string | null;
+  tracking_url: string | null;
+  shipped_at: string | null;
+  delivered_at: string | null;
+  estimated_delivery: string | null;
+  admin_notes: string | null;
+  customer_email: string | null;
+  customer_name: string | null;
+  shopify_order_id: string | null;
+  shopify_order_number: string | null;
   profiles?: { email: string; full_name: string } | null;
+  store_order_items?: Array<{ id: string; product_name: string; product_price: number; quantity: number; total: number; addon_details: any }>;
 }
 
 interface Subscription {
@@ -60,6 +74,8 @@ const StoreManager = () => {
   const [loading, setLoading] = useState(true);
   const [productDialogOpen, setProductDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [trackingForm, setTrackingForm] = useState({ tracking_number: "", tracking_url: "", estimated_delivery: "", admin_notes: "" });
   const [stats, setStats] = useState({ totalProducts: 0, totalOrders: 0, revenue: 0, subscribers: 0 });
   
   const [productForm, setProductForm] = useState({
@@ -92,12 +108,12 @@ const StoreManager = () => {
     
     if (productsData) setProducts(productsData);
 
-    // Fetch orders
+    // Fetch orders with items and profiles
     const { data: ordersData } = await supabase
       .from("store_orders")
-      .select("*")
+      .select(`*, store_order_items(id, product_name, product_price, quantity, total, addon_details), profiles:user_id(email, full_name)`)
       .order("created_at", { ascending: false })
-      .limit(50);
+      .limit(100);
     
     if (ordersData) setOrders(ordersData as any);
 
@@ -233,6 +249,39 @@ const StoreManager = () => {
     
     toast.success("Order status updated");
     fetchData();
+  };
+
+  const handleUpdateTracking = async (orderId: string) => {
+    const updates: any = {};
+    if (trackingForm.tracking_number) updates.tracking_number = trackingForm.tracking_number;
+    if (trackingForm.tracking_url) updates.tracking_url = trackingForm.tracking_url;
+    if (trackingForm.estimated_delivery) updates.estimated_delivery = trackingForm.estimated_delivery;
+    if (trackingForm.admin_notes) updates.admin_notes = trackingForm.admin_notes;
+
+    const { error } = await supabase
+      .from("store_orders")
+      .update(updates)
+      .eq("id", orderId);
+
+    if (error) {
+      toast.error("Failed to update tracking info");
+      return;
+    }
+
+    toast.success("Tracking info updated");
+    setSelectedOrder(null);
+    setTrackingForm({ tracking_number: "", tracking_url: "", estimated_delivery: "", admin_notes: "" });
+    fetchData();
+  };
+
+  const handleViewOrder = (order: Order) => {
+    setSelectedOrder(order);
+    setTrackingForm({
+      tracking_number: order.tracking_number || "",
+      tracking_url: order.tracking_url || "",
+      estimated_delivery: order.estimated_delivery || "",
+      admin_notes: order.admin_notes || "",
+    });
   };
 
   const getStatusColor = (status: string) => {
@@ -499,7 +548,7 @@ const StoreManager = () => {
         <TabsContent value="orders" className="mt-4">
           <Card>
             <CardHeader>
-              <CardTitle>Orders</CardTitle>
+              <CardTitle>Orders ({orders.length})</CardTitle>
             </CardHeader>
             <CardContent>
               <Table>
@@ -507,8 +556,10 @@ const StoreManager = () => {
                   <TableRow>
                     <TableHead>Order #</TableHead>
                     <TableHead>Customer</TableHead>
+                    <TableHead>Items</TableHead>
                     <TableHead>Total</TableHead>
                     <TableHead>Status</TableHead>
+                    <TableHead>Tracking</TableHead>
                     <TableHead>Date</TableHead>
                     <TableHead>Actions</TableHead>
                   </TableRow>
@@ -516,35 +567,56 @@ const StoreManager = () => {
                 <TableBody>
                   {orders.map((order) => (
                     <TableRow key={order.id}>
-                      <TableCell className="font-mono">{order.order_number}</TableCell>
-                      <TableCell>{order.profiles?.full_name || order.profiles?.email || "Guest"}</TableCell>
-                      <TableCell>${Number(order.total).toFixed(2)}</TableCell>
-                      <TableCell>
-                        <Badge className={getStatusColor(order.status)}>{order.status}</Badge>
+                      <TableCell className="font-mono text-xs">
+                        {order.order_number || order.shopify_order_number || order.id.substring(0, 8)}
+                        {order.shopify_order_id && (
+                          <Badge variant="outline" className="ml-1 text-[10px]">Shopify</Badge>
+                        )}
                       </TableCell>
-                      <TableCell>{formatDisplayDate(order.created_at)}</TableCell>
                       <TableCell>
-                        <Select 
-                          value={order.status}
-                          onValueChange={(v) => handleUpdateOrderStatus(order.id, v)}
-                        >
-                          <SelectTrigger className="w-32">
-                            <SelectValue />
+                        <div>
+                          <p className="text-sm">{order.customer_name || order.profiles?.full_name || "Guest"}</p>
+                          <p className="text-xs text-muted-foreground">{order.customer_email || order.profiles?.email || ""}</p>
+                        </div>
+                      </TableCell>
+                      <TableCell>{order.store_order_items?.length || 0}</TableCell>
+                      <TableCell className="font-bold">${Number(order.total).toFixed(2)}</TableCell>
+                      <TableCell>
+                        <Select value={order.status} onValueChange={(v) => handleUpdateOrderStatus(order.id, v)}>
+                          <SelectTrigger className="w-28 h-8">
+                            <Badge className={getStatusColor(order.status)}>{order.status}</Badge>
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="pending">Pending</SelectItem>
                             <SelectItem value="paid">Paid</SelectItem>
+                            <SelectItem value="processing">Processing</SelectItem>
                             <SelectItem value="shipped">Shipped</SelectItem>
                             <SelectItem value="delivered">Delivered</SelectItem>
                             <SelectItem value="cancelled">Cancelled</SelectItem>
+                            <SelectItem value="refunded">Refunded</SelectItem>
                           </SelectContent>
                         </Select>
+                      </TableCell>
+                      <TableCell>
+                        {order.tracking_number ? (
+                          <a href={order.tracking_url || "#"} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline">
+                            {order.tracking_number}
+                          </a>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">—</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-xs">{formatDisplayDate(order.created_at)}</TableCell>
+                      <TableCell>
+                        <Button size="sm" variant="ghost" onClick={() => handleViewOrder(order)}>
+                          <Eye className="h-4 w-4" />
+                        </Button>
                       </TableCell>
                     </TableRow>
                   ))}
                   {orders.length === 0 && (
                     <TableRow>
-                      <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+                      <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
                         No orders yet
                       </TableCell>
                     </TableRow>
@@ -596,6 +668,98 @@ const StoreManager = () => {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Order Detail Dialog */}
+      <Dialog open={!!selectedOrder} onOpenChange={() => setSelectedOrder(null)}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Order Details - {selectedOrder?.order_number || selectedOrder?.shopify_order_number || ""}</DialogTitle>
+          </DialogHeader>
+          {selectedOrder && (
+            <div className="space-y-4">
+              {/* Customer Info */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-xs text-muted-foreground">Customer</Label>
+                  <p className="font-medium">{selectedOrder.customer_name || selectedOrder.profiles?.full_name || "Guest"}</p>
+                  <p className="text-sm text-muted-foreground">{selectedOrder.customer_email || selectedOrder.profiles?.email || "—"}</p>
+                </div>
+                <div>
+                  <Label className="text-xs text-muted-foreground">Status</Label>
+                  <div className="flex items-center gap-2 mt-1">
+                    <Badge className={getStatusColor(selectedOrder.status)}>{selectedOrder.status}</Badge>
+                    {selectedOrder.shopify_order_id && <Badge variant="outline">Shopify #{selectedOrder.shopify_order_number}</Badge>}
+                  </div>
+                </div>
+              </div>
+
+              {/* Order Items */}
+              <div>
+                <Label className="text-xs text-muted-foreground">Items</Label>
+                <div className="border border-border rounded-lg divide-y divide-border mt-1">
+                  {selectedOrder.store_order_items?.map((item) => (
+                    <div key={item.id} className="p-3 flex justify-between">
+                      <div>
+                        <p className="font-medium text-sm">{item.product_name}</p>
+                        <p className="text-xs text-muted-foreground">Qty: {item.quantity} × ${Number(item.product_price).toFixed(2)}</p>
+                      </div>
+                      <p className="font-semibold">${Number(item.total).toFixed(2)}</p>
+                    </div>
+                  )) || <p className="p-3 text-sm text-muted-foreground">No items data</p>}
+                </div>
+              </div>
+
+              {/* Totals */}
+              <div className="space-y-1 text-sm">
+                <div className="flex justify-between"><span className="text-muted-foreground">Subtotal</span><span>${Number(selectedOrder.subtotal).toFixed(2)}</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">Shipping</span><span>${Number(selectedOrder.shipping_cost || 0).toFixed(2)}</span></div>
+                {Number(selectedOrder.wallet_credit_applied) > 0 && (
+                  <div className="flex justify-between"><span className="text-muted-foreground">VendX Pay Credit</span><span className="text-accent">-${Number(selectedOrder.wallet_credit_applied).toFixed(2)}</span></div>
+                )}
+                <div className="flex justify-between font-bold text-base border-t border-border pt-2"><span>Total</span><span className="text-primary">${Number(selectedOrder.total).toFixed(2)}</span></div>
+              </div>
+
+              {/* Tracking & Fulfillment */}
+              <div className="border-t border-border pt-4 space-y-3">
+                <h4 className="font-semibold">Tracking & Fulfillment</h4>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label>Tracking Number</Label>
+                    <Input value={trackingForm.tracking_number} onChange={(e) => setTrackingForm({ ...trackingForm, tracking_number: e.target.value })} placeholder="e.g. 1Z999..." />
+                  </div>
+                  <div>
+                    <Label>Tracking URL</Label>
+                    <Input value={trackingForm.tracking_url} onChange={(e) => setTrackingForm({ ...trackingForm, tracking_url: e.target.value })} placeholder="https://..." />
+                  </div>
+                  <div>
+                    <Label>Estimated Delivery</Label>
+                    <Input type="date" value={trackingForm.estimated_delivery} onChange={(e) => setTrackingForm({ ...trackingForm, estimated_delivery: e.target.value })} />
+                  </div>
+                </div>
+                <div>
+                  <Label>Admin Notes</Label>
+                  <Textarea value={trackingForm.admin_notes} onChange={(e) => setTrackingForm({ ...trackingForm, admin_notes: e.target.value })} rows={2} placeholder="Internal notes..." />
+                </div>
+                <div className="flex gap-2">
+                  <Button onClick={() => handleUpdateTracking(selectedOrder.id)}>Save Tracking Info</Button>
+                  <Button variant="outline" onClick={() => setSelectedOrder(null)}>Close</Button>
+                </div>
+              </div>
+
+              {/* Timeline */}
+              <div className="border-t border-border pt-4">
+                <h4 className="font-semibold text-sm mb-2">Timeline</h4>
+                <div className="space-y-2 text-xs text-muted-foreground">
+                  <p>📦 Ordered: {formatDisplayDate(selectedOrder.created_at)}</p>
+                  {selectedOrder.shipped_at && <p>🚚 Shipped: {formatDisplayDate(selectedOrder.shipped_at)}</p>}
+                  {selectedOrder.delivered_at && <p>✅ Delivered: {formatDisplayDate(selectedOrder.delivered_at)}</p>}
+                  {selectedOrder.estimated_delivery && <p>📅 Est. Delivery: {selectedOrder.estimated_delivery}</p>}
+                </div>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
