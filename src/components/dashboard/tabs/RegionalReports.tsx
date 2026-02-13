@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,8 +7,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, TrendingUp, Trash2, Edit } from "lucide-react";
+import { Plus, TrendingUp, Trash2, Edit, Download } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
+import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+  PieChart, Pie, Cell, Legend,
+} from "recharts";
+import { format } from "date-fns";
+
+const COLORS = ["hsl(var(--primary))", "#10b981", "#8b5cf6", "#f59e0b", "#ef4444", "#06b6d4"];
 
 interface Region {
   id: string;
@@ -93,14 +100,7 @@ const RegionalReports = () => {
   });
 
   const resetForm = () => {
-    setFormData({
-      name: "",
-      country: "",
-      active_machines: 0,
-      monthly_revenue: 0,
-      monthly_transactions: 0,
-      growth_rate: 0,
-    });
+    setFormData({ name: "", country: "", active_machines: 0, monthly_revenue: 0, monthly_transactions: 0, growth_rate: 0 });
     setEditingRegion(null);
   };
 
@@ -128,6 +128,39 @@ const RegionalReports = () => {
 
   const totalMachines = regions?.reduce((sum, r) => sum + r.active_machines, 0) || 0;
   const totalRevenue = regions?.reduce((sum, r) => sum + r.monthly_revenue, 0) || 0;
+  const totalTransactions = regions?.reduce((sum, r) => sum + r.monthly_transactions, 0) || 0;
+  const avgGrowth = regions?.length ? (regions.reduce((sum, r) => sum + r.growth_rate, 0) / regions.length).toFixed(1) : "0.0";
+
+  // Chart: Revenue by region
+  const revenueChartData = useMemo(() => {
+    return (regions || []).map(r => ({
+      name: r.name.length > 12 ? r.name.substring(0, 12) + "…" : r.name,
+      revenue: r.monthly_revenue,
+      transactions: r.monthly_transactions,
+    }));
+  }, [regions]);
+
+  // Chart: Machine distribution pie
+  const machineDistribution = useMemo(() => {
+    return (regions || [])
+      .filter(r => r.active_machines > 0)
+      .map(r => ({ name: r.name, value: r.active_machines }));
+  }, [regions]);
+
+  // CSV Export
+  const exportCSV = () => {
+    if (!regions) return;
+    let csv = "Region,Country,Active Machines,Monthly Revenue,Monthly Transactions,Growth Rate\n";
+    regions.forEach(r => {
+      csv += `"${r.name}","${r.country}",${r.active_machines},${r.monthly_revenue},${r.monthly_transactions},${r.growth_rate}\n`;
+    });
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = `regional-reports-${format(new Date(), "yyyy-MM-dd")}.csv`;
+    link.click();
+    toast({ title: "Exported", description: "Regional report downloaded" });
+  };
 
   if (isLoading) {
     return <div className="flex items-center justify-center h-64"><p className="text-muted-foreground">Loading...</p></div>;
@@ -140,92 +173,61 @@ const RegionalReports = () => {
           <h2 className="text-3xl font-bold text-foreground mb-2">Regional Reports</h2>
           <p className="text-muted-foreground">Monitor performance across all regions</p>
         </div>
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild>
-            <Button onClick={resetForm}>
-              <Plus className="w-4 h-4 mr-2" />
-              Add Region
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>{editingRegion ? "Edit Region" : "Add New Region"}</DialogTitle>
-            </DialogHeader>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="name">Region Name</Label>
-                  <Input
-                    id="name"
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    required
-                  />
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={exportCSV}>
+            <Download className="w-4 h-4 mr-2" />Export CSV
+          </Button>
+          <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>
+              <Button onClick={resetForm}>
+                <Plus className="w-4 h-4 mr-2" />
+                Add Region
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl">
+              <DialogHeader>
+                <DialogTitle>{editingRegion ? "Edit Region" : "Add New Region"}</DialogTitle>
+              </DialogHeader>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="name">Region Name</Label>
+                    <Input id="name" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} required />
+                  </div>
+                  <div>
+                    <Label htmlFor="country">Country</Label>
+                    <Input id="country" value={formData.country} onChange={(e) => setFormData({ ...formData, country: e.target.value })} required />
+                  </div>
+                  <div>
+                    <Label htmlFor="active_machines">Active Machines</Label>
+                    <Input id="active_machines" type="number" value={formData.active_machines} onChange={(e) => setFormData({ ...formData, active_machines: parseInt(e.target.value) })} required />
+                  </div>
+                  <div>
+                    <Label htmlFor="monthly_revenue">Monthly Revenue ($)</Label>
+                    <Input id="monthly_revenue" type="number" step="0.01" value={formData.monthly_revenue} onChange={(e) => setFormData({ ...formData, monthly_revenue: parseFloat(e.target.value) })} required />
+                  </div>
+                  <div>
+                    <Label htmlFor="monthly_transactions">Monthly Transactions</Label>
+                    <Input id="monthly_transactions" type="number" value={formData.monthly_transactions} onChange={(e) => setFormData({ ...formData, monthly_transactions: parseInt(e.target.value) })} required />
+                  </div>
+                  <div>
+                    <Label htmlFor="growth_rate">Growth Rate (%)</Label>
+                    <Input id="growth_rate" type="number" step="0.01" value={formData.growth_rate} onChange={(e) => setFormData({ ...formData, growth_rate: parseFloat(e.target.value) })} required />
+                  </div>
                 </div>
-                <div>
-                  <Label htmlFor="country">Country</Label>
-                  <Input
-                    id="country"
-                    value={formData.country}
-                    onChange={(e) => setFormData({ ...formData, country: e.target.value })}
-                    required
-                  />
+                <div className="flex justify-end gap-2">
+                  <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
+                  <Button type="submit">{editingRegion ? "Update" : "Add"} Region</Button>
                 </div>
-                <div>
-                  <Label htmlFor="active_machines">Active Machines</Label>
-                  <Input
-                    id="active_machines"
-                    type="number"
-                    value={formData.active_machines}
-                    onChange={(e) => setFormData({ ...formData, active_machines: parseInt(e.target.value) })}
-                    required
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="monthly_revenue">Monthly Revenue ($)</Label>
-                  <Input
-                    id="monthly_revenue"
-                    type="number"
-                    step="0.01"
-                    value={formData.monthly_revenue}
-                    onChange={(e) => setFormData({ ...formData, monthly_revenue: parseFloat(e.target.value) })}
-                    required
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="monthly_transactions">Monthly Transactions</Label>
-                  <Input
-                    id="monthly_transactions"
-                    type="number"
-                    value={formData.monthly_transactions}
-                    onChange={(e) => setFormData({ ...formData, monthly_transactions: parseInt(e.target.value) })}
-                    required
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="growth_rate">Growth Rate (%)</Label>
-                  <Input
-                    id="growth_rate"
-                    type="number"
-                    step="0.01"
-                    value={formData.growth_rate}
-                    onChange={(e) => setFormData({ ...formData, growth_rate: parseFloat(e.target.value) })}
-                    required
-                  />
-                </div>
-              </div>
-              <div className="flex justify-end gap-2">
-                <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-                <Button type="submit">{editingRegion ? "Update" : "Add"} Region</Button>
-              </div>
-            </form>
-          </DialogContent>
-        </Dialog>
+              </form>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card>
-          <CardHeader>
+          <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">Total Regions</CardTitle>
           </CardHeader>
           <CardContent>
@@ -233,7 +235,7 @@ const RegionalReports = () => {
           </CardContent>
         </Card>
         <Card>
-          <CardHeader>
+          <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">Total Machines</CardTitle>
           </CardHeader>
           <CardContent>
@@ -241,15 +243,84 @@ const RegionalReports = () => {
           </CardContent>
         </Card>
         <Card>
-          <CardHeader>
+          <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">Total Revenue</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-bold text-foreground">${totalRevenue.toLocaleString()}</p>
+            <p className="text-3xl font-bold text-green-500">${totalRevenue.toLocaleString()}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Avg Growth</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className={`text-3xl font-bold ${Number(avgGrowth) >= 0 ? "text-green-500" : "text-red-500"}`}>
+              {Number(avgGrowth) >= 0 ? "+" : ""}{avgGrowth}%
+            </p>
           </CardContent>
         </Card>
       </div>
 
+      {/* Charts */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Revenue by Region</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="h-[300px]">
+              {revenueChartData.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={revenueChartData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                    <XAxis dataKey="name" tick={{ fontSize: 12 }} stroke="hsl(var(--muted-foreground))" />
+                    <YAxis tickFormatter={(v) => `$${v}`} tick={{ fontSize: 12 }} stroke="hsl(var(--muted-foreground))" />
+                    <Tooltip formatter={(v: number) => `$${v.toLocaleString()}`} contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))" }} />
+                    <Bar dataKey="revenue" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} name="Revenue" />
+                  </BarChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="flex items-center justify-center h-full text-muted-foreground">No regional data</div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Machine Distribution</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="h-[300px]">
+              {machineDistribution.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={machineDistribution}
+                      cx="50%"
+                      cy="50%"
+                      outerRadius={100}
+                      dataKey="value"
+                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                    >
+                      {machineDistribution.map((_, i) => (
+                        <Cell key={i} fill={COLORS[i % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                    <Legend />
+                  </PieChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="flex items-center justify-center h-full text-muted-foreground">No machine data</div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Regional Performance Table */}
       <Card>
         <CardHeader>
           <CardTitle>Regional Performance</CardTitle>
@@ -288,7 +359,7 @@ const RegionalReports = () => {
                       </Button>
                     </div>
                   </div>
-                  <Progress value={(region.monthly_revenue / totalRevenue) * 100} className="h-2" />
+                  <Progress value={totalRevenue > 0 ? (region.monthly_revenue / totalRevenue) * 100 : 0} className="h-2" />
                 </div>
               ))
             )}

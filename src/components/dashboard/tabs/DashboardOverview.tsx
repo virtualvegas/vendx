@@ -9,6 +9,10 @@ import {
   TrendingUp, Package
 } from "lucide-react";
 import { MachineStatsCards, calculateMachineStats, BaseMachine } from "@/components/machines";
+import {
+  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
+} from "recharts";
+import { format } from "date-fns";
 
 const DashboardOverview = () => {
   // Fetch machine transactions for revenue
@@ -82,6 +86,19 @@ const DashboardOverview = () => {
         .filter(t => new Date(t.created_at) >= monthStart)
         .reduce((sum, t) => sum + Number(t.amount), 0),
     };
+  }, [transactions]);
+
+  // Daily revenue trend chart data
+  const dailyRevenueTrend = useMemo(() => {
+    if (!transactions) return [];
+    const dayMap = new Map<string, number>();
+    transactions.forEach(t => {
+      const day = format(new Date(t.created_at), "MM/dd");
+      dayMap.set(day, (dayMap.get(day) || 0) + Number(t.amount));
+    });
+    return Array.from(dayMap.entries())
+      .map(([day, revenue]) => ({ day, revenue }))
+      .sort((a, b) => a.day.localeCompare(b.day));
   }, [transactions]);
 
   // Machine status counts using universal utility
@@ -168,6 +185,36 @@ const DashboardOverview = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Revenue Trend Chart */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <TrendingUp className="w-5 h-5" />
+            30-Day Revenue Trend
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="h-[250px]">
+            {dailyRevenueTrend.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={dailyRevenueTrend}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                  <XAxis dataKey="day" tick={{ fontSize: 12 }} stroke="hsl(var(--muted-foreground))" />
+                  <YAxis tickFormatter={(v) => `$${v}`} tick={{ fontSize: 12 }} stroke="hsl(var(--muted-foreground))" />
+                  <Tooltip 
+                    formatter={(v: number) => [`$${v.toLocaleString()}`, "Revenue"]} 
+                    contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))" }} 
+                  />
+                  <Area type="monotone" dataKey="revenue" fill="hsl(var(--primary))" stroke="hsl(var(--primary))" fillOpacity={0.3} name="Revenue" />
+                </AreaChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex items-center justify-center h-full text-muted-foreground">No transaction data for this period</div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Machine Status Cards - Using Universal Component */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
