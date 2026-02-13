@@ -252,7 +252,7 @@ const Finance = () => {
   const profitMargin = totalRevenue > 0 ? ((netProfit / totalRevenue) * 100).toFixed(1) : "0.0";
 
   const syncedRevenue = syncedTransactions?.filter(t => t.transaction_type === "revenue").reduce((sum, t) => sum + t.amount, 0) || 0;
-  const syncedRefunds = syncedTransactions?.filter(t => t.transaction_type === "refund").reduce((sum, t) => sum + Math.abs(t.amount), 0) || 0;
+  const syncedExpenses = syncedTransactions?.filter(t => t.transaction_type === "expense").reduce((sum, t) => sum + Math.abs(t.amount), 0) || 0;
   const syncedWalletLoads = syncedTransactions?.filter(t => t.transaction_type === "wallet_load").reduce((sum, t) => sum + t.amount, 0) || 0;
 
   const isSyncing = syncMutation.isPending || 
@@ -590,8 +590,8 @@ const Finance = () => {
                       <p className="font-bold text-blue-500">${syncedWalletLoads.toLocaleString()}</p>
                     </div>
                     <div className="p-3 border rounded-lg text-center">
-                      <p className="text-xs text-muted-foreground">Refunds</p>
-                      <p className="font-bold text-red-500">${syncedRefunds.toLocaleString()}</p>
+                      <p className="text-xs text-muted-foreground">Expenses</p>
+                      <p className="font-bold text-red-500">${syncedExpenses.toLocaleString()}</p>
                     </div>
                   </div>
                 </div>
@@ -775,10 +775,10 @@ const Finance = () => {
             </Card>
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">Refunds</CardTitle>
+                <CardTitle className="text-sm font-medium text-muted-foreground">Expenses</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-2xl font-bold text-red-500">${syncedRefunds.toLocaleString()}</p>
+                <p className="text-2xl font-bold text-red-500">${syncedExpenses.toLocaleString()}</p>
               </CardContent>
             </Card>
             <Card>
