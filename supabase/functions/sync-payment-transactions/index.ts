@@ -143,7 +143,8 @@ async function syncStripeTransactions(supabase: any, startDate?: string): Promis
         const transaction = {
           provider: "stripe",
           provider_transaction_id: `refund_${refund.id}`,
-          transaction_type: "refund",
+          transaction_type: "expense",
+          transaction_type: "expense",
           amount: -(refund.amount / 100),
           currency: refund.currency,
           status: refund.status || "succeeded",
@@ -262,7 +263,7 @@ async function syncPayPalTransactions(supabase: any, startDate?: string): Promis
         const transaction = {
           provider: "paypal",
           provider_transaction_id: info.transaction_id,
-          transaction_type: isRefund ? "refund" : "revenue",
+          transaction_type: isRefund ? "expense" : "revenue",
           amount: Math.abs(amount),
           currency: info.transaction_amount?.currency_code || "USD",
           status: "completed",
