@@ -51,10 +51,18 @@ interface MediaRelease {
   vudu_url: string | null;
 }
 
+interface TracklistItem {
+  number: number;
+  title: string;
+  duration: string;
+  featured_artist: string;
+}
+
 const emptyForm = {
   title: "",
   slug: "",
   media_type: "music" as string,
+  music_release_type: "single" as string,
   short_description: "",
   full_description: "",
   cover_image_url: "",
@@ -66,6 +74,7 @@ const emptyForm = {
   is_featured: false,
   is_active: true,
   display_order: 0,
+  tracklist: [] as TracklistItem[],
   spotify_url: "",
   apple_music_url: "",
   youtube_music_url: "",
@@ -140,6 +149,8 @@ const MediaManager = () => {
       const payload = {
         ...form,
         genre: form.genre ? form.genre.split(",").map((g) => g.trim()).filter(Boolean) : [],
+        tracklist: (form.media_type === "music" && form.music_release_type !== "single" ? form.tracklist : []) as any,
+        music_release_type: (form.media_type === "music" ? form.music_release_type : "single") as any,
         short_description: form.short_description || null,
         full_description: form.full_description || null,
         cover_image_url: form.cover_image_url || null,
@@ -169,10 +180,10 @@ const MediaManager = () => {
       };
 
       if (editingId) {
-        const { error } = await supabase.from("media_releases").update(payload).eq("id", editingId);
+        const { error } = await supabase.from("media_releases").update(payload as any).eq("id", editingId);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("media_releases").insert(payload);
+        const { error } = await supabase.from("media_releases").insert(payload as any);
         if (error) throw error;
       }
     },
@@ -207,6 +218,7 @@ const MediaManager = () => {
       title: r.title,
       slug: r.slug,
       media_type: r.media_type,
+      music_release_type: (r as any).music_release_type || "single",
       short_description: r.short_description || "",
       full_description: r.full_description || "",
       cover_image_url: r.cover_image_url || "",
@@ -218,6 +230,7 @@ const MediaManager = () => {
       is_featured: r.is_featured || false,
       is_active: r.is_active !== false,
       display_order: r.display_order,
+      tracklist: ((r as any).tracklist as TracklistItem[]) || [],
       spotify_url: r.spotify_url || "",
       apple_music_url: r.apple_music_url || "",
       youtube_music_url: r.youtube_music_url || "",
@@ -277,7 +290,7 @@ const MediaManager = () => {
                   <Input value={form.slug} onChange={(e) => updateField("slug", e.target.value)} placeholder="auto-from-title" />
                 </div>
               </div>
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label>Type</Label>
                   <Select value={form.media_type} onValueChange={(v) => updateField("media_type", v)}>
@@ -288,6 +301,21 @@ const MediaManager = () => {
                     </SelectContent>
                   </Select>
                 </div>
+                {form.media_type === "music" && (
+                  <div>
+                    <Label>Release Type</Label>
+                    <Select value={form.music_release_type} onValueChange={(v) => updateField("music_release_type", v)}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="single">Single</SelectItem>
+                        <SelectItem value="album">Album</SelectItem>
+                        <SelectItem value="ep">EP</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+              </div>
+              <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label>Status</Label>
                   <Select value={form.release_status} onValueChange={(v) => updateField("release_status", v)}>
@@ -305,6 +333,83 @@ const MediaManager = () => {
                   <Input type="date" value={form.release_date} onChange={(e) => updateField("release_date", e.target.value)} />
                 </div>
               </div>
+
+              {/* Tracklist for Albums/EPs */}
+              {form.media_type === "music" && form.music_release_type !== "single" && (
+                <div className="border-t pt-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="font-semibold flex items-center gap-2">
+                      <Music className="w-4 h-4" /> Tracklist
+                    </h4>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setForm((prev) => ({
+                          ...prev,
+                          tracklist: [...prev.tracklist, { number: prev.tracklist.length + 1, title: "", duration: "", featured_artist: "" }],
+                        }));
+                      }}
+                    >
+                      <Plus className="w-3 h-3 mr-1" /> Add Track
+                    </Button>
+                  </div>
+                  {form.tracklist.length === 0 && (
+                    <p className="text-sm text-muted-foreground">No tracks added yet.</p>
+                  )}
+                  <div className="space-y-2">
+                    {form.tracklist.map((track, idx) => (
+                      <div key={idx} className="flex items-center gap-2">
+                        <span className="text-sm text-muted-foreground w-6 text-center">{idx + 1}</span>
+                        <Input
+                          placeholder="Track title"
+                          value={track.title}
+                          onChange={(e) => {
+                            const updated = [...form.tracklist];
+                            updated[idx] = { ...updated[idx], title: e.target.value, number: idx + 1 };
+                            setForm((prev) => ({ ...prev, tracklist: updated }));
+                          }}
+                          className="flex-1"
+                        />
+                        <Input
+                          placeholder="3:45"
+                          value={track.duration}
+                          onChange={(e) => {
+                            const updated = [...form.tracklist];
+                            updated[idx] = { ...updated[idx], duration: e.target.value };
+                            setForm((prev) => ({ ...prev, tracklist: updated }));
+                          }}
+                          className="w-20"
+                        />
+                        <Input
+                          placeholder="Feat. artist"
+                          value={track.featured_artist}
+                          onChange={(e) => {
+                            const updated = [...form.tracklist];
+                            updated[idx] = { ...updated[idx], featured_artist: e.target.value };
+                            setForm((prev) => ({ ...prev, tracklist: updated }));
+                          }}
+                          className="w-32"
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => {
+                            setForm((prev) => ({
+                              ...prev,
+                              tracklist: prev.tracklist.filter((_, i) => i !== idx).map((t, i) => ({ ...t, number: i + 1 })),
+                            }));
+                          }}
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label>Artist / Director</Label>
