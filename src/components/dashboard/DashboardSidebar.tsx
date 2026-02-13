@@ -111,6 +111,7 @@ const tabGroups: TabGroup[] = [
     label: "Overview & Reports",
     tabs: [
       { id: "overview", label: "Dashboard", icon: LayoutDashboard, requiredRoles: ["super_admin", "global_operations_manager", "finance_accounting", "regional_manager"] },
+      { id: "global-analytics", label: "Global Analytics", icon: TrendingUp, requiredRoles: ["super_admin", "finance_accounting"] },
       { id: "global-operations", label: "Global Operations", icon: Globe, requiredRoles: ["super_admin", "global_operations_manager"] },
       { id: "regional-reports", label: "Regional Reports", icon: MapPin, requiredRoles: ["super_admin", "regional_manager"] },
       { id: "arcade-analytics", label: "Arcade Analytics", icon: BarChart3, requiredRoles: ["super_admin", "finance_accounting"] },
