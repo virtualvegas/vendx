@@ -21,15 +21,13 @@ const Index = () => {
       
       <div className="relative z-10">
         <Hero />
-        <About />
-        <ServicesOverview />
         <FeaturedProducts />
         <FeaturedGames />
         <FeaturedMedia />
         <FeaturedBeats />
+        <ServicesOverview />
         <Divisions />
-        
-        <QuickLinks />
+        <About />
         <Contact />
         <Footer />
       </div>
