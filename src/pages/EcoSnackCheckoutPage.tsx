@@ -3,9 +3,8 @@ import { useParams, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Leaf, Lock, CreditCard, Wallet, Loader2, TreePine } from "lucide-react";
+import { Leaf, Lock, CreditCard, Wallet, Loader2, TreePine, ChevronUp, X } from "lucide-react";
 import { toast } from "sonner";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
@@ -26,6 +25,7 @@ const EcoSnackCheckoutPage = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [lockerCode, setLockerCode] = useState<string | null>(null);
   const [purchaseComplete, setPurchaseComplete] = useState(false);
+  const [checkoutExpanded, setCheckoutExpanded] = useState(false);
 
   const canceled = searchParams.get("canceled");
 
@@ -33,7 +33,11 @@ const EcoSnackCheckoutPage = () => {
     if (canceled) toast.error("Payment was canceled.");
   }, [canceled]);
 
-  // Fetch machine info
+  // Auto-expand checkout on mobile when locker selected
+  useEffect(() => {
+    if (selectedLocker) setCheckoutExpanded(true);
+  }, [selectedLocker]);
+
   const { data: machine, isLoading: machineLoading } = useQuery({
     queryKey: ["ecosnack-machine", machineCode],
     queryFn: async () => {
@@ -50,7 +54,6 @@ const EcoSnackCheckoutPage = () => {
     enabled: !!machineCode,
   });
 
-  // Fetch inventory for this machine
   const { data: inventory } = useQuery({
     queryKey: ["ecosnack-inventory", machine?.id],
     queryFn: async () => {
@@ -72,7 +75,6 @@ const EcoSnackCheckoutPage = () => {
     enabled: !!machine?.id,
   });
 
-  // Check auth for wallet option
   const { data: session } = useQuery({
     queryKey: ["auth-session"],
     queryFn: async () => {
@@ -135,13 +137,6 @@ const EcoSnackCheckoutPage = () => {
     }
   };
 
-  const copyCode = () => {
-    if (lockerCode) {
-      navigator.clipboard.writeText(lockerCode);
-      toast.success("Code copied!");
-    }
-  };
-
   if (machineLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -154,22 +149,21 @@ const EcoSnackCheckoutPage = () => {
     return (
       <div className="min-h-screen bg-background">
         <Navigation />
-        <div className="container mx-auto px-4 pt-32 pb-16 text-center">
-          <TreePine className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
-          <h1 className="text-2xl font-bold text-foreground mb-2">Machine Not Found</h1>
-          <p className="text-muted-foreground">This EcoSnack machine doesn't exist or isn't available.</p>
+        <div className="container mx-auto px-4 pt-24 pb-16 text-center">
+          <TreePine className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
+          <h1 className="text-xl font-bold text-foreground mb-2">Machine Not Found</h1>
+          <p className="text-sm text-muted-foreground">This EcoSnack machine doesn't exist or isn't available.</p>
         </div>
         <Footer />
       </div>
     );
   }
 
-  // Success screen
   if (purchaseComplete && lockerCode && selectedLocker) {
     return (
       <div className="min-h-screen bg-background">
         <Navigation />
-        <div className="container mx-auto px-4 pt-32 pb-16 flex items-center justify-center">
+        <div className="container mx-auto px-4 pt-24 pb-16 flex items-center justify-center">
           <EcoSnackPostPaymentFlow
             lockerCode={lockerCode}
             lockerNumber={selectedLocker.locker_number}
@@ -187,149 +181,251 @@ const EcoSnackCheckoutPage = () => {
   return (
     <div className="min-h-screen bg-background">
       <Navigation />
-      <div className="container mx-auto px-4 pt-28 pb-16">
-        {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 rounded-full bg-accent/20 flex items-center justify-center">
-              <Leaf className="h-5 w-5 text-accent" />
+      
+      {/* Main content - extra bottom padding on mobile for sticky checkout */}
+      <div className="container mx-auto px-3 sm:px-4 pt-20 sm:pt-28 pb-48 sm:pb-16">
+        {/* Header - compact on mobile */}
+        <div className="mb-4 sm:mb-8">
+          <div className="flex items-center gap-2 sm:gap-3 mb-2">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-accent/20 flex items-center justify-center flex-shrink-0">
+              <Leaf className="h-4 w-4 sm:h-5 sm:w-5 text-accent" />
             </div>
-            <div>
-              <h1 className="text-2xl font-bold text-foreground">{machine.name}</h1>
-              <p className="text-sm text-muted-foreground">
-                {(machine.location as any)?.name || (machine.location as any)?.city || "EcoSnack Nature Trail Machine"}
+            <div className="min-w-0">
+              <h1 className="text-lg sm:text-2xl font-bold text-foreground truncate">{machine.name}</h1>
+              <p className="text-xs sm:text-sm text-muted-foreground truncate">
+                {(machine.location as any)?.name || (machine.location as any)?.city || "EcoSnack Machine"}
               </p>
             </div>
           </div>
-          <Badge variant="outline" className="border-accent/50 text-accent">
+          <Badge variant="outline" className="border-accent/50 text-accent text-xs">
             <Leaf className="h-3 w-3 mr-1" /> EcoSnack
           </Badge>
         </div>
 
-        <div className="grid lg:grid-cols-3 gap-6">
-          {/* Locker grid */}
+        <div className="grid lg:grid-cols-3 gap-4 sm:gap-6">
+          {/* Locker grid - optimized for mobile */}
           <div className="lg:col-span-2">
-            <h2 className="text-lg font-semibold text-foreground mb-4">Select a Locker</h2>
+            <h2 className="text-base sm:text-lg font-semibold text-foreground mb-3 sm:mb-4">Select a Locker</h2>
             {lockerItems.length === 0 ? (
-              <Card className="border-border bg-card">
-                <CardContent className="py-12 text-center">
-                  <Lock className="h-10 w-10 mx-auto text-muted-foreground mb-3" />
-                  <p className="text-muted-foreground">No items currently stocked in this machine.</p>
-                </CardContent>
-              </Card>
+              <div className="border border-border bg-card rounded-xl py-10 text-center">
+                <Lock className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
+                <p className="text-sm text-muted-foreground">No items currently stocked.</p>
+              </div>
             ) : (
-              <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 sm:gap-3">
                 {lockerItems.map((item) => (
                   <button
                     key={item.locker_number}
                     onClick={() => item.available && setSelectedLocker(item)}
                     disabled={!item.available}
                     className={`
-                      relative p-4 rounded-xl border-2 transition-all text-left
+                      relative p-3 sm:p-4 rounded-xl border-2 transition-all text-left active:scale-95
                       ${selectedLocker?.locker_number === item.locker_number
                         ? "border-accent bg-accent/10 shadow-[0_0_15px_hsl(var(--accent)/0.3)]"
                         : item.available
-                          ? "border-border bg-card hover:border-accent/50 hover:bg-accent/5"
+                          ? "border-border bg-card hover:border-accent/50 active:bg-accent/5"
                           : "border-border/50 bg-muted/50 opacity-50 cursor-not-allowed"
                       }
                     `}
                   >
-                    <span className="text-xs font-mono text-accent font-bold">
-                      #{item.locker_number.padStart(2, "0")}
-                    </span>
-                    <Lock className={`h-6 w-6 my-2 ${
-                      selectedLocker?.locker_number === item.locker_number ? "text-accent" : "text-muted-foreground"
-                    }`} />
-                    <p className="text-xs font-medium text-foreground truncate">{item.item_name}</p>
-                    <p className="text-xs text-accent font-semibold">${item.price.toFixed(2)}</p>
+                    <div className="flex items-center justify-between sm:block">
+                      <div>
+                        <span className="text-xs font-mono text-accent font-bold">
+                          #{item.locker_number.padStart(2, "0")}
+                        </span>
+                        <Lock className={`h-5 w-5 sm:h-6 sm:w-6 my-1 sm:my-2 ${
+                          selectedLocker?.locker_number === item.locker_number ? "text-accent" : "text-muted-foreground"
+                        }`} />
+                      </div>
+                      <div className="text-right sm:text-left">
+                        <p className="text-xs font-medium text-foreground truncate max-w-[100px] sm:max-w-full">{item.item_name}</p>
+                        <p className="text-sm sm:text-xs text-accent font-bold">${item.price.toFixed(2)}</p>
+                      </div>
+                    </div>
                   </button>
                 ))}
               </div>
             )}
           </div>
 
-          {/* Checkout panel */}
-          <div>
-            <Card className="border-border bg-card sticky top-24">
-              <CardHeader>
-                <CardTitle className="text-lg">Checkout</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {selectedLocker ? (
-                  <>
-                    <div className="bg-muted rounded-lg p-4 space-y-2">
-                      <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Item</span>
-                        <span className="text-foreground font-medium">{selectedLocker.item_name}</span>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Locker</span>
-                        <span className="text-foreground font-medium">#{selectedLocker.locker_number.padStart(2, "0")}</span>
-                      </div>
-                      <div className="border-t border-border pt-2 flex justify-between">
-                        <span className="font-semibold text-foreground">Total</span>
-                        <span className="font-bold text-accent text-lg">${selectedLocker.price.toFixed(2)}</span>
-                      </div>
-                    </div>
-
-                    {/* Payment method */}
-                    <div className="space-y-2">
-                      <p className="text-sm font-medium text-foreground">Payment Method</p>
-                      <button
-                        onClick={() => setPaymentMethod("stripe")}
-                        className={`w-full flex items-center gap-3 p-3 rounded-lg border-2 transition-all ${
-                          paymentMethod === "stripe"
-                            ? "border-accent bg-accent/10"
-                            : "border-border hover:border-accent/50"
-                        }`}
-                      >
-                        <CreditCard className="h-5 w-5 text-accent" />
-                        <span className="text-sm text-foreground">Debit / Credit Card</span>
-                      </button>
-                      {session && (
-                        <button
-                          onClick={() => setPaymentMethod("wallet")}
-                          className={`w-full flex items-center gap-3 p-3 rounded-lg border-2 transition-all ${
-                            paymentMethod === "wallet"
-                              ? "border-accent bg-accent/10"
-                              : "border-border hover:border-accent/50"
-                          }`}
-                        >
-                          <Wallet className="h-5 w-5 text-accent" />
-                          <span className="text-sm text-foreground">VendX Pay Wallet</span>
-                        </button>
-                      )}
-                    </div>
-
-                    <Button
-                      onClick={handlePurchase}
-                      disabled={isProcessing}
-                      className="w-full bg-accent text-accent-foreground hover:bg-accent/90 font-semibold"
-                    >
-                      {isProcessing ? (
-                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                      ) : (
-                        <Lock className="h-4 w-4 mr-2" />
-                      )}
-                      {isProcessing ? "Processing..." : `Pay $${selectedLocker.price.toFixed(2)}`}
-                    </Button>
-
-                    <p className="text-xs text-center text-muted-foreground">
-                      After payment, you'll receive a 3-digit code to unlock your locker.
-                    </p>
-                  </>
-                ) : (
-                  <div className="text-center py-8 text-muted-foreground">
-                    <Lock className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                    <p className="text-sm">Select a locker to continue</p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+          {/* Desktop checkout panel - hidden on mobile */}
+          <div className="hidden lg:block">
+            <div className="border border-border bg-card rounded-xl sticky top-24 p-5">
+              <h3 className="text-lg font-semibold text-foreground mb-4">Checkout</h3>
+              <CheckoutContent
+                selectedLocker={selectedLocker}
+                paymentMethod={paymentMethod}
+                setPaymentMethod={setPaymentMethod}
+                session={session}
+                isProcessing={isProcessing}
+                handlePurchase={handlePurchase}
+              />
+            </div>
           </div>
         </div>
       </div>
-      <Footer />
+
+      {/* Mobile sticky checkout bottom sheet */}
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50">
+        {/* Collapsed bar - always visible when locker selected */}
+        {selectedLocker && !checkoutExpanded && (
+          <button
+            onClick={() => setCheckoutExpanded(true)}
+            className="w-full bg-card border-t border-border px-4 py-3 flex items-center justify-between"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-accent/20 flex items-center justify-center">
+                <Lock className="h-4 w-4 text-accent" />
+              </div>
+              <div className="text-left">
+                <p className="text-sm font-medium text-foreground">{selectedLocker.item_name}</p>
+                <p className="text-xs text-muted-foreground">Locker #{selectedLocker.locker_number.padStart(2, "0")}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-lg font-bold text-accent">${selectedLocker.price.toFixed(2)}</span>
+              <ChevronUp className="h-5 w-5 text-muted-foreground" />
+            </div>
+          </button>
+        )}
+
+        {/* Expanded checkout sheet */}
+        {selectedLocker && checkoutExpanded && (
+          <>
+            {/* Backdrop */}
+            <div
+              className="fixed inset-0 bg-black/50 z-40"
+              onClick={() => setCheckoutExpanded(false)}
+            />
+            <div className="relative z-50 bg-card border-t border-border rounded-t-2xl px-4 pt-3 pb-6 max-h-[70vh] overflow-y-auto">
+              {/* Handle bar */}
+              <div className="flex justify-center mb-2">
+                <div className="w-10 h-1 rounded-full bg-muted-foreground/30" />
+              </div>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-base font-semibold text-foreground">Checkout</h3>
+                <button
+                  onClick={() => setCheckoutExpanded(false)}
+                  className="p-1 rounded-full hover:bg-muted"
+                >
+                  <X className="h-5 w-5 text-muted-foreground" />
+                </button>
+              </div>
+              <CheckoutContent
+                selectedLocker={selectedLocker}
+                paymentMethod={paymentMethod}
+                setPaymentMethod={setPaymentMethod}
+                session={session}
+                isProcessing={isProcessing}
+                handlePurchase={handlePurchase}
+              />
+            </div>
+          </>
+        )}
+
+        {/* No locker selected - prompt bar */}
+        {!selectedLocker && (
+          <div className="w-full bg-card/95 backdrop-blur-sm border-t border-border px-4 py-4 text-center">
+            <p className="text-sm text-muted-foreground">Tap a locker above to start</p>
+          </div>
+        )}
+      </div>
+
+      <div className="hidden lg:block">
+        <Footer />
+      </div>
+    </div>
+  );
+};
+
+/* Shared checkout content used in both desktop sidebar and mobile bottom sheet */
+const CheckoutContent = ({
+  selectedLocker,
+  paymentMethod,
+  setPaymentMethod,
+  session,
+  isProcessing,
+  handlePurchase,
+}: {
+  selectedLocker: LockerItem | null;
+  paymentMethod: "wallet" | "stripe";
+  setPaymentMethod: (m: "wallet" | "stripe") => void;
+  session: any;
+  isProcessing: boolean;
+  handlePurchase: () => void;
+}) => {
+  if (!selectedLocker) {
+    return (
+      <div className="text-center py-6 text-muted-foreground">
+        <Lock className="h-8 w-8 mx-auto mb-2 opacity-50" />
+        <p className="text-sm">Select a locker to continue</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      {/* Order summary */}
+      <div className="bg-muted rounded-lg p-3 space-y-2">
+        <div className="flex justify-between text-sm">
+          <span className="text-muted-foreground">Item</span>
+          <span className="text-foreground font-medium">{selectedLocker.item_name}</span>
+        </div>
+        <div className="flex justify-between text-sm">
+          <span className="text-muted-foreground">Locker</span>
+          <span className="text-foreground font-medium">#{selectedLocker.locker_number.padStart(2, "0")}</span>
+        </div>
+        <div className="border-t border-border pt-2 flex justify-between">
+          <span className="font-semibold text-foreground">Total</span>
+          <span className="font-bold text-accent text-lg">${selectedLocker.price.toFixed(2)}</span>
+        </div>
+      </div>
+
+      {/* Payment methods */}
+      <div className="space-y-2">
+        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Payment Method</p>
+        <button
+          onClick={() => setPaymentMethod("stripe")}
+          className={`w-full flex items-center gap-3 p-3 rounded-lg border-2 transition-all ${
+            paymentMethod === "stripe"
+              ? "border-accent bg-accent/10"
+              : "border-border hover:border-accent/50"
+          }`}
+        >
+          <CreditCard className="h-5 w-5 text-accent" />
+          <span className="text-sm text-foreground">Debit / Credit Card</span>
+        </button>
+        {session && (
+          <button
+            onClick={() => setPaymentMethod("wallet")}
+            className={`w-full flex items-center gap-3 p-3 rounded-lg border-2 transition-all ${
+              paymentMethod === "wallet"
+                ? "border-accent bg-accent/10"
+                : "border-border hover:border-accent/50"
+            }`}
+          >
+            <Wallet className="h-5 w-5 text-accent" />
+            <span className="text-sm text-foreground">VendX Pay Wallet</span>
+          </button>
+        )}
+      </div>
+
+      <Button
+        onClick={handlePurchase}
+        disabled={isProcessing}
+        className="w-full bg-accent text-accent-foreground hover:bg-accent/90 font-semibold h-12 text-base"
+      >
+        {isProcessing ? (
+          <Loader2 className="h-4 w-4 animate-spin mr-2" />
+        ) : (
+          <Lock className="h-4 w-4 mr-2" />
+        )}
+        {isProcessing ? "Processing..." : `Pay $${selectedLocker.price.toFixed(2)}`}
+      </Button>
+
+      <p className="text-xs text-center text-muted-foreground">
+        You'll receive a 3-digit code to unlock your locker.
+      </p>
     </div>
   );
 };
