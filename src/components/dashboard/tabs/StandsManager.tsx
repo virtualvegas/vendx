@@ -45,6 +45,8 @@ import {
   UtensilsCrossed,
   X,
   DollarSign,
+  Upload,
+  Loader2,
 } from "lucide-react";
 import { format } from "date-fns";
 
@@ -80,6 +82,7 @@ interface MenuItem {
   description: string | null;
   price: number | null;
   category: string | null;
+  image_url: string | null;
   display_order: number;
   is_available: boolean;
   created_at: string;
@@ -104,6 +107,9 @@ const StandsManager = () => {
     status: "active",
   });
   const [newImageUrl, setNewImageUrl] = useState("");
+  const [uploadingPrimary, setUploadingPrimary] = useState(false);
+  const [uploadingGallery, setUploadingGallery] = useState(false);
+  const [uploadingMenuImage, setUploadingMenuImage] = useState(false);
 
   // Event dialog state
   const [eventDialogOpen, setEventDialogOpen] = useState(false);
@@ -126,6 +132,7 @@ const StandsManager = () => {
     description: "",
     price: "",
     category: "",
+    image_url: "",
     is_available: true,
   });
   const [editingMenuItem, setEditingMenuItem] = useState<MenuItem | null>(null);
@@ -303,6 +310,7 @@ const StandsManager = () => {
         description: data.description || null,
         price: data.price ? parseFloat(data.price) : null,
         category: data.category || null,
+        image_url: data.image_url || null,
         is_available: data.is_available,
         display_order: editingMenuItem?.display_order || menuItems.length,
       };
@@ -385,9 +393,56 @@ const StandsManager = () => {
       description: "",
       price: "",
       category: "",
+      image_url: "",
       is_available: true,
     });
     setEditingMenuItem(null);
+  };
+
+  const uploadImage = async (file: File, folder: string): Promise<string | null> => {
+    const fileExt = file.name.split(".").pop();
+    const fileName = `${folder}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+    const { error } = await supabase.storage.from("stand-images").upload(fileName, file);
+    if (error) {
+      toast({ title: "Upload failed", description: error.message, variant: "destructive" });
+      return null;
+    }
+    const { data: urlData } = supabase.storage.from("stand-images").getPublicUrl(fileName);
+    return urlData.publicUrl;
+  };
+
+  const handlePrimaryImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingPrimary(true);
+    const url = await uploadImage(file, "primary");
+    if (url) setStandForm({ ...standForm, image_url: url });
+    setUploadingPrimary(false);
+    e.target.value = "";
+  };
+
+  const handleGalleryImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+    setUploadingGallery(true);
+    const newImages: string[] = [];
+    for (const file of Array.from(files)) {
+      const url = await uploadImage(file, "gallery");
+      if (url) newImages.push(url);
+    }
+    setStandForm({ ...standForm, images: [...standForm.images, ...newImages] });
+    setUploadingGallery(false);
+    e.target.value = "";
+  };
+
+  const handleMenuImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingMenuImage(true);
+    const url = await uploadImage(file, "menu");
+    if (url) setMenuItemForm({ ...menuItemForm, image_url: url });
+    setUploadingMenuImage(false);
+    e.target.value = "";
   };
 
   const handleEditStand = (stand: Stand) => {
@@ -425,6 +480,7 @@ const StandsManager = () => {
       description: item.description || "",
       price: item.price?.toString() || "",
       category: item.category || "",
+      image_url: item.image_url || "",
       is_available: item.is_available,
     });
   };
@@ -915,15 +971,38 @@ const StandsManager = () => {
               </div>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="image_url">Primary Image URL</Label>
-              <Input
-                id="image_url"
-                value={standForm.image_url}
-                onChange={(e) =>
-                  setStandForm({ ...standForm, image_url: e.target.value })
-                }
-                placeholder="https://..."
-              />
+              <Label htmlFor="image_url">Primary Image</Label>
+              <div className="flex gap-2">
+                <Input
+                  id="image_url"
+                  value={standForm.image_url}
+                  onChange={(e) =>
+                    setStandForm({ ...standForm, image_url: e.target.value })
+                  }
+                  placeholder="Paste URL or upload..."
+                  className="flex-1"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={uploadingPrimary}
+                  onClick={() => document.getElementById("primary-image-upload")?.click()}
+                >
+                  {uploadingPrimary ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+                </Button>
+                <input
+                  id="primary-image-upload"
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handlePrimaryImageUpload}
+                />
+              </div>
+              {standForm.image_url && (
+                <div className="mt-2 aspect-video w-32 rounded-md overflow-hidden border border-border">
+                  <img src={standForm.image_url} alt="Primary" className="w-full h-full object-cover" />
+                </div>
+              )}
             </div>
             
             {/* Additional Images */}
@@ -933,12 +1012,29 @@ const StandsManager = () => {
                 <Input
                   value={newImageUrl}
                   onChange={(e) => setNewImageUrl(e.target.value)}
-                  placeholder="Enter image URL"
+                  placeholder="Paste URL or upload..."
                   onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), handleAddImage())}
+                  className="flex-1"
                 />
                 <Button type="button" onClick={handleAddImage} variant="outline">
                   <Plus className="h-4 w-4" />
                 </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={uploadingGallery}
+                  onClick={() => document.getElementById("gallery-image-upload")?.click()}
+                >
+                  {uploadingGallery ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+                </Button>
+                <input
+                  id="gallery-image-upload"
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  className="hidden"
+                  onChange={handleGalleryImageUpload}
+                />
               </div>
               {standForm.images.length > 0 && (
                 <div className="grid grid-cols-3 gap-2 mt-2">
@@ -1223,6 +1319,42 @@ const StandsManager = () => {
                     placeholder="Describe this menu item..."
                     rows={2}
                   />
+                </div>
+                <div className="space-y-2">
+                  <Label>Item Image</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      value={menuItemForm.image_url}
+                      onChange={(e) => setMenuItemForm({ ...menuItemForm, image_url: e.target.value })}
+                      placeholder="Paste URL or upload..."
+                      className="flex-1"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      disabled={uploadingMenuImage}
+                      onClick={() => document.getElementById("menu-image-upload")?.click()}
+                    >
+                      {uploadingMenuImage ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+                    </Button>
+                    <input
+                      id="menu-image-upload"
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleMenuImageUpload}
+                    />
+                  </div>
+                  {menuItemForm.image_url && (
+                    <div className="mt-1 flex items-center gap-2">
+                      <div className="w-16 h-16 rounded-md overflow-hidden border border-border">
+                        <img src={menuItemForm.image_url} alt="Menu item" className="w-full h-full object-cover" />
+                      </div>
+                      <Button variant="ghost" size="sm" onClick={() => setMenuItemForm({ ...menuItemForm, image_url: "" })}>
+                        <X className="h-3 w-3 mr-1" /> Remove
+                      </Button>
+                    </div>
+                  )}
                 </div>
                 <div className="flex gap-2">
                   <Button onClick={handleMenuItemSubmit} disabled={menuItemMutation.isPending}>
