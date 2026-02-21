@@ -167,15 +167,6 @@ const tabGroups: TabGroup[] = [
     ],
   },
 
-  // === QUESTS & GAMIFICATION ===
-  {
-    id: "quests-group",
-    label: "Quests & Gamification",
-    tabs: [
-      { id: "quests-manager", label: "Quest Builder", icon: Swords, requiredRoles: ["super_admin", "marketing_sales"] },
-    ],
-  },
-
   // === ONLINE STORE ===
   {
     id: "store-group",
@@ -220,6 +211,7 @@ const tabGroups: TabGroup[] = [
     label: "Administration",
     tabs: [
       { id: "careers", label: "Careers", icon: Briefcase, requiredRoles: ["super_admin"] },
+      { id: "quests-manager", label: "Quest Builder", icon: Swords, requiredRoles: ["super_admin", "marketing_sales"] },
       { id: "site-policies", label: "Site Policies", icon: FileText, requiredRoles: ["super_admin"] },
       { id: "admin-settings", label: "System Settings", icon: Settings, requiredRoles: ["super_admin"] },
     ],
