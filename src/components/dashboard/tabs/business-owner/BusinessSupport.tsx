@@ -44,8 +44,8 @@ const BusinessSupport = () => {
         .from("partner_support_requests")
         .insert({
           business_owner_id: user.id,
-          location_id: formData.location_id || null,
-          machine_id: formData.machine_id || null,
+          location_id: formData.location_id && formData.location_id !== "none" ? formData.location_id : null,
+          machine_id: formData.machine_id && formData.machine_id !== "none" ? formData.machine_id : null,
           request_type: formData.request_type,
           priority: formData.priority,
           subject: formData.subject,
@@ -98,7 +98,7 @@ const BusinessSupport = () => {
   };
 
   const filteredMachinesForForm = useMemo(() => {
-    if (!supportFormData.location_id || !machines) return [];
+    if (!supportFormData.location_id || supportFormData.location_id === "none" || !machines) return [];
     return machines.filter(m => m.location_id === supportFormData.location_id);
   }, [supportFormData.location_id, machines]);
 
@@ -172,14 +172,14 @@ const BusinessSupport = () => {
                   <div className="space-y-2">
                     <Label>Location (Optional)</Label>
                     <Select 
-                      value={supportFormData.location_id} 
-                      onValueChange={(v) => setSupportFormData({...supportFormData, location_id: v, machine_id: ""})}
+                      value={supportFormData.location_id || "none"} 
+                      onValueChange={(v) => setSupportFormData({...supportFormData, location_id: v === "none" ? "" : v, machine_id: ""})}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Select location" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">All Locations</SelectItem>
+                        <SelectItem value="none">All Locations</SelectItem>
                         {assignments?.map((a: any) => (
                           <SelectItem key={a.location_id} value={a.location_id}>
                             {a.location?.name || `${a.location?.city}, ${a.location?.country}`}
@@ -191,15 +191,15 @@ const BusinessSupport = () => {
                   <div className="space-y-2">
                     <Label>Machine (Optional)</Label>
                     <Select 
-                      value={supportFormData.machine_id} 
-                      onValueChange={(v) => setSupportFormData({...supportFormData, machine_id: v})}
-                      disabled={!supportFormData.location_id}
+                      value={supportFormData.machine_id || "none"} 
+                      onValueChange={(v) => setSupportFormData({...supportFormData, machine_id: v === "none" ? "" : v})}
+                      disabled={!supportFormData.location_id || supportFormData.location_id === "none"}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Select machine" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">All Machines</SelectItem>
+                        <SelectItem value="none">All Machines</SelectItem>
                         {filteredMachinesForForm.map((m) => (
                           <SelectItem key={m.id} value={m.id}>
                             {m.name} ({m.machine_code})
