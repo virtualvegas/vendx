@@ -55,6 +55,7 @@ import MediaManager from "@/components/dashboard/tabs/MediaManager";
 import MediaShopManager from "@/components/dashboard/tabs/MediaShopManager";
 import TrackShopManager from "@/components/dashboard/tabs/TrackShopManager";
 import GlobalAnalytics from "@/components/dashboard/tabs/GlobalAnalytics";
+import PoliciesManager from "@/components/dashboard/tabs/PoliciesManager";
 export type AppRole =
   | "super_admin"
   | "global_operations_manager"
@@ -296,6 +297,8 @@ const DashboardPage = () => {
         return <TrackShopManager />;
       case "global-analytics":
         return <GlobalAnalytics />;
+      case "site-policies":
+        return <PoliciesManager />;
       default:
         return <CustomerOrders />;
     }

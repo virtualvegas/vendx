@@ -47,6 +47,7 @@ import TicketRedemptionPage from "./pages/TicketRedemptionPage";
 import ArcadePayPage from "./pages/ArcadePayPage";
 import EcoSnackCheckoutPage from "./pages/EcoSnackCheckoutPage";
 import EcoSnackSuccessPage from "./pages/EcoSnackSuccessPage";
+import PolicyPage from "./pages/PolicyPage";
 
 const queryClient = new QueryClient();
 
@@ -118,6 +119,7 @@ const App = () => (
               <Route path="/tickets/redeem" element={<TicketRedemptionPage />} />
               <Route path="/ecosnack/:machineCode" element={<EcoSnackCheckoutPage />} />
               <Route path="/ecosnack/success" element={<EcoSnackSuccessPage />} />
+              <Route path="/policy/:slug" element={<PolicyPage />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
