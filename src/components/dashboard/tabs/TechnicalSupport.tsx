@@ -9,8 +9,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, AlertTriangle, Trash2, Edit, CheckCircle } from "lucide-react";
+import { Plus, AlertTriangle, Trash2, Edit, CheckCircle, MessageSquare } from "lucide-react";
 import { formatDisplayDate } from "@/lib/dateUtils";
+import TicketDetailDialog from "./technical-support/TicketDetailDialog";
 
 interface SupportTicket {
   id: string;
@@ -22,6 +23,7 @@ interface SupportTicket {
   status: string;
   description: string;
   resolution: string | null;
+  assigned_to: string | null;
   created_at: string;
   resolved_at: string | null;
 }
@@ -29,6 +31,8 @@ interface SupportTicket {
 const TechnicalSupport = () => {
   const [open, setOpen] = useState(false);
   const [editingTicket, setEditingTicket] = useState<SupportTicket | null>(null);
+  const [selectedTicket, setSelectedTicket] = useState<SupportTicket | null>(null);
+  const [detailOpen, setDetailOpen] = useState(false);
   const [formData, setFormData] = useState({
     machine_id: "",
     location: "",
@@ -141,14 +145,9 @@ const TechnicalSupport = () => {
     setOpen(true);
   };
 
-  const handleResolve = (ticket: SupportTicket) => {
-    const resolution = prompt("Enter resolution notes:");
-    if (resolution) {
-      updateMutation.mutate({
-        id: ticket.id,
-        data: { status: "resolved", resolution },
-      });
-    }
+  const handleViewTicket = (ticket: SupportTicket) => {
+    setSelectedTicket(ticket);
+    setDetailOpen(true);
   };
 
   const openTickets = tickets?.filter((t) => t.status === "open") || [];
@@ -305,9 +304,9 @@ const TechnicalSupport = () => {
                       {ticket.ticket_number} • {ticket.machine_id} • {ticket.location}
                     </p>
                   </div>
-                  <Button size="sm" onClick={() => handleResolve(ticket)}>
-                    <CheckCircle className="w-4 h-4 mr-1" />
-                    Resolve
+                  <Button size="sm" onClick={() => handleViewTicket(ticket)}>
+                    <MessageSquare className="w-4 h-4 mr-1" />
+                    View & Respond
                   </Button>
                 </div>
               ))}
@@ -350,11 +349,9 @@ const TechnicalSupport = () => {
                     </p>
                   </div>
                   <div className="flex gap-2">
-                    {ticket.status === "open" && (
-                      <Button variant="outline" size="sm" onClick={() => handleResolve(ticket)}>
-                        <CheckCircle className="w-4 h-4" />
-                      </Button>
-                    )}
+                    <Button variant="outline" size="sm" onClick={() => handleViewTicket(ticket)}>
+                      <MessageSquare className="w-4 h-4" />
+                    </Button>
                     <Button variant="outline" size="sm" onClick={() => handleEdit(ticket)}>
                       <Edit className="w-4 h-4" />
                     </Button>
@@ -368,6 +365,12 @@ const TechnicalSupport = () => {
           </div>
         </CardContent>
       </Card>
+
+      <TicketDetailDialog
+        ticket={selectedTicket}
+        open={detailOpen}
+        onOpenChange={setDetailOpen}
+      />
     </div>
   );
 };
