@@ -4216,6 +4216,47 @@ export type Database = {
           },
         ]
       }
+      support_ticket_responses: {
+        Row: {
+          created_at: string
+          id: string
+          is_internal_note: boolean | null
+          message: string
+          responder_id: string
+          responder_name: string | null
+          responder_role: string | null
+          ticket_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_internal_note?: boolean | null
+          message: string
+          responder_id: string
+          responder_name?: string | null
+          responder_role?: string | null
+          ticket_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_internal_note?: boolean | null
+          message?: string
+          responder_id?: string
+          responder_name?: string | null
+          responder_role?: string | null
+          ticket_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "support_ticket_responses_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "support_tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       support_tickets: {
         Row: {
           assigned_to: string | null
