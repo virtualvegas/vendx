@@ -131,15 +131,15 @@ const Footer = () => {
         <div className="border-t border-border/50 pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-muted-foreground">
           <p>© 2026 VendX Global Corporation. All rights reserved.</p>
           <div className="flex gap-6">
-            <a href="#" className="hover:text-primary transition-smooth">
+            <Link to="/policy/privacy-policy" className="hover:text-primary transition-smooth">
               Privacy Policy
-            </a>
-            <a href="#" className="hover:text-primary transition-smooth">
+            </Link>
+            <Link to="/policy/terms-of-service" className="hover:text-primary transition-smooth">
               Terms of Service
-            </a>
-            <a href="#" className="hover:text-primary transition-smooth">
+            </Link>
+            <Link to="/policy/cookie-policy" className="hover:text-primary transition-smooth">
               Cookie Policy
-            </a>
+            </Link>
           </div>
         </div>
       </div>

@@ -3411,6 +3411,36 @@ export type Database = {
         }
         Relationships: []
       }
+      site_policies: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          last_updated_by: string | null
+          slug: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          content?: string
+          created_at?: string
+          id?: string
+          last_updated_by?: string | null
+          slug: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          last_updated_by?: string | null
+          slug?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       stand_events: {
         Row: {
           created_at: string

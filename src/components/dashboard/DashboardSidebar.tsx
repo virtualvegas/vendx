@@ -35,6 +35,7 @@ import {
   BarChart3,
   Trophy,
   Leaf,
+  FileText,
 } from "lucide-react";
 import { AppRole } from "@/pages/DashboardPage";
 import { cn } from "@/lib/utils";
@@ -219,6 +220,7 @@ const tabGroups: TabGroup[] = [
     label: "Administration",
     tabs: [
       { id: "careers", label: "Careers", icon: Briefcase, requiredRoles: ["super_admin"] },
+      { id: "site-policies", label: "Site Policies", icon: FileText, requiredRoles: ["super_admin"] },
       { id: "admin-settings", label: "System Settings", icon: Settings, requiredRoles: ["super_admin"] },
     ],
   },
