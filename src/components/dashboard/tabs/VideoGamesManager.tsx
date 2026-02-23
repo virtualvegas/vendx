@@ -27,6 +27,7 @@ interface VideoGame {
   cover_image_url: string | null;
   platforms: any;
   release_status: string;
+  release_date: string | null;
   google_play_url: string | null;
   apple_store_url: string | null;
   microsoft_store_url: string | null;
@@ -68,6 +69,7 @@ const VideoGamesManager = () => {
     full_description: "",
     cover_image_url: "",
     release_status: "coming_soon",
+    release_date: "",
     google_play_url: "",
     apple_store_url: "",
     microsoft_store_url: "",
@@ -125,6 +127,7 @@ const VideoGamesManager = () => {
         cover_image_url: data.cover_image_url || null,
         platforms: platforms,
         release_status: data.release_status,
+        release_date: data.release_date || null,
         google_play_url: data.google_play_url || null,
         apple_store_url: data.apple_store_url || null,
         microsoft_store_url: data.microsoft_store_url || null,
@@ -186,6 +189,7 @@ const VideoGamesManager = () => {
       full_description: "",
       cover_image_url: "",
       release_status: "coming_soon",
+      release_date: "",
       google_play_url: "",
       apple_store_url: "",
       microsoft_store_url: "",
@@ -270,6 +274,7 @@ const VideoGamesManager = () => {
       full_description: game.full_description || "",
       cover_image_url: game.cover_image_url || "",
       release_status: game.release_status,
+      release_date: game.release_date || "",
       google_play_url: game.google_play_url || "",
       apple_store_url: game.apple_store_url || "",
       microsoft_store_url: game.microsoft_store_url || "",
@@ -528,6 +533,10 @@ const VideoGamesManager = () => {
                     {RELEASE_STATUSES.map((s) => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}
                   </SelectContent>
                 </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Release Date</Label>
+                <Input type="date" value={formData.release_date} onChange={(e) => setFormData({ ...formData, release_date: e.target.value })} />
               </div>
               <div className="space-y-2">
                 <Label>Display Order</Label>

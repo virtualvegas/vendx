@@ -4780,6 +4780,7 @@ export type Database = {
           nintendo_eshop_url: string | null
           platforms: Json
           playstation_store_url: string | null
+          release_date: string | null
           release_status: string
           roblox_url: string | null
           screenshots: Json | null
@@ -4809,6 +4810,7 @@ export type Database = {
           nintendo_eshop_url?: string | null
           platforms?: Json
           playstation_store_url?: string | null
+          release_date?: string | null
           release_status?: string
           roblox_url?: string | null
           screenshots?: Json | null
@@ -4838,6 +4840,7 @@ export type Database = {
           nintendo_eshop_url?: string | null
           platforms?: Json
           playstation_store_url?: string | null
+          release_date?: string | null
           release_status?: string
           roblox_url?: string | null
           screenshots?: Json | null

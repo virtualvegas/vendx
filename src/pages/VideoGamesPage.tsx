@@ -21,7 +21,8 @@ import {
 } from "react-icons/si";
 import { FaXbox, FaAmazon } from "react-icons/fa";
 import { Monitor, Globe } from "lucide-react";
-import { Gamepad2, ExternalLink, Play, Filter } from "lucide-react";
+import { Gamepad2, ExternalLink, Play, Filter, Calendar } from "lucide-react";
+import { formatDisplayDate, parseLocalDate } from "@/lib/dateUtils";
 import vendxInteractiveLogo from "@/assets/vendx-interactive-logo.png";
 
 interface VideoGame {
@@ -31,6 +32,7 @@ interface VideoGame {
   short_description: string | null;
   full_description: string | null;
   platforms: string[];
+  release_date: string | null;
   release_status: string;
   cover_image_url: string | null;
   trailer_url: string | null;
@@ -281,9 +283,23 @@ const VideoGamesPage = () => {
                     </h3>
                     
                     {game.short_description && (
-                      <p className="text-muted-foreground text-sm mb-4 line-clamp-2">
+                      <p className="text-muted-foreground text-sm mb-2 line-clamp-2">
                         {game.short_description}
                       </p>
+                    )}
+
+                    {game.release_date && (
+                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-4">
+                        <Calendar className="w-3 h-3" />
+                        <span>
+                          {(() => {
+                            const releaseDate = parseLocalDate(game.release_date);
+                            const now = new Date();
+                            if (releaseDate > now) return `Releases ${formatDisplayDate(game.release_date)}`;
+                            return formatDisplayDate(game.release_date);
+                          })()}
+                        </span>
+                      </div>
                     )}
 
                     {/* Platform Links */}
