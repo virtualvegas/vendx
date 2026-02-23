@@ -4222,32 +4222,42 @@ export type Database = {
           id: string
           is_internal_note: boolean | null
           message: string
+          partner_request_id: string | null
           responder_id: string
           responder_name: string | null
           responder_role: string | null
-          ticket_id: string
+          ticket_id: string | null
         }
         Insert: {
           created_at?: string
           id?: string
           is_internal_note?: boolean | null
           message: string
+          partner_request_id?: string | null
           responder_id: string
           responder_name?: string | null
           responder_role?: string | null
-          ticket_id: string
+          ticket_id?: string | null
         }
         Update: {
           created_at?: string
           id?: string
           is_internal_note?: boolean | null
           message?: string
+          partner_request_id?: string | null
           responder_id?: string
           responder_name?: string | null
           responder_role?: string | null
-          ticket_id?: string
+          ticket_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "support_ticket_responses_partner_request_id_fkey"
+            columns: ["partner_request_id"]
+            isOneToOne: false
+            referencedRelation: "partner_support_requests"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "support_ticket_responses_ticket_id_fkey"
             columns: ["ticket_id"]

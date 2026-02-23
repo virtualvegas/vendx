@@ -10,27 +10,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
-import { Send, Clock, CheckCircle, User, Shield, MessageSquare } from "lucide-react";
+import { Send, Shield, MessageSquare, Building2, Mail, Wrench } from "lucide-react";
 import { formatDisplayDate } from "@/lib/dateUtils";
-
-interface SupportTicket {
-  id: string;
-  ticket_number: string;
-  machine_id: string;
-  location: string;
-  issue_type: string;
-  priority: string;
-  status: string;
-  description: string;
-  resolution: string | null;
-  created_at: string;
-  resolved_at: string | null;
-  assigned_to: string | null;
-}
+import type { UnifiedTicket } from "../TechnicalSupport";
 
 interface TicketResponse {
   id: string;
-  ticket_id: string;
+  ticket_id: string | null;
+  partner_request_id: string | null;
   responder_id: string;
   responder_name: string | null;
   responder_role: string | null;
@@ -40,7 +27,7 @@ interface TicketResponse {
 }
 
 interface TicketDetailDialogProps {
-  ticket: SupportTicket | null;
+  ticket: UnifiedTicket | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
@@ -52,16 +39,26 @@ const TicketDetailDialog = ({ ticket, open, onOpenChange }: TicketDetailDialogPr
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  const isPartnerRequest = ticket?.source === "partner_request";
+
   // Fetch responses for this ticket
   const { data: responses, isLoading: responsesLoading } = useQuery({
-    queryKey: ["ticket-responses", ticket?.id],
+    queryKey: ["ticket-responses", ticket?.id, ticket?.source],
     queryFn: async () => {
       if (!ticket) return [];
-      const { data, error } = await supabase
+      
+      let query = supabase
         .from("support_ticket_responses")
         .select("*")
-        .eq("ticket_id", ticket.id)
         .order("created_at", { ascending: true });
+
+      if (isPartnerRequest) {
+        query = query.eq("partner_request_id", ticket.id);
+      } else {
+        query = query.eq("ticket_id", ticket.id);
+      }
+
+      const { data, error } = await query;
       if (error) throw error;
       return data as TicketResponse[];
     },
@@ -74,27 +71,33 @@ const TicketDetailDialog = ({ ticket, open, onOpenChange }: TicketDetailDialogPr
       const { data: { user } } = await supabase.auth.getUser();
       if (!user || !ticket) throw new Error("Not authenticated");
 
-      // Get user profile for name
       const { data: profile } = await supabase
         .from("profiles")
         .select("full_name")
         .eq("id", user.id)
         .single();
 
+      const insertData: any = {
+        responder_id: user.id,
+        responder_name: profile?.full_name || user.email || "Admin",
+        responder_role: "admin",
+        message,
+        is_internal_note: isInternal,
+      };
+
+      if (isPartnerRequest) {
+        insertData.partner_request_id = ticket.id;
+      } else {
+        insertData.ticket_id = ticket.id;
+      }
+
       const { error } = await supabase
         .from("support_ticket_responses")
-        .insert({
-          ticket_id: ticket.id,
-          responder_id: user.id,
-          responder_name: profile?.full_name || user.email || "Admin",
-          responder_role: "admin",
-          message,
-          is_internal_note: isInternal,
-        });
+        .insert(insertData);
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["ticket-responses", ticket?.id] });
+      queryClient.invalidateQueries({ queryKey: ["ticket-responses", ticket?.id, ticket?.source] });
       setNewMessage("");
       toast({ title: "Response sent" });
     },
@@ -111,14 +114,17 @@ const TicketDetailDialog = ({ ticket, open, onOpenChange }: TicketDetailDialogPr
       if (status === "resolved") {
         updateData.resolved_at = new Date().toISOString();
       }
+      const table = isPartnerRequest ? "partner_support_requests" : "support_tickets";
       const { error } = await supabase
-        .from("support_tickets")
+        .from(table)
         .update(updateData)
         .eq("id", ticket.id);
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["support-tickets"] });
+      queryClient.invalidateQueries({ queryKey: ["partner-support-requests-admin"] });
+      queryClient.invalidateQueries({ queryKey: ["business-owner-support-requests"] });
       toast({ title: "Status updated" });
     },
     onError: (error: any) => {
@@ -138,18 +144,30 @@ const TicketDetailDialog = ({ ticket, open, onOpenChange }: TicketDetailDialogPr
 
   if (!ticket) return null;
 
-  const priorityColor = ticket.priority === "critical" ? "destructive" :
+  const priorityColor = (ticket.priority === "critical" || ticket.priority === "urgent") ? "destructive" :
     ticket.priority === "high" ? "secondary" : "outline";
 
   const statusColor = ticket.status === "resolved" ? "default" :
     ticket.status === "in_progress" ? "secondary" : "outline";
 
+  const getSourceBadge = () => {
+    switch (ticket.source) {
+      case "contact_form":
+        return <Badge variant="outline" className="text-xs gap-1"><Mail className="w-3 h-3" />Contact Form</Badge>;
+      case "partner_request":
+        return <Badge variant="outline" className="text-xs gap-1 border-primary/30 text-primary"><Building2 className="w-3 h-3" />Partner Request</Badge>;
+      default:
+        return <Badge variant="outline" className="text-xs gap-1"><Wrench className="w-3 h-3" />Support Ticket</Badge>;
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-3">
+          <DialogTitle className="flex items-center gap-3 flex-wrap">
             <span>{ticket.ticket_number}</span>
+            {getSourceBadge()}
             <Badge variant={priorityColor as any} className="capitalize">{ticket.priority}</Badge>
             <Badge variant={statusColor as any} className="capitalize">{ticket.status}</Badge>
           </DialogTitle>
@@ -175,7 +193,7 @@ const TicketDetailDialog = ({ ticket, open, onOpenChange }: TicketDetailDialogPr
           </div>
           <div className="col-span-2">
             <span className="text-muted-foreground">Description:</span>
-            <p className="mt-1">{ticket.description}</p>
+            <p className="mt-1 whitespace-pre-wrap">{ticket.description}</p>
           </div>
         </div>
 

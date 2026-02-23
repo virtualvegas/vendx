@@ -6,15 +6,17 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, AlertTriangle, Trash2, Edit, CheckCircle, MessageSquare } from "lucide-react";
+import { Plus, AlertTriangle, Trash2, Edit, MessageSquare, Building2, Mail, Wrench } from "lucide-react";
 import { formatDisplayDate } from "@/lib/dateUtils";
 import TicketDetailDialog from "./technical-support/TicketDetailDialog";
 
-interface SupportTicket {
+export interface UnifiedTicket {
   id: string;
+  source: "support_ticket" | "partner_request" | "contact_form";
   ticket_number: string;
   machine_id: string;
   location: string;
@@ -26,12 +28,17 @@ interface SupportTicket {
   assigned_to: string | null;
   created_at: string;
   resolved_at: string | null;
+  // For partner requests
+  subject?: string;
+  business_owner_id?: string;
+  location_id?: string | null;
+  real_machine_id?: string | null;
 }
 
 const TechnicalSupport = () => {
   const [open, setOpen] = useState(false);
-  const [editingTicket, setEditingTicket] = useState<SupportTicket | null>(null);
-  const [selectedTicket, setSelectedTicket] = useState<SupportTicket | null>(null);
+  const [editingTicket, setEditingTicket] = useState<UnifiedTicket | null>(null);
+  const [selectedTicket, setSelectedTicket] = useState<UnifiedTicket | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
   const [formData, setFormData] = useState({
     machine_id: "",
@@ -44,7 +51,8 @@ const TechnicalSupport = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: tickets, isLoading } = useQuery({
+  // Fetch support_tickets
+  const { data: supportTickets, isLoading: loadingTickets } = useQuery({
     queryKey: ["support-tickets"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -52,9 +60,62 @@ const TechnicalSupport = () => {
         .select("*")
         .order("created_at", { ascending: false });
       if (error) throw error;
-      return data as SupportTicket[];
+      return data;
     },
   });
+
+  // Fetch partner_support_requests
+  const { data: partnerRequests, isLoading: loadingPartner } = useQuery({
+    queryKey: ["partner-support-requests-admin"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("partner_support_requests")
+        .select("*, locations(name, city, country), vendx_machines(name, machine_code)")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  // Normalize into unified tickets
+  const tickets: UnifiedTicket[] = [
+    ...(supportTickets?.map((t: any) => ({
+      id: t.id,
+      source: (t.machine_id === "CONTACT_FORM" ? "contact_form" : "support_ticket") as UnifiedTicket["source"],
+      ticket_number: t.ticket_number,
+      machine_id: t.machine_id,
+      location: t.location,
+      issue_type: t.issue_type,
+      priority: t.priority,
+      status: t.status,
+      description: t.description,
+      resolution: t.resolution,
+      assigned_to: t.assigned_to,
+      created_at: t.created_at,
+      resolved_at: t.resolved_at,
+    })) || []),
+    ...(partnerRequests?.map((r: any) => ({
+      id: r.id,
+      source: "partner_request" as const,
+      ticket_number: `PSR-${r.id.substring(0, 8).toUpperCase()}`,
+      machine_id: r.vendx_machines?.machine_code || r.machine_id || "N/A",
+      location: r.locations?.name || r.locations?.city || "Not specified",
+      issue_type: r.subject || r.request_type,
+      priority: r.priority,
+      status: r.status,
+      description: r.description,
+      resolution: r.resolution,
+      assigned_to: r.assigned_to,
+      created_at: r.created_at,
+      resolved_at: r.resolved_at,
+      subject: r.subject,
+      business_owner_id: r.business_owner_id,
+      location_id: r.location_id,
+      real_machine_id: r.machine_id,
+    })) || []),
+  ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+  const isLoading = loadingTickets || loadingPartner;
 
   const createMutation = useMutation({
     mutationFn: async (data: typeof formData) => {
@@ -78,16 +139,18 @@ const TechnicalSupport = () => {
   });
 
   const updateMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: Partial<typeof formData> & { status?: string } }) => {
+    mutationFn: async ({ id, data, source }: { id: string; data: Partial<typeof formData> & { status?: string }; source: string }) => {
       const updateData: any = { ...data };
       if (data.status === "resolved") {
         updateData.resolved_at = new Date().toISOString();
       }
-      const { error } = await supabase.from("support_tickets").update(updateData).eq("id", id);
+      const table = source === "partner_request" ? "partner_support_requests" : "support_tickets";
+      const { error } = await supabase.from(table).update(updateData).eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["support-tickets"] });
+      queryClient.invalidateQueries({ queryKey: ["partner-support-requests-admin"] });
       toast({ title: "Success", description: "Ticket updated successfully" });
       setOpen(false);
       resetForm();
@@ -98,12 +161,14 @@ const TechnicalSupport = () => {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase.from("support_tickets").delete().eq("id", id);
+    mutationFn: async ({ id, source }: { id: string; source: string }) => {
+      const table = source === "partner_request" ? "partner_support_requests" : "support_tickets";
+      const { error } = await supabase.from(table).delete().eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["support-tickets"] });
+      queryClient.invalidateQueries({ queryKey: ["partner-support-requests-admin"] });
       toast({ title: "Success", description: "Ticket deleted successfully" });
     },
     onError: (error: any) => {
@@ -126,13 +191,18 @@ const TechnicalSupport = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (editingTicket) {
-      updateMutation.mutate({ id: editingTicket.id, data: formData });
+      updateMutation.mutate({ id: editingTicket.id, data: formData, source: editingTicket.source });
     } else {
       createMutation.mutate(formData);
     }
   };
 
-  const handleEdit = (ticket: SupportTicket) => {
+  const handleEdit = (ticket: UnifiedTicket) => {
+    if (ticket.source === "partner_request") {
+      // For partner requests, open detail view instead
+      handleViewTicket(ticket);
+      return;
+    }
     setEditingTicket(ticket);
     setFormData({
       machine_id: ticket.machine_id,
@@ -145,13 +215,24 @@ const TechnicalSupport = () => {
     setOpen(true);
   };
 
-  const handleViewTicket = (ticket: SupportTicket) => {
+  const handleViewTicket = (ticket: UnifiedTicket) => {
     setSelectedTicket(ticket);
     setDetailOpen(true);
   };
 
-  const openTickets = tickets?.filter((t) => t.status === "open") || [];
-  const criticalTickets = tickets?.filter((t) => t.priority === "critical" && t.status === "open") || [];
+  const getSourceBadge = (source: UnifiedTicket["source"]) => {
+    switch (source) {
+      case "contact_form":
+        return <Badge variant="outline" className="text-xs gap-1"><Mail className="w-3 h-3" />Contact</Badge>;
+      case "partner_request":
+        return <Badge variant="outline" className="text-xs gap-1 border-primary/30 text-primary"><Building2 className="w-3 h-3" />Partner</Badge>;
+      default:
+        return <Badge variant="outline" className="text-xs gap-1"><Wrench className="w-3 h-3" />Support</Badge>;
+    }
+  };
+
+  const openTickets = tickets.filter((t) => t.status === "open");
+  const criticalTickets = tickets.filter((t) => (t.priority === "critical" || t.priority === "urgent") && t.status === "open");
 
   if (isLoading) {
     return <div className="flex items-center justify-center h-64"><p className="text-muted-foreground">Loading...</p></div>;
@@ -162,7 +243,7 @@ const TechnicalSupport = () => {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-3xl font-bold text-foreground mb-2">Technical Support</h2>
-          <p className="text-muted-foreground">Monitor support tickets and machine issues</p>
+          <p className="text-muted-foreground">All support tickets, contact inquiries, and partner requests</p>
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
@@ -249,7 +330,7 @@ const TechnicalSupport = () => {
         </Dialog>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
         <Card>
           <CardHeader>
             <CardTitle className="text-sm font-medium text-muted-foreground">Open Tickets</CardTitle>
@@ -263,7 +344,7 @@ const TechnicalSupport = () => {
             <CardTitle className="text-sm font-medium text-muted-foreground">Total Tickets</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-bold text-foreground">{tickets?.length || 0}</p>
+            <p className="text-3xl font-bold text-foreground">{tickets.length}</p>
           </CardContent>
         </Card>
         <Card>
@@ -276,11 +357,19 @@ const TechnicalSupport = () => {
         </Card>
         <Card>
           <CardHeader>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Partner Requests</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-3xl font-bold text-primary">{partnerRequests?.length || 0}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
             <CardTitle className="text-sm font-medium text-muted-foreground">Resolved</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-3xl font-bold text-green-500">
-              {tickets?.filter((t) => t.status === "resolved").length || 0}
+              {tickets.filter((t) => t.status === "resolved").length}
             </p>
           </CardContent>
         </Card>
@@ -291,18 +380,21 @@ const TechnicalSupport = () => {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <AlertTriangle className="w-5 h-5 text-destructive" />
-              Critical Issues
+              Critical / Urgent Issues
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
               {criticalTickets.map((ticket) => (
                 <div key={ticket.id} className="flex items-center justify-between border-b border-border pb-3">
-                  <div>
-                    <p className="font-medium text-foreground">{ticket.issue_type}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {ticket.ticket_number} • {ticket.machine_id} • {ticket.location}
-                    </p>
+                  <div className="flex items-center gap-3">
+                    {getSourceBadge(ticket.source)}
+                    <div>
+                      <p className="font-medium text-foreground">{ticket.issue_type}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {ticket.ticket_number} • {ticket.machine_id} • {ticket.location}
+                      </p>
+                    </div>
                   </div>
                   <Button size="sm" onClick={() => handleViewTicket(ticket)}>
                     <MessageSquare className="w-4 h-4 mr-1" />
@@ -321,16 +413,17 @@ const TechnicalSupport = () => {
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
-            {tickets?.length === 0 ? (
+            {tickets.length === 0 ? (
               <p className="text-center text-muted-foreground py-8">No tickets found</p>
             ) : (
-              tickets?.map((ticket) => (
-                <div key={ticket.id} className="flex items-center justify-between border-b border-border pb-3">
+              tickets.map((ticket) => (
+                <div key={`${ticket.source}-${ticket.id}`} className="flex items-center justify-between border-b border-border pb-3">
                   <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-1">
+                    <div className="flex items-center gap-3 mb-1 flex-wrap">
+                      {getSourceBadge(ticket.source)}
                       <h3 className="font-medium text-foreground">{ticket.issue_type}</h3>
                       <span className={`text-xs px-2 py-1 rounded-full ${
-                        ticket.priority === "critical" ? "bg-destructive/10 text-destructive" :
+                        ticket.priority === "critical" || ticket.priority === "urgent" ? "bg-destructive/10 text-destructive" :
                         ticket.priority === "high" ? "bg-orange-500/10 text-orange-500" :
                         ticket.priority === "medium" ? "bg-yellow-500/10 text-yellow-500" :
                         "bg-muted text-muted-foreground"
@@ -339,7 +432,8 @@ const TechnicalSupport = () => {
                       </span>
                       <span className={`text-xs px-2 py-1 rounded-full ${
                         ticket.status === "resolved" ? "bg-green-500/10 text-green-500" :
-                        "bg-blue-500/10 text-blue-500"
+                        ticket.status === "in_progress" ? "bg-blue-500/10 text-blue-500" :
+                        "bg-yellow-500/10 text-yellow-500"
                       }`}>
                         {ticket.status}
                       </span>
@@ -352,10 +446,12 @@ const TechnicalSupport = () => {
                     <Button variant="outline" size="sm" onClick={() => handleViewTicket(ticket)}>
                       <MessageSquare className="w-4 h-4" />
                     </Button>
-                    <Button variant="outline" size="sm" onClick={() => handleEdit(ticket)}>
-                      <Edit className="w-4 h-4" />
-                    </Button>
-                    <Button variant="outline" size="sm" onClick={() => deleteMutation.mutate(ticket.id)}>
+                    {ticket.source !== "partner_request" && (
+                      <Button variant="outline" size="sm" onClick={() => handleEdit(ticket)}>
+                        <Edit className="w-4 h-4" />
+                      </Button>
+                    )}
+                    <Button variant="outline" size="sm" onClick={() => deleteMutation.mutate({ id: ticket.id, source: ticket.source })}>
                       <Trash2 className="w-4 h-4 text-destructive" />
                     </Button>
                   </div>
