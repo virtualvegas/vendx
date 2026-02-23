@@ -5,7 +5,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Gamepad2, ArrowRight, Play, ExternalLink } from "lucide-react";
+import { Gamepad2, ArrowRight, Play, ExternalLink, Calendar } from "lucide-react";
+import { formatDisplayDate, parseLocalDate } from "@/lib/dateUtils";
 import { SiSteam, SiGoogleplay, SiApple, SiItchdotio, SiRoblox } from "react-icons/si";
 import vendxInteractiveLogo from "@/assets/vendx-interactive-logo.png";
 
@@ -15,6 +16,7 @@ interface VideoGame {
   slug: string;
   short_description: string | null;
   cover_image_url: string | null;
+  release_date: string | null;
   release_status: string;
   trailer_url: string | null;
   steam_url: string | null;
@@ -153,9 +155,23 @@ const FeaturedGames = () => {
                   </h3>
                   
                   {game.short_description && (
-                    <p className="text-muted-foreground text-sm mb-4 line-clamp-2">
+                    <p className="text-muted-foreground text-sm mb-2 line-clamp-2">
                       {game.short_description}
                     </p>
+                  )}
+
+                  {game.release_date && (
+                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-3">
+                      <Calendar className="w-3 h-3" />
+                      <span>
+                        {(() => {
+                          const releaseDate = parseLocalDate(game.release_date);
+                          const now = new Date();
+                          if (releaseDate > now) return `Releases ${formatDisplayDate(game.release_date)}`;
+                          return formatDisplayDate(game.release_date);
+                        })()}
+                      </span>
+                    </div>
                   )}
 
                   <div className="flex items-center justify-between">

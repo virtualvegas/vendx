@@ -1,0 +1,1 @@
+ALTER TABLE public.video_games ADD COLUMN release_date DATE;
