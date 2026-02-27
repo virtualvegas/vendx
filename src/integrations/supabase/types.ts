@@ -4719,6 +4719,7 @@ export type Database = {
           accepts_coins: boolean | null
           api_key: string
           bundle_price: number | null
+          connection_status: string
           created_at: string
           current_period_revenue: number | null
           id: string
@@ -4747,6 +4748,7 @@ export type Database = {
           accepts_coins?: boolean | null
           api_key: string
           bundle_price?: number | null
+          connection_status?: string
           created_at?: string
           current_period_revenue?: number | null
           id?: string
@@ -4775,6 +4777,7 @@ export type Database = {
           accepts_coins?: boolean | null
           api_key?: string
           bundle_price?: number | null
+          connection_status?: string
           created_at?: string
           current_period_revenue?: number | null
           id?: string
