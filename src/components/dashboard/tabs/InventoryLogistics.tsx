@@ -11,7 +11,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Package, AlertTriangle, Trash2, Edit, Search, RefreshCw, Warehouse, TrendingDown, DollarSign } from "lucide-react";
+import { Plus, Package, AlertTriangle, Trash2, Edit, Search, RefreshCw, Warehouse, TrendingDown, DollarSign, MoreHorizontal } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 interface InventoryItem {
   id: string;
@@ -48,6 +49,16 @@ const InventoryLogistics = () => {
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  const { data: isSuperAdmin } = useQuery({
+    queryKey: ["is-super-admin"],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return false;
+      const { data } = await supabase.from("user_roles").select("role").eq("user_id", user.id).eq("role", "super_admin");
+      return (data && data.length > 0) || false;
+    },
+  });
 
   const { data: warehouseItems, isLoading } = useQuery({
     queryKey: ["inventory-items"],
@@ -222,9 +233,11 @@ const InventoryLogistics = () => {
             <Button variant={filterLowStock ? "default" : "outline"} size="sm" onClick={() => setFilterLowStock(!filterLowStock)}>
               <AlertTriangle className="w-4 h-4 mr-2" /> Low Stock Only
             </Button>
-            <Button onClick={() => { resetForm(); setShowDialog(true); }}>
-              <Plus className="w-4 h-4 mr-2" /> Add Item
-            </Button>
+            {isSuperAdmin && (
+              <Button onClick={() => { resetForm(); setShowDialog(true); }}>
+                <Plus className="w-4 h-4 mr-2" /> Add Item
+              </Button>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -244,7 +257,7 @@ const InventoryLogistics = () => {
                   <TableHead>Qty</TableHead>
                   <TableHead>Unit Cost</TableHead>
                   <TableHead>Value</TableHead>
-                  <TableHead>Actions</TableHead>
+                  {isSuperAdmin && <TableHead>Actions</TableHead>}
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -263,12 +276,23 @@ const InventoryLogistics = () => {
                     </TableCell>
                     <TableCell>${item.unit_cost.toFixed(2)}</TableCell>
                     <TableCell className="font-medium">${(item.quantity * item.unit_cost).toFixed(2)}</TableCell>
-                    <TableCell>
-                      <div className="flex gap-1">
-                        <Button size="icon" variant="ghost" onClick={() => handleEdit(item)}><Edit className="w-4 h-4" /></Button>
-                        <Button size="icon" variant="ghost" onClick={() => { setSelectedItem(item); setShowDeleteConfirm(true); }}><Trash2 className="w-4 h-4 text-destructive" /></Button>
-                      </div>
-                    </TableCell>
+                    {isSuperAdmin && (
+                      <TableCell>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button size="icon" variant="ghost"><MoreHorizontal className="w-4 h-4" /></Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => handleEdit(item)}>
+                              <Edit className="w-4 h-4 mr-2" /> Edit
+                            </DropdownMenuItem>
+                            <DropdownMenuItem className="text-destructive" onClick={() => { setSelectedItem(item); setShowDeleteConfirm(true); }}>
+                              <Trash2 className="w-4 h-4 mr-2" /> Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    )}
                   </TableRow>
                 ))}
               </TableBody>
