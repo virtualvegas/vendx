@@ -246,14 +246,16 @@ const Finance = () => {
   const getStripeStatus = () => syncStatus?.find(s => s.provider === "stripe");
   const getPayPalStatus = () => syncStatus?.find(s => s.provider === "paypal");
 
-  const totalRevenue = transactions?.filter((t) => t.transaction_type === "revenue").reduce((sum, t) => sum + t.amount, 0) || 0;
-  const totalExpenses = transactions?.filter((t) => t.transaction_type === "expense").reduce((sum, t) => sum + t.amount, 0) || 0;
-  const netProfit = totalRevenue - totalExpenses;
-  const profitMargin = totalRevenue > 0 ? ((netProfit / totalRevenue) * 100).toFixed(1) : "0.0";
-
-  const syncedRevenue = syncedTransactions?.filter(t => t.transaction_type === "revenue").reduce((sum, t) => sum + t.amount, 0) || 0;
+  // Combined totals: manual + synced for accurate global picture
+  const manualRevenue = transactions?.filter((t) => t.transaction_type === "revenue").reduce((sum, t) => sum + t.amount, 0) || 0;
+  const manualExpenses = transactions?.filter((t) => t.transaction_type === "expense").reduce((sum, t) => sum + t.amount, 0) || 0;
+  const syncedRevenue = syncedTransactions?.filter(t => t.transaction_type === "revenue" && t.amount > 0).reduce((sum, t) => sum + t.amount, 0) || 0;
   const syncedExpenses = syncedTransactions?.filter(t => t.transaction_type === "expense").reduce((sum, t) => sum + Math.abs(t.amount), 0) || 0;
   const syncedWalletLoads = syncedTransactions?.filter(t => t.transaction_type === "wallet_load").reduce((sum, t) => sum + t.amount, 0) || 0;
+  const totalRevenue = manualRevenue + syncedRevenue;
+  const totalExpenses = manualExpenses + syncedExpenses;
+  const netProfit = totalRevenue - totalExpenses;
+  const profitMargin = totalRevenue > 0 ? ((netProfit / totalRevenue) * 100).toFixed(1) : "0.0";
 
   const isSyncing = syncMutation.isPending || 
     getStripeStatus()?.sync_status === "syncing" || 

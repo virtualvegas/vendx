@@ -2,14 +2,13 @@ import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useState } from "react";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  PieChart, Pie, Cell, Legend, LineChart, Line, AreaChart, Area,
+  PieChart, Pie, Cell, Legend, AreaChart, Area,
 } from "recharts";
-import { subDays, subMonths, startOfMonth, endOfMonth, format, startOfDay } from "date-fns";
+import { subDays, subMonths, startOfMonth, endOfMonth, format } from "date-fns";
 import {
   DollarSign, ShoppingCart, Gamepad2, Leaf, TrendingUp,
   Package, Users, BarChart3, Wallet,
@@ -35,13 +34,14 @@ const GlobalAnalytics = () => {
     }
   }, [dateRange]);
 
-  // Store orders
-  const { data: storeOrders } = useQuery({
-    queryKey: ["ga-store-orders", dateRange],
+  // ========= UNIFIED SOURCE: synced_transactions =========
+  const { data: syncedTransactions } = useQuery({
+    queryKey: ["ga-synced-txns", dateRange],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("store_orders")
-        .select("id, total, status, created_at, wallet_credit_applied")
+        .from("synced_transactions")
+        .select("id, amount, created_at, transaction_type, provider, status, metadata, description")
+        .eq("status", "completed")
         .gte("created_at", dateFilter.start.toISOString())
         .lte("created_at", dateFilter.end.toISOString());
       if (error) throw error;
@@ -49,7 +49,7 @@ const GlobalAnalytics = () => {
     },
   });
 
-  // Machine transactions (vending)
+  // Machine transactions (VendX Pay vending - separate from synced)
   const { data: machineTransactions } = useQuery({
     queryKey: ["ga-machine-txns", dateRange],
     queryFn: async () => {
@@ -63,13 +63,13 @@ const GlobalAnalytics = () => {
     },
   });
 
-  // Arcade sessions
+  // Arcade sessions for play counts (non-financial metric)
   const { data: arcadeSessions } = useQuery({
     queryKey: ["ga-arcade-sessions", dateRange],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("arcade_play_sessions")
-        .select("id, amount, plays_purchased, created_at")
+        .select("id, plays_purchased, created_at")
         .gte("created_at", dateFilter.start.toISOString())
         .lte("created_at", dateFilter.end.toISOString());
       if (error) throw error;
@@ -77,14 +77,13 @@ const GlobalAnalytics = () => {
     },
   });
 
-  // EcoSnack purchases
-  const { data: ecosnackPurchases } = useQuery({
-    queryKey: ["ga-ecosnack", dateRange],
+  // Store orders for order counts and statuses
+  const { data: storeOrders } = useQuery({
+    queryKey: ["ga-store-orders", dateRange],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("ecosnack_locker_purchases")
-        .select("id, amount, created_at, payment_status")
-        .eq("payment_status", "completed")
+        .from("store_orders")
+        .select("id, status, created_at")
         .gte("created_at", dateFilter.start.toISOString())
         .lte("created_at", dateFilter.end.toISOString());
       if (error) throw error;
@@ -108,20 +107,51 @@ const GlobalAnalytics = () => {
     },
   });
 
+  // Classify synced revenue by source using metadata
+  const revenueBySource = useMemo(() => {
+    let ecosnack = 0, store = 0, arcade = 0, paypal = 0, other = 0;
+    
+    syncedTransactions?.forEach(t => {
+      if (t.transaction_type !== "revenue") return;
+      const amt = Number(t.amount);
+      if (amt <= 0) return;
+      const meta = t.metadata as any;
+      const source = meta?.source;
+      if (source === "ecosnack") ecosnack += amt;
+      else if (source === "store" || source === "shopify") store += amt;
+      else if (source === "arcade") arcade += amt;
+      else if (t.provider === "paypal") paypal += amt;
+      else other += amt;
+    });
+
+    return { ecosnack, store, arcade, paypal, other };
+  }, [syncedTransactions]);
+
   // Totals
   const totals = useMemo(() => {
-    const storeRevenue = storeOrders?.reduce((s, o) => s + Number(o.total), 0) || 0;
     const vendingRevenue = machineTransactions?.reduce((s, t) => s + Number(t.amount), 0) || 0;
-    const arcadeRevenue = arcadeSessions?.reduce((s, a) => s + Number(a.amount), 0) || 0;
-    const ecosnackRevenue = ecosnackPurchases?.reduce((s, e) => s + Number(e.amount), 0) || 0;
+    const syncedRevenue = syncedTransactions
+      ?.filter(t => t.transaction_type === "revenue" && Number(t.amount) > 0)
+      .reduce((s, t) => s + Number(t.amount), 0) || 0;
     const walletLoadTotal = walletLoads?.reduce((s, w) => s + Number(w.amount), 0) || 0;
-    const totalRevenue = storeRevenue + vendingRevenue + arcadeRevenue + ecosnackRevenue;
-    const totalTransactions = (storeOrders?.length || 0) + (machineTransactions?.length || 0) + (arcadeSessions?.length || 0) + (ecosnackPurchases?.length || 0);
+    const totalRevenue = vendingRevenue + syncedRevenue;
     const totalPlays = arcadeSessions?.reduce((s, a) => s + (a.plays_purchased || 0), 0) || 0;
     const totalPoints = machineTransactions?.reduce((s, t) => s + (t.points_earned || 0), 0) || 0;
+    const totalTransactions = (machineTransactions?.length || 0) + 
+      (syncedTransactions?.filter(t => t.transaction_type === "revenue").length || 0);
 
-    return { storeRevenue, vendingRevenue, arcadeRevenue, ecosnackRevenue, walletLoadTotal, totalRevenue, totalTransactions, totalPlays, totalPoints };
-  }, [storeOrders, machineTransactions, arcadeSessions, ecosnackPurchases, walletLoads]);
+    return {
+      vendingRevenue,
+      storeRevenue: revenueBySource.store,
+      arcadeRevenue: revenueBySource.arcade,
+      ecosnackRevenue: revenueBySource.ecosnack,
+      walletLoadTotal,
+      totalRevenue,
+      totalTransactions,
+      totalPlays,
+      totalPoints,
+    };
+  }, [syncedTransactions, machineTransactions, walletLoads, arcadeSessions, revenueBySource]);
 
   // Revenue breakdown for pie chart
   const revenueBreakdown = useMemo(() => [
@@ -129,28 +159,42 @@ const GlobalAnalytics = () => {
     { name: "Vending", value: totals.vendingRevenue },
     { name: "Arcade", value: totals.arcadeRevenue },
     { name: "EcoSnack", value: totals.ecosnackRevenue },
-  ].filter(d => d.value > 0), [totals]);
+    { name: "PayPal (Other)", value: revenueBySource.paypal },
+    { name: "Other", value: revenueBySource.other },
+  ].filter(d => d.value > 0), [totals, revenueBySource]);
 
-  // Daily revenue trend
+  // Daily revenue trend from synced + machine_transactions
   const dailyRevenue = useMemo(() => {
-    const dayMap = new Map<string, { store: number; vending: number; arcade: number; ecosnack: number }>();
+    const dayMap = new Map<string, { store: number; vending: number; arcade: number; ecosnack: number; other: number }>();
 
-    const addToDay = (dateStr: string, field: string, amount: number) => {
-      const day = format(new Date(dateStr), "MM/dd");
-      if (!dayMap.has(day)) dayMap.set(day, { store: 0, vending: 0, arcade: 0, ecosnack: 0 });
-      const entry = dayMap.get(day)!;
-      (entry as any)[field] += amount;
+    const ensureDay = (day: string) => {
+      if (!dayMap.has(day)) dayMap.set(day, { store: 0, vending: 0, arcade: 0, ecosnack: 0, other: 0 });
+      return dayMap.get(day)!;
     };
 
-    storeOrders?.forEach(o => addToDay(o.created_at, "store", Number(o.total)));
-    machineTransactions?.forEach(t => addToDay(t.created_at, "vending", Number(t.amount)));
-    arcadeSessions?.forEach(a => addToDay(a.created_at, "arcade", Number(a.amount)));
-    ecosnackPurchases?.forEach(e => addToDay(e.created_at, "ecosnack", Number(e.amount)));
+    // Vending (machine_transactions)
+    machineTransactions?.forEach(t => {
+      const day = format(new Date(t.created_at), "MM/dd");
+      ensureDay(day).vending += Number(t.amount);
+    });
+
+    // Synced transactions classified by source
+    syncedTransactions?.forEach(t => {
+      if (t.transaction_type !== "revenue" || Number(t.amount) <= 0) return;
+      const day = format(new Date(t.created_at), "MM/dd");
+      const entry = ensureDay(day);
+      const meta = t.metadata as any;
+      const source = meta?.source;
+      if (source === "ecosnack") entry.ecosnack += Number(t.amount);
+      else if (source === "store" || source === "shopify") entry.store += Number(t.amount);
+      else if (source === "arcade") entry.arcade += Number(t.amount);
+      else entry.other += Number(t.amount);
+    });
 
     return Array.from(dayMap.entries())
-      .map(([day, data]) => ({ day, ...data, total: data.store + data.vending + data.arcade + data.ecosnack }))
+      .map(([day, data]) => ({ day, ...data, total: data.store + data.vending + data.arcade + data.ecosnack + data.other }))
       .sort((a, b) => a.day.localeCompare(b.day));
-  }, [storeOrders, machineTransactions, arcadeSessions, ecosnackPurchases]);
+  }, [syncedTransactions, machineTransactions]);
 
   // Order status breakdown
   const orderStatusData = useMemo(() => {
@@ -169,7 +213,7 @@ const GlobalAnalytics = () => {
             Global Analytics
           </h2>
           <p className="text-muted-foreground">
-            Cross-division revenue and performance metrics
+            Cross-division revenue and performance metrics (unified data source)
           </p>
         </div>
         <Select value={dateRange} onValueChange={setDateRange}>
@@ -196,6 +240,7 @@ const GlobalAnalytics = () => {
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-bold text-primary">${totals.totalRevenue.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
+            <p className="text-xs text-muted-foreground">{totals.totalTransactions} transactions</p>
           </CardContent>
         </Card>
         <Card>
@@ -264,6 +309,7 @@ const GlobalAnalytics = () => {
                     <Area type="monotone" dataKey="vending" stackId="1" fill="hsl(var(--primary))" stroke="hsl(var(--primary))" fillOpacity={0.6} name="Vending" />
                     <Area type="monotone" dataKey="arcade" stackId="1" fill="#8b5cf6" stroke="#8b5cf6" fillOpacity={0.6} name="Arcade" />
                     <Area type="monotone" dataKey="ecosnack" stackId="1" fill="#f59e0b" stroke="#f59e0b" fillOpacity={0.6} name="EcoSnack" />
+                    <Area type="monotone" dataKey="other" stackId="1" fill="#06b6d4" stroke="#06b6d4" fillOpacity={0.4} name="Other" />
                     <Legend />
                   </AreaChart>
                 </ResponsiveContainer>
@@ -342,14 +388,14 @@ const GlobalAnalytics = () => {
                 { name: "Online Store", icon: ShoppingCart, revenue: totals.storeRevenue, txns: storeOrders?.length || 0, color: "text-emerald-500" },
                 { name: "Vending Machines", icon: Package, revenue: totals.vendingRevenue, txns: machineTransactions?.length || 0, color: "text-primary" },
                 { name: "Arcade", icon: Gamepad2, revenue: totals.arcadeRevenue, txns: arcadeSessions?.length || 0, color: "text-purple-500" },
-                { name: "EcoSnack", icon: Leaf, revenue: totals.ecosnackRevenue, txns: ecosnackPurchases?.length || 0, color: "text-amber-500" },
+                { name: "EcoSnack", icon: Leaf, revenue: totals.ecosnackRevenue, txns: 0, color: "text-amber-500" },
               ].map((div) => (
                 <div key={div.name} className="flex items-center justify-between p-3 border border-border rounded-lg">
                   <div className="flex items-center gap-3">
                     <div.icon className={`h-5 w-5 ${div.color}`} />
                     <div>
                       <p className="font-medium text-sm">{div.name}</p>
-                      <p className="text-xs text-muted-foreground">{div.txns} transactions</p>
+                      {div.txns > 0 && <p className="text-xs text-muted-foreground">{div.txns} transactions</p>}
                     </div>
                   </div>
                   <p className={`font-bold ${div.color}`}>${div.revenue.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
