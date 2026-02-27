@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { User, Session } from "@supabase/supabase-js";
 import { useToast } from "@/hooks/use-toast";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import GlobalOperations from "@/components/dashboard/tabs/GlobalOperations";
 import EventsRentals from "@/components/dashboard/tabs/EventsRentals";
 import TechnicalSupport from "@/components/dashboard/tabs/TechnicalSupport";
@@ -193,115 +194,131 @@ const DashboardPage = () => {
     return roles.some((role) => requiredRoles.includes(role));
   };
 
+  const NON_ADMIN_TABS = [
+    "my-orders", "my-wallet", "my-tickets", "my-rewards",
+    "business-overview", "business-locations", "business-machines", "business-payouts", "business-support",
+  ];
+
   const renderTabContent = () => {
+    let content: React.ReactNode;
     switch (activeTab) {
       case "overview":
-        return <DashboardOverview />;
+        content = <DashboardOverview />; break;
       case "business-overview":
-        return <BusinessOverview />;
+        content = <BusinessOverview />; break;
       case "business-locations":
-        return <BusinessLocations />;
+        content = <BusinessLocations />; break;
       case "business-machines":
-        return <BusinessMachines />;
+        content = <BusinessMachines />; break;
       case "business-payouts":
-        return <BusinessPayouts />;
+        content = <BusinessPayouts />; break;
       case "business-support":
-        return <BusinessSupport />;
+        content = <BusinessSupport />; break;
       case "my-orders":
-        return <CustomerOrders />;
+        content = <CustomerOrders />; break;
       case "my-wallet":
-        return <CustomerWallet />;
+        content = <CustomerWallet />; break;
       case "my-tickets":
-        return <CustomerTickets />;
+        content = <CustomerTickets />; break;
       case "my-rewards":
-        return <CustomerRewards />;
+        content = <CustomerRewards />; break;
       case "global-operations":
-        return <GlobalOperations />;
+        content = <GlobalOperations />; break;
       case "events-rentals":
-        return <EventsRentals />;
+        content = <EventsRentals />; break;
       case "technical-support":
-        return <TechnicalSupport />;
+        content = <TechnicalSupport />; break;
       case "finance":
-        return <Finance />;
+        content = <Finance />; break;
       case "marketing":
-        return <Marketing />;
+        content = <Marketing />; break;
       case "inventory-logistics":
-        return <InventoryLogistics />;
+        content = <InventoryLogistics />; break;
       case "regional-reports":
-        return <RegionalReports />;
+        content = <RegionalReports />; break;
       case "daily-tasks":
-        return <DailyTasks />;
+        content = <DailyTasks />; break;
       case "admin-settings":
-        return <AdminSettings />;
+        content = <AdminSettings />; break;
       case "careers":
-        return <CareersManager />;
+        content = <CareersManager />; break;
       case "locations":
-        return <GlobalLocations />;
+        content = <GlobalLocations />; break;
       case "vendx-pay":
-        return <VendXPayManager />;
+        content = <VendXPayManager />; break;
       case "rewards-manager":
-        return <RewardsManager />;
+        content = <RewardsManager />; break;
       case "machine-registry":
-        return <MachineRegistry />;
+        content = <MachineRegistry />; break;
       case "partner-offers":
-        return <PartnerOffersManager />;
+        content = <PartnerOffersManager />; break;
       case "my-route":
-        return <MyRoute />;
+        content = <MyRoute />; break;
       case "route-manager":
-        return <RouteManager />;
+        content = <RouteManager />; break;
       case "store-manager":
-        return <StoreManager />;
+        content = <StoreManager />; break;
       case "products-manager":
-        return <ProductsManager />;
+        content = <ProductsManager />; break;
       case "video-games":
-        return <VideoGamesManager />;
+        content = <VideoGamesManager />; break;
       case "payouts":
-        return <PayoutsManager />;
+        content = <PayoutsManager />; break;
       case "profit-splits":
-        return <ProfitSplitsManager />;
+        content = <ProfitSplitsManager />; break;
       case "kiosk-categories":
-        return <KioskCategoriesManager />;
+        content = <KioskCategoriesManager />; break;
       case "funnels":
-        return <FunnelManager />;
+        content = <FunnelManager />; break;
       case "waitlist-manager":
-        return <WaitlistManager />;
+        content = <WaitlistManager />; break;
       case "news":
-        return <NewsManager />;
+        content = <NewsManager />; break;
       case "divisions-manager":
-        return <DivisionsManager />;
+        content = <DivisionsManager />; break;
       case "stands-manager":
-        return <StandsManager />;
+        content = <StandsManager />; break;
       case "quests-manager":
-        return <QuestsManager />;
+        content = <QuestsManager />; break;
       case "business-content":
-        return <BusinessContentManager />;
+        content = <BusinessContentManager />; break;
       case "ticket-config":
-        return <TicketConfigManager />;
+        content = <TicketConfigManager />; break;
       case "arcade-analytics":
-        return <ArcadeAnalytics />;
+        content = <ArcadeAnalytics />; break;
       case "prize-wins":
-        return <PrizeWinsManager />;
+        content = <PrizeWinsManager />; break;
       case "ticket-prizes":
-        return <TicketPrizesManager />;
+        content = <TicketPrizesManager />; break;
       case "prize-inventory":
-        return <PrizeInventoryManager />;
+        content = <PrizeInventoryManager />; break;
       case "ecosnack-lockers":
-        return <EcoSnackLockersManager />;
+        content = <EcoSnackLockersManager />; break;
       case "machine-inventory":
-        return <MachineInventoryManager />;
+        content = <MachineInventoryManager />; break;
       case "media-manager":
-        return <MediaManager />;
+        content = <MediaManager />; break;
       case "media-shop-manager":
-        return <MediaShopManager />;
+        content = <MediaShopManager />; break;
       case "track-shop-manager":
-        return <TrackShopManager />;
+        content = <TrackShopManager />; break;
       case "global-analytics":
-        return <GlobalAnalytics />;
+        content = <GlobalAnalytics />; break;
       case "site-policies":
-        return <PoliciesManager />;
+        content = <PoliciesManager />; break;
       default:
-        return <CustomerOrders />;
+        content = <CustomerOrders />; break;
     }
+
+    if (!NON_ADMIN_TABS.includes(activeTab)) {
+      return (
+        <ScrollArea className="h-[calc(100vh-8rem)]">
+          {content}
+        </ScrollArea>
+      );
+    }
+
+    return content;
   };
 
   if (loading) {
