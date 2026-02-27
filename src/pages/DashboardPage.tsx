@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { User, Session } from "@supabase/supabase-js";
 import { useToast } from "@/hooks/use-toast";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import GlobalOperations from "@/components/dashboard/tabs/GlobalOperations";
 import EventsRentals from "@/components/dashboard/tabs/EventsRentals";
 import TechnicalSupport from "@/components/dashboard/tabs/TechnicalSupport";
@@ -312,10 +312,11 @@ const DashboardPage = () => {
 
     if (!NON_ADMIN_TABS.includes(activeTab)) {
       return (
-        <ScrollArea className="w-full overflow-x-auto">
-          <div className="min-w-max">
+        <ScrollArea className="w-full">
+          <div className="min-w-max pb-4">
             {content}
           </div>
+          <ScrollBar orientation="horizontal" />
         </ScrollArea>
       );
     }
