@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useMemo } from "react";
 
 export interface SupportRequest {
   id: string;
@@ -37,7 +38,7 @@ export const useBusinessOwnerData = () => {
         .from("location_assignments")
         .select(`
           id, location_id, is_active,
-          location:locations(id, name, city, country, address, status, machine_count, location_type)
+          location:locations(id, name, city, country, address, status, machine_count, location_type, contact_name, contact_phone, contact_email)
         `)
         .eq("business_owner_id", user.id)
         .eq("is_active", true);
@@ -55,13 +56,84 @@ export const useBusinessOwnerData = () => {
       const locationIds = assignments.map(a => a.location_id);
       const { data, error } = await supabase
         .from("vendx_machines")
-        .select("id, name, machine_code, machine_type, status, location_id, current_period_revenue, lifetime_revenue")
+        .select("id, name, machine_code, machine_type, status, location_id, current_period_revenue, lifetime_revenue, last_seen, total_plays, total_vends")
         .in("location_id", locationIds);
       if (error) throw error;
       return data || [];
     },
     enabled: !!assignments && assignments.length > 0,
   });
+
+  // Fetch LIVE transaction data from machine_transactions (30 days)
+  const { data: machineTransactions } = useQuery({
+    queryKey: ["business-owner-machine-txns", machines],
+    queryFn: async () => {
+      if (!machines || machines.length === 0) return [];
+      const machineIds = machines.map(m => m.id);
+      const { data, error } = await supabase
+        .from("machine_transactions")
+        .select("amount, created_at, machine_id")
+        .in("machine_id", machineIds)
+        .gte("created_at", new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString());
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!machines && machines.length > 0,
+  });
+
+  // Fetch LIVE synced transactions matching machine codes (30 days)
+  const { data: syncedTransactions } = useQuery({
+    queryKey: ["business-owner-synced-txns"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("synced_transactions")
+        .select("amount, created_at, transaction_type, provider, metadata, description")
+        .eq("status", "completed")
+        .eq("transaction_type", "revenue")
+        .gte("created_at", new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString());
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  // Compute LIVE revenue per machine from actual transactions
+  const machineRevenue = useMemo(() => {
+    if (!machines) return new Map<string, { period: number; lifetime: number }>();
+    
+    const revenueMap = new Map<string, { period: number; lifetime: number }>();
+    machines.forEach(m => revenueMap.set(m.id, { period: 0, lifetime: Number(m.lifetime_revenue || 0) }));
+
+    // Add machine_transactions
+    machineTransactions?.forEach(t => {
+      const entry = revenueMap.get(t.machine_id);
+      if (entry) {
+        entry.period += Number(t.amount);
+      }
+    });
+
+    // Add synced_transactions matched by machine_code
+    syncedTransactions?.forEach(t => {
+      if (Number(t.amount) <= 0) return;
+      const meta = t.metadata as any;
+      const machineCode = meta?.machine_code;
+      if (machineCode) {
+        const machine = machines.find(m => m.machine_code === machineCode);
+        if (machine) {
+          const entry = revenueMap.get(machine.id);
+          if (entry) {
+            entry.period += Number(t.amount);
+          }
+        }
+      }
+    });
+
+    // Use period as lifetime fallback if lifetime is 0
+    revenueMap.forEach((v, k) => {
+      if (v.lifetime === 0 && v.period > 0) v.lifetime = v.period;
+    });
+
+    return revenueMap;
+  }, [machines, machineTransactions, syncedTransactions]);
 
   // Fetch profit splits for machines
   const { data: profitSplits } = useQuery({
@@ -133,14 +205,36 @@ export const useBusinessOwnerData = () => {
     },
   });
 
+  // Fetch location change requests
+  const { data: changeRequests } = useQuery({
+    queryKey: ["business-owner-change-requests"],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return [];
+      
+      const { data, error } = await supabase
+        .from("location_change_requests" as any)
+        .select("*")
+        .eq("requested_by", user.id)
+        .order("created_at", { ascending: false });
+      if (error) {
+        if (error.code === "42P01") return [];
+        throw error;
+      }
+      return data || [];
+    },
+  });
+
   return {
     currentUser,
     assignments,
     machines,
+    machineRevenue,
     profitSplits,
     payouts,
     payoutSettings,
     supportRequests,
+    changeRequests,
     isLoading: assignmentsLoading,
   };
 };

@@ -921,6 +921,59 @@ export type Database = {
           },
         ]
       }
+      location_change_requests: {
+        Row: {
+          admin_notes: string | null
+          created_at: string
+          description: string | null
+          details: Json
+          id: string
+          location_id: string | null
+          request_type: string
+          requested_by: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          created_at?: string
+          description?: string | null
+          details?: Json
+          id?: string
+          location_id?: string | null
+          request_type: string
+          requested_by: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          admin_notes?: string | null
+          created_at?: string
+          description?: string | null
+          details?: Json
+          id?: string
+          location_id?: string | null
+          request_type?: string
+          requested_by?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "location_change_requests_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       locations: {
         Row: {
           address: string | null
