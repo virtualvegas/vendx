@@ -451,14 +451,10 @@ const MachineRegistry = () => {
 
       {/* Tabs for different sections */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="grid grid-cols-4 w-full max-w-2xl">
+        <TabsList className="grid grid-cols-3 w-full max-w-xl">
           <TabsTrigger value="machines" className="flex items-center gap-2">
             <Monitor className="w-4 h-4" />
             Machines
-          </TabsTrigger>
-          <TabsTrigger value="pricing" className="flex items-center gap-2">
-            <DollarSign className="w-4 h-4" />
-            Pricing
           </TabsTrigger>
           <TabsTrigger value="activity" className="flex items-center gap-2">
             <Activity className="w-4 h-4" />
@@ -646,10 +642,6 @@ const MachineRegistry = () => {
               </ScrollArea>
             </CardContent>
           </Card>
-        </TabsContent>
-
-        <TabsContent value="pricing" className="space-y-4">
-          <ArcadePricingTemplates />
         </TabsContent>
 
         <TabsContent value="activity" className="space-y-4">

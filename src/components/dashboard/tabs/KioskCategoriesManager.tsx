@@ -11,8 +11,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Trash2, Edit, Monitor, DollarSign, Layers, ArrowUpDown } from "lucide-react";
+import { Plus, Trash2, Edit, Monitor, DollarSign, Layers, ArrowUpDown, Gamepad2 } from "lucide-react";
+import { ArcadePricingTemplates } from "./machines";
 
 interface KioskCategory {
   id: string;
@@ -231,9 +233,25 @@ const KioskCategoriesManager = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-3xl font-bold text-foreground">Kiosk Categories</h2>
-          <p className="text-muted-foreground">Manage per-machine categories and pricing for kiosk display</p>
+          <h2 className="text-3xl font-bold text-foreground">Kiosk Setup</h2>
+          <p className="text-muted-foreground">Manage kiosk categories, pricing, and arcade pricing templates</p>
         </div>
+      </div>
+
+      <Tabs defaultValue="categories" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="categories" className="flex items-center gap-2">
+            <Layers className="w-4 h-4" />
+            Vending Categories
+          </TabsTrigger>
+          <TabsTrigger value="arcade-pricing" className="flex items-center gap-2">
+            <Gamepad2 className="w-4 h-4" />
+            Arcade Pricing
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="categories" className="space-y-4">
+      <div className="flex justify-end">
         <Button onClick={() => { resetForm(); setShowDialog(true); }}>
           <Plus className="w-4 h-4 mr-2" />
           Add Category
@@ -429,6 +447,13 @@ const KioskCategoriesManager = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+        </TabsContent>
+
+        <TabsContent value="arcade-pricing" className="space-y-4">
+          <ArcadePricingTemplates />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
