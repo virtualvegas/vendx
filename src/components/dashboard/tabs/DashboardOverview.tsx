@@ -80,20 +80,23 @@ const DashboardOverview = () => {
     },
   });
 
-  // Calculate combined revenue from all sources
+  // Calculate combined revenue from all sources (no double counting)
   const revenue = useMemo(() => {
-    const now = Date.now();
     const todayStart = new Date(new Date().setHours(0, 0, 0, 0));
-    const weekStart = new Date(now - 7 * 24 * 60 * 60 * 1000);
-    const monthStart = new Date(now - 30 * 24 * 60 * 60 * 1000);
+    const weekStart = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+    const monthStart = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
 
-    // Combine machine_transactions and synced_transactions (revenue only, positive amounts)
-    const allRevenue: { amount: number; created_at: string }[] = [];
+    // Use synced_transactions as primary unified source
+    // Plus machine_transactions for VendX Pay vending (not in synced)
+    const allRevenue: { amount: number; created_at: string; source: string }[] = [];
     
-    transactions?.forEach(t => allRevenue.push({ amount: Number(t.amount), created_at: t.created_at }));
+    // Add machine_transactions (VendX Pay vending purchases)
+    transactions?.forEach(t => allRevenue.push({ amount: Number(t.amount), created_at: t.created_at, source: "vending" }));
+    
+    // Add synced_transactions (Stripe/PayPal - EcoSnack, Store, etc.)
     syncedTransactions?.forEach(t => {
       if (Number(t.amount) > 0) {
-        allRevenue.push({ amount: Number(t.amount), created_at: t.created_at });
+        allRevenue.push({ amount: Number(t.amount), created_at: t.created_at, source: "synced" });
       }
     });
 
@@ -176,7 +179,7 @@ const DashboardOverview = () => {
       .slice(0, 5);
   }, [machines]);
 
-  // Revenue by location (computed from machines + synced transactions)
+  // Revenue by location (from machine lifetime_revenue + synced transactions matched by machine_code)
   const revenueByLocation = useMemo(() => {
     if (!machines || !locationsWithActualCounts) return [];
 
@@ -190,13 +193,14 @@ const DashboardOverview = () => {
       };
     });
 
+    // Use lifetime_revenue only (it already includes current_period_revenue)
     machines.forEach(m => {
       if (m.location_id && locationRevenue[m.location_id]) {
-        locationRevenue[m.location_id].revenue += Number(m.current_period_revenue || 0) + Number(m.lifetime_revenue || 0);
+        locationRevenue[m.location_id].revenue += Number(m.lifetime_revenue || 0);
       }
     });
 
-    // Also add synced transaction revenue by matching machine_code to locations
+    // Add synced transaction revenue matched to locations via machine_code
     syncedTransactions?.forEach(t => {
       if (Number(t.amount) <= 0) return;
       const meta = t.metadata as any;
