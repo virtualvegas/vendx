@@ -115,43 +115,72 @@ const DashboardOverview = () => {
 
   // Revenue by source for the summary cards
   const revenueBySource = useMemo(() => {
-    if (!syncedTransactions) return { ecosnack: 0, store: 0, other: 0 };
+    if (!syncedTransactions) return { ecosnack: 0, store: 0, arcade: 0, wallet: 0, other: 0 };
     
-    let ecosnack = 0, store = 0, other = 0;
+    let ecosnack = 0, store = 0, arcade = 0, wallet = 0, other = 0;
     syncedTransactions.forEach(t => {
       const amt = Number(t.amount);
       if (amt <= 0) return;
       const meta = t.metadata as any;
-      const source = meta?.source;
-      if (source === "ecosnack") ecosnack += amt;
-      else if (source === "store" || source === "shopify") store += amt;
+      const source = (meta?.source || "").toLowerCase();
+      const desc = (t.description || "").toLowerCase();
+      if (source === "ecosnack" || desc.includes("ecosnack")) ecosnack += amt;
+      else if (source === "store" || source === "shopify" || desc.includes("store")) store += amt;
+      else if (source === "arcade" || desc.includes("arcade")) arcade += amt;
+      else if (source === "wallet" || desc.includes("wallet") || desc.includes("vendx pay")) wallet += amt;
       else other += amt;
     });
-    return { ecosnack, store, other };
+    return { ecosnack, store, arcade, wallet, other };
   }, [syncedTransactions]);
 
-  // Daily revenue trend chart data (combined sources)
+  // Daily revenue trend chart data - all 30 days, broken down by source
   const dailyRevenueTrend = useMemo(() => {
-    const dayMap = new Map<string, { machine: number; synced: number }>();
+    const dayMap = new Map<string, { date: string; vending: number; arcade: number; ecosnack: number; store: number; wallet: number; other: number }>();
     
+    // Pre-fill all 30 days so there are no gaps
+    for (let i = 29; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const key = format(d, "yyyy-MM-dd");
+      dayMap.set(key, { date: key, vending: 0, arcade: 0, ecosnack: 0, store: 0, wallet: 0, other: 0 });
+    }
+    
+    // Machine transactions → vending
     transactions?.forEach(t => {
-      const day = format(new Date(t.created_at), "MM/dd");
-      const entry = dayMap.get(day) || { machine: 0, synced: 0 };
-      entry.machine += Number(t.amount);
-      dayMap.set(day, entry);
+      const key = format(new Date(t.created_at), "yyyy-MM-dd");
+      const entry = dayMap.get(key);
+      if (entry) entry.vending += Number(t.amount);
     });
     
+    // Synced transactions → categorized by source
     syncedTransactions?.forEach(t => {
-      if (Number(t.amount) <= 0) return;
-      const day = format(new Date(t.created_at), "MM/dd");
-      const entry = dayMap.get(day) || { machine: 0, synced: 0 };
-      entry.synced += Number(t.amount);
-      dayMap.set(day, entry);
+      const amt = Number(t.amount);
+      if (amt <= 0) return;
+      const key = format(new Date(t.created_at), "yyyy-MM-dd");
+      const entry = dayMap.get(key);
+      if (!entry) return;
+      const meta = t.metadata as any;
+      const source = (meta?.source || "").toLowerCase();
+      const desc = (t.description || "").toLowerCase();
+      if (source === "ecosnack" || desc.includes("ecosnack")) entry.ecosnack += amt;
+      else if (source === "store" || source === "shopify" || desc.includes("store")) entry.store += amt;
+      else if (source === "arcade" || desc.includes("arcade")) entry.arcade += amt;
+      else if (source === "wallet" || desc.includes("wallet") || desc.includes("vendx pay")) entry.wallet += amt;
+      else entry.other += amt;
     });
 
-    return Array.from(dayMap.entries())
-      .map(([day, data]) => ({ day, vending: data.machine, other: data.synced, total: data.machine + data.synced }))
-      .sort((a, b) => a.day.localeCompare(b.day));
+    return Array.from(dayMap.values())
+      .sort((a, b) => a.date.localeCompare(b.date))
+      .map(d => ({
+        day: format(new Date(d.date + "T12:00:00"), "MM/dd"),
+        vending: Math.round(d.vending * 100) / 100,
+        arcade: Math.round(d.arcade * 100) / 100,
+        ecosnack: Math.round(d.ecosnack * 100) / 100,
+        store: Math.round(d.store * 100) / 100,
+        wallet: Math.round(d.wallet * 100) / 100,
+        other: Math.round(d.other * 100) / 100,
+        total: Math.round((d.vending + d.arcade + d.ecosnack + d.store + d.wallet + d.other) * 100) / 100,
+      }));
   }, [transactions, syncedTransactions]);
 
   // Compute actual machine counts per location from machine data
@@ -297,7 +326,7 @@ const DashboardOverview = () => {
       </div>
 
       {/* Revenue by Source */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
@@ -306,6 +335,17 @@ const DashboardOverview = () => {
                 <p className="text-xl font-bold">${(transactions?.reduce((s, t) => s + Number(t.amount), 0) || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
               </div>
               <Package className="w-6 h-6 text-primary opacity-50" />
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Arcade</p>
+                <p className="text-xl font-bold">${revenueBySource.arcade.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
+              </div>
+              <Gamepad2 className="w-6 h-6 text-primary opacity-50" />
             </div>
           </CardContent>
         </Card>
@@ -353,19 +393,23 @@ const DashboardOverview = () => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="h-[250px]">
+          <div className="h-[280px]">
             {dailyRevenueTrend.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={dailyRevenueTrend}>
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                  <XAxis dataKey="day" tick={{ fontSize: 12 }} stroke="hsl(var(--muted-foreground))" />
-                  <YAxis tickFormatter={(v) => `$${v}`} tick={{ fontSize: 12 }} stroke="hsl(var(--muted-foreground))" />
+                  <XAxis dataKey="day" tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" interval={2} />
+                  <YAxis tickFormatter={(v) => `$${v}`} tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" />
                   <Tooltip 
-                    formatter={(v: number) => [`$${v.toLocaleString(undefined, { minimumFractionDigits: 2 })}`, undefined]} 
+                    formatter={(v: number, name: string) => [`$${v.toLocaleString(undefined, { minimumFractionDigits: 2 })}`, name]} 
                     contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))" }} 
                   />
-                  <Area type="monotone" dataKey="vending" stackId="1" fill="hsl(var(--primary))" stroke="hsl(var(--primary))" fillOpacity={0.4} name="Vending" />
-                  <Area type="monotone" dataKey="other" stackId="1" fill="hsl(var(--accent))" stroke="hsl(var(--accent-foreground))" fillOpacity={0.4} name="EcoSnack / Store" />
+                  <Area type="monotone" dataKey="vending" stackId="1" fill="hsl(var(--primary))" stroke="hsl(var(--primary))" fillOpacity={0.5} name="Vending" />
+                  <Area type="monotone" dataKey="arcade" stackId="1" fill="#8b5cf6" stroke="#8b5cf6" fillOpacity={0.5} name="Arcade" />
+                  <Area type="monotone" dataKey="ecosnack" stackId="1" fill="#10b981" stroke="#10b981" fillOpacity={0.5} name="EcoSnack" />
+                  <Area type="monotone" dataKey="store" stackId="1" fill="#f59e0b" stroke="#f59e0b" fillOpacity={0.5} name="Store" />
+                  <Area type="monotone" dataKey="wallet" stackId="1" fill="#06b6d4" stroke="#06b6d4" fillOpacity={0.5} name="Wallet Loads" />
+                  <Area type="monotone" dataKey="other" stackId="1" fill="#6b7280" stroke="#6b7280" fillOpacity={0.3} name="Other" />
                   <Legend />
                 </AreaChart>
               </ResponsiveContainer>
