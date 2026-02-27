@@ -261,24 +261,35 @@ const Finance = () => {
     getStripeStatus()?.sync_status === "syncing" || 
     getPayPalStatus()?.sync_status === "syncing";
 
-  // Chart: Revenue vs Expenses by day
+  // Chart: Revenue vs Expenses by day (manual + synced combined)
   const dailyFinanceData = useMemo(() => {
-    if (!transactions) return [];
     const dayMap = new Map<string, { day: string; revenue: number; expenses: number }>();
     
-    transactions.forEach(t => {
-      const day = t.transaction_date;
+    const ensureDay = (day: string) => {
       if (!dayMap.has(day)) dayMap.set(day, { day, revenue: 0, expenses: 0 });
-      const entry = dayMap.get(day)!;
+      return dayMap.get(day)!;
+    };
+    
+    // Manual transactions
+    transactions?.forEach(t => {
+      const entry = ensureDay(t.transaction_date);
       if (t.transaction_type === "revenue") entry.revenue += t.amount;
       else entry.expenses += t.amount;
+    });
+    
+    // Synced transactions (include in chart for complete picture)
+    syncedTransactions?.forEach(t => {
+      const day = t.transaction_date;
+      const entry = ensureDay(day);
+      if (t.transaction_type === "revenue" && t.amount > 0) entry.revenue += t.amount;
+      else if (t.transaction_type === "expense") entry.expenses += Math.abs(t.amount);
     });
 
     return Array.from(dayMap.values())
       .sort((a, b) => a.day.localeCompare(b.day))
       .slice(-30)
       .map(d => ({ ...d, day: format(new Date(d.day + "T12:00:00"), "MM/dd") }));
-  }, [transactions]);
+  }, [transactions, syncedTransactions]);
 
   // Chart: Category breakdown
   const categoryBreakdown = useMemo(() => {

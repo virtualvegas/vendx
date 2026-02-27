@@ -240,20 +240,22 @@ const ArcadeAnalytics = () => {
     },
   });
 
-  // Calculate totals
+  // Calculate totals from LIVE session data instead of stale machine counters
   const totals = useMemo(() => {
-    const totalRevenue = machines?.reduce((sum, m) => sum + (m.lifetime_revenue || 0), 0) || 0;
-    const periodRevenue = machines?.reduce((sum, m) => sum + (m.current_period_revenue || 0), 0) || 0;
-    const totalPlays = machines?.reduce((sum, m) => sum + (m.total_plays || 0), 0) || 0;
+    // Use session data for revenue and plays (live, not stale counters)
+    const liveRevenue = sessionStats?.reduce((sum, s) => sum + s.total_revenue, 0) || 0;
+    const livePlays = sessionStats?.reduce((sum, s) => sum + s.total_plays, 0) || 0;
+    // Fall back to machine counters for lifetime (outside date range)
+    const lifetimeRevenue = machines?.reduce((sum, m) => sum + (m.lifetime_revenue || 0), 0) || 0;
     const totalTicketsIssued = ticketStats?.reduce((sum, t) => sum + t.tickets_issued, 0) || 0;
     const totalTicketsRedeemed = redemptionStats?.totalRedeemed || 0;
     const uniquePlayers = sessionStats?.reduce((sum, s) => sum + s.unique_players, 0) || 0;
-    const avgPlaysPerUser = uniquePlayers > 0 ? totalPlays / uniquePlayers : 0;
+    const avgPlaysPerUser = uniquePlayers > 0 ? livePlays / uniquePlayers : 0;
     
     return {
-      totalRevenue,
-      periodRevenue,
-      totalPlays,
+      totalRevenue: lifetimeRevenue,
+      periodRevenue: liveRevenue,
+      totalPlays: livePlays,
       totalTicketsIssued,
       totalTicketsRedeemed,
       uniquePlayers,
@@ -262,14 +264,21 @@ const ArcadeAnalytics = () => {
     };
   }, [machines, ticketStats, sessionStats, redemptionStats]);
 
-  // Chart data for revenue by machine
+  // Chart data for revenue by machine - use live session data
   const revenueChartData = useMemo(() => {
-    return machines?.slice(0, 10).map(m => ({
+    if (!machines) return [];
+    // Build a map of machine_id -> session stats
+    const sessionMap = new Map<string, SessionStats>();
+    sessionStats?.forEach(s => sessionMap.set(s.machine_id, s));
+    
+    return machines.map(m => ({
       name: m.name?.substring(0, 15) || m.machine_code,
-      revenue: m.lifetime_revenue || 0,
-      plays: m.total_plays || 0,
-    })) || [];
-  }, [machines]);
+      revenue: sessionMap.get(m.id)?.total_revenue || m.lifetime_revenue || 0,
+      plays: sessionMap.get(m.id)?.total_plays || m.total_plays || 0,
+    }))
+    .sort((a, b) => b.revenue - a.revenue)
+    .slice(0, 10);
+  }, [machines, sessionStats]);
 
   // Chart data for tickets by machine
   const ticketChartData = useMemo(() => {
