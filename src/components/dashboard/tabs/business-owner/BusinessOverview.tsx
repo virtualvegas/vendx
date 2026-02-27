@@ -1,12 +1,10 @@
 import { useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { 
   DollarSign, Monitor, Building2, TrendingUp, 
-  BarChart3, Activity, Phone, Mail, Headphones, AlertCircle, Clock, CheckCircle2, Plus
+  BarChart3, Activity, Phone, Mail, Headphones, AlertCircle, Clock, CheckCircle2
 } from "lucide-react";
 import { useBusinessOwnerData } from "./useBusinessOwnerData";
 import BusinessOnboarding from "./BusinessOnboarding";
@@ -20,6 +18,7 @@ const BusinessOverview = () => {
   const { 
     assignments, 
     machines, 
+    machineRevenue,
     profitSplits, 
     payouts, 
     payoutSettings,
@@ -27,14 +26,14 @@ const BusinessOverview = () => {
     isLoading 
   } = useBusinessOwnerData();
 
-  // Check if onboarding is needed (no payout settings configured)
+  // Check if onboarding is needed
   useMemo(() => {
     if (!isLoading && showOnboarding === null) {
       setShowOnboarding(!payoutSettings);
     }
   }, [isLoading, payoutSettings, showOnboarding]);
 
-  // Calculate earnings summary
+  // Calculate earnings from LIVE transaction data
   const earnings = useMemo(() => {
     if (!machines || !profitSplits) return { grossRevenue: 0, myShare: 0, pending: 0, lifetimeRevenue: 0, totalPaid: 0 };
 
@@ -45,12 +44,13 @@ const BusinessOverview = () => {
     machines.forEach(machine => {
       const split = profitSplits.find(s => s.machine_id === machine.id);
       const ownerPercentage = split?.business_owner_percentage || 30;
-      const machineRevenue = Number(machine.current_period_revenue || 0);
-      const machineLifetime = Number(machine.lifetime_revenue || 0);
+      const rev = machineRevenue.get(machine.id);
+      const periodRev = rev?.period || 0;
+      const lifetimeRev = rev?.lifetime || 0;
       
-      grossRevenue += machineRevenue;
-      myShare += machineRevenue * (ownerPercentage / 100);
-      lifetimeRevenue += machineLifetime;
+      grossRevenue += periodRev;
+      myShare += periodRev * (ownerPercentage / 100);
+      lifetimeRevenue += lifetimeRev;
     });
 
     const pending = payouts
@@ -62,7 +62,7 @@ const BusinessOverview = () => {
       .reduce((sum, p) => sum + Number(p.amount), 0) || 0;
 
     return { grossRevenue, myShare, pending, lifetimeRevenue, totalPaid };
-  }, [machines, profitSplits, payouts]);
+  }, [machines, machineRevenue, profitSplits, payouts]);
 
   // Calculate machine stats
   const machineStats = useMemo(() => {
@@ -100,7 +100,6 @@ const BusinessOverview = () => {
     );
   }
 
-  // Show onboarding if needed
   if (showOnboarding) {
     return (
       <BusinessOnboarding 
@@ -113,10 +112,9 @@ const BusinessOverview = () => {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div>
         <h2 className="text-2xl lg:text-3xl font-bold text-foreground mb-1">Partner Dashboard</h2>
-        <p className="text-muted-foreground">View performance and manage your locations</p>
+        <p className="text-muted-foreground">Live performance across your locations (30-day window)</p>
       </div>
 
       {/* Quick Stats */}
@@ -125,12 +123,12 @@ const BusinessOverview = () => {
           <CardHeader className="pb-2">
             <CardTitle className="text-xs lg:text-sm font-medium text-muted-foreground flex items-center gap-2">
               <DollarSign className="w-4 h-4" />
-              Your Share (Period)
+              Your Share (30d)
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl lg:text-3xl font-bold text-green-500">${earnings.myShare.toLocaleString()}</p>
-            <p className="text-xs text-muted-foreground mt-1">From ${earnings.grossRevenue.toLocaleString()} gross</p>
+            <p className="text-2xl lg:text-3xl font-bold text-green-500">${earnings.myShare.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
+            <p className="text-xs text-muted-foreground mt-1">From ${earnings.grossRevenue.toLocaleString(undefined, { minimumFractionDigits: 2 })} gross</p>
           </CardContent>
         </Card>
         <Card className="bg-gradient-to-br from-yellow-500/10 to-yellow-600/5 border-yellow-500/20">
@@ -141,7 +139,7 @@ const BusinessOverview = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl lg:text-3xl font-bold text-yellow-500">${earnings.pending.toLocaleString()}</p>
+            <p className="text-2xl lg:text-3xl font-bold text-yellow-500">${earnings.pending.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
           </CardContent>
         </Card>
         <Card>
@@ -184,19 +182,19 @@ const BusinessOverview = () => {
           <CardContent className="space-y-4">
             <div className="flex justify-between items-center py-2 border-b">
               <span className="text-muted-foreground">Lifetime Revenue</span>
-              <span className="font-bold">${earnings.lifetimeRevenue.toLocaleString()}</span>
+              <span className="font-bold">${earnings.lifetimeRevenue.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
             </div>
             <div className="flex justify-between items-center py-2 border-b">
-              <span className="text-muted-foreground">Current Period Revenue</span>
-              <span className="font-bold text-green-500">${earnings.grossRevenue.toLocaleString()}</span>
+              <span className="text-muted-foreground">30-Day Revenue</span>
+              <span className="font-bold text-green-500">${earnings.grossRevenue.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
             </div>
             <div className="flex justify-between items-center py-2 border-b">
-              <span className="text-muted-foreground">Your Earnings (Period)</span>
-              <span className="font-bold text-primary">${earnings.myShare.toLocaleString()}</span>
+              <span className="text-muted-foreground">Your Earnings (30d)</span>
+              <span className="font-bold text-primary">${earnings.myShare.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
             </div>
             <div className="flex justify-between items-center py-2">
               <span className="text-muted-foreground">Total Paid Out</span>
-              <span className="font-bold">${earnings.totalPaid.toLocaleString()}</span>
+              <span className="font-bold">${earnings.totalPaid.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
             </div>
           </CardContent>
         </Card>

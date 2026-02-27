@@ -19,20 +19,17 @@ import {
 } from "@/components/machines";
 
 const BusinessMachines = () => {
-  const { machines, profitSplits, assignments, isLoading } = useBusinessOwnerData();
+  const { machines, machineRevenue, profitSplits, assignments, isLoading } = useBusinessOwnerData();
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [typeFilter, setTypeFilter] = useState("all");
   const [selectedMachine, setSelectedMachine] = useState<any>(null);
 
-  // Get unique machine types
   const machineTypes = useMemo(() => {
     if (!machines) return [];
-    const types = [...new Set(machines.map(m => m.machine_type))];
-    return types.filter(Boolean);
+    return [...new Set(machines.map(m => m.machine_type))].filter(Boolean);
   }, [machines]);
 
-  // Filter machines using universal utility
   const filteredMachines = useMemo(() => {
     if (!machines) return [];
     return filterMachines(machines as BaseMachine[], {
@@ -42,32 +39,30 @@ const BusinessMachines = () => {
     });
   }, [machines, searchQuery, statusFilter, typeFilter]);
 
-  // Calculate totals
   const totals = useMemo(() => {
     if (!filteredMachines || !profitSplits) return { revenue: 0, share: 0, lifetime: 0 };
     
-    let revenue = 0;
-    let share = 0;
-    let lifetime = 0;
-
+    let revenue = 0, share = 0, lifetime = 0;
     filteredMachines.forEach(machine => {
       const split = profitSplits.find(s => s.machine_id === machine.id);
       const ownerPercentage = split?.business_owner_percentage || 30;
-      const machineRevenue = Number(machine.current_period_revenue || 0);
-      
-      revenue += machineRevenue;
-      share += machineRevenue * (ownerPercentage / 100);
-      lifetime += Number(machine.lifetime_revenue || 0);
+      const rev = machineRevenue.get(machine.id);
+      const periodRev = rev?.period || 0;
+      revenue += periodRev;
+      share += periodRev * (ownerPercentage / 100);
+      lifetime += rev?.lifetime || 0;
     });
-
     return { revenue, share, lifetime };
-  }, [filteredMachines, profitSplits]);
+  }, [filteredMachines, profitSplits, machineRevenue]);
 
   const getLocationName = (locationId: string) => {
     const assignment = assignments?.find(a => a.location_id === locationId);
     const loc = assignment?.location;
-    return loc?.name || `${loc?.city}, ${loc?.country}` || "Unknown Location";
+    return (loc as any)?.name || `${(loc as any)?.city}, ${(loc as any)?.country}` || "Unknown Location";
   };
+
+  const getMachineRev = (machineId: string) => machineRevenue.get(machineId)?.period || 0;
+  const getMachineLifetime = (machineId: string) => machineRevenue.get(machineId)?.lifetime || 0;
 
   if (isLoading) {
     return (
@@ -81,10 +76,9 @@ const BusinessMachines = () => {
     <div className="space-y-6">
       <div>
         <h2 className="text-2xl font-bold">My Machines</h2>
-        <p className="text-muted-foreground">View all machines at your locations</p>
+        <p className="text-muted-foreground">Live stats from all machines at your locations</p>
       </div>
 
-      {/* Universal Stats Cards */}
       <MachineStatsCards 
         machines={(machines || []) as BaseMachine[]} 
         showRevenue={true}
@@ -93,7 +87,6 @@ const BusinessMachines = () => {
         compact
       />
 
-      {/* Universal Filters */}
       <Card>
         <CardContent className="p-4">
           <MachineFilters
@@ -109,7 +102,6 @@ const BusinessMachines = () => {
         </CardContent>
       </Card>
 
-      {/* Machines Table */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -117,7 +109,7 @@ const BusinessMachines = () => {
             Machines at Your Locations
           </CardTitle>
           <CardDescription>
-            Showing {filteredMachines.length} of {machines?.length || 0} machines
+            Showing {filteredMachines.length} of {machines?.length || 0} machines · Revenue from live transactions
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -125,7 +117,6 @@ const BusinessMachines = () => {
             <div className="text-center py-12">
               <Monitor className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
               <p className="text-muted-foreground">No machines at your locations</p>
-              <p className="text-sm text-muted-foreground mt-1">Machines will appear here once assigned</p>
             </div>
           ) : filteredMachines.length === 0 ? (
             <div className="text-center py-8">
@@ -147,7 +138,7 @@ const BusinessMachines = () => {
                         <TableHead>Type</TableHead>
                         <TableHead>Status</TableHead>
                         <TableHead>Your Split</TableHead>
-                        <TableHead>Period Revenue</TableHead>
+                        <TableHead>30d Revenue</TableHead>
                         <TableHead>Your Share</TableHead>
                         <TableHead></TableHead>
                       </TableRow>
@@ -156,40 +147,22 @@ const BusinessMachines = () => {
                       {filteredMachines.map((machine) => {
                         const split = profitSplits?.find(s => s.machine_id === machine.id);
                         const ownerPercentage = split?.business_owner_percentage || 30;
-                        const revenue = Number(machine.current_period_revenue || 0);
+                        const revenue = getMachineRev(machine.id);
                         const share = revenue * (ownerPercentage / 100);
                         
                         return (
-                          <TableRow 
-                            key={machine.id} 
-                            className="cursor-pointer hover:bg-muted/50"
-                            onClick={() => setSelectedMachine(machine)}
-                          >
+                          <TableRow key={machine.id} className="cursor-pointer hover:bg-muted/50" onClick={() => setSelectedMachine(machine)}>
                             <TableCell>
                               <p className="font-medium">{machine.name}</p>
                               <p className="text-xs text-muted-foreground font-mono">{machine.machine_code}</p>
                             </TableCell>
-                            <TableCell>
-                              <p className="text-sm">{getLocationName(machine.location_id || "")}</p>
-                            </TableCell>
-                            <TableCell>
-                              <Badge variant="outline">{getMachineTypeLabel(machine.machine_type)}</Badge>
-                            </TableCell>
-                            <TableCell>
-                              <MachineStatusBadge 
-                                status={machine.status} 
-                                lastSeen={machine.last_seen}
-                                size="sm"
-                              />
-                            </TableCell>
-                            <TableCell>
-                              <span className="font-medium">{ownerPercentage}%</span>
-                            </TableCell>
+                            <TableCell><p className="text-sm">{getLocationName(machine.location_id || "")}</p></TableCell>
+                            <TableCell><Badge variant="outline">{getMachineTypeLabel(machine.machine_type)}</Badge></TableCell>
+                            <TableCell><MachineStatusBadge status={machine.status} lastSeen={machine.last_seen} size="sm" /></TableCell>
+                            <TableCell><span className="font-medium">{ownerPercentage}%</span></TableCell>
                             <TableCell>{formatRevenue(revenue)}</TableCell>
                             <TableCell className="font-bold text-green-500">{formatRevenue(share)}</TableCell>
-                            <TableCell>
-                              <ChevronRight className="w-4 h-4 text-muted-foreground" />
-                            </TableCell>
+                            <TableCell><ChevronRight className="w-4 h-4 text-muted-foreground" /></TableCell>
                           </TableRow>
                         );
                       })}
@@ -203,15 +176,11 @@ const BusinessMachines = () => {
                 {filteredMachines.map((machine) => {
                   const split = profitSplits?.find(s => s.machine_id === machine.id);
                   const ownerPercentage = split?.business_owner_percentage || 30;
-                  const revenue = Number(machine.current_period_revenue || 0);
+                  const revenue = getMachineRev(machine.id);
                   const share = revenue * (ownerPercentage / 100);
                   
                   return (
-                    <Card 
-                      key={machine.id} 
-                      className="cursor-pointer hover:border-primary/50 transition-colors"
-                      onClick={() => setSelectedMachine(machine)}
-                    >
+                    <Card key={machine.id} className="cursor-pointer hover:border-primary/50 transition-colors" onClick={() => setSelectedMachine(machine)}>
                       <CardContent className="p-4">
                         <div className="flex items-start justify-between mb-3">
                           <div className="flex items-center gap-2">
@@ -263,7 +232,6 @@ const BusinessMachines = () => {
           </DialogHeader>
 
           <div className="space-y-4">
-            {/* Machine Info */}
             <div className="grid grid-cols-2 gap-4">
               <Card>
                 <CardContent className="p-3">
@@ -274,15 +242,11 @@ const BusinessMachines = () => {
               <Card>
                 <CardContent className="p-3">
                   <p className="text-xs text-muted-foreground">Status</p>
-                  <MachineStatusBadge 
-                    status={selectedMachine?.status || ""} 
-                    lastSeen={selectedMachine?.last_seen}
-                  />
+                  <MachineStatusBadge status={selectedMachine?.status || ""} lastSeen={selectedMachine?.last_seen} />
                 </CardContent>
               </Card>
             </div>
 
-            {/* Location */}
             <Card>
               <CardContent className="p-3">
                 <p className="text-xs text-muted-foreground mb-1">Location</p>
@@ -293,16 +257,15 @@ const BusinessMachines = () => {
               </CardContent>
             </Card>
 
-            {/* Revenue */}
             <Card>
               <CardContent className="p-4">
-                <p className="text-sm font-medium mb-3">Revenue Details</p>
+                <p className="text-sm font-medium mb-3">Revenue Details (Live)</p>
                 {(() => {
                   const split = profitSplits?.find(s => s.machine_id === selectedMachine?.id);
                   const ownerPercentage = split?.business_owner_percentage || 30;
                   const vendxPercentage = split?.vendx_percentage || 70;
-                  const revenue = Number(selectedMachine?.current_period_revenue || 0);
-                  const lifetime = Number(selectedMachine?.lifetime_revenue || 0);
+                  const revenue = selectedMachine ? getMachineRev(selectedMachine.id) : 0;
+                  const lifetime = selectedMachine ? getMachineLifetime(selectedMachine.id) : 0;
                   const share = revenue * (ownerPercentage / 100);
 
                   return (
@@ -312,11 +275,11 @@ const BusinessMachines = () => {
                         <span className="font-medium">You: {ownerPercentage}% / VendX: {vendxPercentage}%</span>
                       </div>
                       <div className="flex justify-between items-center py-2 border-b">
-                        <span className="text-muted-foreground">Period Revenue</span>
+                        <span className="text-muted-foreground">30-Day Revenue</span>
                         <span className="font-medium">{formatRevenue(revenue)}</span>
                       </div>
                       <div className="flex justify-between items-center py-2 border-b">
-                        <span className="text-muted-foreground">Your Share (Period)</span>
+                        <span className="text-muted-foreground">Your Share (30d)</span>
                         <span className="font-bold text-green-500">{formatRevenue(share)}</span>
                       </div>
                       <div className="flex justify-between items-center py-2">
