@@ -119,6 +119,7 @@ const MachineRegistry = () => {
     name: "",
     machine_code: "",
     machine_type: "snack",
+    status: "active",
     location_id: "",
     vendx_pay_enabled: true,
     accepts_cash: true,
@@ -204,6 +205,7 @@ const MachineRegistry = () => {
             name: machineForm.name,
             machine_code: machineForm.machine_code,
             machine_type: machineForm.machine_type,
+            status: machineForm.status,
             location_id: machineForm.location_id && machineForm.location_id !== "none" ? machineForm.location_id : null,
             vendx_pay_enabled: machineForm.vendx_pay_enabled,
             accepts_cash: machineForm.accepts_cash,
@@ -282,8 +284,7 @@ const MachineRegistry = () => {
     }
   };
 
-  const toggleMachineStatus = async (machine: Machine) => {
-    const newStatus = machine.status === "active" ? "inactive" : "active";
+  const updateMachineStatus = async (machine: Machine, newStatus: string) => {
     try {
       const { error } = await supabase
         .from("vendx_machines")
@@ -291,7 +292,7 @@ const MachineRegistry = () => {
         .eq("id", machine.id);
 
       if (error) throw error;
-      toast({ title: `Machine ${newStatus}` });
+      toast({ title: `Machine set to ${newStatus}` });
       fetchData();
     } catch (error) {
       console.error("Error updating status:", error);
@@ -345,6 +346,7 @@ const MachineRegistry = () => {
       name: "", 
       machine_code: "", 
       machine_type: "snack", 
+      status: "active",
       location_id: "", 
       vendx_pay_enabled: true, 
       accepts_cash: true,
@@ -361,6 +363,7 @@ const MachineRegistry = () => {
       name: machine.name,
       machine_code: machine.machine_code,
       machine_type: machine.machine_type,
+      status: machine.status,
       location_id: machine.location_id || "",
       vendx_pay_enabled: machine.vendx_pay_enabled,
       accepts_cash: machine.accepts_cash ?? true,
@@ -502,6 +505,8 @@ const MachineRegistry = () => {
                     <SelectItem value="all">All Status</SelectItem>
                     <SelectItem value="active">Active</SelectItem>
                     <SelectItem value="inactive">Inactive</SelectItem>
+                    <SelectItem value="maintenance">Maintenance</SelectItem>
+                    <SelectItem value="offline">Offline</SelectItem>
                   </SelectContent>
                 </Select>
                 <Select value={filterLocation} onValueChange={setFilterLocation}>
@@ -599,7 +604,21 @@ const MachineRegistry = () => {
                             />
                           </TableCell>
                           <TableCell>
-                            <div className="flex gap-1">
+                            <div className="flex items-center gap-1">
+                              <Select
+                                value={machine.status}
+                                onValueChange={(v) => updateMachineStatus(machine, v)}
+                              >
+                                <SelectTrigger className="w-[120px] h-8 text-xs">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="active">Active</SelectItem>
+                                  <SelectItem value="inactive">Inactive</SelectItem>
+                                  <SelectItem value="maintenance">Maintenance</SelectItem>
+                                  <SelectItem value="offline">Offline</SelectItem>
+                                </SelectContent>
+                              </Select>
                               <Button size="icon" variant="ghost" onClick={() => openEditMachine(machine)} title="Edit">
                                 <Edit className="w-4 h-4" />
                               </Button>
@@ -613,9 +632,6 @@ const MachineRegistry = () => {
                               </Button>
                               <Button size="icon" variant="ghost" onClick={() => { setSelectedMachine(machine); setShowApiKeyDialog(true); }} title="API Key">
                                 <Key className="w-4 h-4" />
-                              </Button>
-                              <Button size="icon" variant="ghost" onClick={() => toggleMachineStatus(machine)} title={machine.status === "active" ? "Disable" : "Enable"}>
-                                <Settings className="w-4 h-4" />
                               </Button>
                               <Button size="icon" variant="ghost" onClick={() => { setSelectedMachine(machine); setShowDeleteConfirm(true); }} title="Delete">
                                 <Trash2 className="w-4 h-4 text-destructive" />
@@ -733,24 +749,41 @@ const MachineRegistry = () => {
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label>Location</Label>
+                <Label>Status</Label>
                 <Select
-                  value={machineForm.location_id}
-                  onValueChange={(v) => setMachineForm({ ...machineForm, location_id: v })}
+                  value={machineForm.status}
+                  onValueChange={(v) => setMachineForm({ ...machineForm, status: v })}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select location" />
+                    <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="none">No Location</SelectItem>
-                    {locations.map(loc => (
-                      <SelectItem key={loc.id} value={loc.id}>
-                        {loc.name || `${loc.city}, ${loc.country}`}
-                      </SelectItem>
-                    ))}
+                    <SelectItem value="active">Active</SelectItem>
+                    <SelectItem value="inactive">Inactive</SelectItem>
+                    <SelectItem value="maintenance">Maintenance</SelectItem>
+                    <SelectItem value="offline">Offline</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
+            </div>
+            <div className="space-y-2">
+              <Label>Location</Label>
+              <Select
+                value={machineForm.location_id}
+                onValueChange={(v) => setMachineForm({ ...machineForm, location_id: v })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select location" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">No Location</SelectItem>
+                  {locations.map(loc => (
+                    <SelectItem key={loc.id} value={loc.id}>
+                      {loc.name || `${loc.city}, ${loc.country}`}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-2">
               <Label>Notes</Label>
