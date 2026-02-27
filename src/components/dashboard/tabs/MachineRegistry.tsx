@@ -65,6 +65,7 @@ interface Machine {
   last_activity_at: string | null;
   current_period_revenue: number;
   lifetime_revenue: number;
+  connection_status: string;
 }
 
 interface MachineInventoryItem {
@@ -296,6 +297,21 @@ const MachineRegistry = () => {
       fetchData();
     } catch (error) {
       console.error("Error updating status:", error);
+    }
+  };
+
+  const updateConnectionStatus = async (machine: Machine, newConnectionStatus: string) => {
+    try {
+      const { error } = await supabase
+        .from("vendx_machines")
+        .update({ connection_status: newConnectionStatus } as any)
+        .eq("id", machine.id);
+
+      if (error) throw error;
+      toast({ title: `Connection set to ${newConnectionStatus}` });
+      fetchData();
+    } catch (error) {
+      console.error("Error updating connection status:", error);
     }
   };
 
@@ -537,6 +553,7 @@ const MachineRegistry = () => {
                       <TableHead>Type</TableHead>
                       <TableHead>Revenue</TableHead>
                       <TableHead>Activity</TableHead>
+                      <TableHead>Connection</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Actions</TableHead>
                     </TableRow>
@@ -592,10 +609,25 @@ const MachineRegistry = () => {
                             </div>
                           </TableCell>
                           <TableCell>
+                            <Select
+                              value={(machine as any).connection_status || "offline"}
+                              onValueChange={(v) => updateConnectionStatus(machine, v)}
+                            >
+                              <SelectTrigger className="w-[120px] h-8 text-xs">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="online">🟢 Online</SelectItem>
+                                <SelectItem value="offline">🔴 Offline</SelectItem>
+                                <SelectItem value="intermittent">🟡 Intermittent</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </TableCell>
+                          <TableCell>
                             <MachineStatusBadge 
                               status={machine.status} 
                               lastSeen={machine.last_seen}
-                              onlineCheckMode="last-seen"
+                              onlineCheckMode="status-only"
                               size="sm"
                             />
                           </TableCell>
