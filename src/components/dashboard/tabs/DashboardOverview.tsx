@@ -171,13 +171,34 @@ const DashboardOverview = () => {
     }));
   }, [locations, machines]);
 
-  // Top machines by revenue
+  // Top machines by revenue (computed from transactions, not stale counters)
   const topMachines = useMemo(() => {
     if (!machines) return [];
+    
+    // Build revenue map from machine_transactions
+    const revenueMap = new Map<string, number>();
+    transactions?.forEach(t => {
+      revenueMap.set(t.machine_id, (revenueMap.get(t.machine_id) || 0) + Number(t.amount));
+    });
+    
+    // Also match synced_transactions by machine_code
+    syncedTransactions?.forEach(t => {
+      if (Number(t.amount) <= 0) return;
+      const meta = t.metadata as any;
+      const machineCode = meta?.machine_code;
+      if (machineCode) {
+        const machine = machines.find(m => m.machine_code === machineCode);
+        if (machine) {
+          revenueMap.set(machine.id, (revenueMap.get(machine.id) || 0) + Number(t.amount));
+        }
+      }
+    });
+    
     return [...machines]
-      .sort((a, b) => Number(b.current_period_revenue || 0) - Number(a.current_period_revenue || 0))
+      .map(m => ({ ...m, computed_revenue: revenueMap.get(m.id) || Number(m.lifetime_revenue || 0) }))
+      .sort((a, b) => b.computed_revenue - a.computed_revenue)
       .slice(0, 5);
-  }, [machines]);
+  }, [machines, transactions, syncedTransactions]);
 
   // Revenue by location (from machine lifetime_revenue + synced transactions matched by machine_code)
   const revenueByLocation = useMemo(() => {
@@ -193,14 +214,15 @@ const DashboardOverview = () => {
       };
     });
 
-    // Use lifetime_revenue only (it already includes current_period_revenue)
-    machines.forEach(m => {
-      if (m.location_id && locationRevenue[m.location_id]) {
-        locationRevenue[m.location_id].revenue += Number(m.lifetime_revenue || 0);
+    // Add machine_transactions revenue to locations
+    transactions?.forEach(t => {
+      const machine = machines.find(m => m.id === t.machine_id);
+      if (machine?.location_id && locationRevenue[machine.location_id]) {
+        locationRevenue[machine.location_id].revenue += Number(t.amount);
       }
     });
 
-    // Add synced transaction revenue matched to locations via machine_code
+    // Add synced transaction revenue - all of it goes to locations if machine_code matched
     syncedTransactions?.forEach(t => {
       if (Number(t.amount) <= 0) return;
       const meta = t.metadata as any;
@@ -212,6 +234,17 @@ const DashboardOverview = () => {
         }
       }
     });
+
+    // For synced revenue without machine_code, distribute to first location as general revenue
+    const unmatched = syncedTransactions?.filter(t => {
+      const meta = t.metadata as any;
+      return Number(t.amount) > 0 && !meta?.machine_code;
+    }).reduce((sum, t) => sum + Number(t.amount), 0) || 0;
+    
+    const firstLoc = Object.keys(locationRevenue)[0];
+    if (firstLoc && unmatched > 0) {
+      locationRevenue[firstLoc].revenue += unmatched;
+    }
 
     return Object.entries(locationRevenue)
       .map(([id, data]) => ({ id, ...data }))
@@ -375,7 +408,7 @@ const DashboardOverview = () => {
                       </div>
                     </div>
                     <span className="font-bold text-primary">
-                      ${Number(machine.current_period_revenue || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                      ${((machine as any).computed_revenue || Number(machine.current_period_revenue || 0)).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                     </span>
                   </div>
                 ))
