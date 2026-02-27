@@ -312,8 +312,10 @@ const DashboardPage = () => {
 
     if (!NON_ADMIN_TABS.includes(activeTab)) {
       return (
-        <ScrollArea className="h-[calc(100vh-8rem)]">
-          {content}
+        <ScrollArea className="w-full overflow-x-auto">
+          <div className="min-w-max">
+            {content}
+          </div>
         </ScrollArea>
       );
     }
