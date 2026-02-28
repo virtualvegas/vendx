@@ -61,7 +61,7 @@ interface BrandedGameRequest {
   status: string;
   admin_notes: string | null;
   created_at: string;
-  arcade_game_titles?: { name: string } | null;
+  video_games?: { title: string } | null;
 }
 
 const locationTypeLabels: Record<string, string> = {
@@ -86,7 +86,7 @@ const BusinessAdReach = () => {
   const [adLocations, setAdLocations] = useState<AdLocation[]>([]);
   const [myBookings, setMyBookings] = useState<AdBooking[]>([]);
   const [myGameRequests, setMyGameRequests] = useState<BrandedGameRequest[]>([]);
-  const [games, setGames] = useState<{ id: string; name: string }[]>([]);
+  const [games, setGames] = useState<{ id: string; title: string }[]>([]);
   const [showBookDialog, setShowBookDialog] = useState(false);
   const [showGameReqDialog, setShowGameReqDialog] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState<AdLocation | null>(null);
@@ -113,8 +113,8 @@ const BusinessAdReach = () => {
     const [locRes, bookRes, gameReqRes, gamesRes] = await Promise.all([
       supabase.from("ad_locations").select("*").eq("is_active", true).order("name"),
       supabase.from("ad_bookings").select("*, ad_locations(*)").eq("business_owner_id", user.id).order("created_at", { ascending: false }),
-      supabase.from("branded_game_requests").select("*, arcade_game_titles:game_title_id(name)").eq("business_owner_id", user.id).order("created_at", { ascending: false }),
-      supabase.from("arcade_game_titles").select("id, name").eq("is_active", true),
+      supabase.from("branded_game_requests").select("*, video_games:game_title_id(title)").eq("business_owner_id", user.id).order("created_at", { ascending: false }),
+      supabase.from("video_games").select("id, title").eq("is_active", true),
     ]);
     if (locRes.data) setAdLocations(locRes.data);
     if (bookRes.data) setMyBookings(bookRes.data as any);
@@ -222,7 +222,7 @@ const BusinessAdReach = () => {
                   <div><Label>VendX Interactive Game</Label>
                     <Select value={gameForm.game_title_id} onValueChange={v => setGameForm(p => ({ ...p, game_title_id: v }))}>
                       <SelectTrigger><SelectValue placeholder="Select game" /></SelectTrigger>
-                      <SelectContent>{games.map(g => <SelectItem key={g.id} value={g.id}>{g.name}</SelectItem>)}</SelectContent>
+                      <SelectContent>{games.map(g => <SelectItem key={g.id} value={g.id}>{g.title}</SelectItem>)}</SelectContent>
                     </Select>
                   </div>
                 )}
@@ -348,7 +348,7 @@ const BusinessAdReach = () => {
                 <TableRow key={r.id}>
                   <TableCell className="font-medium">{r.brand_name}</TableCell>
                   <TableCell><Badge variant="outline">{r.request_type === "custom_cosmetics" ? "Custom Cosmetics" : r.request_type === "collab_items" ? "Collab Items" : r.request_type === "custom_ad" ? "Custom Ad" : r.request_type === "reskin" ? "Reskin" : "Custom"}</Badge></TableCell>
-                  <TableCell>{(r as any).arcade_game_titles?.name || "—"}</TableCell>
+                  <TableCell>{(r as any).video_games?.title || "—"}</TableCell>
                   <TableCell className="text-sm">
                     {r.desired_start_date ? format(new Date(r.desired_start_date), "MMM d") : "—"}
                     {r.desired_end_date ? ` – ${format(new Date(r.desired_end_date), "MMM d")}` : ""}
