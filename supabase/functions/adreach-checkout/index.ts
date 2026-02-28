@@ -57,7 +57,7 @@ serve(async (req) => {
       ad_title: ad_title || null,
       ad_description: ad_description || null,
       ad_creative_url: ad_creative_url || null,
-      status: "pending_payment",
+      status: "pending",
     }).select("id").single();
 
     if (bookingError) throw bookingError;
@@ -90,10 +90,7 @@ serve(async (req) => {
       },
     });
 
-    // Update booking with stripe session id
-    await supabaseAdmin.from("ad_bookings").update({
-      status: "pending",
-    }).eq("id", booking.id);
+    // Booking already set to "pending" on insert
 
     return new Response(JSON.stringify({ url: session.url, booking_id: booking.id }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
