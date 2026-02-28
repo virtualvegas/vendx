@@ -1,11 +1,12 @@
-import { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
+import { useQuery } from "@tanstack/react-query";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useSEO } from "@/hooks/useSEO";
+import { supabase } from "@/integrations/supabase/client";
 import {
   Monitor, Gamepad2, Eye, BarChart3, Calendar, Shield,
   Megaphone, TrendingUp, Palette, DollarSign, Users, Zap,
@@ -59,13 +60,6 @@ const features = [
   },
 ];
 
-const stats = [
-  { value: "500K+", label: "Weekly Impressions" },
-  { value: "200+", label: "Ad Locations" },
-  { value: "95%", label: "Approval Rate" },
-  { value: "3.2x", label: "Avg. ROI" },
-];
-
 const containerVariants = {
   hidden: {},
   visible: { transition: { staggerChildren: 0.1 } },
@@ -81,6 +75,40 @@ const AdReachPage = () => {
     title: "VendX AdReach — Advertise on Machines & Games",
     description: "Reach customers at the point of purchase with VendX AdReach. Place ads on machine screens, wraps, and inside games with real-time analytics.",
   });
+
+  const { data: stats } = useQuery({
+    queryKey: ["adreach-stats"],
+    queryFn: async () => {
+      const [locationsRes, bookingsRes, performanceRes] = await Promise.all([
+        supabase.from("ad_locations").select("estimated_weekly_views, id", { count: "exact" }).eq("is_active", true),
+        supabase.from("ad_bookings").select("id", { count: "exact" }).eq("status", "approved"),
+        supabase.from("ad_performance").select("actual_views, clicks"),
+      ]);
+
+      const totalLocations = locationsRes.count ?? 0;
+      const totalWeeklyViews = locationsRes.data?.reduce((sum, l) => sum + (l.estimated_weekly_views || 0), 0) ?? 0;
+      const approvedBookings = bookingsRes.count ?? 0;
+
+      const perfData = performanceRes.data ?? [];
+      const totalViews = perfData.reduce((sum, p) => sum + (p.actual_views || 0), 0);
+      const totalClicks = perfData.reduce((sum, p) => sum + (p.clicks || 0), 0);
+      const avgROI = totalViews > 0 ? (totalClicks / totalViews * 100).toFixed(1) : "0";
+
+      return [
+        { value: totalWeeklyViews >= 1000 ? `${(totalWeeklyViews / 1000).toFixed(0)}K+` : `${totalWeeklyViews}`, label: "Est. Weekly Impressions" },
+        { value: `${totalLocations}`, label: "Ad Locations" },
+        { value: `${approvedBookings}`, label: "Active Campaigns" },
+        { value: `${avgROI}%`, label: "Avg. CTR" },
+      ];
+    },
+  });
+
+  const displayStats = stats ?? [
+    { value: "—", label: "Est. Weekly Impressions" },
+    { value: "—", label: "Ad Locations" },
+    { value: "—", label: "Active Campaigns" },
+    { value: "—", label: "Avg. CTR" },
+  ];
 
   return (
     <div className="min-h-screen bg-background">
@@ -128,7 +156,7 @@ const AdReachPage = () => {
       <section className="border-y border-border bg-card/50">
         <div className="container mx-auto px-4 py-10">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-            {stats.map((stat, i) => (
+            {displayStats.map((stat, i) => (
               <motion.div
                 key={stat.label}
                 initial={{ opacity: 0, scale: 0.9 }}
