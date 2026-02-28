@@ -130,7 +130,7 @@ export type Database = {
             foreignKeyName: "ad_locations_game_id_fkey"
             columns: ["game_id"]
             isOneToOne: false
-            referencedRelation: "arcade_game_titles"
+            referencedRelation: "video_games"
             referencedColumns: ["id"]
           },
           {
@@ -557,7 +557,7 @@ export type Database = {
             foreignKeyName: "branded_game_requests_game_title_id_fkey"
             columns: ["game_title_id"]
             isOneToOne: false
-            referencedRelation: "arcade_game_titles"
+            referencedRelation: "video_games"
             referencedColumns: ["id"]
           },
         ]

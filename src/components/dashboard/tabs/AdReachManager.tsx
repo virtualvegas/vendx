@@ -62,7 +62,7 @@ interface BrandedGameRequest {
   admin_notes: string | null;
   created_at: string;
   profiles?: { full_name: string; email: string } | null;
-  arcade_game_titles?: { name: string } | null;
+  video_games?: { title: string } | null;
 }
 
 interface PerformanceEntry {
@@ -99,7 +99,7 @@ const AdReachManager = () => {
   const [bookings, setBookings] = useState<AdBooking[]>([]);
   const [gameRequests, setGameRequests] = useState<BrandedGameRequest[]>([]);
   const [machines, setMachines] = useState<{ id: string; name: string; machine_code: string }[]>([]);
-  const [games, setGames] = useState<{ id: string; name: string }[]>([]);
+  const [games, setGames] = useState<{ id: string; title: string }[]>([]);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showPerformanceDialog, setShowPerformanceDialog] = useState(false);
   const [selectedBooking, setSelectedBooking] = useState<AdBooking | null>(null);
@@ -123,9 +123,9 @@ const AdReachManager = () => {
     const [locRes, bookRes, gameReqRes, machRes, gamesRes] = await Promise.all([
       supabase.from("ad_locations").select("*").order("created_at", { ascending: false }),
       supabase.from("ad_bookings").select("*, ad_locations(name, location_type), profiles:business_owner_id(full_name, email)").order("created_at", { ascending: false }),
-      supabase.from("branded_game_requests").select("*, profiles:business_owner_id(full_name, email), arcade_game_titles:game_title_id(name)").order("created_at", { ascending: false }),
+      supabase.from("branded_game_requests").select("*, video_games:game_title_id(title)").order("created_at", { ascending: false }),
       supabase.from("vendx_machines").select("id, name, machine_code").eq("status", "active"),
-      supabase.from("arcade_game_titles").select("id, name").eq("is_active", true),
+      supabase.from("video_games").select("id, title").eq("is_active", true),
     ]);
     if (locRes.data) setAdLocations(locRes.data);
     if (bookRes.data) setBookings(bookRes.data as any);
@@ -284,7 +284,7 @@ const AdReachManager = () => {
                     <div><Label>VendX Interactive Game</Label>
                       <Select value={newLocation.game_id} onValueChange={v => setNewLocation(p => ({ ...p, game_id: v }))}>
                         <SelectTrigger><SelectValue placeholder="Select game" /></SelectTrigger>
-                        <SelectContent>{games.map(g => <SelectItem key={g.id} value={g.id}>{g.name}</SelectItem>)}</SelectContent>
+                        <SelectContent>{games.map(g => <SelectItem key={g.id} value={g.id}>{g.title}</SelectItem>)}</SelectContent>
                       </Select>
                     </div>
                   )}
@@ -391,7 +391,7 @@ const AdReachManager = () => {
                   <TableCell>{(r as any).profiles?.full_name || "Unknown"}</TableCell>
                   <TableCell className="font-medium">{r.brand_name}</TableCell>
                   <TableCell><Badge variant="outline">{r.request_type === "custom_cosmetics" ? "Custom Cosmetics" : r.request_type === "collab_items" ? "Collab Items" : r.request_type === "custom_ad" ? "Custom Ad" : r.request_type === "reskin" ? "Reskin" : "Custom"}</Badge></TableCell>
-                  <TableCell>{(r as any).arcade_game_titles?.name || "—"}</TableCell>
+                  <TableCell>{(r as any).video_games?.title || "—"}</TableCell>
                   <TableCell className="text-sm">
                     {r.desired_start_date ? format(new Date(r.desired_start_date), "MMM d") : "—"}
                     {r.desired_end_date ? ` – ${format(new Date(r.desired_end_date), "MMM d")}` : ""}
