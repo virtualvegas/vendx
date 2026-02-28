@@ -14,6 +14,178 @@ export type Database = {
   }
   public: {
     Tables: {
+      ad_bookings: {
+        Row: {
+          ad_creative_url: string | null
+          ad_description: string | null
+          ad_location_id: string
+          ad_title: string | null
+          admin_notes: string | null
+          business_owner_id: string
+          created_at: string
+          end_date: string
+          id: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          start_date: string
+          status: string
+          total_price: number
+          updated_at: string
+        }
+        Insert: {
+          ad_creative_url?: string | null
+          ad_description?: string | null
+          ad_location_id: string
+          ad_title?: string | null
+          admin_notes?: string | null
+          business_owner_id: string
+          created_at?: string
+          end_date: string
+          id?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          start_date: string
+          status?: string
+          total_price?: number
+          updated_at?: string
+        }
+        Update: {
+          ad_creative_url?: string | null
+          ad_description?: string | null
+          ad_location_id?: string
+          ad_title?: string | null
+          admin_notes?: string | null
+          business_owner_id?: string
+          created_at?: string
+          end_date?: string
+          id?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          start_date?: string
+          status?: string
+          total_price?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ad_bookings_ad_location_id_fkey"
+            columns: ["ad_location_id"]
+            isOneToOne: false
+            referencedRelation: "ad_locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ad_locations: {
+        Row: {
+          created_at: string
+          description: string | null
+          dimensions: string | null
+          estimated_weekly_views: number
+          game_id: string | null
+          id: string
+          is_active: boolean
+          location_type: string
+          machine_id: string | null
+          max_file_size_mb: number | null
+          name: string
+          price: number
+          pricing_model: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          dimensions?: string | null
+          estimated_weekly_views?: number
+          game_id?: string | null
+          id?: string
+          is_active?: boolean
+          location_type: string
+          machine_id?: string | null
+          max_file_size_mb?: number | null
+          name: string
+          price?: number
+          pricing_model?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          dimensions?: string | null
+          estimated_weekly_views?: number
+          game_id?: string | null
+          id?: string
+          is_active?: boolean
+          location_type?: string
+          machine_id?: string | null
+          max_file_size_mb?: number | null
+          name?: string
+          price?: number
+          pricing_model?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ad_locations_game_id_fkey"
+            columns: ["game_id"]
+            isOneToOne: false
+            referencedRelation: "arcade_game_titles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ad_locations_machine_id_fkey"
+            columns: ["machine_id"]
+            isOneToOne: false
+            referencedRelation: "vendx_machines"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ad_performance: {
+        Row: {
+          actual_views: number | null
+          ad_booking_id: string
+          clicks: number | null
+          created_at: string
+          estimated_views: number
+          id: string
+          notes: string | null
+          period_end: string
+          period_start: string
+        }
+        Insert: {
+          actual_views?: number | null
+          ad_booking_id: string
+          clicks?: number | null
+          created_at?: string
+          estimated_views?: number
+          id?: string
+          notes?: string | null
+          period_end: string
+          period_start: string
+        }
+        Update: {
+          actual_views?: number | null
+          ad_booking_id?: string
+          clicks?: number | null
+          created_at?: string
+          estimated_views?: number
+          id?: string
+          notes?: string | null
+          period_end?: string
+          period_start?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ad_performance_ad_booking_id_fkey"
+            columns: ["ad_booking_id"]
+            isOneToOne: false
+            referencedRelation: "ad_bookings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       arcade_game_titles: {
         Row: {
           created_at: string
@@ -318,6 +490,77 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      branded_game_requests: {
+        Row: {
+          admin_notes: string | null
+          brand_colors: Json | null
+          brand_logo_url: string | null
+          brand_name: string
+          budget_range: string | null
+          business_owner_id: string
+          created_at: string
+          description: string | null
+          desired_end_date: string | null
+          desired_start_date: string | null
+          game_title_id: string | null
+          id: string
+          request_type: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          target_locations: string[] | null
+          updated_at: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          brand_colors?: Json | null
+          brand_logo_url?: string | null
+          brand_name: string
+          budget_range?: string | null
+          business_owner_id: string
+          created_at?: string
+          description?: string | null
+          desired_end_date?: string | null
+          desired_start_date?: string | null
+          game_title_id?: string | null
+          id?: string
+          request_type?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          target_locations?: string[] | null
+          updated_at?: string
+        }
+        Update: {
+          admin_notes?: string | null
+          brand_colors?: Json | null
+          brand_logo_url?: string | null
+          brand_name?: string
+          budget_range?: string | null
+          business_owner_id?: string
+          created_at?: string
+          description?: string | null
+          desired_end_date?: string | null
+          desired_start_date?: string | null
+          game_title_id?: string | null
+          id?: string
+          request_type?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          target_locations?: string[] | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "branded_game_requests_game_title_id_fkey"
+            columns: ["game_title_id"]
+            isOneToOne: false
+            referencedRelation: "arcade_game_titles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       business_benefits: {
         Row: {
