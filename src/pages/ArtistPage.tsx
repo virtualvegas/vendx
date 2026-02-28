@@ -19,6 +19,7 @@ import {
   Heart, Disc3, ArrowLeft, Play, ListMusic, Clock,
 } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import AudioPlayer from "@/components/media/AudioPlayer";
 
 interface MediaArtist {
   id: string;
@@ -62,6 +63,19 @@ interface MediaRelease {
   spotify_url: string | null;
   apple_music_url: string | null;
   youtube_url: string | null;
+}
+
+interface MediaTrack {
+  id: string;
+  release_id: string | null;
+  title: string;
+  track_number: number;
+  duration_seconds: number | null;
+  audio_file_url: string | null;
+  preview_url: string | null;
+  external_stream_url: string | null;
+  is_playable: boolean;
+  lyrics: string | null;
 }
 
 const socialLinks = [
@@ -108,6 +122,21 @@ const ArtistPage = () => {
     enabled: !!artist?.id,
   });
 
+  const { data: tracks } = useQuery({
+    queryKey: ["artist-tracks", artist?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("media_tracks")
+        .select("*")
+        .eq("artist_id", artist!.id)
+        .eq("is_active", true)
+        .order("track_number");
+      if (error) throw error;
+      return data as unknown as MediaTrack[];
+    },
+    enabled: !!artist?.id,
+  });
+
   const getActiveSocials = (a: MediaArtist) =>
     socialLinks.filter((s) => a[s.key as keyof MediaArtist]);
 
@@ -115,6 +144,24 @@ const ArtistPage = () => {
     if (!d) return null;
     return new Date(d).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
   };
+
+  // Build playable tracks list for the audio player
+  const playableTracks = (tracks || [])
+    .filter(t => t.is_playable && (t.audio_file_url || t.preview_url))
+    .map(t => {
+      const release = releases?.find(r => r.id === t.release_id);
+      return {
+        id: t.id,
+        title: t.title,
+        artist_name: artist?.name,
+        audio_url: (t.audio_file_url || t.preview_url)!,
+        cover_image_url: release?.cover_image_url || artist?.profile_image_url,
+        duration_seconds: t.duration_seconds,
+      };
+    });
+
+  const getTracksForRelease = (releaseId: string) =>
+    (tracks || []).filter(t => t.release_id === releaseId);
 
   if (isLoading) {
     return (
@@ -176,7 +223,6 @@ const ArtistPage = () => {
         {/* Profile Section */}
         <div className="container mx-auto px-4 -mt-20 relative z-20">
           <div className="flex flex-col md:flex-row gap-6 items-start">
-            {/* Avatar */}
             <div className="w-32 h-32 md:w-40 md:h-40 rounded-xl overflow-hidden border-4 border-background shadow-xl bg-muted flex-shrink-0">
               {artist.profile_image_url ? (
                 <img src={artist.profile_image_url} alt={artist.name} className="w-full h-full object-cover" />
@@ -207,7 +253,6 @@ const ArtistPage = () => {
                 <p className="text-muted-foreground max-w-2xl mb-4">{artist.short_bio}</p>
               )}
 
-              {/* Social Links */}
               {activeSocials.length > 0 && (
                 <div className="flex flex-wrap gap-2">
                   {activeSocials.map((s) => (
@@ -240,6 +285,16 @@ const ArtistPage = () => {
                 <p className="text-muted-foreground whitespace-pre-line">{artist.legacy_tribute_text}</p>
               </CardContent>
             </Card>
+          )}
+
+          {/* Audio Player for playable tracks */}
+          {playableTracks.length > 0 && (
+            <div className="mb-8">
+              <h2 className="text-xl font-semibold text-foreground mb-4 flex items-center gap-2">
+                <Play className="w-5 h-5" /> Listen Now
+              </h2>
+              <AudioPlayer tracks={playableTracks} />
+            </div>
           )}
 
           {/* Bio */}
@@ -283,85 +338,123 @@ const ArtistPage = () => {
             </Card>
           )}
 
-          {/* Discography / Filmography */}
+          {/* Discography / Filmography with linked tracks */}
           {releases && releases.length > 0 && (
             <div className="mb-16">
               <h2 className="text-xl font-semibold text-foreground mb-4">
                 {artist.artist_type === "film" ? "Filmography" : "Discography"}
               </h2>
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {releases.map((release) => (
-                  <Card key={release.id} className="group bg-card/50 border-border/50 hover:border-primary/50 transition-all overflow-hidden">
-                    <div className="relative h-48 bg-muted overflow-hidden">
-                      {release.cover_image_url ? (
-                        <img src={release.cover_image_url} alt={release.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center">
-                          {release.media_type === "music" ? <Music className="w-16 h-16 text-muted-foreground/30" /> : <Film className="w-16 h-16 text-muted-foreground/30" />}
-                        </div>
-                      )}
-                      <Badge className="absolute top-3 right-3 bg-background/80 text-foreground capitalize">
-                        {release.media_type === "music" && release.music_release_type
-                          ? release.music_release_type === "ep" ? "EP" : release.music_release_type
-                          : release.media_type}
-                      </Badge>
-                    </div>
-                    <CardContent className="p-4">
-                      <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors">{release.title}</h3>
-                      {release.release_date && (
-                        <p className="text-xs text-muted-foreground mt-1">{formatDate(release.release_date)}</p>
-                      )}
-                      {release.genre && release.genre.length > 0 && (
-                        <div className="flex flex-wrap gap-1 mt-2">
-                          {release.genre.map((g) => <Badge key={g} variant="outline" className="text-xs">{g}</Badge>)}
-                        </div>
-                      )}
-
-                      {/* Tracklist */}
-                      {release.media_type === "music" && release.tracklist && release.tracklist.length > 0 && (
-                        <Accordion type="single" collapsible className="mt-2">
-                          <AccordionItem value="tracklist" className="border-border/50">
-                            <AccordionTrigger className="text-xs py-1.5 hover:no-underline">
-                              <span className="flex items-center gap-1.5">
-                                <ListMusic className="w-3.5 h-3.5" /> {release.tracklist.length} tracks
-                              </span>
-                            </AccordionTrigger>
-                            <AccordionContent>
-                              <div className="space-y-0.5">
-                                {release.tracklist.map((track: any, i: number) => (
-                                  <div key={i} className="flex items-center gap-2 text-xs py-0.5 px-1 rounded hover:bg-muted/50">
-                                    <span className="text-muted-foreground w-4 text-right">{track.number || i + 1}.</span>
-                                    <span className="flex-1 text-foreground">{track.title}</span>
-                                    {track.duration && <span className="text-muted-foreground flex items-center gap-0.5"><Clock className="w-2.5 h-2.5" />{track.duration}</span>}
-                                  </div>
-                                ))}
-                              </div>
-                            </AccordionContent>
-                          </AccordionItem>
-                        </Accordion>
-                      )}
-
-                      {/* Quick streaming links */}
-                      <div className="flex gap-2 mt-3">
-                        {release.spotify_url && (
-                          <a href={release.spotify_url} target="_blank" rel="noopener noreferrer" className="p-1.5 rounded bg-muted hover:bg-primary/20 transition-colors">
-                            <SiSpotify className="w-4 h-4" />
-                          </a>
+                {releases.map((release) => {
+                  const releaseTracks = getTracksForRelease(release.id);
+                  return (
+                    <Card key={release.id} className="group bg-card/50 border-border/50 hover:border-primary/50 transition-all overflow-hidden">
+                      <div className="relative h-48 bg-muted overflow-hidden">
+                        {release.cover_image_url ? (
+                          <img src={release.cover_image_url} alt={release.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center">
+                            {release.media_type === "music" ? <Music className="w-16 h-16 text-muted-foreground/30" /> : <Film className="w-16 h-16 text-muted-foreground/30" />}
+                          </div>
                         )}
-                        {release.apple_music_url && (
-                          <a href={release.apple_music_url} target="_blank" rel="noopener noreferrer" className="p-1.5 rounded bg-muted hover:bg-primary/20 transition-colors">
-                            <SiApplemusic className="w-4 h-4" />
-                          </a>
-                        )}
-                        {release.youtube_url && (
-                          <a href={release.youtube_url} target="_blank" rel="noopener noreferrer" className="p-1.5 rounded bg-muted hover:bg-primary/20 transition-colors">
-                            <SiYoutube className="w-4 h-4" />
-                          </a>
-                        )}
+                        <Badge className="absolute top-3 right-3 bg-background/80 text-foreground capitalize">
+                          {release.media_type === "music" && release.music_release_type
+                            ? release.music_release_type === "ep" ? "EP" : release.music_release_type
+                            : release.media_type}
+                        </Badge>
                       </div>
-                    </CardContent>
-                  </Card>
-                ))}
+                      <CardContent className="p-4">
+                        <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors">{release.title}</h3>
+                        {release.release_date && (
+                          <p className="text-xs text-muted-foreground mt-1">{formatDate(release.release_date)}</p>
+                        )}
+                        {release.genre && release.genre.length > 0 && (
+                          <div className="flex flex-wrap gap-1 mt-2">
+                            {release.genre.map((g) => <Badge key={g} variant="outline" className="text-xs">{g}</Badge>)}
+                          </div>
+                        )}
+
+                        {/* Tracks from media_tracks table */}
+                        {releaseTracks.length > 0 && (
+                          <Accordion type="single" collapsible className="mt-2">
+                            <AccordionItem value="tracklist" className="border-border/50">
+                              <AccordionTrigger className="text-xs py-1.5 hover:no-underline">
+                                <span className="flex items-center gap-1.5">
+                                  <ListMusic className="w-3.5 h-3.5" /> {releaseTracks.length} tracks
+                                </span>
+                              </AccordionTrigger>
+                              <AccordionContent>
+                                <div className="space-y-0.5">
+                                  {releaseTracks.map((track, i) => (
+                                    <div key={track.id} className="flex items-center gap-2 text-xs py-0.5 px-1 rounded hover:bg-muted/50">
+                                      <span className="text-muted-foreground w-4 text-right">{track.track_number}.</span>
+                                      <span className="flex-1 text-foreground">{track.title}</span>
+                                      {track.is_playable && <Play className="w-3 h-3 text-primary" />}
+                                      {track.duration_seconds && (
+                                        <span className="text-muted-foreground flex items-center gap-0.5">
+                                          <Clock className="w-2.5 h-2.5" />
+                                          {Math.floor(track.duration_seconds / 60)}:{(track.duration_seconds % 60).toString().padStart(2, "0")}
+                                        </span>
+                                      )}
+                                      {track.external_stream_url && (
+                                        <a href={track.external_stream_url} target="_blank" rel="noopener noreferrer" className="text-primary hover:text-primary/80">
+                                          <ExternalLink className="w-3 h-3" />
+                                        </a>
+                                      )}
+                                    </div>
+                                  ))}
+                                </div>
+                              </AccordionContent>
+                            </AccordionItem>
+                          </Accordion>
+                        )}
+
+                        {/* Fallback to JSON tracklist if no media_tracks */}
+                        {releaseTracks.length === 0 && release.media_type === "music" && release.tracklist && release.tracklist.length > 0 && (
+                          <Accordion type="single" collapsible className="mt-2">
+                            <AccordionItem value="tracklist" className="border-border/50">
+                              <AccordionTrigger className="text-xs py-1.5 hover:no-underline">
+                                <span className="flex items-center gap-1.5">
+                                  <ListMusic className="w-3.5 h-3.5" /> {release.tracklist.length} tracks
+                                </span>
+                              </AccordionTrigger>
+                              <AccordionContent>
+                                <div className="space-y-0.5">
+                                  {release.tracklist.map((track: any, i: number) => (
+                                    <div key={i} className="flex items-center gap-2 text-xs py-0.5 px-1 rounded hover:bg-muted/50">
+                                      <span className="text-muted-foreground w-4 text-right">{track.number || i + 1}.</span>
+                                      <span className="flex-1 text-foreground">{track.title}</span>
+                                      {track.duration && <span className="text-muted-foreground flex items-center gap-0.5"><Clock className="w-2.5 h-2.5" />{track.duration}</span>}
+                                    </div>
+                                  ))}
+                                </div>
+                              </AccordionContent>
+                            </AccordionItem>
+                          </Accordion>
+                        )}
+
+                        {/* Quick streaming links */}
+                        <div className="flex gap-2 mt-3">
+                          {release.spotify_url && (
+                            <a href={release.spotify_url} target="_blank" rel="noopener noreferrer" className="p-1.5 rounded bg-muted hover:bg-primary/20 transition-colors">
+                              <SiSpotify className="w-4 h-4" />
+                            </a>
+                          )}
+                          {release.apple_music_url && (
+                            <a href={release.apple_music_url} target="_blank" rel="noopener noreferrer" className="p-1.5 rounded bg-muted hover:bg-primary/20 transition-colors">
+                              <SiApplemusic className="w-4 h-4" />
+                            </a>
+                          )}
+                          {release.youtube_url && (
+                            <a href={release.youtube_url} target="_blank" rel="noopener noreferrer" className="p-1.5 rounded bg-muted hover:bg-primary/20 transition-colors">
+                              <SiYoutube className="w-4 h-4" />
+                            </a>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
               </div>
             </div>
           )}

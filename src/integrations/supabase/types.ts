@@ -1987,6 +1987,75 @@ export type Database = {
           },
         ]
       }
+      media_tracks: {
+        Row: {
+          artist_id: string | null
+          audio_file_url: string | null
+          created_at: string
+          duration_seconds: number | null
+          external_stream_url: string | null
+          id: string
+          is_active: boolean | null
+          is_playable: boolean | null
+          lyrics: string | null
+          play_count: number | null
+          preview_url: string | null
+          release_id: string | null
+          title: string
+          track_number: number | null
+          updated_at: string
+        }
+        Insert: {
+          artist_id?: string | null
+          audio_file_url?: string | null
+          created_at?: string
+          duration_seconds?: number | null
+          external_stream_url?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_playable?: boolean | null
+          lyrics?: string | null
+          play_count?: number | null
+          preview_url?: string | null
+          release_id?: string | null
+          title: string
+          track_number?: number | null
+          updated_at?: string
+        }
+        Update: {
+          artist_id?: string | null
+          audio_file_url?: string | null
+          created_at?: string
+          duration_seconds?: number | null
+          external_stream_url?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_playable?: boolean | null
+          lyrics?: string | null
+          play_count?: number | null
+          preview_url?: string | null
+          release_id?: string | null
+          title?: string
+          track_number?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "media_tracks_artist_id_fkey"
+            columns: ["artist_id"]
+            isOneToOne: false
+            referencedRelation: "media_artists"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "media_tracks_release_id_fkey"
+            columns: ["release_id"]
+            isOneToOne: false
+            referencedRelation: "media_releases"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       metrics: {
         Row: {
           display_order: number | null
