@@ -66,7 +66,6 @@ interface BrandedGameRequest {
 
 const locationTypeLabels: Record<string, string> = {
   machine_screen: "Machine Screen",
-  machine_wrap: "Machine Wrap",
   in_game_banner: "In-Game Banner",
   in_game_interstitial: "In-Game Interstitial",
 };
@@ -101,7 +100,7 @@ const BusinessAdReach = () => {
 
   // Game request form
   const [gameForm, setGameForm] = useState({
-    request_type: "reskin", brand_name: "", game_title_id: "", desired_start_date: "",
+    request_type: "custom_cosmetics", brand_name: "", game_title_id: "", desired_start_date: "",
     desired_end_date: "", description: "", budget_range: "", brand_logo_url: "",
   });
 
@@ -176,9 +175,9 @@ const BusinessAdReach = () => {
       brand_logo_url: gameForm.brand_logo_url || null,
     });
     if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
-    toast({ title: "Branded game request submitted!" });
+    toast({ title: "Custom ad request submitted!" });
     setShowGameReqDialog(false);
-    setGameForm({ request_type: "reskin", brand_name: "", game_title_id: "", desired_start_date: "", desired_end_date: "", description: "", budget_range: "", brand_logo_url: "" });
+    setGameForm({ request_type: "custom_cosmetics", brand_name: "", game_title_id: "", desired_start_date: "", desired_end_date: "", description: "", budget_range: "", brand_logo_url: "" });
     fetchAll();
   };
 
@@ -200,26 +199,27 @@ const BusinessAdReach = () => {
         <div className="flex gap-2">
           <Dialog open={showGameReqDialog} onOpenChange={setShowGameReqDialog}>
             <DialogTrigger asChild>
-              <Button variant="outline"><Gamepad2 className="w-4 h-4 mr-2" />Request Branded Game</Button>
+              <Button variant="outline"><Gamepad2 className="w-4 h-4 mr-2" />Custom Ad Request</Button>
             </DialogTrigger>
             <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
               <DialogHeader>
-                <DialogTitle>Branded Game Season Request</DialogTitle>
+                <DialogTitle>Custom Game Ad Request</DialogTitle>
               </DialogHeader>
               <div className="space-y-4">
                 <div><Label>Request Type</Label>
                   <Select value={gameForm.request_type} onValueChange={v => setGameForm(p => ({ ...p, request_type: v }))}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="reskin">Reskin Existing Game</SelectItem>
-                      <SelectItem value="custom">Custom Game</SelectItem>
+                      <SelectItem value="custom_cosmetics">Custom Cosmetics</SelectItem>
+                      <SelectItem value="collab_items">Collab Items</SelectItem>
+                      <SelectItem value="custom_ad">Custom In-Game Ad</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
                 <div><Label>Brand Name</Label><Input value={gameForm.brand_name} onChange={e => setGameForm(p => ({ ...p, brand_name: e.target.value }))} placeholder="Your brand name" /></div>
                 <div><Label>Brand Logo URL</Label><Input value={gameForm.brand_logo_url} onChange={e => setGameForm(p => ({ ...p, brand_logo_url: e.target.value }))} placeholder="https://..." /></div>
-                {gameForm.request_type === "reskin" && (
-                  <div><Label>Game to Reskin</Label>
+                {gameForm.request_type !== "custom_ad" && (
+                  <div><Label>VendX Interactive Game</Label>
                     <Select value={gameForm.game_title_id} onValueChange={v => setGameForm(p => ({ ...p, game_title_id: v }))}>
                       <SelectTrigger><SelectValue placeholder="Select game" /></SelectTrigger>
                       <SelectContent>{games.map(g => <SelectItem key={g.id} value={g.id}>{g.name}</SelectItem>)}</SelectContent>
@@ -241,7 +241,7 @@ const BusinessAdReach = () => {
                     </SelectContent>
                   </Select>
                 </div>
-                <div><Label>Description / Requirements</Label><Textarea value={gameForm.description} onChange={e => setGameForm(p => ({ ...p, description: e.target.value }))} placeholder="Describe your vision for the branded game season..." rows={4} /></div>
+                <div><Label>Description / Requirements</Label><Textarea value={gameForm.description} onChange={e => setGameForm(p => ({ ...p, description: e.target.value }))} placeholder="Describe your custom cosmetics, collab items, or ad concept..." rows={4} /></div>
                 <Button onClick={submitGameRequest} className="w-full">Submit Request</Button>
               </div>
             </DialogContent>
@@ -261,7 +261,7 @@ const BusinessAdReach = () => {
         </CardContent></Card>
         <Card><CardContent className="pt-6 flex items-center gap-4">
           <Gamepad2 className="w-8 h-8 text-purple-400" />
-          <div><p className="text-sm text-muted-foreground">Game Requests</p><p className="text-2xl font-bold">{myGameRequests.length}</p></div>
+          <div><p className="text-sm text-muted-foreground">Custom Ad Requests</p><p className="text-2xl font-bold">{myGameRequests.length}</p></div>
         </CardContent></Card>
       </div>
 
@@ -269,7 +269,7 @@ const BusinessAdReach = () => {
         <TabsList>
           <TabsTrigger value="marketplace">Ad Marketplace</TabsTrigger>
           <TabsTrigger value="my-bookings">My Bookings ({myBookings.length})</TabsTrigger>
-          <TabsTrigger value="my-games">My Game Requests ({myGameRequests.length})</TabsTrigger>
+          <TabsTrigger value="my-games">Custom Ad Requests ({myGameRequests.length})</TabsTrigger>
         </TabsList>
 
         {/* MARKETPLACE */}
@@ -347,7 +347,7 @@ const BusinessAdReach = () => {
               {myGameRequests.map(r => (
                 <TableRow key={r.id}>
                   <TableCell className="font-medium">{r.brand_name}</TableCell>
-                  <TableCell><Badge variant="outline">{r.request_type === "reskin" ? "Reskin" : "Custom"}</Badge></TableCell>
+                  <TableCell><Badge variant="outline">{r.request_type === "custom_cosmetics" ? "Custom Cosmetics" : r.request_type === "collab_items" ? "Collab Items" : r.request_type === "custom_ad" ? "Custom Ad" : r.request_type === "reskin" ? "Reskin" : "Custom"}</Badge></TableCell>
                   <TableCell>{(r as any).arcade_game_titles?.name || "—"}</TableCell>
                   <TableCell className="text-sm">
                     {r.desired_start_date ? format(new Date(r.desired_start_date), "MMM d") : "—"}
@@ -360,7 +360,7 @@ const BusinessAdReach = () => {
                   </TableCell>
                 </TableRow>
               ))}
-              {myGameRequests.length === 0 && <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">No branded game requests yet</TableCell></TableRow>}
+              {myGameRequests.length === 0 && <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">No custom ad requests yet</TableCell></TableRow>}
             </TableBody>
           </Table>
         </TabsContent>
