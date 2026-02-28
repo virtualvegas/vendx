@@ -161,7 +161,12 @@ const MediaPage = () => {
             <p className="text-muted-foreground max-w-2xl mx-auto mb-6">
               Discover original music and films from VendX — available on all major streaming and purchase platforms
             </p>
-            <div className="flex items-center justify-center gap-3 mb-8">
+            <div className="flex items-center justify-center gap-3 mb-8 flex-wrap">
+              <Link to="/media/artists">
+                <Button variant="outline" className="gap-2">
+                  <Music className="w-4 h-4" /> Artists & Filmmakers
+                </Button>
+              </Link>
               <Link to="/media/shop">
                 <Button variant="outline" className="gap-2">
                   <ShoppingCart className="w-4 h-4" /> Merch Shop

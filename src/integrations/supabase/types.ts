@@ -1689,12 +1689,106 @@ export type Database = {
         }
         Relationships: []
       }
+      media_artists: {
+        Row: {
+          apple_music_url: string | null
+          artist_type: string
+          banner_image_url: string | null
+          bio: string | null
+          birth_date: string | null
+          booking_email: string | null
+          contact_email: string | null
+          created_at: string
+          death_date: string | null
+          display_order: number | null
+          id: string
+          instagram_url: string | null
+          is_active: boolean
+          is_featured: boolean
+          is_legacy: boolean
+          legacy_tribute_text: string | null
+          management_company: string | null
+          name: string
+          profile_image_url: string | null
+          short_bio: string | null
+          slug: string
+          soundcloud_url: string | null
+          spotify_url: string | null
+          tiktok_url: string | null
+          twitter_url: string | null
+          updated_at: string
+          website_url: string | null
+          youtube_url: string | null
+        }
+        Insert: {
+          apple_music_url?: string | null
+          artist_type?: string
+          banner_image_url?: string | null
+          bio?: string | null
+          birth_date?: string | null
+          booking_email?: string | null
+          contact_email?: string | null
+          created_at?: string
+          death_date?: string | null
+          display_order?: number | null
+          id?: string
+          instagram_url?: string | null
+          is_active?: boolean
+          is_featured?: boolean
+          is_legacy?: boolean
+          legacy_tribute_text?: string | null
+          management_company?: string | null
+          name: string
+          profile_image_url?: string | null
+          short_bio?: string | null
+          slug: string
+          soundcloud_url?: string | null
+          spotify_url?: string | null
+          tiktok_url?: string | null
+          twitter_url?: string | null
+          updated_at?: string
+          website_url?: string | null
+          youtube_url?: string | null
+        }
+        Update: {
+          apple_music_url?: string | null
+          artist_type?: string
+          banner_image_url?: string | null
+          bio?: string | null
+          birth_date?: string | null
+          booking_email?: string | null
+          contact_email?: string | null
+          created_at?: string
+          death_date?: string | null
+          display_order?: number | null
+          id?: string
+          instagram_url?: string | null
+          is_active?: boolean
+          is_featured?: boolean
+          is_legacy?: boolean
+          legacy_tribute_text?: string | null
+          management_company?: string | null
+          name?: string
+          profile_image_url?: string | null
+          short_bio?: string | null
+          slug?: string
+          soundcloud_url?: string | null
+          spotify_url?: string | null
+          tiktok_url?: string | null
+          twitter_url?: string | null
+          updated_at?: string
+          website_url?: string | null
+          youtube_url?: string | null
+        }
+        Relationships: []
+      }
       media_releases: {
         Row: {
           amazon_music_url: string | null
           apple_music_url: string | null
           apple_tv_url: string | null
           artist_director: string | null
+          artist_id: string | null
           bandcamp_url: string | null
           cover_image_url: string | null
           created_at: string
@@ -1736,6 +1830,7 @@ export type Database = {
           apple_music_url?: string | null
           apple_tv_url?: string | null
           artist_director?: string | null
+          artist_id?: string | null
           bandcamp_url?: string | null
           cover_image_url?: string | null
           created_at?: string
@@ -1777,6 +1872,7 @@ export type Database = {
           apple_music_url?: string | null
           apple_tv_url?: string | null
           artist_director?: string | null
+          artist_id?: string | null
           bandcamp_url?: string | null
           cover_image_url?: string | null
           created_at?: string
@@ -1813,7 +1909,15 @@ export type Database = {
           youtube_music_url?: string | null
           youtube_url?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "media_releases_artist_id_fkey"
+            columns: ["artist_id"]
+            isOneToOne: false
+            referencedRelation: "media_artists"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       media_shop_products: {
         Row: {

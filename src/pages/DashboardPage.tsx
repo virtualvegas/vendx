@@ -58,6 +58,7 @@ import TrackShopManager from "@/components/dashboard/tabs/TrackShopManager";
 import GlobalAnalytics from "@/components/dashboard/tabs/GlobalAnalytics";
 import PoliciesManager from "@/components/dashboard/tabs/PoliciesManager";
 import AdReachManager from "@/components/dashboard/tabs/AdReachManager";
+import ArtistsManager from "@/components/dashboard/tabs/ArtistsManager";
 import BusinessAdReach from "@/components/dashboard/tabs/business-owner/BusinessAdReach";
 export type AppRole =
   | "super_admin"
@@ -302,6 +303,8 @@ const DashboardPage = () => {
         content = <MachineInventoryManager />; break;
       case "media-manager":
         content = <MediaManager />; break;
+      case "artists-manager":
+        content = <ArtistsManager />; break;
       case "media-shop-manager":
         content = <MediaShopManager />; break;
       case "track-shop-manager":
