@@ -48,6 +48,7 @@ import ArcadePayPage from "./pages/ArcadePayPage";
 import EcoSnackCheckoutPage from "./pages/EcoSnackCheckoutPage";
 import EcoSnackSuccessPage from "./pages/EcoSnackSuccessPage";
 import PolicyPage from "./pages/PolicyPage";
+import AdReachPage from "./pages/AdReachPage";
 
 const queryClient = new QueryClient();
 
@@ -120,6 +121,7 @@ const App = () => (
               <Route path="/ecosnack/:machineCode" element={<EcoSnackCheckoutPage />} />
               <Route path="/ecosnack/success" element={<EcoSnackSuccessPage />} />
               <Route path="/policy/:slug" element={<PolicyPage />} />
+              <Route path="/adreach" element={<AdReachPage />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
