@@ -132,7 +132,7 @@ const AdReachManager = () => {
     const [locRes, bookRes, gameReqRes, machRes, gamesRes] = await Promise.all([
       supabase.from("ad_locations").select("*").order("created_at", { ascending: false }),
       supabase.from("ad_bookings").select("*, ad_locations(name, location_type), profiles:business_owner_id(full_name, email)").order("created_at", { ascending: false }),
-      supabase.from("branded_game_requests").select("*, video_games:game_title_id(title)").order("created_at", { ascending: false }),
+      supabase.from("branded_game_requests").select("*, profiles:business_owner_id(full_name, email), video_games:game_title_id(title)").order("created_at", { ascending: false }),
       supabase.from("vendx_machines").select("id, name, machine_code").eq("status", "active"),
       supabase.from("video_games").select("id, title").eq("is_active", true),
     ]);
