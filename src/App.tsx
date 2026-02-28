@@ -49,6 +49,8 @@ import EcoSnackCheckoutPage from "./pages/EcoSnackCheckoutPage";
 import EcoSnackSuccessPage from "./pages/EcoSnackSuccessPage";
 import PolicyPage from "./pages/PolicyPage";
 import AdReachPage from "./pages/AdReachPage";
+import ArtistsListPage from "./pages/ArtistsListPage";
+import ArtistPage from "./pages/ArtistPage";
 
 const queryClient = new QueryClient();
 
@@ -91,6 +93,8 @@ const App = () => (
               <Route path="/media/shop" element={<MediaShopPage />} />
               <Route path="/media/track-shop" element={<TrackShopPage />} />
               <Route path="/media/download" element={<BeatDownloadPage />} />
+              <Route path="/media/artists" element={<ArtistsListPage />} />
+              <Route path="/media/artists/:slug" element={<ArtistPage />} />
               <Route path="/locations" element={<LocationsPage />} />
               <Route path="/locations/events" element={<EventsPage />} />
               <Route path="/locations/:id" element={<LocationDetailPage />} />
