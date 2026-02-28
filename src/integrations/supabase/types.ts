@@ -1991,6 +1991,7 @@ export type Database = {
         Row: {
           artist_id: string | null
           audio_file_url: string | null
+          cover_image_url: string | null
           created_at: string
           duration_seconds: number | null
           external_stream_url: string | null
@@ -1998,16 +1999,20 @@ export type Database = {
           is_active: boolean | null
           is_playable: boolean | null
           lyrics: string | null
+          media_type: string | null
           play_count: number | null
           preview_url: string | null
           release_id: string | null
           title: string
           track_number: number | null
           updated_at: string
+          video_embed_url: string | null
+          video_file_url: string | null
         }
         Insert: {
           artist_id?: string | null
           audio_file_url?: string | null
+          cover_image_url?: string | null
           created_at?: string
           duration_seconds?: number | null
           external_stream_url?: string | null
@@ -2015,16 +2020,20 @@ export type Database = {
           is_active?: boolean | null
           is_playable?: boolean | null
           lyrics?: string | null
+          media_type?: string | null
           play_count?: number | null
           preview_url?: string | null
           release_id?: string | null
           title: string
           track_number?: number | null
           updated_at?: string
+          video_embed_url?: string | null
+          video_file_url?: string | null
         }
         Update: {
           artist_id?: string | null
           audio_file_url?: string | null
+          cover_image_url?: string | null
           created_at?: string
           duration_seconds?: number | null
           external_stream_url?: string | null
@@ -2032,12 +2041,15 @@ export type Database = {
           is_active?: boolean | null
           is_playable?: boolean | null
           lyrics?: string | null
+          media_type?: string | null
           play_count?: number | null
           preview_url?: string | null
           release_id?: string | null
           title?: string
           track_number?: number | null
           updated_at?: string
+          video_embed_url?: string | null
+          video_file_url?: string | null
         }
         Relationships: [
           {

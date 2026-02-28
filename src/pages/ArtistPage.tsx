@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import AudioPlayer from "@/components/media/AudioPlayer";
+import VideoPlayer from "@/components/media/VideoPlayer";
 
 interface MediaArtist {
   id: string;
@@ -76,6 +77,10 @@ interface MediaTrack {
   external_stream_url: string | null;
   is_playable: boolean;
   lyrics: string | null;
+  media_type: string;
+  video_file_url: string | null;
+  video_embed_url: string | null;
+  cover_image_url: string | null;
 }
 
 const socialLinks = [
@@ -145,9 +150,9 @@ const ArtistPage = () => {
     return new Date(d).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
   };
 
-  // Build playable tracks list for the audio player
-  const playableTracks = (tracks || [])
-    .filter(t => t.is_playable && (t.audio_file_url || t.preview_url))
+  // Build playable audio tracks for the audio player
+  const playableAudioTracks = (tracks || [])
+    .filter(t => t.is_playable && t.media_type !== 'video' && (t.audio_file_url || t.preview_url))
     .map(t => {
       const release = releases?.find(r => r.id === t.release_id);
       return {
@@ -155,7 +160,23 @@ const ArtistPage = () => {
         title: t.title,
         artist_name: artist?.name,
         audio_url: (t.audio_file_url || t.preview_url)!,
-        cover_image_url: release?.cover_image_url || artist?.profile_image_url,
+        cover_image_url: t.cover_image_url || release?.cover_image_url || artist?.profile_image_url,
+        duration_seconds: t.duration_seconds,
+      };
+    });
+
+  // Build playable video items for the video player
+  const playableVideoItems = (tracks || [])
+    .filter(t => t.is_playable && t.media_type === 'video' && (t.video_file_url || t.video_embed_url))
+    .map(t => {
+      const release = releases?.find(r => r.id === t.release_id);
+      return {
+        id: t.id,
+        title: t.title,
+        artist_name: artist?.name,
+        video_url: t.video_file_url,
+        embed_url: t.video_embed_url,
+        cover_image_url: t.cover_image_url || release?.cover_image_url || artist?.profile_image_url,
         duration_seconds: t.duration_seconds,
       };
     });
@@ -287,13 +308,23 @@ const ArtistPage = () => {
             </Card>
           )}
 
-          {/* Audio Player for playable tracks */}
-          {playableTracks.length > 0 && (
+          {/* Audio Player for playable music tracks */}
+          {playableAudioTracks.length > 0 && (
             <div className="mb-8">
               <h2 className="text-xl font-semibold text-foreground mb-4 flex items-center gap-2">
                 <Play className="w-5 h-5" /> Listen Now
               </h2>
-              <AudioPlayer tracks={playableTracks} />
+              <AudioPlayer tracks={playableAudioTracks} />
+            </div>
+          )}
+
+          {/* Video Player for film/video content */}
+          {playableVideoItems.length > 0 && (
+            <div className="mb-8">
+              <h2 className="text-xl font-semibold text-foreground mb-4 flex items-center gap-2">
+                <Film className="w-5 h-5" /> Watch Now
+              </h2>
+              <VideoPlayer items={playableVideoItems} />
             </div>
           )}
 
