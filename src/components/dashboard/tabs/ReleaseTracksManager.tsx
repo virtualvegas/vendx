@@ -12,7 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Plus, Pencil, Trash2, Music, Film, Upload, Disc3, ListMusic } from "lucide-react";
+import { Plus, Pencil, Trash2, Music, Film, Upload, Disc3, ListMusic, Video } from "lucide-react";
 
 interface Artist {
   id: string;
@@ -52,6 +52,10 @@ interface Track {
   is_playable: boolean;
   is_active: boolean;
   play_count: number;
+  media_type: string;
+  video_file_url: string | null;
+  video_embed_url: string | null;
+  cover_image_url: string | null;
 }
 
 const emptyRelease = {
@@ -65,6 +69,7 @@ const emptyTrack = {
   title: "", track_number: 1, duration_seconds: "",
   audio_file_url: "", preview_url: "", external_stream_url: "",
   lyrics: "", is_playable: false, is_active: true, release_id: "", artist_id: "",
+  media_type: "audio", video_file_url: "", video_embed_url: "", cover_image_url: "",
 };
 
 const ReleaseTracksManager = () => {
@@ -179,6 +184,10 @@ const ReleaseTracksManager = () => {
       external_stream_url: t.external_stream_url || "", lyrics: t.lyrics || "",
       is_playable: t.is_playable, is_active: t.is_active,
       release_id: t.release_id || "", artist_id: t.artist_id || "",
+      media_type: t.media_type || "audio",
+      video_file_url: t.video_file_url || "",
+      video_embed_url: t.video_embed_url || "",
+      cover_image_url: t.cover_image_url || "",
     });
     setTrackDialog(true);
   };
@@ -197,6 +206,48 @@ const ReleaseTracksManager = () => {
     setUploading(false);
   };
 
+  const handleVideoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    const ext = file.name.split(".").pop();
+    const path = `videos/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+    const { data, error } = await supabase.storage.from("artist-audio").upload(path, file);
+    if (error) { toast.error("Upload failed: " + error.message); setUploading(false); return; }
+    const { data: urlData } = supabase.storage.from("artist-audio").getPublicUrl(data.path);
+    setTrackForm(f => ({ ...f, video_file_url: urlData.publicUrl, is_playable: true }));
+    toast.success("Video uploaded");
+    setUploading(false);
+  };
+
+  const handleCoverUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    const ext = file.name.split(".").pop();
+    const path = `covers/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+    const { data, error } = await supabase.storage.from("media-covers").upload(path, file);
+    if (error) { toast.error("Upload failed: " + error.message); setUploading(false); return; }
+    const { data: urlData } = supabase.storage.from("media-covers").getPublicUrl(data.path);
+    setTrackForm(f => ({ ...f, cover_image_url: urlData.publicUrl }));
+    toast.success("Cover uploaded");
+    setUploading(false);
+  };
+
+  const handleReleaseCoverUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    const ext = file.name.split(".").pop();
+    const path = `releases/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+    const { data, error } = await supabase.storage.from("media-covers").upload(path, file);
+    if (error) { toast.error("Upload failed: " + error.message); setUploading(false); return; }
+    const { data: urlData } = supabase.storage.from("media-covers").getPublicUrl(data.path);
+    setReleaseForm(f => ({ ...f, cover_image_url: urlData.publicUrl }));
+    toast.success("Cover uploaded");
+    setUploading(false);
+  };
+
   const saveTrack = async () => {
     if (!trackForm.title) { toast.error("Title required"); return; }
     const payload: any = {
@@ -210,6 +261,10 @@ const ReleaseTracksManager = () => {
       is_active: trackForm.is_active,
       release_id: trackForm.release_id || null,
       artist_id: trackForm.artist_id || null,
+      media_type: trackForm.media_type,
+      video_file_url: trackForm.video_file_url || null,
+      video_embed_url: trackForm.video_embed_url || null,
+      cover_image_url: trackForm.cover_image_url || null,
     };
 
     let error;
@@ -343,6 +398,7 @@ const ReleaseTracksManager = () => {
                 <TableRow>
                   <TableHead>#</TableHead>
                   <TableHead>Title</TableHead>
+                  <TableHead>Type</TableHead>
                   <TableHead>Artist</TableHead>
                   <TableHead>Release</TableHead>
                   <TableHead>Playable</TableHead>
@@ -351,13 +407,18 @@ const ReleaseTracksManager = () => {
               </TableHeader>
               <TableBody>
                 {loading ? (
-                  <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">Loading...</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">Loading...</TableCell></TableRow>
                 ) : tracks.length === 0 ? (
-                  <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">No tracks yet</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">No tracks yet</TableCell></TableRow>
                 ) : tracks.map((t) => (
                   <TableRow key={t.id}>
                     <TableCell className="text-muted-foreground">{t.track_number}</TableCell>
                     <TableCell className="font-medium text-foreground">{t.title}</TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className="capitalize gap-1">
+                        {t.media_type === "video" ? <><Film className="w-3 h-3" /> Video</> : <><Music className="w-3 h-3" /> Audio</>}
+                      </Badge>
+                    </TableCell>
                     <TableCell className="text-sm">{getArtistName(t.artist_id)}</TableCell>
                     <TableCell className="text-sm text-muted-foreground">
                       {releases.find(r => r.id === t.release_id)?.title || "—"}
@@ -366,7 +427,7 @@ const ReleaseTracksManager = () => {
                       {t.is_playable ? (
                         <Badge className="bg-accent text-accent-foreground">Playable</Badge>
                       ) : (
-                        <Badge variant="outline">No audio</Badge>
+                        <Badge variant="outline">Disabled</Badge>
                       )}
                     </TableCell>
                     <TableCell className="text-right">
@@ -439,7 +500,13 @@ const ReleaseTracksManager = () => {
               </div>
               <div><Label>Release Date</Label><Input type="date" value={releaseForm.release_date} onChange={e => setReleaseForm(f => ({ ...f, release_date: e.target.value }))} /></div>
             </div>
-            <div><Label>Cover Image URL</Label><Input value={releaseForm.cover_image_url} onChange={e => setReleaseForm(f => ({ ...f, cover_image_url: e.target.value }))} /></div>
+            <div>
+              <Label>Cover Image</Label>
+              <div className="flex gap-2">
+                <Input value={releaseForm.cover_image_url} onChange={e => setReleaseForm(f => ({ ...f, cover_image_url: e.target.value }))} placeholder="URL or upload" className="flex-1" />
+                <Input type="file" accept="image/*" onChange={handleReleaseCoverUpload} disabled={uploading} className="w-40" />
+              </div>
+            </div>
             <div><Label>Genre (comma-separated)</Label><Input value={releaseForm.genre} onChange={e => setReleaseForm(f => ({ ...f, genre: e.target.value }))} placeholder="Hip-Hop, R&B" /></div>
             <div><Label>Description</Label><Textarea value={releaseForm.short_description} onChange={e => setReleaseForm(f => ({ ...f, short_description: e.target.value }))} rows={2} /></div>
             <Card className="bg-card/50 border-border/50">
@@ -465,9 +532,19 @@ const ReleaseTracksManager = () => {
           <DialogHeader><DialogTitle>{editingTrack ? "Edit Track" : "Add Track"}</DialogTitle></DialogHeader>
           <div className="space-y-4">
             <div><Label>Title *</Label><Input value={trackForm.title} onChange={e => setTrackForm(f => ({ ...f, title: e.target.value }))} /></div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-3 gap-4">
               <div><Label>Track #</Label><Input type="number" value={trackForm.track_number} onChange={e => setTrackForm(f => ({ ...f, track_number: parseInt(e.target.value) || 1 }))} /></div>
-              <div><Label>Duration (seconds)</Label><Input type="number" value={trackForm.duration_seconds} onChange={e => setTrackForm(f => ({ ...f, duration_seconds: e.target.value }))} /></div>
+              <div><Label>Duration (sec)</Label><Input type="number" value={trackForm.duration_seconds} onChange={e => setTrackForm(f => ({ ...f, duration_seconds: e.target.value }))} /></div>
+              <div>
+                <Label>Media Type</Label>
+                <Select value={trackForm.media_type} onValueChange={v => setTrackForm(f => ({ ...f, media_type: v }))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="audio">Audio / Music</SelectItem>
+                    <SelectItem value="video">Video / Film</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
@@ -490,29 +567,62 @@ const ReleaseTracksManager = () => {
               </div>
             </div>
 
-            {/* Audio Upload */}
-            <Card className="bg-card/50 border-border/50">
-              <CardHeader className="pb-2"><CardTitle className="text-sm flex items-center gap-2"><Upload className="w-4 h-4" /> Audio File</CardTitle></CardHeader>
-              <CardContent className="space-y-3">
-                <div>
-                  <Label>Upload Audio (MP3, WAV, etc.)</Label>
-                  <Input type="file" accept="audio/*" onChange={handleAudioUpload} disabled={uploading} />
-                  {uploading && <p className="text-xs text-muted-foreground mt-1">Uploading...</p>}
-                </div>
-                <div><Label>Or paste Audio URL</Label><Input value={trackForm.audio_file_url} onChange={e => setTrackForm(f => ({ ...f, audio_file_url: e.target.value, is_playable: !!e.target.value }))} placeholder="https://..." /></div>
-                <div><Label>External Stream URL (Spotify, YouTube, etc.)</Label><Input value={trackForm.external_stream_url} onChange={e => setTrackForm(f => ({ ...f, external_stream_url: e.target.value }))} /></div>
-                <div className="flex items-center gap-2">
-                  <Switch checked={trackForm.is_playable} onCheckedChange={v => setTrackForm(f => ({ ...f, is_playable: v }))} />
-                  <Label>Playable in browser</Label>
-                </div>
-              </CardContent>
-            </Card>
-
-            <div><Label>Lyrics</Label><Textarea value={trackForm.lyrics} onChange={e => setTrackForm(f => ({ ...f, lyrics: e.target.value }))} rows={4} placeholder="Song lyrics..." /></div>
-            <div className="flex items-center gap-2">
-              <Switch checked={trackForm.is_active} onCheckedChange={v => setTrackForm(f => ({ ...f, is_active: v }))} />
-              <Label>Active</Label>
+            {/* Cover Image */}
+            <div>
+              <Label>Cover Image</Label>
+              <div className="flex gap-2">
+                <Input value={trackForm.cover_image_url} onChange={e => setTrackForm(f => ({ ...f, cover_image_url: e.target.value }))} placeholder="URL or upload" className="flex-1" />
+                <Input type="file" accept="image/*" onChange={handleCoverUpload} disabled={uploading} className="w-40" />
+              </div>
             </div>
+
+            {/* Audio Upload (for audio type) */}
+            {trackForm.media_type === "audio" && (
+              <Card className="bg-card/50 border-border/50">
+                <CardHeader className="pb-2"><CardTitle className="text-sm flex items-center gap-2"><Upload className="w-4 h-4" /> Audio File</CardTitle></CardHeader>
+                <CardContent className="space-y-3">
+                  <div>
+                    <Label>Upload Audio (MP3, WAV, etc.)</Label>
+                    <Input type="file" accept="audio/*" onChange={handleAudioUpload} disabled={uploading} />
+                    {uploading && <p className="text-xs text-muted-foreground mt-1">Uploading...</p>}
+                  </div>
+                  <div><Label>Or paste Audio URL</Label><Input value={trackForm.audio_file_url} onChange={e => setTrackForm(f => ({ ...f, audio_file_url: e.target.value, is_playable: !!e.target.value }))} placeholder="https://..." /></div>
+                  <div><Label>External Stream URL (Spotify, YouTube, etc.)</Label><Input value={trackForm.external_stream_url} onChange={e => setTrackForm(f => ({ ...f, external_stream_url: e.target.value }))} /></div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Video Upload (for video type) */}
+            {trackForm.media_type === "video" && (
+              <Card className="bg-card/50 border-border/50">
+                <CardHeader className="pb-2"><CardTitle className="text-sm flex items-center gap-2"><Upload className="w-4 h-4" /> Video File</CardTitle></CardHeader>
+                <CardContent className="space-y-3">
+                  <div>
+                    <Label>Upload Video (MP4, WebM, etc.)</Label>
+                    <Input type="file" accept="video/*" onChange={handleVideoUpload} disabled={uploading} />
+                    {uploading && <p className="text-xs text-muted-foreground mt-1">Uploading...</p>}
+                  </div>
+                  <div><Label>Or paste Video URL</Label><Input value={trackForm.video_file_url} onChange={e => setTrackForm(f => ({ ...f, video_file_url: e.target.value, is_playable: !!e.target.value }))} placeholder="https://..." /></div>
+                  <div><Label>Embed URL (YouTube, Vimeo link)</Label><Input value={trackForm.video_embed_url} onChange={e => setTrackForm(f => ({ ...f, video_embed_url: e.target.value, is_playable: !!e.target.value }))} placeholder="https://youtube.com/watch?v=..." /></div>
+                </CardContent>
+              </Card>
+            )}
+
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <Switch checked={trackForm.is_playable} onCheckedChange={v => setTrackForm(f => ({ ...f, is_playable: v }))} />
+                <Label>Playable in browser</Label>
+              </div>
+              <div className="flex items-center gap-2">
+                <Switch checked={trackForm.is_active} onCheckedChange={v => setTrackForm(f => ({ ...f, is_active: v }))} />
+                <Label>Active</Label>
+              </div>
+            </div>
+
+            {trackForm.media_type === "audio" && (
+              <div><Label>Lyrics</Label><Textarea value={trackForm.lyrics} onChange={e => setTrackForm(f => ({ ...f, lyrics: e.target.value }))} rows={4} placeholder="Song lyrics..." /></div>
+            )}
+
             <Button onClick={saveTrack} className="w-full">{editingTrack ? "Update Track" : "Add Track"}</Button>
           </div>
         </DialogContent>
