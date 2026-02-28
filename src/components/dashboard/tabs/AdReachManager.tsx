@@ -11,7 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { Plus, Eye, TrendingUp, DollarSign, Monitor, Gamepad2, CheckCircle, XCircle, BarChart3 } from "lucide-react";
+import { Plus, Eye, TrendingUp, DollarSign, Monitor, Gamepad2, CheckCircle, XCircle, BarChart3, Pencil, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 
 interface AdLocation {
@@ -101,12 +101,21 @@ const AdReachManager = () => {
   const [machines, setMachines] = useState<{ id: string; name: string; machine_code: string }[]>([]);
   const [games, setGames] = useState<{ id: string; title: string }[]>([]);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [editingLocation, setEditingLocation] = useState<AdLocation | null>(null);
   const [showPerformanceDialog, setShowPerformanceDialog] = useState(false);
   const [selectedBooking, setSelectedBooking] = useState<AdBooking | null>(null);
   const [performanceEntries, setPerformanceEntries] = useState<PerformanceEntry[]>([]);
 
   // New ad location form
   const [newLocation, setNewLocation] = useState({
+    name: "", description: "", location_type: "machine_screen",
+    machine_id: "", game_id: "", pricing_model: "monthly",
+    price: "", estimated_weekly_views: "", dimensions: "",
+  });
+
+  // Edit ad location form
+  const [editLocation, setEditLocation] = useState({
     name: "", description: "", location_type: "machine_screen",
     machine_id: "", game_id: "", pricing_model: "monthly",
     price: "", estimated_weekly_views: "", dimensions: "",
@@ -205,6 +214,49 @@ const AdReachManager = () => {
 
   const toggleAdLocation = async (loc: AdLocation) => {
     await supabase.from("ad_locations").update({ is_active: !loc.is_active }).eq("id", loc.id);
+    fetchAll();
+  };
+
+  const openEditDialog = (loc: AdLocation) => {
+    setEditingLocation(loc);
+    setEditLocation({
+      name: loc.name,
+      description: loc.description || "",
+      location_type: loc.location_type,
+      machine_id: loc.machine_id || "",
+      game_id: loc.game_id || "",
+      pricing_model: loc.pricing_model,
+      price: String(loc.price),
+      estimated_weekly_views: String(loc.estimated_weekly_views),
+      dimensions: loc.dimensions || "",
+    });
+    setShowEditDialog(true);
+  };
+
+  const updateAdLocation = async () => {
+    if (!editingLocation) return;
+    const { error } = await supabase.from("ad_locations").update({
+      name: editLocation.name,
+      description: editLocation.description || null,
+      location_type: editLocation.location_type,
+      machine_id: editLocation.machine_id || null,
+      game_id: editLocation.game_id || null,
+      pricing_model: editLocation.pricing_model,
+      price: parseFloat(editLocation.price) || 0,
+      estimated_weekly_views: parseInt(editLocation.estimated_weekly_views) || 0,
+      dimensions: editLocation.dimensions || null,
+    }).eq("id", editingLocation.id);
+    if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
+    toast({ title: "Ad location updated" });
+    setShowEditDialog(false);
+    setEditingLocation(null);
+    fetchAll();
+  };
+
+  const deleteAdLocation = async (loc: AdLocation) => {
+    const { error } = await supabase.from("ad_locations").delete().eq("id", loc.id);
+    if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
+    toast({ title: "Ad location deleted" });
     fetchAll();
   };
 
@@ -323,9 +375,15 @@ const AdReachManager = () => {
                   <TableCell>${Number(loc.price).toFixed(2)}/{loc.pricing_model === "weekly" ? "wk" : "mo"}</TableCell>
                   <TableCell>{loc.estimated_weekly_views.toLocaleString()}</TableCell>
                   <TableCell><Badge variant={loc.is_active ? "default" : "secondary"}>{loc.is_active ? "Active" : "Inactive"}</Badge></TableCell>
-                  <TableCell>
+                  <TableCell className="flex gap-1">
                     <Button variant="ghost" size="sm" onClick={() => toggleAdLocation(loc)}>
                       {loc.is_active ? "Deactivate" : "Activate"}
+                    </Button>
+                    <Button variant="ghost" size="icon" onClick={() => openEditDialog(loc)}>
+                      <Pencil className="w-4 h-4" />
+                    </Button>
+                    <Button variant="ghost" size="icon" className="text-destructive" onClick={() => { if (confirm("Delete this ad location? Any bookings linked to it may be affected.")) deleteAdLocation(loc); }}>
+                      <Trash2 className="w-4 h-4" />
                     </Button>
                   </TableCell>
                 </TableRow>
@@ -333,6 +391,60 @@ const AdReachManager = () => {
               {adLocations.length === 0 && <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">No ad locations created yet</TableCell></TableRow>}
             </TableBody>
           </Table>
+
+          {/* Edit Dialog */}
+          <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+            <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+              <DialogHeader><DialogTitle>Edit Ad Location</DialogTitle></DialogHeader>
+              <div className="space-y-4">
+                <div><Label>Name</Label><Input value={editLocation.name} onChange={e => setEditLocation(p => ({ ...p, name: e.target.value }))} /></div>
+                <div><Label>Description</Label><Textarea value={editLocation.description} onChange={e => setEditLocation(p => ({ ...p, description: e.target.value }))} /></div>
+                <div><Label>Ad Type</Label>
+                  <Select value={editLocation.location_type} onValueChange={v => setEditLocation(p => ({ ...p, location_type: v }))}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="machine_screen">Machine Screen</SelectItem>
+                      <SelectItem value="in_game_banner">In-Game Banner</SelectItem>
+                      <SelectItem value="in_game_interstitial">In-Game Interstitial</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                {editLocation.location_type === "machine_screen" && (
+                  <div><Label>Machine</Label>
+                    <Select value={editLocation.machine_id} onValueChange={v => setEditLocation(p => ({ ...p, machine_id: v }))}>
+                      <SelectTrigger><SelectValue placeholder="Select machine" /></SelectTrigger>
+                      <SelectContent>{machines.map(m => <SelectItem key={m.id} value={m.id}>{m.name} ({m.machine_code})</SelectItem>)}</SelectContent>
+                    </Select>
+                  </div>
+                )}
+                {(editLocation.location_type === "in_game_banner" || editLocation.location_type === "in_game_interstitial") && (
+                  <div><Label>VendX Interactive Game</Label>
+                    <Select value={editLocation.game_id} onValueChange={v => setEditLocation(p => ({ ...p, game_id: v }))}>
+                      <SelectTrigger><SelectValue placeholder="Select game" /></SelectTrigger>
+                      <SelectContent>{games.map(g => <SelectItem key={g.id} value={g.id}>{g.title}</SelectItem>)}</SelectContent>
+                    </Select>
+                  </div>
+                )}
+                <div className="grid grid-cols-2 gap-4">
+                  <div><Label>Pricing Model</Label>
+                    <Select value={editLocation.pricing_model} onValueChange={v => setEditLocation(p => ({ ...p, pricing_model: v }))}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="weekly">Weekly</SelectItem>
+                        <SelectItem value="monthly">Monthly</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div><Label>Price ($)</Label><Input type="number" value={editLocation.price} onChange={e => setEditLocation(p => ({ ...p, price: e.target.value }))} /></div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div><Label>Est. Weekly Views</Label><Input type="number" value={editLocation.estimated_weekly_views} onChange={e => setEditLocation(p => ({ ...p, estimated_weekly_views: e.target.value }))} /></div>
+                  <div><Label>Dimensions</Label><Input value={editLocation.dimensions} onChange={e => setEditLocation(p => ({ ...p, dimensions: e.target.value }))} placeholder="e.g. 1920x1080" /></div>
+                </div>
+                <Button onClick={updateAdLocation} className="w-full">Save Changes</Button>
+              </div>
+            </DialogContent>
+          </Dialog>
         </TabsContent>
 
         {/* BOOKINGS TAB */}
