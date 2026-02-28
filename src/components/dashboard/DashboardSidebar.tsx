@@ -36,6 +36,7 @@ import {
   Trophy,
   Leaf,
   FileText,
+  Megaphone,
 } from "lucide-react";
 import { AppRole } from "@/pages/DashboardPage";
 import { cn } from "@/lib/utils";
@@ -81,6 +82,7 @@ const tabGroups: TabGroup[] = [
       { id: "business-locations", label: "My Locations", icon: MapPin, requiredRoles: ["business_owner"] },
       { id: "business-machines", label: "My Machines", icon: Monitor, requiredRoles: ["business_owner"] },
       { id: "business-payouts", label: "Payouts", icon: DollarSign, requiredRoles: ["business_owner"] },
+      { id: "business-adreach", label: "AdReach", icon: Megaphone, requiredRoles: ["business_owner"] },
       { id: "business-support", label: "Support", icon: Wrench, requiredRoles: ["business_owner"] },
     ],
   },
@@ -162,6 +164,7 @@ const tabGroups: TabGroup[] = [
     label: "Marketing & Engagement",
     tabs: [
       { id: "marketing", label: "Campaigns", icon: TrendingUp, requiredRoles: ["super_admin", "marketing_sales"] },
+      { id: "adreach-manager", label: "AdReach", icon: Megaphone, requiredRoles: ["super_admin"] },
       { id: "rewards-manager", label: "Rewards Catalog", icon: Gift, requiredRoles: ["super_admin", "marketing_sales"] },
       { id: "partner-offers", label: "Partner Offers", icon: Percent, requiredRoles: ["super_admin", "marketing_sales"] },
     ],

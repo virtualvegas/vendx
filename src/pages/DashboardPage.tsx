@@ -57,6 +57,8 @@ import MediaShopManager from "@/components/dashboard/tabs/MediaShopManager";
 import TrackShopManager from "@/components/dashboard/tabs/TrackShopManager";
 import GlobalAnalytics from "@/components/dashboard/tabs/GlobalAnalytics";
 import PoliciesManager from "@/components/dashboard/tabs/PoliciesManager";
+import AdReachManager from "@/components/dashboard/tabs/AdReachManager";
+import BusinessAdReach from "@/components/dashboard/tabs/business-owner/BusinessAdReach";
 export type AppRole =
   | "super_admin"
   | "global_operations_manager"
@@ -196,7 +198,7 @@ const DashboardPage = () => {
 
   const NON_ADMIN_TABS = [
     "my-orders", "my-wallet", "my-tickets", "my-rewards",
-    "business-overview", "business-locations", "business-machines", "business-payouts", "business-support",
+    "business-overview", "business-locations", "business-machines", "business-payouts", "business-support", "business-adreach",
   ];
 
   const renderTabContent = () => {
@@ -212,6 +214,8 @@ const DashboardPage = () => {
         content = <BusinessMachines />; break;
       case "business-payouts":
         content = <BusinessPayouts />; break;
+      case "business-adreach":
+        content = <BusinessAdReach />; break;
       case "business-support":
         content = <BusinessSupport />; break;
       case "my-orders":
@@ -304,6 +308,8 @@ const DashboardPage = () => {
         content = <TrackShopManager />; break;
       case "global-analytics":
         content = <GlobalAnalytics />; break;
+      case "adreach-manager":
+        content = <AdReachManager />; break;
       case "site-policies":
         content = <PoliciesManager />; break;
       default:
