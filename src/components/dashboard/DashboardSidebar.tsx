@@ -192,6 +192,7 @@ const tabGroups: TabGroup[] = [
       { id: "video-games", label: "Video Games", icon: Gamepad2, requiredRoles: ["super_admin"] },
       { id: "media-manager", label: "Music & Film", icon: Disc3, requiredRoles: ["super_admin"] },
       { id: "artists-manager", label: "Artists", icon: Users, requiredRoles: ["super_admin"] },
+      { id: "releases-tracks", label: "Releases & Tracks", icon: Music, requiredRoles: ["super_admin"] },
       { id: "media-shop-manager", label: "Media Shop", icon: ShoppingCart, requiredRoles: ["super_admin"] },
       { id: "track-shop-manager", label: "Track Shop", icon: Music, requiredRoles: ["super_admin"] },
     ],
