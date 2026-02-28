@@ -141,22 +141,28 @@ const BusinessAdReach = () => {
 
     const totalPrice = calculatePrice(selectedLocation, bookForm.start_date, bookForm.end_date);
 
-    const { error } = await supabase.from("ad_bookings").insert({
-      ad_location_id: selectedLocation.id,
-      business_owner_id: user.id,
-      start_date: bookForm.start_date,
-      end_date: bookForm.end_date,
-      total_price: totalPrice,
-      ad_title: bookForm.ad_title || null,
-      ad_description: bookForm.ad_description || null,
-      ad_creative_url: bookForm.ad_creative_url || null,
-    });
-    if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
-    toast({ title: "Booking submitted for approval!" });
-    setShowBookDialog(false);
-    setBookForm({ start_date: "", end_date: "", ad_title: "", ad_description: "", ad_creative_url: "" });
-    setSelectedLocation(null);
-    fetchAll();
+    try {
+      const { data, error } = await supabase.functions.invoke("adreach-checkout", {
+        body: {
+          ad_location_id: selectedLocation.id,
+          start_date: bookForm.start_date,
+          end_date: bookForm.end_date,
+          total_price: totalPrice,
+          ad_title: bookForm.ad_title || null,
+          ad_description: bookForm.ad_description || null,
+          ad_creative_url: bookForm.ad_creative_url || null,
+        },
+      });
+
+      if (error) throw error;
+      if (data?.url) {
+        window.location.href = data.url;
+      } else {
+        toast({ title: "Error", description: "Could not create checkout session", variant: "destructive" });
+      }
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message || "Payment failed", variant: "destructive" });
+    }
   };
 
   const submitGameRequest = async () => {
@@ -392,7 +398,7 @@ const BusinessAdReach = () => {
               <div><Label>Ad Title</Label><Input value={bookForm.ad_title} onChange={e => setBookForm(p => ({ ...p, ad_title: e.target.value }))} placeholder="Your ad campaign title" /></div>
               <div><Label>Ad Description</Label><Textarea value={bookForm.ad_description} onChange={e => setBookForm(p => ({ ...p, ad_description: e.target.value }))} placeholder="Describe your ad..." /></div>
               <div><Label>Creative URL (image/video link)</Label><Input value={bookForm.ad_creative_url} onChange={e => setBookForm(p => ({ ...p, ad_creative_url: e.target.value }))} placeholder="https://..." /></div>
-              <Button onClick={submitBooking} className="w-full">Submit for Approval</Button>
+              <Button onClick={submitBooking} className="w-full">Pay & Submit for Approval</Button>
             </div>
           )}
         </DialogContent>

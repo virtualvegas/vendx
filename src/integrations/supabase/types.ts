@@ -74,6 +74,13 @@ export type Database = {
             referencedRelation: "ad_locations"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "ad_bookings_business_owner_id_fkey"
+            columns: ["business_owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
         ]
       }
       ad_locations: {
@@ -553,6 +560,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "branded_game_requests_business_owner_id_fkey"
+            columns: ["business_owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "branded_game_requests_game_title_id_fkey"
             columns: ["game_title_id"]
