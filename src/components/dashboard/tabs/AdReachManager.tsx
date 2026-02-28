@@ -78,7 +78,6 @@ interface PerformanceEntry {
 
 const locationTypeLabels: Record<string, string> = {
   machine_screen: "Machine Screen",
-  machine_wrap: "Machine Wrap",
   in_game_banner: "In-Game Banner",
   in_game_interstitial: "In-Game Interstitial",
 };
@@ -220,7 +219,7 @@ const AdReachManager = () => {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">VendX AdReach</h1>
-          <p className="text-muted-foreground text-sm">Manage ad locations, bookings, and branded game requests</p>
+          <p className="text-muted-foreground text-sm">Manage ad locations, bookings, and custom game ad requests</p>
         </div>
       </div>
 
@@ -240,7 +239,7 @@ const AdReachManager = () => {
         </CardContent></Card>
         <Card><CardContent className="pt-6 flex items-center gap-4">
           <Gamepad2 className="w-8 h-8 text-purple-400" />
-          <div><p className="text-sm text-muted-foreground">Game Requests</p><p className="text-2xl font-bold">{pendingGameReqs}</p></div>
+          <div><p className="text-sm text-muted-foreground">Custom Ad Requests</p><p className="text-2xl font-bold">{pendingGameReqs}</p></div>
         </CardContent></Card>
       </div>
 
@@ -248,7 +247,7 @@ const AdReachManager = () => {
         <TabsList>
           <TabsTrigger value="locations">Ad Locations</TabsTrigger>
           <TabsTrigger value="bookings">Bookings {pendingBookings > 0 && <Badge variant="destructive" className="ml-2 text-xs">{pendingBookings}</Badge>}</TabsTrigger>
-          <TabsTrigger value="game-requests">Branded Games {pendingGameReqs > 0 && <Badge variant="destructive" className="ml-2 text-xs">{pendingGameReqs}</Badge>}</TabsTrigger>
+          <TabsTrigger value="game-requests">Custom Ad Requests {pendingGameReqs > 0 && <Badge variant="destructive" className="ml-2 text-xs">{pendingGameReqs}</Badge>}</TabsTrigger>
         </TabsList>
 
         {/* AD LOCATIONS TAB */}
@@ -268,13 +267,12 @@ const AdReachManager = () => {
                       <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="machine_screen">Machine Screen</SelectItem>
-                        <SelectItem value="machine_wrap">Machine Wrap</SelectItem>
                         <SelectItem value="in_game_banner">In-Game Banner</SelectItem>
                         <SelectItem value="in_game_interstitial">In-Game Interstitial</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
-                  {(newLocation.location_type === "machine_screen" || newLocation.location_type === "machine_wrap") && (
+                  {newLocation.location_type === "machine_screen" && (
                     <div><Label>Machine</Label>
                       <Select value={newLocation.machine_id} onValueChange={v => setNewLocation(p => ({ ...p, machine_id: v }))}>
                         <SelectTrigger><SelectValue placeholder="Select machine" /></SelectTrigger>
@@ -283,7 +281,7 @@ const AdReachManager = () => {
                     </div>
                   )}
                   {(newLocation.location_type === "in_game_banner" || newLocation.location_type === "in_game_interstitial") && (
-                    <div><Label>Game</Label>
+                    <div><Label>VendX Interactive Game</Label>
                       <Select value={newLocation.game_id} onValueChange={v => setNewLocation(p => ({ ...p, game_id: v }))}>
                         <SelectTrigger><SelectValue placeholder="Select game" /></SelectTrigger>
                         <SelectContent>{games.map(g => <SelectItem key={g.id} value={g.id}>{g.name}</SelectItem>)}</SelectContent>
@@ -380,7 +378,7 @@ const AdReachManager = () => {
           </Table>
         </TabsContent>
 
-        {/* BRANDED GAME REQUESTS TAB */}
+        {/* CUSTOM AD REQUESTS TAB */}
         <TabsContent value="game-requests" className="space-y-4">
           <Table>
             <TableHeader><TableRow>
@@ -392,7 +390,7 @@ const AdReachManager = () => {
                 <TableRow key={r.id}>
                   <TableCell>{(r as any).profiles?.full_name || "Unknown"}</TableCell>
                   <TableCell className="font-medium">{r.brand_name}</TableCell>
-                  <TableCell><Badge variant="outline">{r.request_type === "reskin" ? "Reskin" : "Custom"}</Badge></TableCell>
+                  <TableCell><Badge variant="outline">{r.request_type === "custom_cosmetics" ? "Custom Cosmetics" : r.request_type === "collab_items" ? "Collab Items" : r.request_type === "custom_ad" ? "Custom Ad" : r.request_type === "reskin" ? "Reskin" : "Custom"}</Badge></TableCell>
                   <TableCell>{(r as any).arcade_game_titles?.name || "—"}</TableCell>
                   <TableCell className="text-sm">
                     {r.desired_start_date ? format(new Date(r.desired_start_date), "MMM d") : "—"}
@@ -425,7 +423,7 @@ const AdReachManager = () => {
                   </TableCell>
                 </TableRow>
               ))}
-              {gameRequests.length === 0 && <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-8">No branded game requests</TableCell></TableRow>}
+              {gameRequests.length === 0 && <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-8">No custom ad requests</TableCell></TableRow>}
             </TableBody>
           </Table>
         </TabsContent>

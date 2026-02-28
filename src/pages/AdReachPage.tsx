@@ -20,8 +20,8 @@ const features = [
   },
   {
     icon: Palette,
-    title: "Machine Wraps",
-    description: "Full-body branded wraps on VendX machines for maximum physical visibility and brand presence.",
+    title: "Custom Cosmetics",
+    description: "Request custom branded cosmetics inside VendX Interactive games — skins, outfits, and branded items for your business.",
   },
   {
     icon: Gamepad2,
@@ -50,8 +50,8 @@ const features = [
   },
   {
     icon: Palette,
-    title: "Branded Game Seasons",
-    description: "Request a custom branded game season — reskin existing titles or commission a fully custom experience.",
+    title: "Collab Items & Custom Ads",
+    description: "Submit requests for collab items, branded game content, or fully custom in-game ad experiences tied to VendX Interactive titles.",
   },
   {
     icon: DollarSign,
@@ -269,20 +269,20 @@ const AdReachPage = () => {
           >
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-accent/30 bg-accent/10 mb-6">
               <Gamepad2 className="w-4 h-4 text-accent" />
-              <span className="text-sm text-accent font-medium">Branded Game Seasons</span>
+              <span className="text-sm text-accent font-medium">Custom Game Ads</span>
             </div>
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
               Go Beyond Ads — Own the Game
             </h2>
             <p className="text-muted-foreground text-lg mb-8 max-w-2xl mx-auto">
-              Request a custom branded game season. Reskin an existing VendX Interactive title with your brand colors and logo, 
-              or commission a fully custom game experience that puts your brand at the center of the action.
+              Request custom cosmetics, collab items, or branded in-game content inside VendX Interactive titles. 
+              Put your brand at the center of the action with custom game ad experiences.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link to="/auth">
                 <Button size="lg" className="bg-accent text-accent-foreground hover:bg-accent/90 text-lg px-8 py-6">
                   <Zap className="w-5 h-5 mr-2" />
-                  Request a Branded Game
+                  Submit a Custom Ad Request
                 </Button>
               </Link>
               <Link to="/games">
