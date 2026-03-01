@@ -13,6 +13,7 @@ interface VideoItem {
   cover_image_url?: string | null;
   duration_seconds?: number | null;
   artist_name?: string;
+  external_url?: string | null;
 }
 
 interface VideoPlayerProps {
@@ -45,6 +46,7 @@ const VideoPlayer = ({ items, className, compact = false }: VideoPlayerProps) =>
   const [activeIndex, setActiveIndex] = useState(0);
   const [playing, setPlaying] = useState(false);
   const [started, setStarted] = useState(false);
+  const [loadError, setLoadError] = useState(false);
   const [showPlaylist, setShowPlaylist] = useState(!compact && items.length > 1);
   const videoRef = useRef<HTMLVideoElement>(null);
 
@@ -54,11 +56,21 @@ const VideoPlayer = ({ items, className, compact = false }: VideoPlayerProps) =>
     setActiveIndex(i);
     setPlaying(false);
     setStarted(false);
+    setLoadError(false);
   };
 
   const startPlaying = () => {
     setStarted(true);
     setPlaying(true);
+    setLoadError(false);
+  };
+
+  const handleVideoError = () => {
+    setLoadError(true);
+    const fallback = current?.external_url || current?.embed_url;
+    if (fallback) {
+      window.open(fallback, '_blank', 'noopener,noreferrer');
+    }
   };
 
   if (!current) return null;
@@ -90,6 +102,7 @@ const VideoPlayer = ({ items, className, compact = false }: VideoPlayerProps) =>
               poster={current.cover_image_url || undefined}
               onPlay={() => setPlaying(true)}
               onPause={() => setPlaying(false)}
+              onError={handleVideoError}
             />
           ) : (
             /* Poster / Click to play */
