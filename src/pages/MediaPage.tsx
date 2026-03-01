@@ -11,20 +11,14 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  SiSpotify,
-  SiApplemusic,
-  SiYoutubemusic,
-  SiSoundcloud,
-  SiTidal,
-  SiBandcamp,
-  SiNetflix,
-  SiPrimevideo,
-  SiYoutube,
-  SiAppletv,
+  SiSpotify, SiApplemusic, SiYoutubemusic, SiSoundcloud,
+  SiTidal, SiBandcamp, SiNetflix, SiPrimevideo, SiYoutube, SiAppletv,
 } from "react-icons/si";
 import { FaAmazon, FaFilm } from "react-icons/fa";
-import { Music, ExternalLink, Play, Filter, Film, Disc3, ShoppingCart, ListMusic, Clock } from "lucide-react";
+import { Music, ExternalLink, Play, Filter, Film, Disc3, ShoppingCart, ListMusic, Clock, Headphones, Video } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import AudioPlayer from "@/components/media/AudioPlayer";
+import VideoPlayer from "@/components/media/VideoPlayer";
 
 interface TracklistItem {
   number: number;
@@ -47,6 +41,7 @@ interface MediaRelease {
   release_status: string;
   genre: string[] | null;
   artist_director: string | null;
+  artist_id: string | null;
   is_featured: boolean | null;
   tracklist: any[] | null;
   spotify_url: string | null;
@@ -69,6 +64,23 @@ interface MediaRelease {
   itunes_url: string | null;
   google_play_url: string | null;
   vudu_url: string | null;
+}
+
+interface MediaTrack {
+  id: string;
+  release_id: string | null;
+  artist_id: string | null;
+  title: string;
+  track_number: number;
+  duration_seconds: number | null;
+  audio_file_url: string | null;
+  preview_url: string | null;
+  external_stream_url: string | null;
+  is_playable: boolean;
+  media_type: string;
+  video_file_url: string | null;
+  video_embed_url: string | null;
+  cover_image_url: string | null;
 }
 
 const platformConfig: Record<string, { icon: React.ReactNode; label: string; field: keyof MediaRelease }> = {
@@ -110,8 +122,73 @@ const statusLabels: Record<string, string> = {
   past_release: "Past Release",
 };
 
+const formatTime = (s: number) => {
+  const m = Math.floor(s / 60);
+  const sec = Math.floor(s % 60);
+  return `${m}:${sec.toString().padStart(2, "0")}`;
+};
+
+// Inline player component for a single release card
+const ReleaseInlinePlayer = ({ releaseId, releaseCover, artistName }: {
+  releaseId: string;
+  releaseCover: string | null;
+  artistName: string | null;
+}) => {
+  const { data: tracks } = useQuery({
+    queryKey: ["release-tracks", releaseId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("media_tracks")
+        .select("*")
+        .eq("release_id", releaseId)
+        .eq("is_active", true)
+        .eq("is_playable", true)
+        .order("track_number");
+      if (error) throw error;
+      return data as unknown as MediaTrack[];
+    },
+  });
+
+  const audioTracks = (tracks || [])
+    .filter(t => t.media_type !== "video" && (t.audio_file_url || t.preview_url))
+    .map(t => ({
+      id: t.id,
+      title: t.title,
+      artist_name: artistName || undefined,
+      audio_url: (t.audio_file_url || t.preview_url)!,
+      cover_image_url: t.cover_image_url || releaseCover,
+      duration_seconds: t.duration_seconds,
+    }));
+
+  const videoItems = (tracks || [])
+    .filter(t => t.media_type === "video" && (t.video_file_url || t.video_embed_url))
+    .map(t => ({
+      id: t.id,
+      title: t.title,
+      artist_name: artistName || undefined,
+      video_url: t.video_file_url,
+      embed_url: t.video_embed_url,
+      cover_image_url: t.cover_image_url || releaseCover,
+      duration_seconds: t.duration_seconds,
+    }));
+
+  if (!audioTracks.length && !videoItems.length) return null;
+
+  return (
+    <div className="space-y-3 mt-3">
+      {audioTracks.length > 0 && (
+        <AudioPlayer tracks={audioTracks} compact />
+      )}
+      {videoItems.length > 0 && (
+        <VideoPlayer items={videoItems} compact />
+      )}
+    </div>
+  );
+};
+
 const MediaPage = () => {
   const [mediaFilter, setMediaFilter] = useState<"all" | "music" | "film">("all");
+  const [expandedPlayer, setExpandedPlayer] = useState<string | null>(null);
 
   const { data: releases, isLoading } = useQuery({
     queryKey: ["media-releases"],
@@ -125,6 +202,23 @@ const MediaPage = () => {
       return data as unknown as MediaRelease[];
     },
   });
+
+  // Also fetch all playable tracks to show play indicators
+  const { data: allPlayableTracks } = useQuery({
+    queryKey: ["all-playable-tracks"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("media_tracks")
+        .select("id, release_id, media_type")
+        .eq("is_active", true)
+        .eq("is_playable", true);
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const getPlayableCountForRelease = (releaseId: string) =>
+    (allPlayableTracks || []).filter(t => t.release_id === releaseId).length;
 
   const filtered = releases?.filter((r) => {
     if (mediaFilter === "all") return true;
@@ -159,7 +253,7 @@ const MediaPage = () => {
               VendX Music & Film
             </h1>
             <p className="text-muted-foreground max-w-2xl mx-auto mb-6">
-              Discover original music and films from VendX — available on all major streaming and purchase platforms
+              Discover original music and films from VendX — stream, watch, and listen right here or on your favorite platform
             </p>
             <div className="flex items-center justify-center gap-3 mb-8 flex-wrap">
               <Link to="/media/artists">
@@ -213,6 +307,9 @@ const MediaPage = () => {
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filtered.map((release) => {
                 const links = getPlatformLinks(release);
+                const playableCount = getPlayableCountForRelease(release.id);
+                const isExpanded = expandedPlayer === release.id;
+
                 return (
                   <Card
                     key={release.id}
@@ -251,7 +348,19 @@ const MediaPage = () => {
                           : release.media_type}
                       </Badge>
 
-                      {release.trailer_url && (
+                      {/* Play button overlay if playable tracks exist */}
+                      {playableCount > 0 && (
+                        <button
+                          onClick={() => setExpandedPlayer(isExpanded ? null : release.id)}
+                          className="absolute inset-0 flex items-center justify-center bg-background/40 opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <div className="w-14 h-14 rounded-full bg-primary flex items-center justify-center shadow-xl">
+                            <Play className="w-7 h-7 text-primary-foreground ml-0.5" />
+                          </div>
+                        </button>
+                      )}
+
+                      {release.trailer_url && !playableCount && (
                         <a
                           href={release.trailer_url}
                           target="_blank"
@@ -279,15 +388,37 @@ const MediaPage = () => {
                       )}
 
                       {release.genre && release.genre.length > 0 && (
-                        <div className="flex flex-wrap gap-1 mb-4">
+                        <div className="flex flex-wrap gap-1 mb-3">
                           {release.genre.map((g) => (
                             <Badge key={g} variant="outline" className="text-xs">{g}</Badge>
                           ))}
                         </div>
                       )}
 
-                      {/* Tracklist for Albums/EPs */}
-                      {release.media_type === "music" && release.tracklist && release.tracklist.length > 0 && (
+                      {/* Play Button */}
+                      {playableCount > 0 && (
+                        <Button
+                          variant={isExpanded ? "default" : "outline"}
+                          size="sm"
+                          className="gap-2 mb-3 w-full"
+                          onClick={() => setExpandedPlayer(isExpanded ? null : release.id)}
+                        >
+                          {release.media_type === "music" ? <Headphones className="w-4 h-4" /> : <Video className="w-4 h-4" />}
+                          {isExpanded ? "Hide Player" : `Play (${playableCount} track${playableCount > 1 ? "s" : ""})`}
+                        </Button>
+                      )}
+
+                      {/* Inline Player */}
+                      {isExpanded && (
+                        <ReleaseInlinePlayer
+                          releaseId={release.id}
+                          releaseCover={release.cover_image_url}
+                          artistName={release.artist_director}
+                        />
+                      )}
+
+                      {/* Legacy Tracklist for Albums/EPs */}
+                      {release.media_type === "music" && release.tracklist && release.tracklist.length > 0 && !isExpanded && (
                         <Accordion type="single" collapsible className="mb-3">
                           <AccordionItem value="tracklist" className="border-border/50">
                             <AccordionTrigger className="text-sm py-2 hover:no-underline">
@@ -319,21 +450,23 @@ const MediaPage = () => {
                       )}
 
                       {/* Platform Links */}
-                      <div className="flex flex-wrap gap-2">
-                        {links.map((link) => (
-                          <a
-                            key={link.key}
-                            href={link.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-muted hover:bg-primary/20 border border-border hover:border-primary/50 text-sm transition-all"
-                          >
-                            {link.icon}
-                            <span className="hidden sm:inline">{link.label}</span>
-                            <ExternalLink className="w-3 h-3 text-muted-foreground" />
-                          </a>
-                        ))}
-                      </div>
+                      {links.length > 0 && (
+                        <div className="flex flex-wrap gap-2">
+                          {links.map((link) => (
+                            <a
+                              key={link.key}
+                              href={link.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-muted hover:bg-primary/20 border border-border hover:border-primary/50 text-sm transition-all"
+                            >
+                              {link.icon}
+                              <span className="hidden sm:inline">{link.label}</span>
+                              <ExternalLink className="w-3 h-3 text-muted-foreground" />
+                            </a>
+                          ))}
+                        </div>
+                      )}
                     </CardContent>
                   </Card>
                 );
