@@ -33,6 +33,7 @@ interface MediaArtist {
   banner_image_url: string | null;
   is_legacy: boolean;
   legacy_tribute_text: string | null;
+  legacy_background_url: string | null;
   birth_date: string | null;
   death_date: string | null;
   website_url: string | null;
@@ -221,7 +222,14 @@ const ArtistPage = () => {
 
   return (
     <div className="relative min-h-screen bg-background">
-      <StarField />
+      {artist.is_legacy && artist.legacy_background_url ? (
+        <div className="fixed inset-0 z-0">
+          <img src={artist.legacy_background_url} alt="" className="w-full h-full object-cover" />
+          <div className="absolute inset-0 bg-background/80" />
+        </div>
+      ) : (
+        <StarField />
+      )}
       <Navigation />
 
       <div className="relative z-10">
