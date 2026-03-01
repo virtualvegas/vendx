@@ -12,6 +12,7 @@ interface Track {
   audio_url: string;
   cover_image_url?: string | null;
   duration_seconds?: number | null;
+  external_url?: string | null;
 }
 
 interface AudioPlayerProps {
@@ -64,7 +65,14 @@ const AudioPlayer = ({ tracks, initialTrackIndex = 0, className, compact = false
         setIsPlaying(false);
       }
     };
-    const onError = () => setLoadError(true);
+    const onError = () => {
+      setLoadError(true);
+      // If audio fails, try opening external link
+      const track = tracks[currentIndex];
+      if (track?.external_url) {
+        window.open(track.external_url, '_blank', 'noopener,noreferrer');
+      }
+    };
 
     audio.addEventListener("timeupdate", onTime);
     audio.addEventListener("loadedmetadata", onDuration);
@@ -98,13 +106,18 @@ const AudioPlayer = ({ tracks, initialTrackIndex = 0, className, compact = false
   const togglePlay = useCallback(() => {
     const audio = audioRef.current;
     if (!audio) return;
+    // If already errored out, open external link
+    if (loadError && current?.external_url) {
+      window.open(current.external_url, '_blank', 'noopener,noreferrer');
+      return;
+    }
     if (isPlaying) {
       audio.pause();
       setIsPlaying(false);
     } else {
       audio.play().then(() => setIsPlaying(true)).catch(() => {});
     }
-  }, [isPlaying]);
+  }, [isPlaying, loadError, current]);
 
   const seek = (val: number[]) => {
     if (audioRef.current) audioRef.current.currentTime = val[0];
@@ -177,7 +190,13 @@ const AudioPlayer = ({ tracks, initialTrackIndex = 0, className, compact = false
               <span className="text-[10px] text-muted-foreground w-8 font-mono">{formatTime(duration)}</span>
             </div>
             {loadError && (
-              <p className="text-[10px] text-destructive">Unable to load audio</p>
+              <p className="text-[10px] text-destructive">
+                {current?.external_url ? (
+                  <a href={current.external_url} target="_blank" rel="noopener noreferrer" className="underline hover:text-primary transition-colors">
+                    Open in external player →
+                  </a>
+                ) : "Unable to load audio"}
+              </p>
             )}
           </div>
 

@@ -162,6 +162,7 @@ const ArtistPage = () => {
         audio_url: (t.audio_file_url || t.preview_url)!,
         cover_image_url: t.cover_image_url || release?.cover_image_url || artist?.profile_image_url,
         duration_seconds: t.duration_seconds,
+        external_url: t.external_stream_url || undefined,
       };
     });
 
@@ -178,6 +179,7 @@ const ArtistPage = () => {
         embed_url: t.video_embed_url,
         cover_image_url: t.cover_image_url || release?.cover_image_url || artist?.profile_image_url,
         duration_seconds: t.duration_seconds,
+        external_url: t.external_stream_url || undefined,
       };
     });
 

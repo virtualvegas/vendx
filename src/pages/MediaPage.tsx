@@ -158,6 +158,7 @@ const ReleaseInlinePlayer = ({ releaseId, releaseCover, artistName }: {
       audio_url: (t.audio_file_url || t.preview_url)!,
       cover_image_url: t.cover_image_url || releaseCover,
       duration_seconds: t.duration_seconds,
+      external_url: t.external_stream_url || undefined,
     }));
 
   const videoItems = (tracks || [])
@@ -170,6 +171,7 @@ const ReleaseInlinePlayer = ({ releaseId, releaseCover, artistName }: {
       embed_url: t.video_embed_url,
       cover_image_url: t.cover_image_url || releaseCover,
       duration_seconds: t.duration_seconds,
+      external_url: t.external_stream_url || undefined,
     }));
 
   if (!audioTracks.length && !videoItems.length) return null;
