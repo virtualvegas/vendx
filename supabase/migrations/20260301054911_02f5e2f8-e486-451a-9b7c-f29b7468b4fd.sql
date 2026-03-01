@@ -1,0 +1,1 @@
+ALTER TABLE public.media_artists ADD COLUMN legacy_background_url text DEFAULT NULL;

@@ -40,6 +40,7 @@ interface MediaArtist {
   is_active: boolean;
   is_featured: boolean;
   display_order: number;
+  legacy_background_url: string | null;
 }
 
 const emptyForm = {
@@ -50,6 +51,7 @@ const emptyForm = {
   spotify_url: "", apple_music_url: "", soundcloud_url: "", tiktok_url: "",
   contact_email: "", booking_email: "", management_company: "",
   is_active: true, is_featured: false, display_order: 0,
+  legacy_background_url: "",
 };
 
 const ArtistsManager = () => {
@@ -94,6 +96,7 @@ const ArtistsManager = () => {
       contact_email: a.contact_email || "", booking_email: a.booking_email || "",
       management_company: a.management_company || "",
       is_active: a.is_active, is_featured: a.is_featured, display_order: a.display_order,
+      legacy_background_url: a.legacy_background_url || "",
     });
     setDialogOpen(true);
   };
@@ -115,6 +118,7 @@ const ArtistsManager = () => {
       soundcloud_url: form.soundcloud_url || null, tiktok_url: form.tiktok_url || null,
       contact_email: form.contact_email || null, booking_email: form.booking_email || null,
       management_company: form.management_company || null,
+      legacy_background_url: form.legacy_background_url || null,
     };
 
     let error;
@@ -270,6 +274,7 @@ const ArtistsManager = () => {
                       <div><Label>Death Date</Label><Input type="date" value={form.death_date} onChange={(e) => updateField("death_date", e.target.value)} /></div>
                     </div>
                     <div><Label>Tribute Text</Label><Textarea value={form.legacy_tribute_text} onChange={(e) => updateField("legacy_tribute_text", e.target.value)} rows={3} placeholder="A tribute message honoring this artist..." /></div>
+                    <div><Label>Custom Background Image URL</Label><Input value={form.legacy_background_url} onChange={(e) => updateField("legacy_background_url", e.target.value)} placeholder="URL for the page background (replaces space theme)" /></div>
                   </>
                 )}
               </CardContent>

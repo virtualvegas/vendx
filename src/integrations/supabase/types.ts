@@ -1706,6 +1706,7 @@ export type Database = {
           is_active: boolean
           is_featured: boolean
           is_legacy: boolean
+          legacy_background_url: string | null
           legacy_tribute_text: string | null
           management_company: string | null
           name: string
@@ -1736,6 +1737,7 @@ export type Database = {
           is_active?: boolean
           is_featured?: boolean
           is_legacy?: boolean
+          legacy_background_url?: string | null
           legacy_tribute_text?: string | null
           management_company?: string | null
           name: string
@@ -1766,6 +1768,7 @@ export type Database = {
           is_active?: boolean
           is_featured?: boolean
           is_legacy?: boolean
+          legacy_background_url?: string | null
           legacy_tribute_text?: string | null
           management_company?: string | null
           name?: string
