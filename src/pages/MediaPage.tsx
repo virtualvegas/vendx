@@ -19,6 +19,7 @@ import { Music, ExternalLink, Play, Filter, Film, Disc3, ShoppingCart, ListMusic
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import AudioPlayer from "@/components/media/AudioPlayer";
 import VideoPlayer from "@/components/media/VideoPlayer";
+import { useSEO } from "@/hooks/useSEO";
 
 interface TracklistItem {
   number: number;
@@ -191,6 +192,11 @@ const ReleaseInlinePlayer = ({ releaseId, releaseCover, artistName }: {
 const MediaPage = () => {
   const [mediaFilter, setMediaFilter] = useState<"all" | "music" | "film">("all");
   const [expandedPlayer, setExpandedPlayer] = useState<string | null>(null);
+
+  useSEO({
+    title: "VendX Music & Film — Releases",
+    description: "Discover original music and films from VendX. Stream, watch, and listen on your favorite platforms.",
+  });
 
   const { data: releases, isLoading } = useQuery({
     queryKey: ["media-releases"],

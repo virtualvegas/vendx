@@ -11,6 +11,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ShoppingCart, Music, Film, Disc3, Filter, Package, Download, Disc, Image as ImageIcon } from "lucide-react";
+import { useSEO } from "@/hooks/useSEO";
 
 interface MediaShopProduct {
   id: string;
@@ -54,6 +55,11 @@ const typeIcons: Record<string, React.ReactNode> = {
 
 const MediaShopPage = () => {
   const [typeFilter, setTypeFilter] = useState<string>("all");
+
+  useSEO({
+    title: "VendX Music & Film Shop",
+    description: "Official merch, vinyl, digital downloads, and more from VendX Music & Film.",
+  });
 
   const { data: products, isLoading } = useQuery({
     queryKey: ["media-shop-products"],

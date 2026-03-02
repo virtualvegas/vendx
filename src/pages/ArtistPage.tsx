@@ -21,6 +21,7 @@ import {
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import AudioPlayer from "@/components/media/AudioPlayer";
 import VideoPlayer from "@/components/media/VideoPlayer";
+import { useSEO } from "@/hooks/useSEO";
 
 interface MediaArtist {
   id: string;
@@ -111,6 +112,12 @@ const ArtistPage = () => {
       return data as unknown as MediaArtist;
     },
     enabled: !!slug,
+  });
+
+  useSEO({
+    title: artist?.name,
+    description: artist?.short_bio || artist?.bio?.slice(0, 160) || "VendX Music & Film Artist",
+    image: artist?.profile_image_url || artist?.banner_image_url || undefined,
   });
 
   const { data: releases } = useQuery({

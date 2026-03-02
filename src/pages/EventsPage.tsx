@@ -15,6 +15,7 @@ import {
 import { parseLocalDate, isLocalToday } from "@/lib/dateUtils";
 
 import EventCard from "@/components/events/EventCard";
+import { useSEO } from "@/hooks/useSEO";
 
 interface StandEvent {
   id: string;
@@ -36,6 +37,11 @@ interface StandEvent {
 
 const EventsPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
+
+  useSEO({
+    title: "Upcoming Events — VendX",
+    description: "Find VendX concession and amusement stands at local events near you.",
+  });
 
   const { data: standEvents = [], isLoading } = useQuery({
     queryKey: ["public-stand-events"],

@@ -7,9 +7,15 @@ import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Download, CheckCircle, Music, AlertCircle, Loader2 } from "lucide-react";
+import { useSEO } from "@/hooks/useSEO";
 
 const BeatDownloadPage = () => {
   const [searchParams] = useSearchParams();
+
+  useSEO({
+    title: "Beat Download — VendX Music",
+    description: "Download your purchased beat from VendX Music & Film.",
+  });
   const token = searchParams.get("token");
   const [status, setStatus] = useState<"loading" | "ready" | "error" | "expired">("loading");
   const [downloadUrl, setDownloadUrl] = useState<string | null>(null);

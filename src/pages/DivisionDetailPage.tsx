@@ -3,6 +3,7 @@ import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, CheckCircle2, Smartphone, Maximize2, Apple, Monitor, Truck, Bot, Rocket } from "lucide-react";
+import { useSEO } from "@/hooks/useSEO";
 
 const divisionData: Record<string, any> = {
   mini: {
@@ -199,6 +200,11 @@ const divisionData: Record<string, any> = {
 const DivisionDetailPage = () => {
   const { slug } = useParams<{ slug: string }>();
   const division = slug ? divisionData[slug] : null;
+
+  useSEO({
+    title: division ? `${division.name} — ${division.tagline}` : "Division Not Found",
+    description: division?.description?.slice(0, 160) || "VendX Division Details",
+  });
 
   if (!division) {
     return (

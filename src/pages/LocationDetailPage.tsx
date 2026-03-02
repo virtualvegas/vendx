@@ -28,6 +28,7 @@ import {
   Store,
   Warehouse
 } from "lucide-react";
+import { useSEO } from "@/hooks/useSEO";
 
 interface Location {
   id: string;
@@ -143,6 +144,11 @@ const LocationDetailPage = () => {
       return data as Location;
     },
     enabled: !!id,
+  });
+
+  useSEO({
+    title: location ? `${location.name || location.city} — VendX Location` : "VendX Location",
+    description: location ? `VendX machines at ${location.name || location.city}, ${location.country}. ${location.machine_count} machines available.` : "VendX machine location details",
   });
 
   const { data: arcadeGames, isLoading: arcadeLoading } = useQuery({
