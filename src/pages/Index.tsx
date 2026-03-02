@@ -6,7 +6,7 @@ import ServicesOverview from "@/components/home/ServicesOverview";
 import FeaturedProducts from "@/components/home/FeaturedProducts";
 import FeaturedGames from "@/components/home/FeaturedGames";
 import FeaturedMedia from "@/components/home/FeaturedMedia";
-import FeaturedBeats from "@/components/home/FeaturedBeats";
+
 import Divisions from "@/components/Divisions";
 
 import QuickLinks from "@/components/home/QuickLinks";
@@ -24,7 +24,7 @@ const Index = () => {
         <FeaturedProducts />
         <FeaturedGames />
         <FeaturedMedia />
-        <FeaturedBeats />
+        
         <ServicesOverview />
         <Divisions />
         <About />
