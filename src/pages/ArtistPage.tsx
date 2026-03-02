@@ -16,7 +16,7 @@ import {
 import { FaXTwitter, FaTiktok } from "react-icons/fa6";
 import {
   Music, Film, ExternalLink, Globe, Mail, Calendar,
-  Heart, Disc3, ArrowLeft, Play, ListMusic, Clock,
+  Heart, Disc3, ArrowLeft, Play, ListMusic, Clock, ShoppingCart,
 } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import AudioPlayer from "@/components/media/AudioPlayer";
@@ -300,6 +300,15 @@ const ArtistPage = () => {
                   ))}
                 </div>
               )}
+
+              {/* Shop Link */}
+              <div className="mt-4">
+                <Link to={`/media/artists/${artist.slug}/shop`}>
+                  <Button variant="outline" className="gap-2">
+                    <ShoppingCart className="w-4 h-4" /> Shop {artist.name}
+                  </Button>
+                </Link>
+              </div>
             </div>
           </div>
 

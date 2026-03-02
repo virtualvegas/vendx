@@ -195,6 +195,7 @@ const tabGroups: TabGroup[] = [
       { id: "releases-tracks", label: "Releases & Tracks", icon: Music, requiredRoles: ["super_admin"] },
       { id: "media-shop-manager", label: "Media Shop", icon: ShoppingCart, requiredRoles: ["super_admin"] },
       { id: "track-shop-manager", label: "Track Shop", icon: Music, requiredRoles: ["super_admin"] },
+      { id: "artist-payouts", label: "Artist Payouts", icon: DollarSign, requiredRoles: ["super_admin"] },
     ],
   },
 

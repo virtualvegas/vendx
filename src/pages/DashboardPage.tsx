@@ -61,6 +61,7 @@ import AdReachManager from "@/components/dashboard/tabs/AdReachManager";
 import ArtistsManager from "@/components/dashboard/tabs/ArtistsManager";
 import ReleaseTracksManager from "@/components/dashboard/tabs/ReleaseTracksManager";
 import BusinessAdReach from "@/components/dashboard/tabs/business-owner/BusinessAdReach";
+import ArtistPayoutsManager from "@/components/dashboard/tabs/ArtistPayoutsManager";
 export type AppRole =
   | "super_admin"
   | "global_operations_manager"
@@ -318,6 +319,8 @@ const DashboardPage = () => {
         content = <AdReachManager />; break;
       case "site-policies":
         content = <PoliciesManager />; break;
+      case "artist-payouts":
+        content = <ArtistPayoutsManager />; break;
       default:
         content = <CustomerOrders />; break;
     }

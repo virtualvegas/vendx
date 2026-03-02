@@ -367,6 +367,113 @@ export type Database = {
         }
         Relationships: []
       }
+      artist_payout_items: {
+        Row: {
+          amount: number
+          commission_rate: number
+          created_at: string
+          id: string
+          payout_id: string
+          product_id: string | null
+          product_title: string
+          quantity: number
+          unit_price: number
+        }
+        Insert: {
+          amount?: number
+          commission_rate?: number
+          created_at?: string
+          id?: string
+          payout_id: string
+          product_id?: string | null
+          product_title: string
+          quantity?: number
+          unit_price?: number
+        }
+        Update: {
+          amount?: number
+          commission_rate?: number
+          created_at?: string
+          id?: string
+          payout_id?: string
+          product_id?: string | null
+          product_title?: string
+          quantity?: number
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "artist_payout_items_payout_id_fkey"
+            columns: ["payout_id"]
+            isOneToOne: false
+            referencedRelation: "artist_payouts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "artist_payout_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "media_shop_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      artist_payouts: {
+        Row: {
+          amount: number
+          artist_id: string
+          created_at: string
+          id: string
+          notes: string | null
+          payment_method: string | null
+          payment_reference: string | null
+          period_end: string
+          period_start: string
+          processed_at: string | null
+          processed_by: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          amount?: number
+          artist_id: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          payment_method?: string | null
+          payment_reference?: string | null
+          period_end: string
+          period_start: string
+          processed_at?: string | null
+          processed_by?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          artist_id?: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          payment_method?: string | null
+          payment_reference?: string | null
+          period_end?: string
+          period_start?: string
+          processed_at?: string | null
+          processed_by?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "artist_payouts_artist_id_fkey"
+            columns: ["artist_id"]
+            isOneToOne: false
+            referencedRelation: "media_artists"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       beat_purchases: {
         Row: {
           amount: number
@@ -1697,6 +1804,7 @@ export type Database = {
           bio: string | null
           birth_date: string | null
           booking_email: string | null
+          commission_rate: number | null
           contact_email: string | null
           created_at: string
           death_date: string | null
@@ -1728,6 +1836,7 @@ export type Database = {
           bio?: string | null
           birth_date?: string | null
           booking_email?: string | null
+          commission_rate?: number | null
           contact_email?: string | null
           created_at?: string
           death_date?: string | null
@@ -1759,6 +1868,7 @@ export type Database = {
           bio?: string | null
           birth_date?: string | null
           booking_email?: string | null
+          commission_rate?: number | null
           contact_email?: string | null
           created_at?: string
           death_date?: string | null
@@ -1924,6 +2034,7 @@ export type Database = {
       }
       media_shop_products: {
         Row: {
+          artist_id: string | null
           compare_at_price: number | null
           created_at: string
           description: string | null
@@ -1943,6 +2054,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          artist_id?: string | null
           compare_at_price?: number | null
           created_at?: string
           description?: string | null
@@ -1962,6 +2074,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          artist_id?: string | null
           compare_at_price?: number | null
           created_at?: string
           description?: string | null
@@ -1981,6 +2094,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "media_shop_products_artist_id_fkey"
+            columns: ["artist_id"]
+            isOneToOne: false
+            referencedRelation: "media_artists"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "media_shop_products_media_release_id_fkey"
             columns: ["media_release_id"]
