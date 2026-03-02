@@ -134,9 +134,9 @@ const ArtistShopPage = () => {
                   <Music className="w-4 h-4" /> Artist Profile
                 </Button>
               </Link>
-              <Link to="/media/shop">
+              <Link to="/media/artists">
                 <Button variant="outline" className="gap-2">
-                  <ShoppingCart className="w-4 h-4" /> Full Shop
+                  <ShoppingCart className="w-4 h-4" /> All Artists
                 </Button>
               </Link>
             </div>
