@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "sonner";
 import { Plus, Pencil, Trash2, Heart, Music, Film, Users } from "lucide-react";
+import ArtistImageUpload from "./artists/ArtistImageUpload";
 
 interface MediaArtist {
   id: string;
@@ -255,8 +256,8 @@ const ArtistsManager = () => {
 
             {/* Images */}
             <div className="grid grid-cols-2 gap-4">
-              <div><Label>Profile Image URL</Label><Input value={form.profile_image_url} onChange={(e) => updateField("profile_image_url", e.target.value)} /></div>
-              <div><Label>Banner Image URL</Label><Input value={form.banner_image_url} onChange={(e) => updateField("banner_image_url", e.target.value)} /></div>
+              <ArtistImageUpload label="Profile Image" value={form.profile_image_url} onChange={(url) => updateField("profile_image_url", url)} folder="profiles" placeholder="Upload or paste profile image URL" />
+              <ArtistImageUpload label="Banner Image" value={form.banner_image_url} onChange={(url) => updateField("banner_image_url", url)} folder="banners" placeholder="Upload or paste banner image URL" />
             </div>
 
             {/* Legacy Section */}
@@ -274,7 +275,7 @@ const ArtistsManager = () => {
                       <div><Label>Death Date</Label><Input type="date" value={form.death_date} onChange={(e) => updateField("death_date", e.target.value)} /></div>
                     </div>
                     <div><Label>Tribute Text</Label><Textarea value={form.legacy_tribute_text} onChange={(e) => updateField("legacy_tribute_text", e.target.value)} rows={3} placeholder="A tribute message honoring this artist..." /></div>
-                    <div><Label>Custom Background Image URL</Label><Input value={form.legacy_background_url} onChange={(e) => updateField("legacy_background_url", e.target.value)} placeholder="URL for the page background (replaces space theme)" /></div>
+                    <ArtistImageUpload label="Custom Background Image" value={form.legacy_background_url} onChange={(url) => updateField("legacy_background_url", url)} folder="legacy-backgrounds" placeholder="Upload or paste background image URL" />
                   </>
                 )}
               </CardContent>
