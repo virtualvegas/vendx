@@ -257,15 +257,34 @@ serve(async (req) => {
         machineDbId = machine.id;
       }
 
-      if (!totp_code || totp_code.length !== 6) {
+      if (!totp_code || totp_code.length !== 6 || !/^\d{6}$/.test(totp_code)) {
         return new Response(JSON.stringify({ error: "Invalid code format" }), {
           status: 400,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
 
+      // Rate limiting: track attempts by machine API key or IP
+      const rateLimitKey = apiKey || req.headers.get("x-forwarded-for") || "unknown";
+      const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+      
+      // Check recent failed attempts from machine_activity_log
+      const { data: recentAttempts, error: attemptError } = await supabase
+        .from("machine_activity_log")
+        .select("id")
+        .eq("activity_type", "totp_failed")
+        .gte("created_at", fiveMinutesAgo)
+        .eq("item_name", rateLimitKey);
+
+      if (!attemptError && recentAttempts && recentAttempts.length >= 5) {
+        console.warn("Rate limit exceeded for TOTP attempts:", rateLimitKey);
+        return new Response(JSON.stringify({ error: "Too many attempts. Please wait 5 minutes." }), {
+          status: 429,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
       // Get all users with TOTP secrets and check each one
-      // In production, you'd want to limit this or use a more efficient lookup
       const { data: profiles, error: profilesError } = await supabase
         .from("profiles")
         .select("id, totp_secret")
@@ -290,7 +309,20 @@ serve(async (req) => {
       }
 
       if (!matchedUserId) {
-        console.log("Invalid TOTP code attempted:", totp_code);
+        // Log failed attempt for rate limiting
+        if (machineDbId) {
+          await supabase.from("machine_activity_log").insert({
+            machine_id: machineDbId,
+            activity_type: "totp_failed",
+            item_name: rateLimitKey,
+            metadata: { code_attempted: true },
+          });
+        } else {
+          // For demo mode, use a placeholder machine_id logging approach
+          // We log to console only since we don't have a real machine_id
+          console.warn("Failed TOTP attempt from:", rateLimitKey);
+        }
+        
         return new Response(JSON.stringify({ error: "Invalid code" }), {
           status: 400,
           headers: { ...corsHeaders, "Content-Type": "application/json" },

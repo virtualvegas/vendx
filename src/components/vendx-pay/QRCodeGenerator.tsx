@@ -11,126 +11,56 @@ interface QRCodeGeneratorProps {
   onOpenChange: (open: boolean) => void;
 }
 
-// TOTP generation utilities
-function base32ToBytes(base32: string): Uint8Array {
-  const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
-  let bits = '';
-  
-  for (const char of base32.toUpperCase()) {
-    const val = alphabet.indexOf(char);
-    if (val === -1) continue;
-    bits += val.toString(2).padStart(5, '0');
-  }
-  
-  const bytes = new Uint8Array(Math.floor(bits.length / 8));
-  for (let i = 0; i < bytes.length; i++) {
-    bytes[i] = parseInt(bits.slice(i * 8, (i + 1) * 8), 2);
-  }
-  
-  return bytes;
-}
-
-async function hmacSha1(key: Uint8Array, message: Uint8Array): Promise<Uint8Array> {
-  const cryptoKey = await crypto.subtle.importKey(
-    'raw',
-    key.buffer as ArrayBuffer,
-    { name: 'HMAC', hash: 'SHA-1' },
-    false,
-    ['sign']
-  );
-  const signature = await crypto.subtle.sign('HMAC', cryptoKey, message.buffer as ArrayBuffer);
-  return new Uint8Array(signature);
-}
-
-async function generateTOTP(secret: string, timeStep: number = 60): Promise<string> {
-  const counter = Math.floor(Date.now() / 1000 / timeStep);
-  const counterBytes = new Uint8Array(8);
-  let temp = counter;
-  for (let i = 7; i >= 0; i--) {
-    counterBytes[i] = temp & 0xff;
-    temp = Math.floor(temp / 256);
-  }
-  
-  const key = base32ToBytes(secret);
-  const hmac = await hmacSha1(key, counterBytes);
-  
-  const offset = hmac[19] & 0xf;
-  const code = (
-    ((hmac[offset] & 0x7f) << 24) |
-    ((hmac[offset + 1] & 0xff) << 16) |
-    ((hmac[offset + 2] & 0xff) << 8) |
-    (hmac[offset + 3] & 0xff)
-  ) % 1000000;
-  
-  return code.toString().padStart(6, '0');
-}
-
 function getTimeRemaining(timeStep: number = 60): number {
   return timeStep - (Math.floor(Date.now() / 1000) % timeStep);
 }
 
 const QRCodeGenerator = ({ open, onOpenChange }: QRCodeGeneratorProps) => {
-  const [totpSecret, setTotpSecret] = useState<string | null>(null);
   const [currentCode, setCurrentCode] = useState<string>("------");
   const [timeRemaining, setTimeRemaining] = useState(60);
   const [copied, setCopied] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [hasTotp, setHasTotp] = useState(false);
   const { toast } = useToast();
 
-  const TIME_STEP = 60; // 60 seconds like McDonald's
+  const TIME_STEP = 60;
 
-  const generateCode = useCallback(async (secret: string) => {
+  const fetchCode = useCallback(async () => {
     try {
-      const code = await generateTOTP(secret, TIME_STEP);
-      setCurrentCode(code);
+      const { data, error } = await supabase.functions.invoke("totp-generate-code");
+      if (error) throw error;
+      if (data?.code) {
+        setCurrentCode(data.code);
+        setTimeRemaining(data.time_remaining || TIME_STEP);
+        setHasTotp(true);
+      }
     } catch (error) {
-      console.error("Error generating TOTP:", error);
+      console.error("Error fetching TOTP code:", error);
+    } finally {
+      setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    const fetchSecret = async () => {
-      setLoading(true);
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("totp_secret")
-          .eq("id", user.id)
-          .single();
-        
-        if (profile?.totp_secret) {
-          setTotpSecret(profile.totp_secret);
-          await generateCode(profile.totp_secret);
-        }
-      }
-      setLoading(false);
-    };
-
     if (open) {
-      fetchSecret();
+      setLoading(true);
+      fetchCode();
     }
-  }, [open, generateCode]);
+  }, [open, fetchCode]);
 
-  // Update countdown and regenerate code every second
   useEffect(() => {
-    if (!totpSecret || !open) return;
-
-    const interval = setInterval(async () => {
-      const remaining = getTimeRemaining(TIME_STEP);
-      setTimeRemaining(remaining);
-      
-      // Regenerate code when timer resets
-      if (remaining === TIME_STEP) {
-        await generateCode(totpSecret);
-      }
+    if (!hasTotp || !open) return;
+    const interval = setInterval(() => {
+      setTimeRemaining((prev) => {
+        if (prev <= 1) {
+          fetchCode();
+          return TIME_STEP;
+        }
+        return prev - 1;
+      });
     }, 1000);
-
-    // Set initial time
-    setTimeRemaining(getTimeRemaining(TIME_STEP));
-
     return () => clearInterval(interval);
-  }, [totpSecret, open, generateCode]);
+  }, [hasTotp, open, fetchCode]);
 
   const copyCode = () => {
     navigator.clipboard.writeText(currentCode);
@@ -142,7 +72,6 @@ const QRCodeGenerator = ({ open, onOpenChange }: QRCodeGeneratorProps) => {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  // Generate a simple QR code representation using CSS
   const QRCodeDisplay = ({ data }: { data: string }) => {
     return (
       <div className="flex flex-col items-center gap-4">
@@ -168,8 +97,8 @@ const QRCodeGenerator = ({ open, onOpenChange }: QRCodeGeneratorProps) => {
   };
 
   const getProgressColor = () => {
-    if (timeRemaining <= 10) return "text-red-500";
-    if (timeRemaining <= 20) return "text-yellow-500";
+    if (timeRemaining <= 10) return "text-destructive";
+    if (timeRemaining <= 20) return "text-amber-500";
     return "text-primary";
   };
 
@@ -206,7 +135,6 @@ const QRCodeGenerator = ({ open, onOpenChange }: QRCodeGeneratorProps) => {
               </div>
             ) : (
               <div className="text-center space-y-6">
-                {/* Code Display */}
                 <div className="relative">
                   <div className="p-8 bg-gradient-to-br from-primary/10 to-accent/10 rounded-xl border border-primary/20">
                     <p className="text-sm text-muted-foreground mb-3">Your Payment Code</p>
@@ -214,14 +142,9 @@ const QRCodeGenerator = ({ open, onOpenChange }: QRCodeGeneratorProps) => {
                       <p className="text-5xl font-mono font-bold tracking-[0.3em] text-foreground">
                         {currentCode}
                       </p>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={copyCode}
-                        className="ml-2"
-                      >
+                      <Button variant="ghost" size="icon" onClick={copyCode} className="ml-2">
                         {copied ? (
-                          <Check className="w-5 h-5 text-green-500" />
+                          <Check className="w-5 h-5 text-primary" />
                         ) : (
                           <Copy className="w-5 h-5" />
                         )}
@@ -229,7 +152,6 @@ const QRCodeGenerator = ({ open, onOpenChange }: QRCodeGeneratorProps) => {
                     </div>
                   </div>
 
-                  {/* Timer */}
                   <div className="mt-4 flex items-center justify-center gap-2">
                     <Clock className={`w-4 h-4 ${getProgressColor()}`} />
                     <span className={`text-sm font-medium ${getProgressColor()}`}>
@@ -237,7 +159,6 @@ const QRCodeGenerator = ({ open, onOpenChange }: QRCodeGeneratorProps) => {
                     </span>
                   </div>
 
-                  {/* Progress bar */}
                   <div className="mt-2 h-1.5 bg-muted rounded-full overflow-hidden">
                     <div 
                       className="h-full bg-primary transition-all duration-1000 ease-linear"
@@ -246,7 +167,6 @@ const QRCodeGenerator = ({ open, onOpenChange }: QRCodeGeneratorProps) => {
                   </div>
                 </div>
 
-                {/* Instructions */}
                 <div className="text-sm text-muted-foreground space-y-2 pt-4 border-t border-border">
                   <p className="font-medium text-foreground">How to use:</p>
                   <ol className="text-left space-y-1 pl-4">
@@ -264,7 +184,7 @@ const QRCodeGenerator = ({ open, onOpenChange }: QRCodeGeneratorProps) => {
               <p className="text-sm text-muted-foreground mb-4">
                 Scan this QR code on the machine screen to link your wallet
               </p>
-              {totpSecret && (
+              {hasTotp && (
                 <QRCodeDisplay data={`vendxpay:${currentCode}`} />
               )}
               <p className="text-xs text-muted-foreground mt-4">
