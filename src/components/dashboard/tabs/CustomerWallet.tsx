@@ -10,68 +10,16 @@ import { WalletHierarchyView } from "@/components/wallet";
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-// TOTP generation utilities
-function base32ToBytes(base32: string): Uint8Array {
-  const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
-  let bits = '';
-  for (const char of base32.toUpperCase()) {
-    const val = alphabet.indexOf(char);
-    if (val === -1) continue;
-    bits += val.toString(2).padStart(5, '0');
-  }
-  const bytes = new Uint8Array(Math.floor(bits.length / 8));
-  for (let i = 0; i < bytes.length; i++) {
-    bytes[i] = parseInt(bits.slice(i * 8, (i + 1) * 8), 2);
-  }
-  return bytes;
-}
-
-async function hmacSha1(key: Uint8Array, message: Uint8Array): Promise<Uint8Array> {
-  const cryptoKey = await crypto.subtle.importKey(
-    'raw',
-    key.buffer as ArrayBuffer,
-    { name: 'HMAC', hash: 'SHA-1' },
-    false,
-    ['sign']
-  );
-  const signature = await crypto.subtle.sign('HMAC', cryptoKey, message.buffer as ArrayBuffer);
-  return new Uint8Array(signature);
-}
-
-async function generateTOTP(secret: string, timeStep: number = 60): Promise<string> {
-  const counter = Math.floor(Date.now() / 1000 / timeStep);
-  const counterBytes = new Uint8Array(8);
-  let temp = counter;
-  for (let i = 7; i >= 0; i--) {
-    counterBytes[i] = temp & 0xff;
-    temp = Math.floor(temp / 256);
-  }
-  const key = base32ToBytes(secret);
-  const hmac = await hmacSha1(key, counterBytes);
-  const offset = hmac[19] & 0xf;
-  const code = (
-    ((hmac[offset] & 0x7f) << 24) |
-    ((hmac[offset + 1] & 0xff) << 16) |
-    ((hmac[offset + 2] & 0xff) << 8) |
-    (hmac[offset + 3] & 0xff)
-  ) % 1000000;
-  return code.toString().padStart(6, '0');
-}
-
-function getTimeRemaining(timeStep: number = 60): number {
-  return timeStep - (Math.floor(Date.now() / 1000) % timeStep);
-}
-
 const CustomerWallet = () => {
   const [loadDialogOpen, setLoadDialogOpen] = useState(false);
-  const [totpSecret, setTotpSecret] = useState<string | null>(null);
   const [currentCode, setCurrentCode] = useState<string>("------");
   const [timeRemaining, setTimeRemaining] = useState(60);
   const [copied, setCopied] = useState(false);
+  const [hasTotp, setHasTotp] = useState(false);
   const { toast } = useToast();
   const TIME_STEP = 60;
 
-  const { data: wallet, isLoading: walletLoading, refetch } = useQuery({
+  const { data: wallet, isLoading: walletLoading } = useQuery({
     queryKey: ["customer-wallet"],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -87,45 +35,37 @@ const CustomerWallet = () => {
     },
   });
 
-  const generateCode = useCallback(async (secret: string) => {
+  const fetchCode = useCallback(async () => {
     try {
-      const code = await generateTOTP(secret, TIME_STEP);
-      setCurrentCode(code);
+      const { data, error } = await supabase.functions.invoke("totp-generate-code");
+      if (error) throw error;
+      if (data?.code) {
+        setCurrentCode(data.code);
+        setTimeRemaining(data.time_remaining || TIME_STEP);
+        setHasTotp(true);
+      }
     } catch (error) {
-      console.error("Error generating TOTP:", error);
+      console.error("Error fetching TOTP code:", error);
     }
   }, []);
 
   useEffect(() => {
-    const fetchSecret = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("totp_secret")
-          .eq("id", user.id)
-          .single();
-        if (profile?.totp_secret) {
-          setTotpSecret(profile.totp_secret);
-          await generateCode(profile.totp_secret);
-        }
-      }
-    };
-    fetchSecret();
-  }, [generateCode]);
+    fetchCode();
+  }, [fetchCode]);
 
   useEffect(() => {
-    if (!totpSecret) return;
-    const interval = setInterval(async () => {
-      const remaining = getTimeRemaining(TIME_STEP);
-      setTimeRemaining(remaining);
-      if (remaining === TIME_STEP) {
-        await generateCode(totpSecret);
-      }
+    if (!hasTotp) return;
+    const interval = setInterval(() => {
+      setTimeRemaining((prev) => {
+        if (prev <= 1) {
+          fetchCode();
+          return TIME_STEP;
+        }
+        return prev - 1;
+      });
     }, 1000);
-    setTimeRemaining(getTimeRemaining(TIME_STEP));
     return () => clearInterval(interval);
-  }, [totpSecret, generateCode]);
+  }, [hasTotp, fetchCode]);
 
   const copyCode = () => {
     navigator.clipboard.writeText(currentCode);

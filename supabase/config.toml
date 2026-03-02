@@ -59,3 +59,6 @@ verify_jwt = false
 
 [functions.tickets-redeem-prize]
 verify_jwt = true
+
+[functions.totp-generate-code]
+verify_jwt = true
