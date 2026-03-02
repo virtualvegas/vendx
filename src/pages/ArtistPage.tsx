@@ -256,7 +256,7 @@ const ArtistPage = () => {
           <div className="flex flex-col md:flex-row gap-6 items-start">
             <div className="w-32 h-32 md:w-40 md:h-40 rounded-xl overflow-hidden border-4 border-background shadow-xl bg-muted flex-shrink-0">
               {artist.profile_image_url ? (
-                <img src={artist.profile_image_url} alt={artist.name} className="w-full h-full object-cover" />
+                <img src={artist.profile_image_url} alt={artist.name} className="w-full h-full object-contain" />
               ) : (
                 <div className="w-full h-full flex items-center justify-center">
                   <Music className="w-16 h-16 text-muted-foreground/30" />
@@ -399,9 +399,9 @@ const ArtistPage = () => {
                   const releaseTracks = getTracksForRelease(release.id);
                   return (
                     <Card key={release.id} className="group bg-card/50 border-border/50 hover:border-primary/50 transition-all overflow-hidden">
-                      <div className="relative h-48 bg-muted overflow-hidden">
+                      <div className="relative aspect-square bg-muted overflow-hidden">
                         {release.cover_image_url ? (
-                          <img src={release.cover_image_url} alt={release.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                          <img src={release.cover_image_url} alt={release.title} className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300" />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center">
                             {release.media_type === "music" ? <Music className="w-16 h-16 text-muted-foreground/30" /> : <Film className="w-16 h-16 text-muted-foreground/30" />}
