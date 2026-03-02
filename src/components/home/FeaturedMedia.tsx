@@ -60,10 +60,10 @@ const FeaturedMedia = () => {
                 <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </Button>
             </Link>
-            <Link to="/media/shop">
+            <Link to="/media/artists">
               <Button variant="outline" className="gap-2 group border-red-500/50 text-red-400 hover:bg-red-500/10">
                 <ShoppingBag className="w-4 h-4" />
-                Shop
+                Artist Shops
               </Button>
             </Link>
           </div>

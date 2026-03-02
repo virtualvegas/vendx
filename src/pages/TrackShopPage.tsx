@@ -188,9 +188,9 @@ const TrackShopPage = () => {
                   <Film className="w-4 h-4" /> Releases
                 </Button>
               </Link>
-              <Link to="/media/shop">
+              <Link to="/media/artists">
                 <Button variant="outline" className="gap-2">
-                  <ShoppingCart className="w-4 h-4" /> Merch Shop
+                  <ShoppingCart className="w-4 h-4" /> Artist Shops
                 </Button>
               </Link>
             </div>

@@ -21,6 +21,7 @@ import {
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import AudioPlayer from "@/components/media/AudioPlayer";
 import VideoPlayer from "@/components/media/VideoPlayer";
+import ArtistMerchSection from "@/components/media/ArtistMerchSection";
 import { useSEO } from "@/hooks/useSEO";
 
 interface MediaArtist {
@@ -308,14 +309,7 @@ const ArtistPage = () => {
                 </div>
               )}
 
-              {/* Shop Link */}
-              <div className="mt-4">
-                <Link to={`/media/artists/${artist.slug}/shop`}>
-                  <Button variant="outline" className="gap-2">
-                    <ShoppingCart className="w-4 h-4" /> Shop {artist.name}
-                  </Button>
-                </Link>
-              </div>
+              {/* Shop link removed - merch is now inline below */}
             </div>
           </div>
 
@@ -490,6 +484,9 @@ const ArtistPage = () => {
                           </Accordion>
                         )}
 
+                        {/* Release-linked merch */}
+                        <ArtistMerchSection artistId={artist.id} artistName={artist.name} releaseId={release.id} compact />
+
                         {/* Quick streaming links */}
                         <div className="flex gap-2 mt-3">
                           {release.spotify_url && (
@@ -515,6 +512,9 @@ const ArtistPage = () => {
               </div>
             </div>
           )}
+
+          {/* Full artist merch section */}
+          <ArtistMerchSection artistId={artist.id} artistName={artist.name} />
 
           {/* Back link */}
           <div className="pb-16">

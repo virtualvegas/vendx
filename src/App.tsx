@@ -28,7 +28,7 @@ import ArcadeSubscriptionPage from "./pages/ArcadeSubscriptionPage";
 import OrderSuccessPage from "./pages/OrderSuccessPage";
 import VideoGamesPage from "./pages/VideoGamesPage";
 import MediaPage from "./pages/MediaPage";
-import MediaShopPage from "./pages/MediaShopPage";
+// MediaShopPage removed - merch now on artist profiles
 import TrackShopPage from "./pages/TrackShopPage";
 import BeatDownloadPage from "./pages/BeatDownloadPage";
 import GamesPlayerPage from "./pages/GamesPlayerPage";
@@ -91,7 +91,7 @@ const App = () => (
               <Route path="/games" element={<VideoGamesPage />} />
               <Route path="/games-player" element={<GamesPlayerPage />} />
               <Route path="/media" element={<MediaPage />} />
-              <Route path="/media/shop" element={<MediaShopPage />} />
+              {/* /media/shop removed - merch now lives on artist profiles */}
               <Route path="/media/track-shop" element={<TrackShopPage />} />
               <Route path="/media/download" element={<BeatDownloadPage />} />
               <Route path="/media/artists" element={<ArtistsListPage />} />

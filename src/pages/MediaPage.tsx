@@ -269,9 +269,9 @@ const MediaPage = () => {
                   <Music className="w-4 h-4" /> Artists & Filmmakers
                 </Button>
               </Link>
-              <Link to="/media/shop">
+              <Link to="/media/artists">
                 <Button variant="outline" className="gap-2">
-                  <ShoppingCart className="w-4 h-4" /> Merch Shop
+                  <ShoppingCart className="w-4 h-4" /> Artist Shops
                 </Button>
               </Link>
               <Link to="/media/track-shop">
