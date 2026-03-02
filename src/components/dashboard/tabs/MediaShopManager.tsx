@@ -43,7 +43,7 @@ const MediaShopManager = () => {
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [form, setForm] = useState({ ...defaultForm, media_release_id: "" });
+  const [form, setForm] = useState({ ...defaultForm, media_release_id: "", artist_id: "" });
 
   const { data: releases } = useQuery({
     queryKey: ["media-releases-for-shop"],
@@ -53,6 +53,19 @@ const MediaShopManager = () => {
         .select("id, title, media_type")
         .eq("is_active", true)
         .order("title");
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const { data: artists } = useQuery({
+    queryKey: ["media-artists-for-shop"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("media_artists")
+        .select("id, name")
+        .eq("is_active", true)
+        .order("name");
       if (error) throw error;
       return data;
     },
@@ -87,6 +100,7 @@ const MediaShopManager = () => {
         display_order: parseInt(values.display_order) || 0,
         tags: values.tags ? values.tags.split(",").map((t) => t.trim()).filter(Boolean) : null,
         media_release_id: values.media_release_id || null,
+        artist_id: values.artist_id || null,
       };
 
       if (editingId) {
@@ -118,7 +132,7 @@ const MediaShopManager = () => {
   });
 
   const resetForm = () => {
-    setForm({ ...defaultForm, media_release_id: "" });
+    setForm({ ...defaultForm, media_release_id: "", artist_id: "" });
     setEditingId(null);
   };
 
@@ -139,6 +153,7 @@ const MediaShopManager = () => {
       display_order: String(product.display_order ?? 0),
       tags: product.tags?.join(", ") || "",
       media_release_id: product.media_release_id || "",
+      artist_id: product.artist_id || "",
     });
     setDialogOpen(true);
   };
@@ -204,6 +219,18 @@ const MediaShopManager = () => {
                   <Input value={form.file_url} onChange={(e) => setForm({ ...form, file_url: e.target.value })} />
                 </div>
               )}
+              <div>
+                <Label>Artist</Label>
+                <Select value={form.artist_id} onValueChange={(v) => setForm({ ...form, artist_id: v === "none" ? "" : v })}>
+                  <SelectTrigger><SelectValue placeholder="None (no artist)" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">None</SelectItem>
+                    {artists?.map((a) => (
+                      <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
               <div>
                 <Label>Linked Release</Label>
                 <Select value={form.media_release_id} onValueChange={(v) => setForm({ ...form, media_release_id: v === "none" ? "" : v })}>
