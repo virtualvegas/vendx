@@ -14,6 +14,7 @@ import WalletLoadDialog from "@/components/vendx-pay/WalletLoadDialog";
 import QRCodeGenerator from "@/components/vendx-pay/QRCodeGenerator";
 import { ArcadePaymentFlow, ArcadeMachineScanner, ChildWalletManager } from "@/components/arcade";
 import { TicketBalanceCard } from "@/components/wallet";
+import { useSEO } from "@/hooks/useSEO";
 
 interface WalletData {
   id: string;
@@ -43,6 +44,10 @@ const TIER_INFO = {
 };
 
 const WalletPage = () => {
+  useSEO({
+    title: "VendX Pay — Digital Wallet",
+    description: "Your digital wallet for all VendX machines. Add funds, pay at vending and arcade machines, and manage your rewards.",
+  });
   const [user, setUser] = useState<User | null>(null);
   const [wallet, setWallet] = useState<WalletData | null>(null);
   const [rewards, setRewards] = useState<RewardsData | null>(null);

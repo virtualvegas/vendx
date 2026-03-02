@@ -22,6 +22,7 @@ import {
 import { FaXbox, FaAmazon } from "react-icons/fa";
 import { Monitor, Globe } from "lucide-react";
 import { Gamepad2, ExternalLink, Play, Filter, Calendar } from "lucide-react";
+import { useSEO } from "@/hooks/useSEO";
 import { formatDisplayDate, parseLocalDate } from "@/lib/dateUtils";
 import vendxInteractiveLogo from "@/assets/vendx-interactive-logo.png";
 
@@ -105,6 +106,11 @@ const statusLabels: Record<string, string> = {
 
 const VideoGamesPage = () => {
   const [selectedPlatform, setSelectedPlatform] = useState<string | null>(null);
+
+  useSEO({
+    title: "VendX Interactive — Games",
+    description: "Experience gaming excellence with VendX Interactive — premium titles across all major platforms.",
+  });
 
   const { data: games, isLoading } = useQuery({
     queryKey: ["video-games"],

@@ -10,6 +10,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowLeft, Calendar, Eye, Share2, Tag, Clock } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
+import { useSEO } from "@/hooks/useSEO";
 
 interface NewsCategory {
   id: string;
@@ -42,6 +43,13 @@ export default function NewsArticlePage() {
   const [article, setArticle] = useState<NewsArticle | null>(null);
   const [relatedArticles, setRelatedArticles] = useState<NewsArticle[]>([]);
   const [loading, setLoading] = useState(true);
+
+  useSEO({
+    title: article?.meta_title || article?.title,
+    description: article?.meta_description || article?.excerpt || article?.title,
+    image: article?.featured_image || undefined,
+    type: "article",
+  });
 
   useEffect(() => {
     if (slug) {

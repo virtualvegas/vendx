@@ -10,6 +10,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Gamepad2, Maximize2, Minimize2, ArrowLeft, ExternalLink } from "lucide-react";
 import { Link } from "react-router-dom";
 import vendxInteractiveLogo from "@/assets/vendx-interactive-logo.png";
+import { useSEO } from "@/hooks/useSEO";
 
 interface PlayableGame {
   id: string;
@@ -24,6 +25,12 @@ interface PlayableGame {
 const GamesPlayerPage = () => {
   const [selectedGame, setSelectedGame] = useState<PlayableGame | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
+
+  useSEO({
+    title: selectedGame ? `Play ${selectedGame.title}` : "Play Games in Browser",
+    description: selectedGame?.short_description || "Play VendX Interactive games directly in your browser — no downloads required.",
+    image: selectedGame?.cover_image_url || undefined,
+  });
 
   const { data: games, isLoading } = useQuery({
     queryKey: ["playable-games"],

@@ -15,6 +15,7 @@ import {
   Music, Play, Pause, ShoppingCart, Filter, Clock, Zap, Crown, Star,
   Film, Download
 } from "lucide-react";
+import { useSEO } from "@/hooks/useSEO";
 
 interface BeatTrack {
   id: string;
@@ -53,6 +54,11 @@ const TrackShopPage = () => {
   const [progress, setProgress] = useState(0);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  useSEO({
+    title: "Track Shop — Premium Beats",
+    description: "Premium beats for artists — preview 30 seconds, then purchase and download the full track instantly.",
+  });
 
   const { data: beats, isLoading } = useQuery({
     queryKey: ["beat-tracks"],

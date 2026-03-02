@@ -62,6 +62,7 @@ import ArtistsManager from "@/components/dashboard/tabs/ArtistsManager";
 import ReleaseTracksManager from "@/components/dashboard/tabs/ReleaseTracksManager";
 import BusinessAdReach from "@/components/dashboard/tabs/business-owner/BusinessAdReach";
 import ArtistPayoutsManager from "@/components/dashboard/tabs/ArtistPayoutsManager";
+import { useSEO } from "@/hooks/useSEO";
 export type AppRole =
   | "super_admin"
   | "global_operations_manager"
@@ -76,6 +77,10 @@ export type AppRole =
   | "business_owner";
 
 const DashboardPage = () => {
+  useSEO({
+    title: "Dashboard — VendX",
+    description: "Manage your VendX account, orders, wallet, rewards, and more from your personalized dashboard.",
+  });
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [roles, setRoles] = useState<AppRole[]>([]);
