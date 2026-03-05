@@ -12,7 +12,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   SiSpotify, SiApplemusic, SiYoutubemusic, SiSoundcloud,
-  SiTidal, SiBandcamp, SiNetflix, SiPrimevideo, SiYoutube, SiAppletv,
+  SiTidal, SiBandcamp, SiNetflix, SiYoutube,
 } from "react-icons/si";
 import { FaAmazon, FaFilm } from "react-icons/fa";
 import { Music, ExternalLink, Play, Filter, Film, Disc3, ShoppingCart, ListMusic, Clock, Headphones, Video } from "lucide-react";
@@ -94,11 +94,11 @@ const platformConfig: Record<string, { icon: React.ReactNode; label: string; fie
   deezer: { icon: <Music className="w-5 h-5" />, label: "Deezer", field: "deezer_url" },
   bandcamp: { icon: <SiBandcamp className="w-5 h-5" />, label: "Bandcamp", field: "bandcamp_url" },
   netflix: { icon: <SiNetflix className="w-5 h-5" />, label: "Netflix", field: "netflix_url" },
-  prime_video: { icon: <SiPrimevideo className="w-5 h-5" />, label: "Prime Video", field: "prime_video_url" },
+  prime_video: { icon: <FaAmazon className="w-5 h-5" />, label: "Prime Video", field: "prime_video_url" },
   disney_plus: { icon: <Film className="w-5 h-5" />, label: "Disney+", field: "disney_plus_url" },
   hulu: { icon: <Film className="w-5 h-5" />, label: "Hulu", field: "hulu_url" },
   youtube: { icon: <SiYoutube className="w-5 h-5" />, label: "YouTube", field: "youtube_url" },
-  apple_tv: { icon: <SiAppletv className="w-5 h-5" />, label: "Apple TV+", field: "apple_tv_url" },
+  apple_tv: { icon: <SiApplemusic className="w-5 h-5" />, label: "Apple TV+", field: "apple_tv_url" },
   peacock: { icon: <Film className="w-5 h-5" />, label: "Peacock", field: "peacock_url" },
   paramount_plus: { icon: <Film className="w-5 h-5" />, label: "Paramount+", field: "paramount_plus_url" },
   tubi: { icon: <Film className="w-5 h-5" />, label: "Tubi", field: "tubi_url" },
