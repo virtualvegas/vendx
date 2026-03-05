@@ -1,64 +1,47 @@
 project_id = "xbbnodpvfvxtbffziuvr"
 
-[functions.vendx-pay-create-checkout]
-verify_jwt = true
-
-[functions.vendx-pay-webhook]
-verify_jwt = false
-
-[functions.vendx-pay-machine-auth]
-verify_jwt = false
-
-[functions.vendx-pay-session]
-verify_jwt = false
-
-[functions.vendx-pay-process]
-verify_jwt = false
-
-[functions.vendx-pay-balance]
-verify_jwt = false
-
-[functions.store-create-checkout]
-verify_jwt = true
-
-[functions.store-webhook]
-verify_jwt = false
-
-[functions.store-paypal-checkout]
-verify_jwt = true
-
-[functions.vendx-pay-paypal-checkout]
-verify_jwt = true
-
-[functions.paypal-capture]
-verify_jwt = false
-
-[functions.sync-payment-transactions]
-verify_jwt = false
-
-[functions.store-vendx-pay-checkout]
-verify_jwt = false
-
-[functions.store-refund-wallet]
-verify_jwt = false
-
-[functions.arcade-award-tickets]
-verify_jwt = false
-
-[functions.tickets-balance]
-verify_jwt = true
-
-[functions.tickets-redeem]
-verify_jwt = true
-
-[functions.arcade-play-purchase]
-verify_jwt = true
-
-[functions.arcade-machine-info]
-verify_jwt = false
-
-[functions.tickets-redeem-prize]
-verify_jwt = true
-
-[functions.totp-generate-code]
-verify_jwt = true
+[functions]
+  [functions.arcade-award-tickets]
+    verify_jwt = false
+  [functions.arcade-machine-info]
+    verify_jwt = false
+  [functions.arcade-play-purchase]
+    verify_jwt = true
+  [functions.auth-email-hook]
+    verify_jwt = false
+  [functions.paypal-capture]
+    verify_jwt = false
+  [functions.store-create-checkout]
+    verify_jwt = true
+  [functions.store-paypal-checkout]
+    verify_jwt = true
+  [functions.store-refund-wallet]
+    verify_jwt = false
+  [functions.store-vendx-pay-checkout]
+    verify_jwt = false
+  [functions.store-webhook]
+    verify_jwt = false
+  [functions.sync-payment-transactions]
+    verify_jwt = false
+  [functions.tickets-balance]
+    verify_jwt = true
+  [functions.tickets-redeem]
+    verify_jwt = true
+  [functions.tickets-redeem-prize]
+    verify_jwt = true
+  [functions.totp-generate-code]
+    verify_jwt = true
+  [functions.vendx-pay-balance]
+    verify_jwt = false
+  [functions.vendx-pay-create-checkout]
+    verify_jwt = true
+  [functions.vendx-pay-machine-auth]
+    verify_jwt = false
+  [functions.vendx-pay-paypal-checkout]
+    verify_jwt = true
+  [functions.vendx-pay-process]
+    verify_jwt = false
+  [functions.vendx-pay-session]
+    verify_jwt = false
+  [functions.vendx-pay-webhook]
+    verify_jwt = false
