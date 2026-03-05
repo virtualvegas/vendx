@@ -37,6 +37,7 @@ import LocationDetailPage from "./pages/LocationDetailPage";
 import EventsPage from "./pages/EventsPage";
 import StandDetailPage from "./pages/StandDetailPage";
 import LinksPage from "./pages/LinksPage";
+import TeamLinksPage from "./pages/TeamLinksPage";
 import NewsPage from "./pages/NewsPage";
 import NewsArticlePage from "./pages/NewsArticlePage";
 import FunnelPage from "./pages/FunnelPage";
@@ -105,6 +106,7 @@ const App = () => (
               <Route path="/careers/:id" element={<JobDetailPage />} />
               <Route path="/contact" element={<ContactPage />} />
               <Route path="/links" element={<LinksPage />} />
+              <Route path="/team-links" element={<TeamLinksPage />} />
               <Route path="/auth" element={<AuthPage />} />
               <Route path="/dashboard" element={<DashboardPage />} />
               <Route path="/dashboard/:tab" element={<DashboardPage />} />
