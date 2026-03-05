@@ -15,7 +15,6 @@ import {
   SiApple,
   SiItchdotio,
   SiPlaystation,
-  SiNintendo,
   SiEpicgames,
   SiRoblox
 } from "react-icons/si";
@@ -64,7 +63,7 @@ const platformIcons: Record<string, React.ReactNode> = {
   amazon: <FaAmazon className="w-5 h-5" />,
   xbox: <FaXbox className="w-5 h-5" />,
   playstation: <SiPlaystation className="w-5 h-5" />,
-  nintendo: <SiNintendo className="w-5 h-5" />,
+  nintendo: <Gamepad2 className="w-5 h-5" />,
   epic: <SiEpicgames className="w-5 h-5" />,
   roblox: <SiRoblox className="w-5 h-5" />,
   browser: <Globe className="w-5 h-5" />,
