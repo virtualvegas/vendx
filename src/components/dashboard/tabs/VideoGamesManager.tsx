@@ -15,7 +15,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, Gamepad2, Trash2, Edit, Search, RefreshCw, Eye, EyeOff, ExternalLink, Upload, X, ImageIcon } from "lucide-react";
 import { FaGooglePlay, FaApple, FaSteam, FaWindows, FaItchIo, FaAmazon, FaXbox, FaPlaystation } from "react-icons/fa";
-import { SiNintendo, SiEpicgames, SiRoblox } from "react-icons/si";
+import { SiEpicgames, SiRoblox } from "react-icons/si";
 import { Globe } from "lucide-react";
 
 interface VideoGame {
@@ -321,7 +321,7 @@ const VideoGamesManager = () => {
     if (game.amazon_app_store_url) icons.push(<FaAmazon key="amazon" className="w-4 h-4" />);
     if (game.xbox_store_url) icons.push(<FaXbox key="xbox" className="w-4 h-4" />);
     if (game.playstation_store_url) icons.push(<FaPlaystation key="playstation" className="w-4 h-4" />);
-    if (game.nintendo_eshop_url) icons.push(<SiNintendo key="nintendo" className="w-4 h-4" />);
+    if (game.nintendo_eshop_url) icons.push(<Gamepad2 key="nintendo" className="w-4 h-4" />);
     if (game.epic_games_store_url) icons.push(<SiEpicgames key="epic" className="w-4 h-4" />);
     if (game.roblox_url) icons.push(<SiRoblox key="roblox" className="w-4 h-4" />);
     if (game.browser_play_url) icons.push(<span key="browser" className="w-4 h-4"><Globe className="w-4 h-4" /></span>);
@@ -580,7 +580,7 @@ const VideoGamesManager = () => {
                   <Input value={formData.playstation_store_url} onChange={(e) => setFormData({ ...formData, playstation_store_url: e.target.value })} placeholder="https://store.playstation.com/..." />
                 </div>
                 <div className="space-y-2">
-                  <Label className="flex items-center gap-2"><SiNintendo />Nintendo eShop</Label>
+                  <Label className="flex items-center gap-2"><Gamepad2 className="w-4 h-4" />Nintendo eShop</Label>
                   <Input value={formData.nintendo_eshop_url} onChange={(e) => setFormData({ ...formData, nintendo_eshop_url: e.target.value })} placeholder="https://nintendo.com/..." />
                 </div>
                 <div className="space-y-2">
