@@ -288,7 +288,14 @@ const Finance = () => {
     return Array.from(dayMap.values())
       .sort((a, b) => a.day.localeCompare(b.day))
       .slice(-30)
-      .map(d => ({ ...d, day: format(new Date(d.day + "T12:00:00"), "MM/dd") }));
+      .map(d => {
+        try {
+          const dateStr = d.day.includes("T") ? d.day.split("T")[0] : d.day;
+          return { ...d, day: format(new Date(dateStr + "T12:00:00"), "MM/dd") };
+        } catch {
+          return { ...d, day: d.day.substring(0, 10) };
+        }
+      });
   }, [transactions, syncedTransactions]);
 
   // Chart: Category breakdown
