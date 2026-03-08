@@ -341,13 +341,13 @@ const EcoSnackLockersManager = () => {
               <TableHeader>
                 <TableRow>
                   <TableHead>Machine</TableHead>
-                  <TableHead>Locker</TableHead>
+                  <TableHead className="hidden sm:table-cell">Locker</TableHead>
                   <TableHead>Item</TableHead>
-                  <TableHead>Code</TableHead>
+                  <TableHead className="hidden md:table-cell">Code</TableHead>
                   <TableHead>Amount</TableHead>
-                  <TableHead>Payment</TableHead>
+                  <TableHead className="hidden lg:table-cell">Payment</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>Date</TableHead>
+                  <TableHead className="hidden md:table-cell">Date</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>

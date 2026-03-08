@@ -262,10 +262,10 @@ const TrackShopManager = () => {
             <TableHeader>
               <TableRow>
                 <TableHead>Title</TableHead>
-                <TableHead>Producer</TableHead>
+                <TableHead className="hidden sm:table-cell">Producer</TableHead>
                 <TableHead>Price</TableHead>
-                <TableHead>License</TableHead>
-                <TableHead>Plays</TableHead>
+                <TableHead className="hidden md:table-cell">License</TableHead>
+                <TableHead className="hidden lg:table-cell">Plays</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="w-24">Actions</TableHead>
               </TableRow>

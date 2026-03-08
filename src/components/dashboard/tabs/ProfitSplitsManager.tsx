@@ -205,7 +205,7 @@ const ProfitSplitsManager = () => {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Machine</TableHead>
-                    <TableHead>Location</TableHead>
+                    <TableHead className="hidden sm:table-cell">Location</TableHead>
                     <TableHead>VendX Share</TableHead>
                     <TableHead>Owner Share</TableHead>
                   </TableRow>

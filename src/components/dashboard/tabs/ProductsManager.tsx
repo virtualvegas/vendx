@@ -573,7 +573,7 @@ const ProductsManager = () => {
               ) : (
                 products.map((product) => (
                   <TableRow key={product.id}>
-                    <TableCell>
+                    <TableCell className="hidden sm:table-cell">
                       {product.images && product.images.length > 0 ? (
                         <img 
                           src={product.images[0]} 
@@ -597,7 +597,7 @@ const ProductsManager = () => {
                         ${(product.subscription_price || product.price).toFixed(2)}
                       </span>
                     </TableCell>
-                    <TableCell className="capitalize">
+                    <TableCell className="hidden md:table-cell capitalize">
                       {product.subscription_interval || "month"}ly
                     </TableCell>
                     <TableCell>

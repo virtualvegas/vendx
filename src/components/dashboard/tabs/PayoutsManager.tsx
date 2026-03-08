@@ -255,9 +255,9 @@ const PayoutsManager = () => {
               <TableHeader>
                 <TableRow>
                   <TableHead>Business Owner</TableHead>
-                  <TableHead>Period</TableHead>
-                  <TableHead>Gross Revenue</TableHead>
-                  <TableHead>VendX Share</TableHead>
+                  <TableHead className="hidden md:table-cell">Period</TableHead>
+                  <TableHead className="hidden lg:table-cell">Gross Revenue</TableHead>
+                  <TableHead className="hidden lg:table-cell">VendX Share</TableHead>
                   <TableHead>Owner Payout</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Actions</TableHead>

@@ -446,10 +446,10 @@ export default function NewsManager() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Title</TableHead>
-                  <TableHead>Category</TableHead>
+                  <TableHead className="hidden sm:table-cell">Category</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>Views</TableHead>
-                  <TableHead>Date</TableHead>
+                  <TableHead className="hidden md:table-cell">Views</TableHead>
+                  <TableHead className="hidden lg:table-cell">Date</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
