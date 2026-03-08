@@ -580,11 +580,15 @@ const StoreManager = () => {
                                       key={sp.node.id}
                                       type="button"
                                       className="w-full flex items-center gap-3 p-2 hover:bg-muted/50 transition-colors text-left"
-                                      onClick={() => setProductForm({
-                                        ...productForm,
-                                        shopify_handle: sp.node.handle,
-                                        shopify_variant_id: firstVariant?.id || "",
-                                      })}
+                                      onClick={() => {
+                                        const shopifyImages = sp.node.images.edges.map(e => e.node.url).filter(Boolean);
+                                        setProductForm({
+                                          ...productForm,
+                                          shopify_handle: sp.node.handle,
+                                          shopify_variant_id: firstVariant?.id || "",
+                                          ...(shopifyImages.length > 0 && productForm.images.length === 0 ? { images: shopifyImages } : {}),
+                                        });
+                                      }}
                                     >
                                       {firstImage && (
                                         <img src={firstImage.url} alt="" className="w-10 h-10 rounded object-cover flex-shrink-0" />

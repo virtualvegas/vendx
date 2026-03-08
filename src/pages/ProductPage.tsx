@@ -242,17 +242,22 @@ const ProductPage = () => {
 
         <div className="grid md:grid-cols-2 gap-8 lg:gap-12">
           {/* Images */}
-          <div className="space-y-4">
+          {(() => {
+            const displayImages = isShopifyLinked && shopifyProduct?.images?.edges?.length
+              ? shopifyProduct.images.edges.map(e => e.node.url)
+              : product.images;
+            return (
+            <div className="space-y-4">
             <div className="aspect-square rounded-xl overflow-hidden bg-card border border-border">
               <img
-                src={product.images[selectedImage] || "https://via.placeholder.com/600"}
+                src={displayImages[selectedImage] || "https://via.placeholder.com/600"}
                 alt={product.name}
                 className="w-full h-full object-cover"
               />
             </div>
-            {product.images.length > 1 && (
+            {displayImages.length > 1 && (
               <div className="flex gap-2 overflow-x-auto">
-                {product.images.map((img, idx) => (
+                {displayImages.map((img, idx) => (
                   <button
                     key={idx}
                     onClick={() => setSelectedImage(idx)}
