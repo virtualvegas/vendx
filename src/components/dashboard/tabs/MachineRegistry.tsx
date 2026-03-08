@@ -9,6 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { SearchableSelect } from "@/components/ui/searchable-select";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -498,42 +499,48 @@ const MachineRegistry = () => {
                     />
                   </div>
                 </div>
-                <Select value={filterType} onValueChange={setFilterType}>
-                  <SelectTrigger className="w-[150px]">
-                    <SelectValue placeholder="Type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Types</SelectItem>
-                    {MACHINE_TYPES.map(t => (
-                      <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Select value={filterStatus} onValueChange={setFilterStatus}>
-                  <SelectTrigger className="w-[150px]">
-                    <SelectValue placeholder="Status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Status</SelectItem>
-                    <SelectItem value="active">Active</SelectItem>
-                    <SelectItem value="inactive">Inactive</SelectItem>
-                    <SelectItem value="maintenance">Maintenance</SelectItem>
-                    <SelectItem value="offline">Offline</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Select value={filterLocation} onValueChange={setFilterLocation}>
-                  <SelectTrigger className="w-[200px]">
-                    <SelectValue placeholder="Location" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Locations</SelectItem>
-                    {locations.map(loc => (
-                      <SelectItem key={loc.id} value={loc.id}>
-                        {loc.name || `${loc.city}, ${loc.country}`}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <div className="w-[150px]">
+                  <SearchableSelect
+                    options={[
+                      { value: "all", label: "All Types" },
+                      ...MACHINE_TYPES.map(t => ({ value: t.value, label: t.label })),
+                    ]}
+                    value={filterType}
+                    onValueChange={setFilterType}
+                    placeholder="Type"
+                    searchPlaceholder="Search type..."
+                  />
+                </div>
+                <div className="w-[150px]">
+                  <SearchableSelect
+                    options={[
+                      { value: "all", label: "All Status" },
+                      { value: "active", label: "Active" },
+                      { value: "inactive", label: "Inactive" },
+                      { value: "maintenance", label: "Maintenance" },
+                      { value: "offline", label: "Offline" },
+                    ]}
+                    value={filterStatus}
+                    onValueChange={setFilterStatus}
+                    placeholder="Status"
+                    searchPlaceholder="Search status..."
+                  />
+                </div>
+                <div className="w-[200px]">
+                  <SearchableSelect
+                    options={[
+                      { value: "all", label: "All Locations" },
+                      ...locations.map(loc => ({
+                        value: loc.id,
+                        label: loc.name || `${loc.city}, ${loc.country}`,
+                      })),
+                    ]}
+                    value={filterLocation}
+                    onValueChange={setFilterLocation}
+                    placeholder="Location"
+                    searchPlaceholder="Search locations..."
+                  />
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -792,22 +799,19 @@ const MachineRegistry = () => {
             </div>
             <div className="space-y-2">
               <Label>Location</Label>
-              <Select
+              <SearchableSelect
+                options={[
+                  { value: "none", label: "No Location" },
+                  ...locations.map(loc => ({
+                    value: loc.id,
+                    label: loc.name || `${loc.city}, ${loc.country}`,
+                  })),
+                ]}
                 value={machineForm.location_id}
                 onValueChange={(v) => setMachineForm({ ...machineForm, location_id: v })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select location" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">No Location</SelectItem>
-                  {locations.map(loc => (
-                    <SelectItem key={loc.id} value={loc.id}>
-                      {loc.name || `${loc.city}, ${loc.country}`}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                placeholder="Select location"
+                searchPlaceholder="Search locations..."
+              />
             </div>
             <div className="space-y-2">
               <Label>Notes</Label>

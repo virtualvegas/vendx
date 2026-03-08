@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { SearchableSelect } from "@/components/ui/searchable-select";
 import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -542,9 +543,9 @@ const GlobalLocations = () => {
               <div className="space-y-2"><Label>Country *</Label><Input value={formData.country} onChange={(e) => setFormData({ ...formData, country: e.target.value })} required /></div>
               <div className="space-y-2"><Label>City *</Label><Input value={formData.city} onChange={(e) => setFormData({ ...formData, city: e.target.value })} required /></div>
               <div className="col-span-2 space-y-2"><Label>Address</Label><Input value={formData.address} onChange={(e) => setFormData({ ...formData, address: e.target.value })} /></div>
-              <div className="space-y-2"><Label>Type</Label><Select value={formData.location_type} onValueChange={(v) => setFormData({ ...formData, location_type: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{LOCATION_TYPES.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}</SelectContent></Select></div>
-              <div className="space-y-2"><Label>Category</Label><Select value={formData.location_category} onValueChange={(v) => setFormData({ ...formData, location_category: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{LOCATION_CATEGORIES.map(c => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}</SelectContent></Select></div>
-              <div className="space-y-2"><Label>Status</Label><Select value={formData.status} onValueChange={(v) => setFormData({ ...formData, status: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="active">Active</SelectItem><SelectItem value="inactive">Inactive</SelectItem><SelectItem value="coming_soon">Coming Soon</SelectItem><SelectItem value="seasonal">Seasonal</SelectItem></SelectContent></Select></div>
+              <div className="space-y-2"><Label>Type</Label><SearchableSelect options={LOCATION_TYPES.map(t => ({ value: t.value, label: t.label }))} value={formData.location_type} onValueChange={(v) => setFormData({ ...formData, location_type: v })} placeholder="Select type" searchPlaceholder="Search type..." /></div>
+              <div className="space-y-2"><Label>Category</Label><SearchableSelect options={LOCATION_CATEGORIES.map(c => ({ value: c.value, label: c.label }))} value={formData.location_category} onValueChange={(v) => setFormData({ ...formData, location_category: v })} placeholder="Select category" searchPlaceholder="Search category..." /></div>
+              <div className="space-y-2"><Label>Status</Label><SearchableSelect options={[{ value: "active", label: "Active" }, { value: "inactive", label: "Inactive" }, { value: "coming_soon", label: "Coming Soon" }, { value: "seasonal", label: "Seasonal" }]} value={formData.status} onValueChange={(v) => setFormData({ ...formData, status: v })} placeholder="Select status" searchPlaceholder="Search status..." /></div>
               <div className="space-y-2"><Label>Latitude</Label><Input value={formData.latitude} onChange={(e) => setFormData({ ...formData, latitude: e.target.value })} placeholder="e.g. 40.7128" /></div>
               <div className="space-y-2"><Label>Longitude</Label><Input value={formData.longitude} onChange={(e) => setFormData({ ...formData, longitude: e.target.value })} placeholder="e.g. -74.0060" /></div>
             </div>
@@ -645,19 +646,20 @@ const GlobalLocations = () => {
           <div className="space-y-4">
             <div className="space-y-2">
               <Label>Business Owner</Label>
-              <Select value={selectedOwner} onValueChange={setSelectedOwner}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a business owner" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">No owner assigned</SelectItem>
-                  {(businessOwners || []).map(owner => (
-                    <SelectItem key={owner.id} value={owner.id}>
-                      {owner.full_name || owner.email}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <SearchableSelect
+                options={[
+                  { value: "none", label: "No owner assigned" },
+                  ...(businessOwners || []).map(owner => ({
+                    value: owner.id,
+                    label: owner.full_name || owner.email,
+                    description: owner.full_name ? owner.email : undefined,
+                  })),
+                ]}
+                value={selectedOwner}
+                onValueChange={setSelectedOwner}
+                placeholder="Select a business owner"
+                searchPlaceholder="Search owners..."
+              />
               {businessOwners?.length === 0 && (
                 <p className="text-xs text-muted-foreground">
                   No users with the Business Owner role found. Assign the role first in Admin Settings.

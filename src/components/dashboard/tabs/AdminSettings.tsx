@@ -3,13 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { SearchableSelect } from "@/components/ui/searchable-select";
 import {
   Card,
   CardContent,
@@ -288,34 +282,34 @@ const AdminSettings = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <Label htmlFor="user-select">Select User</Label>
-              <Select value={selectedUser} onValueChange={setSelectedUser}>
-                <SelectTrigger id="user-select">
-                  <SelectValue placeholder="Choose user" />
-                </SelectTrigger>
-                <SelectContent>
-                  {users.map((user) => (
-                    <SelectItem key={user.id} value={user.id}>
-                      {user.email}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <SearchableSelect
+                id="user-select"
+                options={users.map((user) => ({
+                  value: user.id,
+                  label: user.email,
+                  description: user.full_name || undefined,
+                }))}
+                value={selectedUser}
+                onValueChange={setSelectedUser}
+                placeholder="Choose user"
+                searchPlaceholder="Search by email or name..."
+              />
             </div>
 
             <div>
               <Label htmlFor="role-select">Select Role</Label>
-              <Select value={selectedRole} onValueChange={(v) => setSelectedRole(v as AppRole)}>
-                <SelectTrigger id="role-select">
-                  <SelectValue placeholder="Choose role" />
-                </SelectTrigger>
-                <SelectContent>
-                  {Object.entries(roleLabels).map(([key, label]) => (
-                    <SelectItem key={key} value={key}>
-                      {label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <SearchableSelect
+                id="role-select"
+                options={Object.entries(roleLabels).map(([key, label]) => ({
+                  value: key,
+                  label,
+                  description: roleDescriptions[key as AppRole],
+                }))}
+                value={selectedRole}
+                onValueChange={(v) => setSelectedRole(v as AppRole)}
+                placeholder="Choose role"
+                searchPlaceholder="Search roles..."
+              />
               {selectedRole && (
                 <p className="text-xs text-muted-foreground mt-1">
                   {roleDescriptions[selectedRole]}

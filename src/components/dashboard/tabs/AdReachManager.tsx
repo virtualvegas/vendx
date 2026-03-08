@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { SearchableSelect } from "@/components/ui/searchable-select";
 import { Label } from "@/components/ui/label";
 import { Plus, Eye, TrendingUp, DollarSign, Monitor, Gamepad2, CheckCircle, XCircle, BarChart3, Pencil, Trash2 } from "lucide-react";
 import { format } from "date-fns";
@@ -326,18 +327,24 @@ const AdReachManager = () => {
                   </div>
                   {newLocation.location_type === "machine_screen" && (
                     <div><Label>Machine</Label>
-                      <Select value={newLocation.machine_id} onValueChange={v => setNewLocation(p => ({ ...p, machine_id: v }))}>
-                        <SelectTrigger><SelectValue placeholder="Select machine" /></SelectTrigger>
-                        <SelectContent>{machines.map(m => <SelectItem key={m.id} value={m.id}>{m.name} ({m.machine_code})</SelectItem>)}</SelectContent>
-                      </Select>
+                      <SearchableSelect
+                        options={machines.map(m => ({ value: m.id, label: `${m.name} (${m.machine_code})` }))}
+                        value={newLocation.machine_id}
+                        onValueChange={v => setNewLocation(p => ({ ...p, machine_id: v }))}
+                        placeholder="Select machine"
+                        searchPlaceholder="Search machines..."
+                      />
                     </div>
                   )}
                   {(newLocation.location_type === "in_game_banner" || newLocation.location_type === "in_game_interstitial") && (
                     <div><Label>VendX Interactive Game</Label>
-                      <Select value={newLocation.game_id} onValueChange={v => setNewLocation(p => ({ ...p, game_id: v }))}>
-                        <SelectTrigger><SelectValue placeholder="Select game" /></SelectTrigger>
-                        <SelectContent>{games.map(g => <SelectItem key={g.id} value={g.id}>{g.title}</SelectItem>)}</SelectContent>
-                      </Select>
+                      <SearchableSelect
+                        options={games.map(g => ({ value: g.id, label: g.title }))}
+                        value={newLocation.game_id}
+                        onValueChange={v => setNewLocation(p => ({ ...p, game_id: v }))}
+                        placeholder="Select game"
+                        searchPlaceholder="Search games..."
+                      />
                     </div>
                   )}
                   <div className="grid grid-cols-2 gap-4">
@@ -411,18 +418,24 @@ const AdReachManager = () => {
                 </div>
                 {editLocation.location_type === "machine_screen" && (
                   <div><Label>Machine</Label>
-                    <Select value={editLocation.machine_id} onValueChange={v => setEditLocation(p => ({ ...p, machine_id: v }))}>
-                      <SelectTrigger><SelectValue placeholder="Select machine" /></SelectTrigger>
-                      <SelectContent>{machines.map(m => <SelectItem key={m.id} value={m.id}>{m.name} ({m.machine_code})</SelectItem>)}</SelectContent>
-                    </Select>
+                    <SearchableSelect
+                      options={machines.map(m => ({ value: m.id, label: `${m.name} (${m.machine_code})` }))}
+                      value={editLocation.machine_id}
+                      onValueChange={v => setEditLocation(p => ({ ...p, machine_id: v }))}
+                      placeholder="Select machine"
+                      searchPlaceholder="Search machines..."
+                    />
                   </div>
                 )}
                 {(editLocation.location_type === "in_game_banner" || editLocation.location_type === "in_game_interstitial") && (
                   <div><Label>VendX Interactive Game</Label>
-                    <Select value={editLocation.game_id} onValueChange={v => setEditLocation(p => ({ ...p, game_id: v }))}>
-                      <SelectTrigger><SelectValue placeholder="Select game" /></SelectTrigger>
-                      <SelectContent>{games.map(g => <SelectItem key={g.id} value={g.id}>{g.title}</SelectItem>)}</SelectContent>
-                    </Select>
+                    <SearchableSelect
+                      options={games.map(g => ({ value: g.id, label: g.title }))}
+                      value={editLocation.game_id}
+                      onValueChange={v => setEditLocation(p => ({ ...p, game_id: v }))}
+                      placeholder="Select game"
+                      searchPlaceholder="Search games..."
+                    />
                   </div>
                 )}
                 <div className="grid grid-cols-2 gap-4">

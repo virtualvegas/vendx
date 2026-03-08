@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { SearchableSelect } from "@/components/ui/searchable-select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -262,15 +263,18 @@ const MachineInventoryManager = () => {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input placeholder="Search products..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-10" />
           </div>
-          <Select value={filterMachine} onValueChange={setFilterMachine}>
-            <SelectTrigger className="w-[240px]"><SelectValue placeholder="All Machines" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Machines</SelectItem>
-              {machines.map((m) => (
-                <SelectItem key={m.id} value={m.id}>{m.name} ({m.machine_code})</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="w-[240px]">
+            <SearchableSelect
+              options={[
+                { value: "all", label: "All Machines" },
+                ...machines.map((m) => ({ value: m.id, label: `${m.name} (${m.machine_code})` })),
+              ]}
+              value={filterMachine}
+              onValueChange={setFilterMachine}
+              placeholder="All Machines"
+              searchPlaceholder="Search machines..."
+            />
+          </div>
         </CardContent>
       </Card>
 
