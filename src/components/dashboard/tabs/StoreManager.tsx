@@ -90,7 +90,9 @@ const StoreManager = () => {
     is_featured: false,
     is_subscription: false,
     subscription_price: 0,
-    images: [""]
+    images: [""],
+    retail_status: "online_only" as string,
+    retail_links: [] as Array<{ store: string; url: string; link_type: string }>,
   });
 
   useEffect(() => {
@@ -152,26 +154,41 @@ const StoreManager = () => {
       is_featured: false,
       is_subscription: false,
       subscription_price: 0,
-      images: [""]
+      images: [""],
+      retail_status: "online_only",
+      retail_links: [],
     });
     setEditingProduct(null);
   };
 
-  const handleEditProduct = (product: Product) => {
+  const handleEditProduct = async (product: Product) => {
     setEditingProduct(product);
+    // Fetch full product data including retail fields
+    const { data: fullProduct } = await supabase
+      .from("store_products")
+      .select("*")
+      .eq("id", product.id)
+      .single();
+    
+    const retailLinks = Array.isArray(fullProduct?.retail_links) 
+      ? (fullProduct.retail_links as any[]).map((l: any) => ({ store: l.store || "", url: l.url || "", link_type: l.link_type || "product_url" }))
+      : [];
+    
     setProductForm({
       name: product.name,
       slug: product.slug,
-      description: "",
-      short_description: "",
+      description: fullProduct?.description || "",
+      short_description: fullProduct?.short_description || "",
       price: product.price,
       category: product.category,
       stock: product.stock,
       is_active: product.is_active,
       is_featured: product.is_featured,
       is_subscription: product.is_subscription,
-      subscription_price: 0,
-      images: [""]
+      subscription_price: fullProduct?.subscription_price || 0,
+      images: fullProduct?.images?.length ? fullProduct.images : [""],
+      retail_status: fullProduct?.retail_status || "online_only",
+      retail_links: retailLinks,
     });
     setProductDialogOpen(true);
   };
@@ -191,7 +208,9 @@ const StoreManager = () => {
       is_featured: productForm.is_featured,
       is_subscription: productForm.is_subscription,
       subscription_price: productForm.is_subscription ? productForm.subscription_price : null,
-      images: productForm.images.filter(img => img.trim() !== "")
+      images: productForm.images.filter(img => img.trim() !== ""),
+      retail_status: productForm.retail_status,
+      retail_links: productForm.retail_links.filter(l => l.store && l.url),
     };
 
     if (editingProduct) {
