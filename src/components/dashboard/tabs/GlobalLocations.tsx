@@ -646,19 +646,20 @@ const GlobalLocations = () => {
           <div className="space-y-4">
             <div className="space-y-2">
               <Label>Business Owner</Label>
-              <Select value={selectedOwner} onValueChange={setSelectedOwner}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a business owner" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">No owner assigned</SelectItem>
-                  {(businessOwners || []).map(owner => (
-                    <SelectItem key={owner.id} value={owner.id}>
-                      {owner.full_name || owner.email}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <SearchableSelect
+                options={[
+                  { value: "none", label: "No owner assigned" },
+                  ...(businessOwners || []).map(owner => ({
+                    value: owner.id,
+                    label: owner.full_name || owner.email,
+                    description: owner.full_name ? owner.email : undefined,
+                  })),
+                ]}
+                value={selectedOwner}
+                onValueChange={setSelectedOwner}
+                placeholder="Select a business owner"
+                searchPlaceholder="Search owners..."
+              />
               {businessOwners?.length === 0 && (
                 <p className="text-xs text-muted-foreground">
                   No users with the Business Owner role found. Assign the role first in Admin Settings.
