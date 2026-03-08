@@ -26,10 +26,16 @@ const BusinessOverview = () => {
     isLoading 
   } = useBusinessOwnerData();
 
-  // Check if onboarding is needed
+  const completeOnboarding = () => {
+    localStorage.setItem("vendx_bo_onboarded", "true");
+    setShowOnboarding(false);
+  };
+
+  // Check if onboarding is needed — only show if never completed before
   useMemo(() => {
     if (!isLoading && showOnboarding === null) {
-      setShowOnboarding(!payoutSettings);
+      const alreadyOnboarded = localStorage.getItem("vendx_bo_onboarded") === "true";
+      setShowOnboarding(!alreadyOnboarded && !payoutSettings);
     }
   }, [isLoading, payoutSettings, showOnboarding]);
 
