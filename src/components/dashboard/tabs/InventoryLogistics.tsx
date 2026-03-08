@@ -171,19 +171,18 @@ const InventoryLogistics = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold flex items-center gap-2">
-            <Warehouse className="w-6 h-6 text-primary" />
-            Warehouse Inventory
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="min-w-0">
+          <h2 className="text-xl sm:text-2xl font-bold flex items-center gap-2">
+            <Warehouse className="w-5 h-5 sm:w-6 sm:h-6 text-primary flex-shrink-0" />
+            <span className="truncate">Warehouse Inventory</span>
           </h2>
-          <p className="text-muted-foreground">Manage central warehouse stock</p>
+          <p className="text-sm text-muted-foreground">Manage central warehouse stock</p>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={() => queryClient.invalidateQueries({ queryKey: ["inventory-items"] })}>
-            <RefreshCw className="w-4 h-4 mr-2" /> Refresh
-          </Button>
-        </div>
+        <Button variant="outline" size="sm" onClick={() => queryClient.invalidateQueries({ queryKey: ["inventory-items"] })}>
+          <RefreshCw className="w-4 h-4 sm:mr-2" />
+          <span className="hidden sm:inline">Refresh</span>
+        </Button>
       </div>
 
       {/* Stats */}
@@ -252,12 +251,12 @@ const InventoryLogistics = () => {
               <TableHeader>
                 <TableRow>
                   <TableHead>Product</TableHead>
-                  <TableHead>SKU</TableHead>
-                  <TableHead>Category</TableHead>
-                  <TableHead>Location</TableHead>
+                  <TableHead className="hidden sm:table-cell">SKU</TableHead>
+                  <TableHead className="hidden md:table-cell">Category</TableHead>
+                  <TableHead className="hidden lg:table-cell">Location</TableHead>
                   <TableHead>Qty</TableHead>
-                  <TableHead>Unit Cost</TableHead>
-                  <TableHead>Value</TableHead>
+                  <TableHead className="hidden sm:table-cell">Unit Cost</TableHead>
+                  <TableHead className="hidden md:table-cell">Value</TableHead>
                   {isSuperAdmin && <TableHead>Actions</TableHead>}
                 </TableRow>
               </TableHeader>
@@ -268,15 +267,15 @@ const InventoryLogistics = () => {
                       {item.product_name}
                       {item.quantity <= item.min_stock_level && <AlertTriangle className="w-3 h-3 text-destructive inline ml-2" />}
                     </TableCell>
-                    <TableCell className="font-mono text-sm text-muted-foreground">{item.sku}</TableCell>
-                    <TableCell><Badge variant="outline">{item.category}</Badge></TableCell>
-                    <TableCell className="text-sm">{item.location}</TableCell>
+                    <TableCell className="hidden sm:table-cell font-mono text-sm text-muted-foreground">{item.sku}</TableCell>
+                    <TableCell className="hidden md:table-cell"><Badge variant="outline">{item.category}</Badge></TableCell>
+                    <TableCell className="hidden lg:table-cell text-sm">{item.location}</TableCell>
                     <TableCell>
                       <span className={item.quantity <= item.min_stock_level ? "text-destructive font-medium" : ""}>{item.quantity}</span>
                       <span className="text-muted-foreground">/{item.min_stock_level}</span>
                     </TableCell>
-                    <TableCell>${item.unit_cost.toFixed(2)}</TableCell>
-                    <TableCell className="font-medium">${(item.quantity * item.unit_cost).toFixed(2)}</TableCell>
+                    <TableCell className="hidden sm:table-cell">${item.unit_cost.toFixed(2)}</TableCell>
+                    <TableCell className="hidden md:table-cell font-medium">${(item.quantity * item.unit_cost).toFixed(2)}</TableCell>
                     {isSuperAdmin && (
                       <TableCell>
                         <DropdownMenu>
@@ -304,10 +303,10 @@ const InventoryLogistics = () => {
 
       {/* Add/Edit Dialog */}
       <Dialog open={showDialog} onOpenChange={setShowDialog}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader><DialogTitle>{editingItem ? "Edit Warehouse Item" : "Add Warehouse Item"}</DialogTitle></DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2"><Label>Product Name *</Label><Input value={formData.product_name} onChange={(e) => setFormData({ ...formData, product_name: e.target.value })} required /></div>
               <div className="space-y-2"><Label>SKU *</Label><Input value={formData.sku} onChange={(e) => setFormData({ ...formData, sku: e.target.value })} required /></div>
               <div className="space-y-2"><Label>Category</Label>

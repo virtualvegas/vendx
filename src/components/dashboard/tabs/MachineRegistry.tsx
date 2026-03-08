@@ -15,6 +15,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Monitor, Plus, Key, RefreshCw, Copy, Eye, EyeOff, MapPin, Package, Search, Settings, Trash2, Edit, DollarSign, Activity, Gamepad2, ShoppingCart } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { 
   MachineStatsCards, 
   MachineFilters, 
@@ -446,19 +447,20 @@ const MachineRegistry = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold flex items-center gap-2">
-          <Monitor className="w-6 h-6 text-primary" />
-          Machine Management
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h2 className="text-xl sm:text-2xl font-bold flex items-center gap-2 min-w-0">
+          <Monitor className="w-5 h-5 sm:w-6 sm:h-6 text-primary flex-shrink-0" />
+          <span className="truncate">Machine Management</span>
         </h2>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-shrink-0">
           <Button onClick={fetchData} variant="outline" size="sm">
-            <RefreshCw className="w-4 h-4 mr-2" />
-            Refresh
+            <RefreshCw className="w-4 h-4 sm:mr-2" />
+            <span className="hidden sm:inline">Refresh</span>
           </Button>
-          <Button onClick={() => { resetMachineForm(); setShowMachineDialog(true); }}>
-            <Plus className="w-4 h-4 mr-2" />
-            Register Machine
+          <Button size="sm" onClick={() => { resetMachineForm(); setShowMachineDialog(true); }}>
+            <Plus className="w-4 h-4 sm:mr-2" />
+            <span className="hidden sm:inline">Register Machine</span>
+            <span className="sm:hidden">Add</span>
           </Button>
         </div>
       </div>
@@ -556,11 +558,11 @@ const MachineRegistry = () => {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Machine</TableHead>
-                      <TableHead>Location</TableHead>
-                      <TableHead>Type</TableHead>
-                      <TableHead>Revenue</TableHead>
-                      <TableHead>Activity</TableHead>
-                      <TableHead>Connection</TableHead>
+                      <TableHead className="hidden md:table-cell">Location</TableHead>
+                      <TableHead className="hidden lg:table-cell">Type</TableHead>
+                      <TableHead className="hidden sm:table-cell">Revenue</TableHead>
+                      <TableHead className="hidden lg:table-cell">Activity</TableHead>
+                      <TableHead className="hidden xl:table-cell">Connection</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Actions</TableHead>
                     </TableRow>
@@ -576,26 +578,26 @@ const MachineRegistry = () => {
                               <p className="text-xs text-muted-foreground font-mono">{machine.machine_code}</p>
                             </div>
                           </TableCell>
-                          <TableCell>
+                          <TableCell className="hidden md:table-cell">
                             {machine.location ? (
                               <div className="flex items-center gap-1">
-                                <MapPin className="w-3 h-3 text-muted-foreground" />
-                                <span className="text-sm">{machine.location.name || `${machine.location.city}`}</span>
+                                <MapPin className="w-3 h-3 text-muted-foreground flex-shrink-0" />
+                                <span className="text-sm truncate max-w-[120px]">{machine.location.name || `${machine.location.city}`}</span>
                               </div>
                             ) : (
                               <span className="text-muted-foreground text-sm">Unassigned</span>
                             )}
                           </TableCell>
-                          <TableCell>
+                          <TableCell className="hidden lg:table-cell">
                             <Badge variant="outline" className="capitalize">{machine.machine_type}</Badge>
                           </TableCell>
-                          <TableCell>
+                          <TableCell className="hidden sm:table-cell">
                             <div className="text-sm">
                               <p className="font-medium">${(machine.lifetime_revenue || 0).toLocaleString()}</p>
                               <p className="text-xs text-muted-foreground">lifetime</p>
                             </div>
                           </TableCell>
-                          <TableCell>
+                          <TableCell className="hidden lg:table-cell">
                             <div className="flex items-center gap-2 text-sm">
                               {isArcade ? (
                                 <span className="flex items-center gap-1">
@@ -608,19 +610,14 @@ const MachineRegistry = () => {
                                   {machine.total_vends || 0}
                                 </span>
                               )}
-                              {machine.last_activity_at && (
-                                <span className="text-xs text-muted-foreground">
-                                  {formatDistanceToNow(new Date(machine.last_activity_at), { addSuffix: true })}
-                                </span>
-                              )}
                             </div>
                           </TableCell>
-                          <TableCell>
+                          <TableCell className="hidden xl:table-cell">
                             <Select
                               value={(machine as any).connection_status || "offline"}
                               onValueChange={(v) => updateConnectionStatus(machine, v)}
                             >
-                              <SelectTrigger className="w-[120px] h-8 text-xs">
+                              <SelectTrigger className="w-[110px] h-8 text-xs">
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent>
@@ -639,39 +636,34 @@ const MachineRegistry = () => {
                             />
                           </TableCell>
                           <TableCell>
-                            <div className="flex items-center gap-1">
-                              <Select
-                                value={machine.status}
-                                onValueChange={(v) => updateMachineStatus(machine, v)}
-                              >
-                                <SelectTrigger className="w-[120px] h-8 text-xs">
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="active">Active</SelectItem>
-                                  <SelectItem value="inactive">Inactive</SelectItem>
-                                  <SelectItem value="maintenance">Maintenance</SelectItem>
-                                  <SelectItem value="offline">Offline</SelectItem>
-                                </SelectContent>
-                              </Select>
-                              <Button size="icon" variant="ghost" onClick={() => openEditMachine(machine)} title="Edit">
-                                <Edit className="w-4 h-4" />
-                              </Button>
-                              {isArcade && (
-                                <Button size="icon" variant="ghost" onClick={() => { setSelectedMachine(machine); setShowPricingEditor(true); }} title="Set Pricing">
-                                  <DollarSign className="w-4 h-4" />
-                                </Button>
-                              )}
-                              <Button size="icon" variant="ghost" onClick={() => openInventoryDialog(machine)} title="Inventory">
-                                <Package className="w-4 h-4" />
-                              </Button>
-                              <Button size="icon" variant="ghost" onClick={() => { setSelectedMachine(machine); setShowApiKeyDialog(true); }} title="API Key">
-                                <Key className="w-4 h-4" />
-                              </Button>
-                              <Button size="icon" variant="ghost" onClick={() => { setSelectedMachine(machine); setShowDeleteConfirm(true); }} title="Delete">
-                                <Trash2 className="w-4 h-4 text-destructive" />
-                              </Button>
-                            </div>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button size="icon" variant="ghost"><Settings className="w-4 h-4" /></Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={() => openEditMachine(machine)}>
+                                  <Edit className="w-4 h-4 mr-2" /> Edit
+                                </DropdownMenuItem>
+                                {isArcade && (
+                                  <DropdownMenuItem onClick={() => { setSelectedMachine(machine); setShowPricingEditor(true); }}>
+                                    <DollarSign className="w-4 h-4 mr-2" /> Pricing
+                                  </DropdownMenuItem>
+                                )}
+                                <DropdownMenuItem onClick={() => openInventoryDialog(machine)}>
+                                  <Package className="w-4 h-4 mr-2" /> Inventory
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => { setSelectedMachine(machine); setShowApiKeyDialog(true); }}>
+                                  <Key className="w-4 h-4 mr-2" /> API Key
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem onClick={() => updateMachineStatus(machine, machine.status === "active" ? "inactive" : "active")}>
+                                  <RefreshCw className="w-4 h-4 mr-2" /> Toggle Status
+                                </DropdownMenuItem>
+                                <DropdownMenuItem className="text-destructive" onClick={() => { setSelectedMachine(machine); setShowDeleteConfirm(true); }}>
+                                  <Trash2 className="w-4 h-4 mr-2" /> Delete
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
                           </TableCell>
                         </TableRow>
                       );
