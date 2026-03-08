@@ -42,7 +42,7 @@ const GAME_TYPES = [
 const emptyForm = {
   name: "",
   description: "",
-  game_type: "classic",
+  game_type: "cabinet",
   image_url: "",
   is_active: true,
 };
