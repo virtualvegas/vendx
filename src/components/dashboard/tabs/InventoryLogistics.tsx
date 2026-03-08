@@ -304,10 +304,10 @@ const InventoryLogistics = () => {
 
       {/* Add/Edit Dialog */}
       <Dialog open={showDialog} onOpenChange={setShowDialog}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader><DialogTitle>{editingItem ? "Edit Warehouse Item" : "Add Warehouse Item"}</DialogTitle></DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2"><Label>Product Name *</Label><Input value={formData.product_name} onChange={(e) => setFormData({ ...formData, product_name: e.target.value })} required /></div>
               <div className="space-y-2"><Label>SKU *</Label><Input value={formData.sku} onChange={(e) => setFormData({ ...formData, sku: e.target.value })} required /></div>
               <div className="space-y-2"><Label>Category</Label>
