@@ -311,10 +311,13 @@ const InventoryLogistics = () => {
               <div className="space-y-2"><Label>Product Name *</Label><Input value={formData.product_name} onChange={(e) => setFormData({ ...formData, product_name: e.target.value })} required /></div>
               <div className="space-y-2"><Label>SKU *</Label><Input value={formData.sku} onChange={(e) => setFormData({ ...formData, sku: e.target.value })} required /></div>
               <div className="space-y-2"><Label>Category</Label>
-                <Select value={formData.category} onValueChange={(v) => setFormData({ ...formData, category: v })}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>{CATEGORIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
-                </Select>
+                <SearchableSelect
+                  options={CATEGORIES.map(c => ({ value: c, label: c }))}
+                  value={formData.category}
+                  onValueChange={(v) => setFormData({ ...formData, category: v })}
+                  placeholder="Select category"
+                  searchPlaceholder="Search categories..."
+                />
               </div>
               <div className="space-y-2"><Label>Location</Label><Input value={formData.location} onChange={(e) => setFormData({ ...formData, location: e.target.value })} required /></div>
               <div className="space-y-2"><Label>Quantity</Label><Input type="number" value={formData.quantity} onChange={(e) => setFormData({ ...formData, quantity: parseInt(e.target.value) || 0 })} required /></div>
