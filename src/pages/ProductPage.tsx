@@ -152,13 +152,34 @@ const ProductPage = () => {
     return (basePrice + addonsTotal) * quantity;
   };
 
+  const isShopifyLinked = !!product?.shopify_handle && !!shopifyProduct;
+
   const handleAddToCart = async () => {
     if (!product) return;
     setAdding(true);
     
     try {
-      await addToCart(product.id, quantity, selectedAddons);
-      toast.success(`${product.name} added to cart!`);
+      if (isShopifyLinked && shopifyProduct) {
+        // Use Shopify cart for linked products
+        const firstVariant = shopifyProduct.variants.edges[0]?.node;
+        if (!firstVariant) {
+          toast.error("No Shopify variant available");
+          setAdding(false);
+          return;
+        }
+        await shopifyCartStore.addItem({
+          product: { node: shopifyProduct },
+          variantId: product.shopify_variant_id || firstVariant.id,
+          variantTitle: firstVariant.title,
+          price: firstVariant.price,
+          quantity,
+          selectedOptions: firstVariant.selectedOptions || [],
+        });
+        toast.success(`${product.name} added to Shopify cart!`);
+      } else {
+        await addToCart(product.id, quantity, selectedAddons);
+        toast.success(`${product.name} added to cart!`);
+      }
     } catch (error) {
       toast.error("Failed to add to cart");
     }
