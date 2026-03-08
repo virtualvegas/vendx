@@ -105,21 +105,6 @@ const RegionalReports = () => {
       }
     });
 
-    // Revenue from synced transactions matched by machine_code
-    syncedTransactions?.forEach(t => {
-      if (Number(t.amount) <= 0) return;
-      const meta = t.metadata as any;
-      const machineCode = meta?.machine_code;
-      if (machineCode) {
-        const machine = machines?.find(m => (m as any).machine_code === machineCode);
-        if (machine?.location_id) {
-          revenueMap.set(machine.location_id, (revenueMap.get(machine.location_id) || 0) + Number(t.amount));
-          txnCountMap.set(machine.location_id, (txnCountMap.get(machine.location_id) || 0) + 1);
-        }
-      }
-    });
-
-    return locations.map(loc => ({
       id: loc.id,
       name: loc.name || loc.city,
       country: loc.country,
