@@ -446,10 +446,10 @@ export default function NewsManager() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Title</TableHead>
-                  <TableHead>Category</TableHead>
+                  <TableHead className="hidden sm:table-cell">Category</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>Views</TableHead>
-                  <TableHead>Date</TableHead>
+                  <TableHead className="hidden md:table-cell">Views</TableHead>
+                  <TableHead className="hidden lg:table-cell">Date</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -469,7 +469,7 @@ export default function NewsManager() {
                           {article.is_featured && <Badge variant="secondary" className="mt-1">Featured</Badge>}
                         </div>
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="hidden sm:table-cell">
                         {article.category ? (
                           <Badge style={{ backgroundColor: article.category.color }} className="text-white">
                             {article.category.name}
@@ -483,8 +483,8 @@ export default function NewsManager() {
                           {article.is_published ? 'Published' : 'Draft'}
                         </Badge>
                       </TableCell>
-                      <TableCell>{article.view_count}</TableCell>
-                      <TableCell>{format(new Date(article.created_at), 'MMM d, yyyy')}</TableCell>
+                      <TableCell className="hidden md:table-cell">{article.view_count}</TableCell>
+                      <TableCell className="hidden lg:table-cell">{format(new Date(article.created_at), 'MMM d, yyyy')}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-1">
                           <Button size="icon" variant="ghost" onClick={() => openPreview(article)}>

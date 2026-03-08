@@ -341,13 +341,13 @@ const EcoSnackLockersManager = () => {
               <TableHeader>
                 <TableRow>
                   <TableHead>Machine</TableHead>
-                  <TableHead>Locker</TableHead>
+                  <TableHead className="hidden sm:table-cell">Locker</TableHead>
                   <TableHead>Item</TableHead>
-                  <TableHead>Code</TableHead>
+                  <TableHead className="hidden md:table-cell">Code</TableHead>
                   <TableHead>Amount</TableHead>
-                  <TableHead>Payment</TableHead>
+                  <TableHead className="hidden lg:table-cell">Payment</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>Date</TableHead>
+                  <TableHead className="hidden md:table-cell">Date</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -355,11 +355,11 @@ const EcoSnackLockersManager = () => {
                 {filtered.map((purchase) => (
                   <TableRow key={purchase.id}>
                     <TableCell className="font-mono text-xs">{purchase.machine_code}</TableCell>
-                    <TableCell>
+                    <TableCell className="hidden sm:table-cell">
                       <Badge variant="outline">#{purchase.locker_number.padStart(2, "0")}</Badge>
                     </TableCell>
                     <TableCell className="font-medium">{purchase.item_name}</TableCell>
-                    <TableCell>
+                    <TableCell className="hidden md:table-cell">
                       <div className="flex items-center gap-2">
                         <span className="font-mono font-bold text-accent tracking-wider">
                           {purchase.locker_code}
@@ -370,13 +370,13 @@ const EcoSnackLockersManager = () => {
                       </div>
                     </TableCell>
                     <TableCell>${purchase.amount.toFixed(2)}</TableCell>
-                    <TableCell>
+                    <TableCell className="hidden lg:table-cell">
                       <Badge variant="outline" className="capitalize">{purchase.payment_method}</Badge>
                     </TableCell>
                     <TableCell>
                       {getStatusBadge(purchase.payment_status, purchase.redeemed_at, purchase.expires_at)}
                     </TableCell>
-                    <TableCell className="text-xs text-muted-foreground">
+                    <TableCell className="hidden md:table-cell text-xs text-muted-foreground">
                       {format(new Date(purchase.created_at), "MMM d, h:mm a")}
                     </TableCell>
                     <TableCell>

@@ -851,9 +851,9 @@ const StandsManager = () => {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Stand</TableHead>
-                    <TableHead>Event</TableHead>
-                    <TableHead>Location</TableHead>
-                    <TableHead>Date</TableHead>
+                    <TableHead className="hidden sm:table-cell">Event</TableHead>
+                    <TableHead className="hidden md:table-cell">Location</TableHead>
+                    <TableHead className="hidden lg:table-cell">Date</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
@@ -864,7 +864,7 @@ const StandsManager = () => {
                       <TableCell className="font-medium">
                         {event.stands?.name || "Unknown"}
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="hidden sm:table-cell">
                         <div>
                           <p>{event.event_name}</p>
                           {event.notes && (
@@ -874,13 +874,13 @@ const StandsManager = () => {
                           )}
                         </div>
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="hidden md:table-cell">
                         <div className="flex items-center gap-1">
                           <MapPin className="h-3 w-3 text-muted-foreground" />
                           {event.event_location}
                         </div>
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="hidden lg:table-cell">
                         <div className="text-sm">
                           {format(new Date(event.event_date), "MMM d, yyyy")}
                           {event.event_end_date && (

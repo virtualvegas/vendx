@@ -336,8 +336,8 @@ const DivisionsManager = () => {
               <TableHeader>
                 <TableRow>
                   <TableHead>Name</TableHead>
-                  <TableHead>Slug</TableHead>
-                  <TableHead>Description</TableHead>
+                  <TableHead className="hidden sm:table-cell">Slug</TableHead>
+                  <TableHead className="hidden md:table-cell">Description</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
@@ -346,8 +346,8 @@ const DivisionsManager = () => {
                 {divisions.map((division) => (
                   <TableRow key={division.id}>
                     <TableCell className="font-medium">{division.name}</TableCell>
-                    <TableCell className="text-muted-foreground">/divisions/{division.slug}</TableCell>
-                    <TableCell className="max-w-xs truncate text-muted-foreground">
+                    <TableCell className="hidden sm:table-cell text-muted-foreground">/divisions/{division.slug}</TableCell>
+                    <TableCell className="hidden md:table-cell max-w-xs truncate text-muted-foreground">
                       {division.description || "—"}
                     </TableCell>
                     <TableCell>{getStatusBadge(division.status)}</TableCell>

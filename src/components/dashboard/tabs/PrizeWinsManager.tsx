@@ -465,10 +465,10 @@ const PrizeWinsManager = () => {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Date</TableHead>
+                      <TableHead className="hidden sm:table-cell">Date</TableHead>
                       <TableHead>Prize</TableHead>
-                      <TableHead>User</TableHead>
-                      <TableHead>Machine</TableHead>
+                      <TableHead className="hidden md:table-cell">User</TableHead>
+                      <TableHead className="hidden lg:table-cell">Machine</TableHead>
                       <TableHead className="text-center">Status</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
@@ -476,7 +476,7 @@ const PrizeWinsManager = () => {
                   <TableBody>
                     {filteredWins?.map((win) => (
                       <TableRow key={win.id}>
-                        <TableCell className="text-sm">
+                        <TableCell className="hidden sm:table-cell text-sm">
                           {format(new Date(win.created_at), "MMM d, HH:mm")}
                         </TableCell>
                         <TableCell>
@@ -488,7 +488,7 @@ const PrizeWinsManager = () => {
                             {win.prize_value > 0 && `${win.prize_value} tickets`}
                           </div>
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="hidden md:table-cell">
                           <div className="flex items-center gap-1">
                             <User className="h-3 w-3 text-muted-foreground" />
                             <span className="text-sm truncate max-w-[100px]">
@@ -496,7 +496,7 @@ const PrizeWinsManager = () => {
                             </span>
                           </div>
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="hidden lg:table-cell">
                           <div className="text-sm">
                             {win.machine?.name || "—"}
                           </div>
