@@ -1,4 +1,4 @@
-import { ExternalLink, ShoppingBag, Store, Gamepad2, Disc3, Pill, Coffee } from "lucide-react";
+import { ExternalLink, ShoppingBag, Store, Gamepad2, Disc3, Pill, Coffee, MapPin } from "lucide-react";
 import { FaAmazon } from "react-icons/fa";
 import { 
   SiWalmart, 
@@ -14,6 +14,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 interface RetailLink {
   store: string;
   url: string;
+  link_type?: string; // "product_url" | "store_locator"
 }
 
 interface RetailLinksProps {
@@ -151,11 +152,14 @@ const RetailLinks = ({ links, compact = false }: RetailLinksProps) => {
 
   if (validLinks.length === 0) return null;
 
+  const isStoreLocator = (link: RetailLink) => link.link_type === "store_locator";
+
   if (compact) {
     return (
       <div className="flex flex-wrap gap-2">
         {validLinks.map((link, index) => {
           const config = storeConfig[link.store] || storeConfig.other;
+          const locator = isStoreLocator(link);
           return (
             <a
               key={index}
@@ -164,8 +168,9 @@ const RetailLinks = ({ links, compact = false }: RetailLinksProps) => {
               rel="noopener noreferrer"
               className={`inline-flex items-center gap-2 px-3 py-2 rounded-lg ${config.bgColor} ${config.color} transition-colors text-sm font-medium`}
             >
-              {config.icon}
+              {locator ? <MapPin className="w-4 h-4" /> : config.icon}
               <span>{config.name}</span>
+              {locator && <span className="text-xs opacity-70">(Find a Store)</span>}
             </a>
           );
         })}
@@ -185,6 +190,7 @@ const RetailLinks = ({ links, compact = false }: RetailLinksProps) => {
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
           {validLinks.map((link, index) => {
             const config = storeConfig[link.store] || storeConfig.other;
+            const locator = isStoreLocator(link);
             return (
               <a
                 key={index}
@@ -194,11 +200,18 @@ const RetailLinks = ({ links, compact = false }: RetailLinksProps) => {
               >
                 <Button
                   variant="outline"
-                  className={`w-full justify-start gap-3 h-12 ${config.color} border-current/20 hover:border-current/40`}
+                  className={`w-full justify-start gap-3 h-auto min-h-[48px] py-2 ${config.color} border-current/20 hover:border-current/40`}
                 >
                   {config.icon}
-                  <span className="truncate">{config.name}</span>
-                  <ExternalLink className="w-3 h-3 ml-auto opacity-50" />
+                  <div className="flex flex-col items-start min-w-0">
+                    <span className="truncate">{config.name}</span>
+                    {locator && (
+                      <span className="text-[10px] opacity-60 flex items-center gap-1">
+                        <MapPin className="w-3 h-3" /> Find a Store
+                      </span>
+                    )}
+                  </div>
+                  <ExternalLink className="w-3 h-3 ml-auto opacity-50 flex-shrink-0" />
                 </Button>
               </a>
             );

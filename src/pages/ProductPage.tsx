@@ -18,6 +18,7 @@ import type { Json } from "@/integrations/supabase/types";
 interface RetailLink {
   store: string;
   url: string;
+  link_type?: string;
 }
 
 interface Product {
