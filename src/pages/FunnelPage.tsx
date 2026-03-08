@@ -11,7 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
 import { useCart } from "@/hooks/useCart";
-import { useCartStore } from "@/stores/shopifyCartStore";
+import { useShopifyCartStore } from "@/stores/shopifyCartStore";
 import { useShopifyProduct } from "@/hooks/useShopifyProducts";
 import { ShoppingCart, Check, ArrowRight, ArrowLeft, Sparkles, CreditCard, ShoppingBag, Package } from "lucide-react";
 
@@ -66,7 +66,7 @@ export default function FunnelPage() {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
   const { addToCart } = useCart();
-  const shopifyCartStore = useCartStore();
+  const shopifyCartStore = useShopifyCartStore();
 
   const [funnel, setFunnel] = useState<Funnel | null>(null);
   const [steps, setSteps] = useState<FunnelStep[]>([]);
