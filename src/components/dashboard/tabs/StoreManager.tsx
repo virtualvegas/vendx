@@ -17,6 +17,7 @@ import {
   Users, TrendingUp, Eye, Loader2, RefreshCw 
 } from "lucide-react";
 import { formatDisplayDate } from "@/lib/dateUtils";
+import { AVAILABLE_STORES } from "@/components/store/RetailLinks";
 
 interface Product {
   id: string;
@@ -513,6 +514,105 @@ const StoreManager = () => {
                         />
                       </div>
                     )}
+
+                    {/* Retail Status */}
+                    <div className="border-t border-border pt-4 mt-2">
+                      <Label className="text-base font-semibold">Retail Availability</Label>
+                      <p className="text-sm text-muted-foreground mb-3">Where can customers buy this product?</p>
+                      <Select 
+                        value={productForm.retail_status}
+                        onValueChange={(v) => setProductForm({...productForm, retail_status: v})}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="online_only">Online Only</SelectItem>
+                          <SelectItem value="in_store_only">In Store Only</SelectItem>
+                          <SelectItem value="in_store_and_online">In Store & Online</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* Retail Links */}
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <Label className="text-base font-semibold">Retail Store Links</Label>
+                        <Button 
+                          type="button" 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => setProductForm({
+                            ...productForm, 
+                            retail_links: [...productForm.retail_links, { store: "", url: "", link_type: "product_url" }]
+                          })}
+                        >
+                          <Plus className="h-4 w-4 mr-1" /> Add Store
+                        </Button>
+                      </div>
+                      <p className="text-sm text-muted-foreground mb-3">
+                        Link to the product on other retailers or their store locator
+                      </p>
+                      {productForm.retail_links.map((link, idx) => (
+                        <div key={idx} className="flex gap-2 mb-2 items-start">
+                          <Select 
+                            value={link.store}
+                            onValueChange={(v) => {
+                              const updated = [...productForm.retail_links];
+                              updated[idx] = { ...updated[idx], store: v };
+                              setProductForm({...productForm, retail_links: updated});
+                            }}
+                          >
+                            <SelectTrigger className="w-[140px]">
+                              <SelectValue placeholder="Store" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {AVAILABLE_STORES.map(s => (
+                                <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <Select
+                            value={link.link_type}
+                            onValueChange={(v) => {
+                              const updated = [...productForm.retail_links];
+                              updated[idx] = { ...updated[idx], link_type: v };
+                              setProductForm({...productForm, retail_links: updated});
+                            }}
+                          >
+                            <SelectTrigger className="w-[150px]">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="product_url">Product Link</SelectItem>
+                              <SelectItem value="store_locator">Store Locator</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <Input 
+                            className="flex-1"
+                            value={link.url}
+                            onChange={(e) => {
+                              const updated = [...productForm.retail_links];
+                              updated[idx] = { ...updated[idx], url: e.target.value };
+                              setProductForm({...productForm, retail_links: updated});
+                            }}
+                            placeholder={link.link_type === "store_locator" ? "https://store.com/store-locator" : "https://store.com/product-page"}
+                          />
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="text-destructive flex-shrink-0"
+                            onClick={() => {
+                              const updated = productForm.retail_links.filter((_, i) => i !== idx);
+                              setProductForm({...productForm, retail_links: updated});
+                            }}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                   <Button onClick={handleSaveProduct} className="w-full">
                     {editingProduct ? "Update Product" : "Create Product"}
