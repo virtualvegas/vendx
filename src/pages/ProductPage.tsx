@@ -84,6 +84,10 @@ const ProductPage = () => {
   const [loading, setLoading] = useState(true);
   const [adding, setAdding] = useState(false);
   const { addToCart, cartCount } = useCart();
+  const shopifyCartStore = useShopifyCartStore();
+
+  // Fetch linked Shopify product data when product has shopify_handle
+  const { product: shopifyProduct } = useShopifyProduct(product?.shopify_handle || undefined);
 
   // Dynamic SEO for product sharing
   useSEO({
