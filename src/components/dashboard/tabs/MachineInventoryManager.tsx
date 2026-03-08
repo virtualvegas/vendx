@@ -341,16 +341,16 @@ const MachineInventoryManager = () => {
                               <p className="font-medium">{item.product_name}</p>
                               <p className="text-xs text-muted-foreground">{item.sku}</p>
                             </TableCell>
-                            <TableCell><Badge variant="outline">{item.category || "General"}</Badge></TableCell>
+                            <TableCell className="hidden md:table-cell"><Badge variant="outline">{item.category || "General"}</Badge></TableCell>
                             <TableCell>
                               <span className={item.quantity === 0 ? "text-destructive font-medium" : item.quantity <= 2 ? "text-yellow-500 font-medium" : ""}>
                                 {item.quantity}
                               </span>
                               <span className="text-muted-foreground">/{item.max_capacity}</span>
                             </TableCell>
-                            <TableCell className="text-muted-foreground">${(item.cost_of_goods || 0).toFixed(2)}</TableCell>
-                            <TableCell className="font-medium">${item.unit_price.toFixed(2)}</TableCell>
-                            <TableCell>
+                            <TableCell className="hidden sm:table-cell text-muted-foreground">${(item.cost_of_goods || 0).toFixed(2)}</TableCell>
+                            <TableCell className="hidden sm:table-cell font-medium">${item.unit_price.toFixed(2)}</TableCell>
+                            <TableCell className="hidden lg:table-cell">
                               <span className={marginPct >= 30 ? "text-green-600" : marginPct >= 15 ? "text-yellow-500" : "text-destructive"}>
                                 {marginPct.toFixed(0)}%
                               </span>
