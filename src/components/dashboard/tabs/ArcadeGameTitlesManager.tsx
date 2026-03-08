@@ -27,16 +27,15 @@ interface ArcadeGameTitle {
 }
 
 const GAME_TYPES = [
-  { value: "classic", label: "Classic Arcade" },
+  { value: "claw", label: "Claw / Crane" },
+  { value: "cabinet", label: "Cabinet / Classic" },
   { value: "redemption", label: "Redemption" },
-  { value: "skill", label: "Skill Game" },
+  { value: "simulator", label: "Simulator" },
   { value: "racing", label: "Racing" },
-  { value: "fighting", label: "Fighting" },
   { value: "shooter", label: "Shooter" },
   { value: "sports", label: "Sports" },
-  { value: "pinball", label: "Pinball" },
-  { value: "crane", label: "Crane / Claw" },
   { value: "rhythm", label: "Rhythm / Music" },
+  { value: "vr", label: "VR" },
   { value: "other", label: "Other" },
 ];
 
