@@ -4353,10 +4353,13 @@ export type Database = {
           custom_price: number | null
           discount_percentage: number | null
           display_order: number | null
+          external_product_data: Json | null
+          external_product_id: string | null
           funnel_step_id: string
           id: string
           is_featured: boolean | null
-          product_id: string
+          product_id: string | null
+          product_source: string
           quantity_limit: number | null
         }
         Insert: {
@@ -4365,10 +4368,13 @@ export type Database = {
           custom_price?: number | null
           discount_percentage?: number | null
           display_order?: number | null
+          external_product_data?: Json | null
+          external_product_id?: string | null
           funnel_step_id: string
           id?: string
           is_featured?: boolean | null
-          product_id: string
+          product_id?: string | null
+          product_source?: string
           quantity_limit?: number | null
         }
         Update: {
@@ -4377,10 +4383,13 @@ export type Database = {
           custom_price?: number | null
           discount_percentage?: number | null
           display_order?: number | null
+          external_product_data?: Json | null
+          external_product_id?: string | null
           funnel_step_id?: string
           id?: string
           is_featured?: boolean | null
-          product_id?: string
+          product_id?: string | null
+          product_source?: string
           quantity_limit?: number | null
         }
         Relationships: [
