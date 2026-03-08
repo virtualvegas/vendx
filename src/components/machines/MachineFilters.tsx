@@ -1,7 +1,7 @@
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, Filter } from "lucide-react";
+import { Search } from "lucide-react";
 import { MACHINE_TYPES, MACHINE_STATUSES, MachineLocation } from "@/lib/machineUtils";
+import { SearchableSelect } from "@/components/ui/searchable-select";
 
 interface MachineFiltersProps {
   searchTerm: string;
@@ -34,7 +34,6 @@ export const MachineFilters = ({
   showLocationFilter = false,
   className,
 }: MachineFiltersProps) => {
-  // Use available types if provided, otherwise use all machine types
   const displayTypes = availableTypes 
     ? MACHINE_TYPES.filter(t => availableTypes.includes(t.value))
     : MACHINE_TYPES;
@@ -51,51 +50,50 @@ export const MachineFilters = ({
         />
       </div>
       
-      <Select value={statusFilter} onValueChange={onStatusChange}>
-        <SelectTrigger className="w-full sm:w-[150px]">
-          <Filter className="w-4 h-4 mr-2 shrink-0" />
-          <SelectValue placeholder="Status" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="all">All Status</SelectItem>
-          {MACHINE_STATUSES.map(status => (
-            <SelectItem key={status.value} value={status.value}>
-              {status.label}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+      <div className="w-full sm:w-[150px]">
+        <SearchableSelect
+          options={[
+            { value: "all", label: "All Status" },
+            ...MACHINE_STATUSES.map(s => ({ value: s.value, label: s.label })),
+          ]}
+          value={statusFilter}
+          onValueChange={onStatusChange}
+          placeholder="Status"
+          searchPlaceholder="Search status..."
+        />
+      </div>
 
       {showTypeFilter && onTypeChange && (
-        <Select value={typeFilter} onValueChange={onTypeChange}>
-          <SelectTrigger className="w-full sm:w-[150px]">
-            <SelectValue placeholder="Type" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Types</SelectItem>
-            {displayTypes.map(type => (
-              <SelectItem key={type.value} value={type.value}>
-                {type.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <div className="w-full sm:w-[150px]">
+          <SearchableSelect
+            options={[
+              { value: "all", label: "All Types" },
+              ...displayTypes.map(t => ({ value: t.value, label: t.label })),
+            ]}
+            value={typeFilter}
+            onValueChange={onTypeChange}
+            placeholder="Type"
+            searchPlaceholder="Search type..."
+          />
+        </div>
       )}
 
       {showLocationFilter && onLocationChange && (
-        <Select value={locationFilter} onValueChange={onLocationChange}>
-          <SelectTrigger className="w-full sm:w-[200px]">
-            <SelectValue placeholder="Location" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Locations</SelectItem>
-            {locations.map(loc => (
-              <SelectItem key={loc.id} value={loc.id}>
-                {loc.name || `${loc.city}, ${loc.country}`}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <div className="w-full sm:w-[200px]">
+          <SearchableSelect
+            options={[
+              { value: "all", label: "All Locations" },
+              ...locations.map(loc => ({
+                value: loc.id,
+                label: loc.name || `${loc.city}, ${loc.country}`,
+              })),
+            ]}
+            value={locationFilter}
+            onValueChange={onLocationChange}
+            placeholder="Location"
+            searchPlaceholder="Search locations..."
+          />
+        </div>
       )}
     </div>
   );
