@@ -252,12 +252,12 @@ const InventoryLogistics = () => {
               <TableHeader>
                 <TableRow>
                   <TableHead>Product</TableHead>
-                  <TableHead>SKU</TableHead>
-                  <TableHead>Category</TableHead>
-                  <TableHead>Location</TableHead>
+                  <TableHead className="hidden sm:table-cell">SKU</TableHead>
+                  <TableHead className="hidden md:table-cell">Category</TableHead>
+                  <TableHead className="hidden lg:table-cell">Location</TableHead>
                   <TableHead>Qty</TableHead>
-                  <TableHead>Unit Cost</TableHead>
-                  <TableHead>Value</TableHead>
+                  <TableHead className="hidden sm:table-cell">Unit Cost</TableHead>
+                  <TableHead className="hidden md:table-cell">Value</TableHead>
                   {isSuperAdmin && <TableHead>Actions</TableHead>}
                 </TableRow>
               </TableHeader>
@@ -268,15 +268,15 @@ const InventoryLogistics = () => {
                       {item.product_name}
                       {item.quantity <= item.min_stock_level && <AlertTriangle className="w-3 h-3 text-destructive inline ml-2" />}
                     </TableCell>
-                    <TableCell className="font-mono text-sm text-muted-foreground">{item.sku}</TableCell>
-                    <TableCell><Badge variant="outline">{item.category}</Badge></TableCell>
-                    <TableCell className="text-sm">{item.location}</TableCell>
+                    <TableCell className="hidden sm:table-cell font-mono text-sm text-muted-foreground">{item.sku}</TableCell>
+                    <TableCell className="hidden md:table-cell"><Badge variant="outline">{item.category}</Badge></TableCell>
+                    <TableCell className="hidden lg:table-cell text-sm">{item.location}</TableCell>
                     <TableCell>
                       <span className={item.quantity <= item.min_stock_level ? "text-destructive font-medium" : ""}>{item.quantity}</span>
                       <span className="text-muted-foreground">/{item.min_stock_level}</span>
                     </TableCell>
-                    <TableCell>${item.unit_cost.toFixed(2)}</TableCell>
-                    <TableCell className="font-medium">${(item.quantity * item.unit_cost).toFixed(2)}</TableCell>
+                    <TableCell className="hidden sm:table-cell">${item.unit_cost.toFixed(2)}</TableCell>
+                    <TableCell className="hidden md:table-cell font-medium">${(item.quantity * item.unit_cost).toFixed(2)}</TableCell>
                     {isSuperAdmin && (
                       <TableCell>
                         <DropdownMenu>
