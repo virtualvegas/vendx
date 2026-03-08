@@ -47,6 +47,7 @@ import BusinessContentManager from "@/components/dashboard/tabs/BusinessContentM
 import TicketConfigManager from "@/components/dashboard/tabs/TicketConfigManager";
 import CustomerTickets from "@/components/dashboard/tabs/CustomerTickets";
 import ArcadeAnalytics from "@/components/dashboard/tabs/ArcadeAnalytics";
+import ArcadeGameTitlesManager from "@/components/dashboard/tabs/ArcadeGameTitlesManager";
 import PrizeWinsManager from "@/components/dashboard/tabs/PrizeWinsManager";
 import TicketPrizesManager from "@/components/dashboard/tabs/TicketPrizesManager";
 import PrizeInventoryManager from "@/components/dashboard/tabs/PrizeInventoryManager";
@@ -298,6 +299,8 @@ const DashboardPage = () => {
         content = <TicketConfigManager />; break;
       case "arcade-analytics":
         content = <ArcadeAnalytics />; break;
+      case "arcade-game-titles":
+        content = <ArcadeGameTitlesManager />; break;
       case "prize-wins":
         content = <PrizeWinsManager />; break;
       case "ticket-prizes":

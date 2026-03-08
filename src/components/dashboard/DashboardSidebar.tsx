@@ -102,6 +102,7 @@ const tabGroups: TabGroup[] = [
     id: "arcade-prizes",
     label: "Arcade & Prizes",
     tabs: [
+      { id: "arcade-game-titles", label: "Game Titles", icon: Gamepad2, requiredRoles: ["super_admin", "employee_operator"] },
       { id: "ticket-prizes", label: "Prize Catalog", icon: Gift, requiredRoles: ["super_admin", "employee_operator"] },
       { id: "prize-inventory", label: "Prize Inventory", icon: Package, requiredRoles: ["super_admin", "warehouse_logistics", "employee_operator"] },
       { id: "prize-wins", label: "Prize Wins Log", icon: Trophy, requiredRoles: ["super_admin", "finance_accounting", "employee_operator"] },
