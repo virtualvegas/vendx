@@ -438,6 +438,48 @@ const MyRoute = () => {
     },
   });
 
+  // Create task from route stop
+  const createTaskFromStopMutation = useMutation({
+    mutationFn: async ({ title, description, priority, stopName }: { title: string; description: string; priority: string; stopName: string }) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      const { error } = await supabase.from("daily_tasks").insert([{
+        title,
+        description: `[Route Stop: ${stopName}] ${description}`,
+        priority,
+        status: "pending",
+        due_date: new Date().toISOString().split("T")[0],
+        created_by: user?.id,
+        assigned_to: user?.id,
+      }]);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["daily-tasks"] });
+      queryClient.invalidateQueries({ queryKey: ["today-tasks-count"] });
+      toast({ title: "Task Created", description: "Added to your daily tasks" });
+      setShowTaskDialog(false);
+      setTaskForm({ title: "", description: "", priority: "medium" });
+    },
+    onError: (error: any) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    },
+  });
+
+  // Fetch today's tasks to show count in header
+  const { data: todayTasks } = useQuery({
+    queryKey: ["today-tasks-count"],
+    queryFn: async () => {
+      const today = new Date().toISOString().split("T")[0];
+      const { data, error } = await supabase
+        .from("daily_tasks")
+        .select("id, title, status")
+        .eq("due_date", today)
+        .eq("status", "pending");
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
   // Calculations
   const pendingStops = stops?.filter(s => s.status === "pending") || [];
   const completedStops = stops?.filter(s => s.status === "completed" || s.status === "skipped") || [];
