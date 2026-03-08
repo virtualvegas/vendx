@@ -1258,6 +1258,48 @@ const MyRoute = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Create Task from Stop Dialog */}
+      <Dialog open={showTaskDialog} onOpenChange={setShowTaskDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <ListTodo className="w-5 h-5 text-primary" />
+              Create Task
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Title</Label>
+              <Input value={taskForm.title} onChange={(e) => setTaskForm({ ...taskForm, title: e.target.value })} placeholder="Task title" />
+            </div>
+            <div className="space-y-2">
+              <Label>Description</Label>
+              <Textarea value={taskForm.description} onChange={(e) => setTaskForm({ ...taskForm, description: e.target.value })} placeholder="Details..." rows={3} />
+            </div>
+            <div className="space-y-2">
+              <Label>Priority</Label>
+              <Select value={taskForm.priority} onValueChange={(v) => setTaskForm({ ...taskForm, priority: v })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="low">Low</SelectItem>
+                  <SelectItem value="medium">Medium</SelectItem>
+                  <SelectItem value="high">High</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowTaskDialog(false)}>Cancel</Button>
+            <Button 
+              onClick={() => createTaskFromStopMutation.mutate({ ...taskForm, stopName: selectedStop?.stop_name || "" })}
+              disabled={!taskForm.title.trim() || createTaskFromStopMutation.isPending}
+            >
+              Create Task
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
