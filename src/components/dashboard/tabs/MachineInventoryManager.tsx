@@ -322,11 +322,11 @@ const MachineInventoryManager = () => {
                       <TableRow>
                         <TableHead>Slot</TableHead>
                         <TableHead>Product</TableHead>
-                        <TableHead>Category</TableHead>
+                        <TableHead className="hidden md:table-cell">Category</TableHead>
                         <TableHead>Qty</TableHead>
-                        <TableHead>COGS</TableHead>
-                        <TableHead>Retail</TableHead>
-                        <TableHead>Margin</TableHead>
+                        <TableHead className="hidden sm:table-cell">COGS</TableHead>
+                        <TableHead className="hidden sm:table-cell">Retail</TableHead>
+                        <TableHead className="hidden lg:table-cell">Margin</TableHead>
                         <TableHead className="text-right">Actions</TableHead>
                       </TableRow>
                     </TableHeader>
