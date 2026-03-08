@@ -75,21 +75,6 @@ const RegionalReports = () => {
     },
   });
 
-  // Fetch synced transactions for the period
-  const { data: syncedTransactions } = useQuery({
-    queryKey: ["regional-synced-txns", dateRange],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("synced_transactions")
-        .select("amount, metadata, created_at, transaction_type")
-        .eq("status", "completed")
-        .eq("transaction_type", "revenue")
-        .gte("created_at", dateFilter.start.toISOString())
-        .lte("created_at", dateFilter.end.toISOString());
-      if (error) throw error;
-      return data || [];
-    },
-  });
 
   // Build region stats from live data
   const regionStats = useMemo(() => {
