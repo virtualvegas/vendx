@@ -105,6 +105,7 @@ const RegionalReports = () => {
       }
     });
 
+    return locations.map(loc => ({
       id: loc.id,
       name: loc.name || loc.city,
       country: loc.country,
@@ -112,7 +113,7 @@ const RegionalReports = () => {
       revenue: revenueMap.get(loc.id) || 0,
       transactions: txnCountMap.get(loc.id) || 0,
     })).sort((a, b) => b.revenue - a.revenue);
-  }, [locations, machines, machineTransactions, syncedTransactions]);
+  }, [locations, machines, machineTransactions]);
 
   const totalMachines = regionStats.reduce((s, r) => s + r.activeMachines, 0);
   const totalRevenue = regionStats.reduce((s, r) => s + r.revenue, 0);
