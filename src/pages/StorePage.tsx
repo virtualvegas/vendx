@@ -1,17 +1,15 @@
-import { useState, useMemo } from "react";
-import { useSearchParams, Link } from "react-router-dom";
-import arcadeHeroImage from "@/assets/arcade-hero.png";
+import { useState, useMemo, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { 
-  Search, 
-  Package, 
-  Shirt, 
-  Cpu, 
-  Cookie, 
+import {
+  Search,
+  Package,
+  Shirt,
+  Cpu,
+  Cookie,
   Gift,
   SlidersHorizontal,
   ArrowUpDown,
@@ -20,7 +18,7 @@ import {
   TrendingUp,
   Clock,
   DollarSign,
-  Loader2
+  Loader2,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -29,10 +27,30 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { useShopifyProducts } from "@/hooks/useShopifyProducts";
-import { ShopifyProductCard } from "@/components/store/ShopifyProductCard";
 import { ShopifyCartDrawer } from "@/components/store/ShopifyCartDrawer";
 import { SubscriptionsSection } from "@/components/store/SubscriptionsSection";
+import { StoreProductCard } from "@/components/store/StoreProductCard";
+import { supabase } from "@/integrations/supabase/client";
+import type { Json } from "@/integrations/supabase/types";
+
+interface StoreProduct {
+  id: string;
+  name: string;
+  slug: string;
+  short_description: string | null;
+  description: string;
+  price: number;
+  compare_at_price: number | null;
+  category: string;
+  images: string[];
+  stock: number | null;
+  is_subscription: boolean;
+  subscription_price: number | null;
+  retail_status: string | null;
+  retail_links: Json | null;
+  shopify_handle: string | null;
+  created_at: string;
+}
 
 const categories = [
   { id: "all", label: "All Products", icon: Package },
@@ -51,49 +69,75 @@ const StorePage = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState<SortOption>("featured");
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
+  const [products, setProducts] = useState<StoreProduct[]>([]);
+  const [loading, setLoading] = useState(true);
   const activeCategory = searchParams.get("category") || "all";
 
-  // Build Shopify query based on category
-  const shopifyQuery = useMemo(() => {
-    if (activeCategory === "all") return undefined;
-    if (activeCategory === "subscriptions") return "tag:subscription";
-    return `product_type:${activeCategory}`;
-  }, [activeCategory]);
+  useEffect(() => {
+    fetchProducts();
+  }, []);
 
-  const { products, loading, error } = useShopifyProducts(shopifyQuery);
+  const fetchProducts = async () => {
+    setLoading(true);
+    const { data, error } = await supabase
+      .from("store_products")
+      .select("id, name, slug, short_description, description, price, compare_at_price, category, images, stock, is_subscription, subscription_price, retail_status, retail_links, shopify_handle, created_at")
+      .eq("is_active", true)
+      .order("created_at", { ascending: false });
+
+    if (!error && data) {
+      setProducts(data as StoreProduct[]);
+    }
+    setLoading(false);
+  };
 
   const filteredAndSortedProducts = useMemo(() => {
-    let result = products.filter(product =>
-      product.node.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      product.node.description?.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    let result = products;
 
+    // Category filter
+    if (activeCategory !== "all" && activeCategory !== "subscriptions") {
+      result = result.filter((p) => p.category === activeCategory);
+    }
+    if (activeCategory === "subscriptions") {
+      result = result.filter((p) => p.is_subscription);
+    }
+
+    // Exclude subscriptions from non-subscription views (they show in SubscriptionsSection)
+    if (activeCategory === "all") {
+      result = result.filter((p) => !p.is_subscription);
+    }
+
+    // Search filter
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      result = result.filter(
+        (p) =>
+          p.name.toLowerCase().includes(q) ||
+          p.short_description?.toLowerCase().includes(q) ||
+          p.description?.toLowerCase().includes(q)
+      );
+    }
+
+    // Sort
     switch (sortBy) {
       case "price-asc":
-        result = [...result].sort((a, b) => {
-          const priceA = parseFloat(a.node.priceRange.minVariantPrice.amount);
-          const priceB = parseFloat(b.node.priceRange.minVariantPrice.amount);
-          return priceA - priceB;
-        });
+        result = [...result].sort((a, b) => a.price - b.price);
         break;
       case "price-desc":
-        result = [...result].sort((a, b) => {
-          const priceA = parseFloat(a.node.priceRange.minVariantPrice.amount);
-          const priceB = parseFloat(b.node.priceRange.minVariantPrice.amount);
-          return priceB - priceA;
-        });
+        result = [...result].sort((a, b) => b.price - a.price);
         break;
       case "name":
-        result = [...result].sort((a, b) => a.node.title.localeCompare(b.node.title));
+        result = [...result].sort((a, b) => a.name.localeCompare(b.name));
         break;
-      case "featured":
       case "newest":
+        result = [...result].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+        break;
       default:
         break;
     }
 
     return result;
-  }, [products, searchQuery, sortBy]);
+  }, [products, searchQuery, sortBy, activeCategory]);
 
   const sortOptions = [
     { value: "featured", label: "Featured", icon: TrendingUp },
@@ -115,7 +159,7 @@ const StorePage = () => {
   return (
     <div className="min-h-screen bg-background">
       <Navigation />
-      
+
       {/* Hero Section */}
       <section className="pt-24 pb-12 px-4 bg-gradient-space">
         <div className="container mx-auto text-center">
@@ -127,9 +171,9 @@ const StorePage = () => {
             <span className="text-foreground">Store</span>
           </h1>
           <p className="text-muted-foreground text-lg max-w-2xl mx-auto mb-8">
-            Premium merchandise, subscription boxes, and exclusive items for vending enthusiasts
+            Premium merchandise, subscription boxes, and exclusive items — buy online or find at your favorite retailers
           </p>
-          
+
           {/* Search Bar */}
           <div className="max-w-md mx-auto relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
@@ -148,7 +192,6 @@ const StorePage = () => {
       <section className="py-6 px-4 border-b border-border bg-card/50">
         <div className="container mx-auto">
           <div className="flex flex-col md:flex-row md:items-center gap-4">
-            {/* Category Filters */}
             <div className="flex gap-2 overflow-x-auto pb-2 md:pb-0 scrollbar-hide flex-1">
               {categories.map((cat) => {
                 const Icon = cat.icon;
@@ -167,7 +210,6 @@ const StorePage = () => {
               })}
             </div>
 
-            {/* Sort & View Controls */}
             <div className="flex items-center gap-2">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -204,7 +246,6 @@ const StorePage = () => {
             </div>
           </div>
 
-          {/* Results count */}
           <div className="mt-4 text-sm text-muted-foreground">
             Showing {filteredAndSortedProducts.length} product{filteredAndSortedProducts.length !== 1 ? "s" : ""}
             {searchQuery && ` for "${searchQuery}"`}
@@ -212,74 +253,59 @@ const StorePage = () => {
         </div>
       </section>
 
-      {/* Subscriptions Section - Show on "all" or "subscriptions" category */}
-      {(activeCategory === "all" || activeCategory === "subscriptions") && (
-        <SubscriptionsSection />
-      )}
+      {/* Subscriptions Section */}
+      {(activeCategory === "all" || activeCategory === "subscriptions") && <SubscriptionsSection />}
 
-      {/* Products Grid/List - Hide on subscriptions-only view */}
+      {/* Products Grid/List */}
       {activeCategory !== "subscriptions" && (
-      <section className="py-8 px-4">
-        <div className="container mx-auto">
-          {/* Section Header for Products */}
-          {(activeCategory === "all" || activeCategory === "subscriptions") && filteredAndSortedProducts.length > 0 && (
-            <div className="flex items-center gap-3 mb-8">
-              <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center">
-                <Package className="w-5 h-5 text-primary" />
+        <section className="py-8 px-4">
+          <div className="container mx-auto">
+            {(activeCategory === "all") && filteredAndSortedProducts.length > 0 && (
+              <div className="flex items-center gap-3 mb-8">
+                <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center">
+                  <Package className="w-5 h-5 text-primary" />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-bold">Shop Products</h2>
+                  <p className="text-muted-foreground text-sm">
+                    {filteredAndSortedProducts.length} product{filteredAndSortedProducts.length !== 1 ? "s" : ""} available
+                  </p>
+                </div>
               </div>
-              <div>
-                <h2 className="text-2xl font-bold">Shop Products</h2>
-                <p className="text-muted-foreground text-sm">
-                  {filteredAndSortedProducts.length} product{filteredAndSortedProducts.length !== 1 ? "s" : ""} available
-                </p>
-              </div>
-            </div>
-          )}
+            )}
 
-          {loading ? (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            </div>
-          ) : error ? (
-            <div className="text-center py-12">
-              <Package className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
-              <h3 className="text-xl font-semibold mb-2">Error loading products</h3>
-              <p className="text-muted-foreground">{error}</p>
-            </div>
-          ) : filteredAndSortedProducts.length === 0 ? (
-            <div className="text-center py-12">
-              <Package className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
-              <h3 className="text-xl font-semibold mb-2">No products found</h3>
-              <p className="text-muted-foreground mb-4">
-                {products.length === 0 
-                  ? "No products have been added yet. Add products in Shopify to display them here."
-                  : "Try adjusting your search or category filter"
-                }
-              </p>
-              {searchQuery && (
-                <Button 
-                  variant="outline" 
-                  onClick={() => setSearchQuery("")}
-                >
-                  Clear Search
-                </Button>
-              )}
-            </div>
-          ) : viewMode === "grid" ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {filteredAndSortedProducts.map((product) => (
-                <ShopifyProductCard key={product.node.id} product={product} viewMode="grid" />
-              ))}
-            </div>
-          ) : (
-            <div className="flex flex-col gap-4">
-              {filteredAndSortedProducts.map((product) => (
-                <ShopifyProductCard key={product.node.id} product={product} viewMode="list" />
-              ))}
-            </div>
-          )}
-        </div>
-      </section>
+            {loading ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              </div>
+            ) : filteredAndSortedProducts.length === 0 ? (
+              <div className="text-center py-12">
+                <Package className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
+                <h3 className="text-xl font-semibold mb-2">No products found</h3>
+                <p className="text-muted-foreground mb-4">
+                  {searchQuery ? "Try adjusting your search or category filter" : "No products have been added yet."}
+                </p>
+                {searchQuery && (
+                  <Button variant="outline" onClick={() => setSearchQuery("")}>
+                    Clear Search
+                  </Button>
+                )}
+              </div>
+            ) : viewMode === "grid" ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {filteredAndSortedProducts.map((product) => (
+                  <StoreProductCard key={product.id} product={product} viewMode="grid" />
+                ))}
+              </div>
+            ) : (
+              <div className="flex flex-col gap-4">
+                {filteredAndSortedProducts.map((product) => (
+                  <StoreProductCard key={product.id} product={product} viewMode="list" />
+                ))}
+              </div>
+            )}
+          </div>
+        </section>
       )}
 
       <Footer />
