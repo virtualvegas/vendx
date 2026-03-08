@@ -109,7 +109,7 @@ const BusinessOverview = () => {
   if (showOnboarding) {
     return (
       <BusinessOnboarding 
-        onComplete={() => setShowOnboarding(false)} 
+        onComplete={completeOnboarding} 
         assignments={assignments || []}
         machines={machines || []}
       />
