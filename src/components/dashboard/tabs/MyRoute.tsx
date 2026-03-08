@@ -20,7 +20,7 @@ import {
   Timer, Zap, TrendingUp, ChevronRight, MapPinned,
   Search, Filter, WifiOff, Wifi, Camera, MessageSquare,
   ThumbsUp, AlertCircle, SkipForward, History, Target,
-  DollarSign, Coins, Banknote, CreditCard
+  DollarSign, Coins, Banknote, CreditCard, ListTodo, Flag
 } from "lucide-react";
 
 interface RouteStop {
