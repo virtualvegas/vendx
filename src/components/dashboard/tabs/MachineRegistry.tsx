@@ -446,19 +446,20 @@ const MachineRegistry = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold flex items-center gap-2">
-          <Monitor className="w-6 h-6 text-primary" />
-          Machine Management
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h2 className="text-xl sm:text-2xl font-bold flex items-center gap-2 min-w-0">
+          <Monitor className="w-5 h-5 sm:w-6 sm:h-6 text-primary flex-shrink-0" />
+          <span className="truncate">Machine Management</span>
         </h2>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-shrink-0">
           <Button onClick={fetchData} variant="outline" size="sm">
-            <RefreshCw className="w-4 h-4 mr-2" />
-            Refresh
+            <RefreshCw className="w-4 h-4 sm:mr-2" />
+            <span className="hidden sm:inline">Refresh</span>
           </Button>
-          <Button onClick={() => { resetMachineForm(); setShowMachineDialog(true); }}>
-            <Plus className="w-4 h-4 mr-2" />
-            Register Machine
+          <Button size="sm" onClick={() => { resetMachineForm(); setShowMachineDialog(true); }}>
+            <Plus className="w-4 h-4 sm:mr-2" />
+            <span className="hidden sm:inline">Register Machine</span>
+            <span className="sm:hidden">Add</span>
           </Button>
         </div>
       </div>
@@ -556,11 +557,11 @@ const MachineRegistry = () => {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Machine</TableHead>
-                      <TableHead>Location</TableHead>
-                      <TableHead>Type</TableHead>
-                      <TableHead>Revenue</TableHead>
-                      <TableHead>Activity</TableHead>
-                      <TableHead>Connection</TableHead>
+                      <TableHead className="hidden md:table-cell">Location</TableHead>
+                      <TableHead className="hidden lg:table-cell">Type</TableHead>
+                      <TableHead className="hidden sm:table-cell">Revenue</TableHead>
+                      <TableHead className="hidden lg:table-cell">Activity</TableHead>
+                      <TableHead className="hidden xl:table-cell">Connection</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Actions</TableHead>
                     </TableRow>
@@ -576,26 +577,26 @@ const MachineRegistry = () => {
                               <p className="text-xs text-muted-foreground font-mono">{machine.machine_code}</p>
                             </div>
                           </TableCell>
-                          <TableCell>
+                          <TableCell className="hidden md:table-cell">
                             {machine.location ? (
                               <div className="flex items-center gap-1">
-                                <MapPin className="w-3 h-3 text-muted-foreground" />
-                                <span className="text-sm">{machine.location.name || `${machine.location.city}`}</span>
+                                <MapPin className="w-3 h-3 text-muted-foreground flex-shrink-0" />
+                                <span className="text-sm truncate max-w-[120px]">{machine.location.name || `${machine.location.city}`}</span>
                               </div>
                             ) : (
                               <span className="text-muted-foreground text-sm">Unassigned</span>
                             )}
                           </TableCell>
-                          <TableCell>
+                          <TableCell className="hidden lg:table-cell">
                             <Badge variant="outline" className="capitalize">{machine.machine_type}</Badge>
                           </TableCell>
-                          <TableCell>
+                          <TableCell className="hidden sm:table-cell">
                             <div className="text-sm">
                               <p className="font-medium">${(machine.lifetime_revenue || 0).toLocaleString()}</p>
                               <p className="text-xs text-muted-foreground">lifetime</p>
                             </div>
                           </TableCell>
-                          <TableCell>
+                          <TableCell className="hidden lg:table-cell">
                             <div className="flex items-center gap-2 text-sm">
                               {isArcade ? (
                                 <span className="flex items-center gap-1">
@@ -606,11 +607,6 @@ const MachineRegistry = () => {
                                 <span className="flex items-center gap-1">
                                   <ShoppingCart className="w-3 h-3 text-green-500" />
                                   {machine.total_vends || 0}
-                                </span>
-                              )}
-                              {machine.last_activity_at && (
-                                <span className="text-xs text-muted-foreground">
-                                  {formatDistanceToNow(new Date(machine.last_activity_at), { addSuffix: true })}
                                 </span>
                               )}
                             </div>
