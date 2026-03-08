@@ -31,6 +31,7 @@ import { ShopifyCartDrawer } from "@/components/store/ShopifyCartDrawer";
 import { SubscriptionsSection } from "@/components/store/SubscriptionsSection";
 import { StoreProductCard } from "@/components/store/StoreProductCard";
 import { supabase } from "@/integrations/supabase/client";
+import { useShopifyProducts } from "@/hooks/useShopifyProducts";
 import type { Json } from "@/integrations/supabase/types";
 
 interface StoreProduct {
