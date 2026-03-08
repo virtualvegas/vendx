@@ -171,19 +171,18 @@ const InventoryLogistics = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold flex items-center gap-2">
-            <Warehouse className="w-6 h-6 text-primary" />
-            Warehouse Inventory
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="min-w-0">
+          <h2 className="text-xl sm:text-2xl font-bold flex items-center gap-2">
+            <Warehouse className="w-5 h-5 sm:w-6 sm:h-6 text-primary flex-shrink-0" />
+            <span className="truncate">Warehouse Inventory</span>
           </h2>
-          <p className="text-muted-foreground">Manage central warehouse stock</p>
+          <p className="text-sm text-muted-foreground">Manage central warehouse stock</p>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={() => queryClient.invalidateQueries({ queryKey: ["inventory-items"] })}>
-            <RefreshCw className="w-4 h-4 mr-2" /> Refresh
-          </Button>
-        </div>
+        <Button variant="outline" size="sm" onClick={() => queryClient.invalidateQueries({ queryKey: ["inventory-items"] })}>
+          <RefreshCw className="w-4 h-4 sm:mr-2" />
+          <span className="hidden sm:inline">Refresh</span>
+        </Button>
       </div>
 
       {/* Stats */}
