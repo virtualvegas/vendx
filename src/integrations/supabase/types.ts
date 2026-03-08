@@ -4705,6 +4705,8 @@ export type Database = {
           price: number
           retail_links: Json | null
           retail_status: string | null
+          shopify_handle: string | null
+          shopify_variant_id: string | null
           short_description: string | null
           slug: string
           stock: number | null
@@ -4732,6 +4734,8 @@ export type Database = {
           price?: number
           retail_links?: Json | null
           retail_status?: string | null
+          shopify_handle?: string | null
+          shopify_variant_id?: string | null
           short_description?: string | null
           slug: string
           stock?: number | null
@@ -4759,6 +4763,8 @@ export type Database = {
           price?: number
           retail_links?: Json | null
           retail_status?: string | null
+          shopify_handle?: string | null
+          shopify_variant_id?: string | null
           short_description?: string | null
           slug?: string
           stock?: number | null
