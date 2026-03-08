@@ -20,7 +20,7 @@ import {
   Timer, Zap, TrendingUp, ChevronRight, MapPinned,
   Search, Filter, WifiOff, Wifi, Camera, MessageSquare,
   ThumbsUp, AlertCircle, SkipForward, History, Target,
-  DollarSign, Coins, Banknote, CreditCard
+  DollarSign, Coins, Banknote, CreditCard, ListTodo, Flag
 } from "lucide-react";
 
 interface RouteStop {
@@ -88,10 +88,12 @@ const MyRoute = () => {
   const [showRestockDialog, setShowRestockDialog] = useState(false);
   const [showIssueDialog, setShowIssueDialog] = useState(false);
   const [showRevenueDialog, setShowRevenueDialog] = useState(false);
+  const [showTaskDialog, setShowTaskDialog] = useState(false);
   const [selectedStop, setSelectedStop] = useState<RouteStop | null>(null);
   const [restockNotes, setRestockNotes] = useState("");
   const [issueDescription, setIssueDescription] = useState("");
   const [revenueForm, setRevenueForm] = useState({ cashAmount: "", coinsAmount: "", notes: "" });
+  const [taskForm, setTaskForm] = useState({ title: "", description: "", priority: "medium" });
   const [activeView, setActiveView] = useState<"my-route" | "all-routes">("my-route");
   const [userRoles, setUserRoles] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -436,6 +438,48 @@ const MyRoute = () => {
     },
   });
 
+  // Create task from route stop
+  const createTaskFromStopMutation = useMutation({
+    mutationFn: async ({ title, description, priority, stopName }: { title: string; description: string; priority: string; stopName: string }) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      const { error } = await supabase.from("daily_tasks").insert([{
+        title,
+        description: `[Route Stop: ${stopName}] ${description}`,
+        priority,
+        status: "pending",
+        due_date: new Date().toISOString().split("T")[0],
+        created_by: user?.id,
+        assigned_to: user?.id,
+      }]);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["daily-tasks"] });
+      queryClient.invalidateQueries({ queryKey: ["today-tasks-count"] });
+      toast({ title: "Task Created", description: "Added to your daily tasks" });
+      setShowTaskDialog(false);
+      setTaskForm({ title: "", description: "", priority: "medium" });
+    },
+    onError: (error: any) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    },
+  });
+
+  // Fetch today's tasks to show count in header
+  const { data: todayTasks } = useQuery({
+    queryKey: ["today-tasks-count"],
+    queryFn: async () => {
+      const today = new Date().toISOString().split("T")[0];
+      const { data, error } = await supabase
+        .from("daily_tasks")
+        .select("id, title, status")
+        .eq("due_date", today)
+        .eq("status", "pending");
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
   // Calculations
   const pendingStops = stops?.filter(s => s.status === "pending") || [];
   const completedStops = stops?.filter(s => s.status === "completed" || s.status === "skipped") || [];
@@ -503,6 +547,24 @@ const MyRoute = () => {
           </Button>
         </div>
       </div>
+
+      {/* Today's Tasks Banner */}
+      {todayTasks && todayTasks.length > 0 && (
+        <Card className="p-3 border-yellow-500/30 bg-yellow-500/5">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <ListTodo className="w-4 h-4 text-yellow-600" />
+              <span className="text-sm font-medium">{todayTasks.length} task{todayTasks.length !== 1 ? "s" : ""} due today</span>
+            </div>
+            <div className="flex items-center gap-1">
+              {todayTasks.slice(0, 2).map(t => (
+                <Badge key={t.id} variant="outline" className="text-xs max-w-[120px] truncate">{t.title}</Badge>
+              ))}
+              {todayTasks.length > 2 && <Badge variant="outline" className="text-xs">+{todayTasks.length - 2}</Badge>}
+            </div>
+          </div>
+        </Card>
+      )}
 
       {/* Manager View Toggle */}
       {isManager && (
@@ -978,6 +1040,22 @@ const MyRoute = () => {
                 </Button>
               </>
             )}
+            <Button 
+              variant="secondary" 
+              className="flex-1"
+              onClick={() => {
+                setTaskForm({ 
+                  title: `Follow up: ${selectedStop?.stop_name || ""}`, 
+                  description: selectedStop?.machine ? `Machine: ${selectedStop.machine.name} (${selectedStop.machine.machine_code})` : "",
+                  priority: "medium" 
+                });
+                setShowStopDetailsDialog(false);
+                setShowTaskDialog(true);
+              }}
+            >
+              <ListTodo className="w-4 h-4 mr-2" />
+              Create Task
+            </Button>
             {selectedStop?.status !== "pending" && isManager && (
               <Button variant="outline" onClick={() => { resetStopMutation.mutate(selectedStop!.id); setShowStopDetailsDialog(false); }}>
                 <RotateCcw className="w-4 h-4 mr-2" />
@@ -1176,6 +1254,48 @@ const MyRoute = () => {
             >
               <CheckCircle className="w-4 h-4 mr-2" />
               Confirm Collection
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Create Task from Stop Dialog */}
+      <Dialog open={showTaskDialog} onOpenChange={setShowTaskDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <ListTodo className="w-5 h-5 text-primary" />
+              Create Task
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Title</Label>
+              <Input value={taskForm.title} onChange={(e) => setTaskForm({ ...taskForm, title: e.target.value })} placeholder="Task title" />
+            </div>
+            <div className="space-y-2">
+              <Label>Description</Label>
+              <Textarea value={taskForm.description} onChange={(e) => setTaskForm({ ...taskForm, description: e.target.value })} placeholder="Details..." rows={3} />
+            </div>
+            <div className="space-y-2">
+              <Label>Priority</Label>
+              <Select value={taskForm.priority} onValueChange={(v) => setTaskForm({ ...taskForm, priority: v })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="low">Low</SelectItem>
+                  <SelectItem value="medium">Medium</SelectItem>
+                  <SelectItem value="high">High</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowTaskDialog(false)}>Cancel</Button>
+            <Button 
+              onClick={() => createTaskFromStopMutation.mutate({ ...taskForm, stopName: selectedStop?.stop_name || "" })}
+              disabled={!taskForm.title.trim() || createTaskFromStopMutation.isPending}
+            >
+              Create Task
             </Button>
           </DialogFooter>
         </DialogContent>
