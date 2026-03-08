@@ -274,6 +274,12 @@ const ProductPage = () => {
               {product.is_subscription && (
                 <Badge className="bg-accent text-accent-foreground">Subscription</Badge>
               )}
+              {isShopifyLinked && (
+                <Badge className="bg-primary/20 text-primary border border-primary/30">
+                  <ShoppingCart className="h-3 w-3 mr-1" />
+                  Shopify
+                </Badge>
+              )}
               {product.compare_at_price && product.compare_at_price > product.price && (
                 <Badge className="bg-destructive">Sale</Badge>
               )}
@@ -380,10 +386,12 @@ const ProductPage = () => {
               >
                 {adding ? (
                   <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                ) : isShopifyLinked ? (
+                  <ExternalLink className="h-5 w-5 mr-2" />
                 ) : (
                   <ShoppingCart className="h-5 w-5 mr-2" />
                 )}
-                {product.is_subscription ? "Subscribe Now" : "Add to Cart"}
+                {product.is_subscription ? "Subscribe Now" : isShopifyLinked ? "Add to Cart (Shopify)" : "Add to Cart"}
               </Button>
 
               {/* Features */}
