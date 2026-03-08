@@ -146,14 +146,14 @@ const ArtistsManager = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold text-foreground flex items-center gap-2">
-            <Users className="w-6 h-6" /> Artists & Filmmakers
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="min-w-0">
+          <h2 className="text-xl sm:text-2xl font-bold text-foreground flex items-center gap-2">
+            <Users className="w-5 h-5 sm:w-6 sm:h-6 flex-shrink-0" /> <span className="truncate">Artists & Filmmakers</span>
           </h2>
           <p className="text-muted-foreground text-sm">Manage artist profiles, legacy memorials, and contact info</p>
         </div>
-        <Button onClick={openCreate} className="gap-2"><Plus className="w-4 h-4" /> Add Artist</Button>
+        <Button onClick={openCreate} size="sm" className="gap-2 flex-shrink-0"><Plus className="w-4 h-4" /> <span className="hidden sm:inline">Add Artist</span><span className="sm:hidden">Add</span></Button>
       </div>
 
       {/* Stats */}
@@ -178,9 +178,9 @@ const ArtistsManager = () => {
           <TableHeader>
             <TableRow>
               <TableHead>Artist</TableHead>
-              <TableHead>Type</TableHead>
+              <TableHead className="hidden sm:table-cell">Type</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead>Legacy</TableHead>
+              <TableHead className="hidden md:table-cell">Legacy</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -204,7 +204,7 @@ const ArtistsManager = () => {
                     </div>
                   </div>
                 </TableCell>
-                <TableCell>
+                <TableCell className="hidden sm:table-cell">
                   <Badge variant="outline" className="capitalize">{a.artist_type === "both" ? "Music & Film" : a.artist_type}</Badge>
                 </TableCell>
                 <TableCell>
@@ -212,7 +212,7 @@ const ArtistsManager = () => {
                     {a.is_active ? "Active" : "Inactive"}
                   </Badge>
                 </TableCell>
-                <TableCell>
+                <TableCell className="hidden md:table-cell">
                   {a.is_legacy && <Badge className="bg-destructive/20 text-destructive border-destructive/30 gap-1"><Heart className="w-3 h-3" /> Legacy</Badge>}
                 </TableCell>
                 <TableCell className="text-right">
