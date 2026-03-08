@@ -527,6 +527,86 @@ const StoreManager = () => {
                       </div>
                     )}
 
+                    {/* Shopify Product Link */}
+                    <div className="border-t border-border pt-4 mt-2">
+                      <Label className="text-base font-semibold">Link Shopify Product</Label>
+                      <p className="text-sm text-muted-foreground mb-3">
+                        Link this to a Shopify product so customers buy through Shopify checkout
+                      </p>
+                      {productForm.shopify_handle ? (
+                        <div className="flex items-center gap-2 p-3 rounded-lg bg-primary/10 border border-primary/30">
+                          <LinkIcon className="h-4 w-4 text-primary flex-shrink-0" />
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium text-sm truncate">
+                              {shopifyProducts.find(p => p.node.handle === productForm.shopify_handle)?.node.title || productForm.shopify_handle}
+                            </p>
+                            <p className="text-xs text-muted-foreground">Shopify Handle: {productForm.shopify_handle}</p>
+                          </div>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="flex-shrink-0"
+                            onClick={() => setProductForm({...productForm, shopify_handle: "", shopify_variant_id: ""})}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="space-y-2">
+                          <div className="relative">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                            <Input
+                              className="pl-9"
+                              placeholder="Search Shopify products..."
+                              value={shopifySearch}
+                              onChange={(e) => setShopifySearch(e.target.value)}
+                            />
+                          </div>
+                          {shopifyLoading ? (
+                            <div className="flex items-center justify-center py-4">
+                              <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                              <span className="text-sm text-muted-foreground ml-2">Loading Shopify products...</span>
+                            </div>
+                          ) : (
+                            <div className="max-h-48 overflow-y-auto border border-border rounded-lg divide-y divide-border">
+                              {shopifyProducts
+                                .filter(p => !shopifySearch || p.node.title.toLowerCase().includes(shopifySearch.toLowerCase()))
+                                .map((sp) => {
+                                  const firstVariant = sp.node.variants.edges[0]?.node;
+                                  const firstImage = sp.node.images.edges[0]?.node;
+                                  return (
+                                    <button
+                                      key={sp.node.id}
+                                      type="button"
+                                      className="w-full flex items-center gap-3 p-2 hover:bg-muted/50 transition-colors text-left"
+                                      onClick={() => setProductForm({
+                                        ...productForm,
+                                        shopify_handle: sp.node.handle,
+                                        shopify_variant_id: firstVariant?.id || "",
+                                      })}
+                                    >
+                                      {firstImage && (
+                                        <img src={firstImage.url} alt="" className="w-10 h-10 rounded object-cover flex-shrink-0" />
+                                      )}
+                                      <div className="flex-1 min-w-0">
+                                        <p className="text-sm font-medium truncate">{sp.node.title}</p>
+                                        <p className="text-xs text-muted-foreground">
+                                          {sp.node.priceRange.minVariantPrice.currencyCode} {parseFloat(sp.node.priceRange.minVariantPrice.amount).toFixed(2)}
+                                        </p>
+                                      </div>
+                                    </button>
+                                  );
+                                })}
+                              {shopifyProducts.filter(p => !shopifySearch || p.node.title.toLowerCase().includes(shopifySearch.toLowerCase())).length === 0 && (
+                                <p className="text-sm text-muted-foreground text-center py-4">No Shopify products found</p>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+
                     {/* Retail Status */}
                     <div className="border-t border-border pt-4 mt-2">
                       <Label className="text-base font-semibold">Retail Availability</Label>
