@@ -82,7 +82,7 @@ const DashboardLayout = ({
           <p className="text-xs text-muted-foreground truncate">{user.email}</p>
         </div>
 
-        <main className="flex-1 p-4 lg:p-8 overflow-auto">{children}</main>
+        <main className="flex-1 p-4 lg:p-8 overflow-x-auto overflow-y-auto">{children}</main>
       </div>
     </div>
   );

@@ -332,12 +332,9 @@ const DashboardPage = () => {
 
     if (!NON_ADMIN_TABS.includes(activeTab)) {
       return (
-        <ScrollArea className="w-full">
-          <div className="min-w-max pb-4">
-            {content}
-          </div>
-          <ScrollBar orientation="horizontal" />
-        </ScrollArea>
+        <div className="w-full overflow-x-auto pb-4">
+          {content}
+        </div>
       );
     }
 
