@@ -366,13 +366,13 @@ const BusinessContentManager = () => {
                   <TableBody>
                     {services?.map((service) => (
                       <TableRow key={service.id}>
-                        <TableCell>
-                          <GripVertical className="w-4 h-4 text-muted-foreground" />
+                        <TableCell className="hidden sm:table-cell">
+                          <GripVertical className="w-4 h-4 text-muted-foreground inline" />
                           {service.display_order}
                         </TableCell>
-                        <TableCell><Badge variant="outline">{service.icon}</Badge></TableCell>
+                        <TableCell className="hidden md:table-cell"><Badge variant="outline">{service.icon}</Badge></TableCell>
                         <TableCell className="font-medium">{service.title}</TableCell>
-                        <TableCell>
+                        <TableCell className="hidden lg:table-cell">
                           <div className="flex flex-wrap gap-1">
                             {service.features?.slice(0, 2).map((f, i) => (
                               <Badge key={i} variant="secondary" className="text-xs">{f}</Badge>

@@ -306,10 +306,10 @@ const RewardsManager = () => {
                   {rewards.map((reward) => (
                     <TableRow key={reward.id}>
                       <TableCell className="font-medium">{reward.name}</TableCell>
-                      <TableCell className="capitalize">{reward.reward_type.replace("_", " ")}</TableCell>
+                      <TableCell className="hidden sm:table-cell capitalize">{reward.reward_type.replace("_", " ")}</TableCell>
                       <TableCell>{reward.points_cost.toLocaleString()}</TableCell>
-                      <TableCell className="capitalize">{reward.tier_required}</TableCell>
-                      <TableCell>{reward.stock !== null ? reward.stock : "∞"}</TableCell>
+                      <TableCell className="hidden md:table-cell capitalize">{reward.tier_required}</TableCell>
+                      <TableCell className="hidden lg:table-cell">{reward.stock !== null ? reward.stock : "∞"}</TableCell>
                       <TableCell>
                         <Badge variant={reward.is_active ? "default" : "secondary"}>
                           {reward.is_active ? "Active" : "Inactive"}

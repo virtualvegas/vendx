@@ -299,7 +299,7 @@ const PrizeInventoryManager = () => {
                               <span className="font-medium">{inv.prize.name}</span>
                             </div>
                           </TableCell>
-                          <TableCell>
+                          <TableCell className="hidden sm:table-cell">
                             <div className="flex items-center gap-1">
                               <MapPin className="h-3 w-3 text-muted-foreground" />
                               {inv.location.name || inv.location.city}
@@ -310,15 +310,15 @@ const PrizeInventoryManager = () => {
                               {inv.quantity}
                             </Badge>
                           </TableCell>
-                          <TableCell className="text-center">
+                          <TableCell className="text-center hidden md:table-cell">
                             {inv.reserved_quantity > 0 ? (
                               <Badge variant="outline">{inv.reserved_quantity}</Badge>
                             ) : "-"}
                           </TableCell>
-                          <TableCell className="text-center font-medium">
+                          <TableCell className="text-center hidden md:table-cell font-medium">
                             {available}
                           </TableCell>
-                          <TableCell className="text-sm text-muted-foreground">
+                          <TableCell className="hidden lg:table-cell text-sm text-muted-foreground">
                             {inv.last_restocked 
                               ? format(new Date(inv.last_restocked), "MMM d, yyyy")
                               : "-"
