@@ -799,22 +799,19 @@ const MachineRegistry = () => {
             </div>
             <div className="space-y-2">
               <Label>Location</Label>
-              <Select
+              <SearchableSelect
+                options={[
+                  { value: "none", label: "No Location" },
+                  ...locations.map(loc => ({
+                    value: loc.id,
+                    label: loc.name || `${loc.city}, ${loc.country}`,
+                  })),
+                ]}
                 value={machineForm.location_id}
                 onValueChange={(v) => setMachineForm({ ...machineForm, location_id: v })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select location" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">No Location</SelectItem>
-                  {locations.map(loc => (
-                    <SelectItem key={loc.id} value={loc.id}>
-                      {loc.name || `${loc.city}, ${loc.country}`}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                placeholder="Select location"
+                searchPlaceholder="Search locations..."
+              />
             </div>
             <div className="space-y-2">
               <Label>Notes</Label>
