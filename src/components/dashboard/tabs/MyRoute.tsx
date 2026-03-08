@@ -548,6 +548,24 @@ const MyRoute = () => {
         </div>
       </div>
 
+      {/* Today's Tasks Banner */}
+      {todayTasks && todayTasks.length > 0 && (
+        <Card className="p-3 border-yellow-500/30 bg-yellow-500/5">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <ListTodo className="w-4 h-4 text-yellow-600" />
+              <span className="text-sm font-medium">{todayTasks.length} task{todayTasks.length !== 1 ? "s" : ""} due today</span>
+            </div>
+            <div className="flex items-center gap-1">
+              {todayTasks.slice(0, 2).map(t => (
+                <Badge key={t.id} variant="outline" className="text-xs max-w-[120px] truncate">{t.title}</Badge>
+              ))}
+              {todayTasks.length > 2 && <Badge variant="outline" className="text-xs">+{todayTasks.length - 2}</Badge>}
+            </div>
+          </div>
+        </Card>
+      )}
+
       {/* Manager View Toggle */}
       {isManager && (
         <Tabs value={activeView} onValueChange={(v) => setActiveView(v as "my-route" | "all-routes")} className="w-full">
