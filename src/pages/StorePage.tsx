@@ -72,6 +72,19 @@ const StorePage = () => {
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
   const [products, setProducts] = useState<StoreProduct[]>([]);
   const [loading, setLoading] = useState(true);
+  const { products: shopifyProducts } = useShopifyProducts();
+
+  // Build a map of shopify handle -> image URLs
+  const shopifyImageMap = useMemo(() => {
+    const map: Record<string, string[]> = {};
+    for (const sp of shopifyProducts) {
+      if (sp.node.handle && sp.node.images?.edges?.length) {
+        map[sp.node.handle] = sp.node.images.edges.map(e => e.node.url);
+      }
+    }
+    return map;
+  }, [shopifyProducts]);
+
   const activeCategory = searchParams.get("category") || "all";
 
   useEffect(() => {
