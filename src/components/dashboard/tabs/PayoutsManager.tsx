@@ -272,13 +272,13 @@ const PayoutsManager = () => {
                         <p className="font-medium">{owner?.full_name || "Unknown"}</p>
                         <p className="text-xs text-muted-foreground">{owner?.email}</p>
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="hidden md:table-cell">
                         <p className="text-sm">
                           {formatDisplayDate(payout.period_start)} - {formatDisplayDate(payout.period_end)}
                         </p>
                       </TableCell>
-                      <TableCell>${Number(payout.gross_revenue).toLocaleString()}</TableCell>
-                      <TableCell>${Number(payout.vendx_share).toLocaleString()}</TableCell>
+                      <TableCell className="hidden lg:table-cell">${Number(payout.gross_revenue).toLocaleString()}</TableCell>
+                      <TableCell className="hidden lg:table-cell">${Number(payout.vendx_share).toLocaleString()}</TableCell>
                       <TableCell className="font-bold text-green-500">
                         ${Number(payout.amount).toLocaleString()}
                       </TableCell>

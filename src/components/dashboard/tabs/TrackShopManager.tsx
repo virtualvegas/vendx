@@ -277,10 +277,10 @@ const TrackShopManager = () => {
                 beats.map((b) => (
                   <TableRow key={b.id}>
                     <TableCell className="font-medium">{b.title}</TableCell>
-                    <TableCell>{b.producer || "—"}</TableCell>
+                    <TableCell className="hidden sm:table-cell">{b.producer || "—"}</TableCell>
                     <TableCell>${Number(b.price).toFixed(2)}</TableCell>
-                    <TableCell><Badge variant="outline" className="capitalize">{b.license_type}</Badge></TableCell>
-                    <TableCell>{b.play_count}</TableCell>
+                    <TableCell className="hidden md:table-cell"><Badge variant="outline" className="capitalize">{b.license_type}</Badge></TableCell>
+                    <TableCell className="hidden lg:table-cell">{b.play_count}</TableCell>
                     <TableCell>
                       <Badge variant={b.is_active ? "default" : "secondary"}>
                         {b.is_active ? "Active" : "Inactive"}

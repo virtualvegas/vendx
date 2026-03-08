@@ -217,7 +217,7 @@ const ProfitSplitsManager = () => {
                         <p className="font-medium">{machine.name}</p>
                         <p className="text-xs text-muted-foreground font-mono">{machine.machine_code}</p>
                       </TableCell>
-                      <TableCell>{machine.location ? (machine.location.name || machine.location.city) : "Unassigned"}</TableCell>
+                      <TableCell className="hidden sm:table-cell">{machine.location ? (machine.location.name || machine.location.city) : "Unassigned"}</TableCell>
                       <TableCell><span className="font-bold text-primary">{machine.split?.vendx_percentage || 70}%</span></TableCell>
                       <TableCell><span className="font-bold text-green-500">{machine.split?.business_owner_percentage || 30}%</span></TableCell>
                     </TableRow>
