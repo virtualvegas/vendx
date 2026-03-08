@@ -88,10 +88,12 @@ const MyRoute = () => {
   const [showRestockDialog, setShowRestockDialog] = useState(false);
   const [showIssueDialog, setShowIssueDialog] = useState(false);
   const [showRevenueDialog, setShowRevenueDialog] = useState(false);
+  const [showTaskDialog, setShowTaskDialog] = useState(false);
   const [selectedStop, setSelectedStop] = useState<RouteStop | null>(null);
   const [restockNotes, setRestockNotes] = useState("");
   const [issueDescription, setIssueDescription] = useState("");
   const [revenueForm, setRevenueForm] = useState({ cashAmount: "", coinsAmount: "", notes: "" });
+  const [taskForm, setTaskForm] = useState({ title: "", description: "", priority: "medium" });
   const [activeView, setActiveView] = useState<"my-route" | "all-routes">("my-route");
   const [userRoles, setUserRoles] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
