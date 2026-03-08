@@ -230,20 +230,23 @@ const MachineInventoryManager = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold flex items-center gap-2">
-            <Package className="w-6 h-6 text-primary" />
-            Machine Inventory
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="min-w-0">
+          <h2 className="text-xl sm:text-2xl font-bold flex items-center gap-2">
+            <Package className="w-5 h-5 sm:w-6 sm:h-6 text-primary flex-shrink-0" />
+            <span className="truncate">Machine Inventory</span>
           </h2>
-          <p className="text-muted-foreground">Manage product slots across all machines</p>
+          <p className="text-sm text-muted-foreground">Manage product slots across all machines</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-shrink-0">
           <Button variant="outline" size="sm" onClick={() => queryClient.invalidateQueries({ queryKey: ["machine-inventory-all"] })}>
-            <RefreshCw className="w-4 h-4 mr-2" /> Refresh
+            <RefreshCw className="w-4 h-4 sm:mr-2" />
+            <span className="hidden sm:inline">Refresh</span>
           </Button>
-          <Button onClick={() => setShowAssignDialog(true)}>
-            <Copy className="w-4 h-4 mr-2" /> Assign Product
+          <Button size="sm" onClick={() => setShowAssignDialog(true)}>
+            <Copy className="w-4 h-4 sm:mr-2" />
+            <span className="hidden sm:inline">Assign Product</span>
+            <span className="sm:hidden">Assign</span>
           </Button>
         </div>
       </div>
@@ -298,20 +301,20 @@ const MachineInventoryManager = () => {
                 className="cursor-pointer hover:bg-muted/30 transition-colors"
                 onClick={() => toggleMachine(machineId)}
               >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    {isCollapsed ? <ChevronRight className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
-                    <Monitor className="w-5 h-5 text-primary" />
-                    <div>
-                      <CardTitle className="text-lg">{machine?.name || "Unknown Machine"}</CardTitle>
-                      <p className="text-sm text-muted-foreground">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex items-center gap-2 min-w-0">
+                    {isCollapsed ? <ChevronRight className="w-5 h-5 flex-shrink-0" /> : <ChevronDown className="w-5 h-5 flex-shrink-0" />}
+                    <Monitor className="w-5 h-5 text-primary flex-shrink-0" />
+                    <div className="min-w-0">
+                      <CardTitle className="text-base sm:text-lg truncate">{machine?.name || "Unknown Machine"}</CardTitle>
+                      <p className="text-xs sm:text-sm text-muted-foreground truncate">
                         {machine?.machine_code} • {machine?.location?.name || machine?.location?.city || "No location"} • {items.length} slot{items.length !== 1 ? "s" : ""}
                       </p>
                     </div>
                   </div>
-                  <div className="flex gap-2">
-                    {machineEmpty > 0 && <Badge variant="destructive">{machineEmpty} empty</Badge>}
-                    {machineLow > 0 && <Badge variant="outline" className="border-yellow-500 text-yellow-500">{machineLow} low</Badge>}
+                  <div className="flex gap-2 flex-shrink-0">
+                    {machineEmpty > 0 && <Badge variant="destructive" className="text-xs">{machineEmpty} empty</Badge>}
+                    {machineLow > 0 && <Badge variant="outline" className="border-yellow-500 text-yellow-500 text-xs">{machineLow} low</Badge>}
                   </div>
                 </div>
               </CardHeader>
