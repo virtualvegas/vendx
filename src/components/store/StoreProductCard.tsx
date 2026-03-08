@@ -59,7 +59,7 @@ export const StoreProductCard = ({ product, viewMode = "grid", shopifyImages }: 
         <Card className="bg-card border-border hover:border-primary/50 transition-all group flex flex-row">
           <div className="w-32 h-32 flex-shrink-0 overflow-hidden rounded-l-lg">
             <img
-              src={product.images?.[0] || "/placeholder.svg"}
+              src={displayImage}
               alt={product.name}
               className="w-full h-full object-cover group-hover:scale-105 transition-transform"
             />
@@ -107,7 +107,7 @@ export const StoreProductCard = ({ product, viewMode = "grid", shopifyImages }: 
       <Card className="bg-card border-border hover:border-primary/50 transition-all group h-full flex flex-col">
         <div className="aspect-square relative overflow-hidden rounded-t-lg">
           <img
-            src={product.images?.[0] || "/placeholder.svg"}
+            src={displayImage}
             alt={product.name}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform"
           />
