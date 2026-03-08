@@ -851,9 +851,9 @@ const StandsManager = () => {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Stand</TableHead>
-                    <TableHead>Event</TableHead>
-                    <TableHead>Location</TableHead>
-                    <TableHead>Date</TableHead>
+                    <TableHead className="hidden sm:table-cell">Event</TableHead>
+                    <TableHead className="hidden md:table-cell">Location</TableHead>
+                    <TableHead className="hidden lg:table-cell">Date</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>

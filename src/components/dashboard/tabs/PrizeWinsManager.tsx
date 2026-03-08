@@ -465,10 +465,10 @@ const PrizeWinsManager = () => {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Date</TableHead>
+                      <TableHead className="hidden sm:table-cell">Date</TableHead>
                       <TableHead>Prize</TableHead>
-                      <TableHead>User</TableHead>
-                      <TableHead>Machine</TableHead>
+                      <TableHead className="hidden md:table-cell">User</TableHead>
+                      <TableHead className="hidden lg:table-cell">Machine</TableHead>
                       <TableHead className="text-center">Status</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>

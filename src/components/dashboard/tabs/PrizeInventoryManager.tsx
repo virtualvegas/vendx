@@ -273,11 +273,11 @@ const PrizeInventoryManager = () => {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Prize</TableHead>
-                      <TableHead>Location</TableHead>
+                      <TableHead className="hidden sm:table-cell">Location</TableHead>
                       <TableHead className="text-center">In Stock</TableHead>
-                      <TableHead className="text-center">Reserved</TableHead>
-                      <TableHead className="text-center">Available</TableHead>
-                      <TableHead>Last Restocked</TableHead>
+                      <TableHead className="text-center hidden md:table-cell">Reserved</TableHead>
+                      <TableHead className="text-center hidden md:table-cell">Available</TableHead>
+                      <TableHead className="hidden lg:table-cell">Last Restocked</TableHead>
                       <TableHead></TableHead>
                     </TableRow>
                   </TableHeader>

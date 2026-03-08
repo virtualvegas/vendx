@@ -294,10 +294,10 @@ const RewardsManager = () => {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Name</TableHead>
-                    <TableHead>Type</TableHead>
+                    <TableHead className="hidden sm:table-cell">Type</TableHead>
                     <TableHead>Points</TableHead>
-                    <TableHead>Tier</TableHead>
-                    <TableHead>Stock</TableHead>
+                    <TableHead className="hidden md:table-cell">Tier</TableHead>
+                    <TableHead className="hidden lg:table-cell">Stock</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Actions</TableHead>
                   </TableRow>

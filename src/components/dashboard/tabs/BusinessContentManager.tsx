@@ -355,10 +355,10 @@ const BusinessContentManager = () => {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Order</TableHead>
-                      <TableHead>Icon</TableHead>
+                      <TableHead className="hidden sm:table-cell">Order</TableHead>
+                      <TableHead className="hidden md:table-cell">Icon</TableHead>
                       <TableHead>Title</TableHead>
-                      <TableHead>Features</TableHead>
+                      <TableHead className="hidden lg:table-cell">Features</TableHead>
                       <TableHead>Active</TableHead>
                       <TableHead>Actions</TableHead>
                     </TableRow>
