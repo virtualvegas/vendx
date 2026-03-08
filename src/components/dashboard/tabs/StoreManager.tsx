@@ -14,10 +14,11 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { 
   Package, Plus, Edit, Trash2, ShoppingCart, DollarSign, 
-  Users, TrendingUp, Eye, Loader2, RefreshCw 
+  Users, TrendingUp, Eye, Loader2, RefreshCw, Search, Link as LinkIcon, X 
 } from "lucide-react";
 import { formatDisplayDate } from "@/lib/dateUtils";
 import { AVAILABLE_STORES } from "@/components/store/RetailLinks";
+import { useShopifyProducts, ShopifyProduct } from "@/hooks/useShopifyProducts";
 
 interface Product {
   id: string;
@@ -94,7 +95,12 @@ const StoreManager = () => {
     images: [""],
     retail_status: "online_only" as string,
     retail_links: [] as Array<{ store: string; url: string; link_type: string }>,
+    shopify_handle: "" as string,
+    shopify_variant_id: "" as string,
   });
+
+  const { products: shopifyProducts, loading: shopifyLoading } = useShopifyProducts();
+  const [shopifySearch, setShopifySearch] = useState("");
 
   useEffect(() => {
     fetchData();
@@ -158,6 +164,8 @@ const StoreManager = () => {
       images: [""],
       retail_status: "online_only",
       retail_links: [],
+      shopify_handle: "",
+      shopify_variant_id: "",
     });
     setEditingProduct(null);
   };
@@ -190,6 +198,8 @@ const StoreManager = () => {
       images: fullProduct?.images?.length ? fullProduct.images : [""],
       retail_status: fullProduct?.retail_status || "online_only",
       retail_links: retailLinks,
+      shopify_handle: (fullProduct as any)?.shopify_handle || "",
+      shopify_variant_id: (fullProduct as any)?.shopify_variant_id || "",
     });
     setProductDialogOpen(true);
   };
@@ -212,6 +222,8 @@ const StoreManager = () => {
       images: productForm.images.filter(img => img.trim() !== ""),
       retail_status: productForm.retail_status,
       retail_links: productForm.retail_links.filter(l => l.store && l.url),
+      shopify_handle: productForm.shopify_handle || null,
+      shopify_variant_id: productForm.shopify_variant_id || null,
     };
 
     if (editingProduct) {
