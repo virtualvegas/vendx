@@ -327,11 +327,13 @@ const AdReachManager = () => {
                   </div>
                   {newLocation.location_type === "machine_screen" && (
                     <div><Label>Machine</Label>
-                      <Select value={newLocation.machine_id} onValueChange={v => setNewLocation(p => ({ ...p, machine_id: v }))}>
-                        <SelectTrigger><SelectValue placeholder="Select machine" /></SelectTrigger>
-                        <SelectContent>{machines.map(m => <SelectItem key={m.id} value={m.id}>{m.name} ({m.machine_code})</SelectItem>)}</SelectContent>
-                      </Select>
-                    </div>
+                      <SearchableSelect
+                        options={machines.map(m => ({ value: m.id, label: `${m.name} (${m.machine_code})` }))}
+                        value={newLocation.machine_id}
+                        onValueChange={v => setNewLocation(p => ({ ...p, machine_id: v }))}
+                        placeholder="Select machine"
+                        searchPlaceholder="Search machines..."
+                      />
                   )}
                   {(newLocation.location_type === "in_game_banner" || newLocation.location_type === "in_game_interstitial") && (
                     <div><Label>VendX Interactive Game</Label>
