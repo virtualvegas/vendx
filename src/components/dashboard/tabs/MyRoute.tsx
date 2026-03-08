@@ -1022,6 +1022,22 @@ const MyRoute = () => {
                 </Button>
               </>
             )}
+            <Button 
+              variant="secondary" 
+              className="flex-1"
+              onClick={() => {
+                setTaskForm({ 
+                  title: `Follow up: ${selectedStop?.stop_name || ""}`, 
+                  description: selectedStop?.machine ? `Machine: ${selectedStop.machine.name} (${selectedStop.machine.machine_code})` : "",
+                  priority: "medium" 
+                });
+                setShowStopDetailsDialog(false);
+                setShowTaskDialog(true);
+              }}
+            >
+              <ListTodo className="w-4 h-4 mr-2" />
+              Create Task
+            </Button>
             {selectedStop?.status !== "pending" && isManager && (
               <Button variant="outline" onClick={() => { resetStopMutation.mutate(selectedStop!.id); setShowStopDetailsDialog(false); }}>
                 <RotateCcw className="w-4 h-4 mr-2" />
