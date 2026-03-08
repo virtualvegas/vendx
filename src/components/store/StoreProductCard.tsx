@@ -30,6 +30,7 @@ interface StoreProduct {
 interface StoreProductCardProps {
   product: StoreProduct;
   viewMode?: "grid" | "list";
+  shopifyImages?: string[];
 }
 
 const retailStatusLabel: Record<string, string> = {
@@ -44,7 +45,8 @@ const retailStatusColor: Record<string, string> = {
   online_only: "bg-blue-500/20 text-blue-400 border-blue-500/30",
 };
 
-export const StoreProductCard = ({ product, viewMode = "grid" }: StoreProductCardProps) => {
+export const StoreProductCard = ({ product, viewMode = "grid", shopifyImages }: StoreProductCardProps) => {
+  const displayImage = (shopifyImages?.length ? shopifyImages[0] : null) || product.images?.[0] || "/placeholder.svg";
   const price = product.is_subscription ? (product.subscription_price || product.price) : product.price;
   const isOnSale = product.compare_at_price !== null && product.compare_at_price > product.price;
   const outOfStock = product.stock !== null && product.stock < 1;
@@ -57,7 +59,7 @@ export const StoreProductCard = ({ product, viewMode = "grid" }: StoreProductCar
         <Card className="bg-card border-border hover:border-primary/50 transition-all group flex flex-row">
           <div className="w-32 h-32 flex-shrink-0 overflow-hidden rounded-l-lg">
             <img
-              src={product.images?.[0] || "/placeholder.svg"}
+              src={displayImage}
               alt={product.name}
               className="w-full h-full object-cover group-hover:scale-105 transition-transform"
             />
@@ -105,7 +107,7 @@ export const StoreProductCard = ({ product, viewMode = "grid" }: StoreProductCar
       <Card className="bg-card border-border hover:border-primary/50 transition-all group h-full flex flex-col">
         <div className="aspect-square relative overflow-hidden rounded-t-lg">
           <img
-            src={product.images?.[0] || "/placeholder.svg"}
+            src={displayImage}
             alt={product.name}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform"
           />
