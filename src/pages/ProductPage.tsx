@@ -271,6 +271,8 @@ const ProductPage = () => {
               </div>
             )}
           </div>
+            );
+          })()}
 
           {/* Product Info */}
           <div>
