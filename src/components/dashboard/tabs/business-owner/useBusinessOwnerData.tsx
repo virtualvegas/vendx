@@ -17,6 +17,22 @@ export interface SupportRequest {
   resolved_at: string | null;
 }
 
+export interface ScheduledServiceStop {
+  id: string;
+  stop_name: string;
+  address: string | null;
+  notes: string | null;
+  status: string;
+  scheduled_date: string | null;
+  priority: string | null;
+  auto_scheduled: boolean | null;
+  source_ticket_id: string | null;
+  estimated_duration_minutes: number | null;
+  completed_at: string | null;
+  machine?: { id: string; name: string; machine_code: string } | null;
+  zone?: { id: string; name: string } | null;
+}
+
 export const useBusinessOwnerData = () => {
   // Fetch current user
   const { data: currentUser } = useQuery({
@@ -225,6 +241,32 @@ export const useBusinessOwnerData = () => {
     },
   });
 
+  // Fetch scheduled service stops for business owner's machines
+  const { data: scheduledStops } = useQuery({
+    queryKey: ["business-owner-scheduled-stops", machines],
+    queryFn: async () => {
+      if (!machines || machines.length === 0) return [];
+      const machineIds = machines.map(m => m.id);
+      const locationIds = assignments?.map(a => a.location_id) || [];
+
+      const { data, error } = await supabase
+        .from("route_stops")
+        .select(`
+          id, stop_name, address, notes, status, scheduled_date, priority,
+          auto_scheduled, source_ticket_id, estimated_duration_minutes, completed_at,
+          machine:vendx_machines(id, name, machine_code),
+          zone:service_routes(id, name)
+        `)
+        .or(`machine_id.in.(${machineIds.join(",")}),location_id.in.(${locationIds.join(",")})`)
+        .in("status", ["pending", "in_progress"])
+        .order("scheduled_date", { ascending: true })
+        .limit(20);
+      if (error) throw error;
+      return (data || []) as ScheduledServiceStop[];
+    },
+    enabled: !!machines && machines.length > 0,
+  });
+
   return {
     currentUser,
     assignments,
@@ -235,6 +277,7 @@ export const useBusinessOwnerData = () => {
     payoutSettings,
     supportRequests,
     changeRequests,
+    scheduledStops,
     isLoading: assignmentsLoading,
   };
 };
