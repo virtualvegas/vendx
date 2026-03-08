@@ -39,6 +39,8 @@ interface Product {
   subscription_price: number | null;
   retail_links: Json | null;
   retail_status: string | null;
+  shopify_handle: string | null;
+  shopify_variant_id: string | null;
 }
 
 const getRetailStatusBadge = (status: string | null) => {
