@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ShoppingBag, ArrowRight, Star } from "lucide-react";
+import { useShopifyProducts } from "@/hooks/useShopifyProducts";
+import { useMemo } from "react";
 
 interface Product {
   id: string;
@@ -18,6 +20,7 @@ interface Product {
   is_featured: boolean;
   is_subscription: boolean;
   subscription_price: number | null;
+  shopify_handle: string | null;
 }
 
 const FeaturedProducts = () => {
@@ -26,7 +29,7 @@ const FeaturedProducts = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("store_products")
-        .select("id, name, slug, short_description, price, compare_at_price, images, is_featured, is_subscription, subscription_price")
+        .select("id, name, slug, short_description, price, compare_at_price, images, is_featured, is_subscription, subscription_price, shopify_handle")
         .eq("is_active", true)
         .eq("is_featured", true)
         .order("created_at", { ascending: false })
@@ -36,6 +39,16 @@ const FeaturedProducts = () => {
       return data as Product[];
     },
   });
+
+  const { products: shopifyProducts } = useShopifyProducts();
+
+  const shopifyImageMap = useMemo(() => {
+    const map: Record<string, string[]> = {};
+    shopifyProducts.forEach((p) => {
+      map[p.node.handle] = p.node.images.edges.map((e) => e.node.url);
+    });
+    return map;
+  }, [shopifyProducts]);
 
   return (
     <section className="py-20 relative">
@@ -74,11 +87,17 @@ const FeaturedProducts = () => {
               <Link key={product.id} to={`/store/${product.slug}`}>
                 <Card className="group bg-card/50 border-border/50 hover:border-primary/50 transition-all duration-300 overflow-hidden h-full">
                   <div className="aspect-square relative overflow-hidden">
-                    <img
-                      src={product.images[0] || "https://via.placeholder.com/400"}
-                      alt={product.name}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    />
+                    {(() => {
+                      const shopifyImgs = product.shopify_handle ? shopifyImageMap[product.shopify_handle] : null;
+                      const displayImage = (shopifyImgs?.length ? shopifyImgs[0] : null) || product.images?.[0] || "/placeholder.svg";
+                      return (
+                        <img
+                          src={displayImage}
+                          alt={product.name}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        />
+                      );
+                    })()}
                     {product.is_featured && (
                       <Badge className="absolute top-2 left-2 bg-primary gap-1">
                         <Star className="w-3 h-3" /> Featured
