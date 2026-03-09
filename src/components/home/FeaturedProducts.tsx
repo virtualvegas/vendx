@@ -87,11 +87,17 @@ const FeaturedProducts = () => {
               <Link key={product.id} to={`/store/${product.slug}`}>
                 <Card className="group bg-card/50 border-border/50 hover:border-primary/50 transition-all duration-300 overflow-hidden h-full">
                   <div className="aspect-square relative overflow-hidden">
-                    <img
-                      src={product.images[0] || "https://via.placeholder.com/400"}
-                      alt={product.name}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    />
+                    {(() => {
+                      const shopifyImgs = product.shopify_handle ? shopifyImageMap[product.shopify_handle] : null;
+                      const displayImage = (shopifyImgs?.length ? shopifyImgs[0] : null) || product.images?.[0] || "/placeholder.svg";
+                      return (
+                        <img
+                          src={displayImage}
+                          alt={product.name}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        />
+                      );
+                    })()}
                     {product.is_featured && (
                       <Badge className="absolute top-2 left-2 bg-primary gap-1">
                         <Star className="w-3 h-3" /> Featured
