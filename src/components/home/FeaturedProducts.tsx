@@ -29,7 +29,7 @@ const FeaturedProducts = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("store_products")
-        .select("id, name, slug, short_description, price, compare_at_price, images, is_featured, is_subscription, subscription_price")
+        .select("id, name, slug, short_description, price, compare_at_price, images, is_featured, is_subscription, subscription_price, shopify_handle")
         .eq("is_active", true)
         .eq("is_featured", true)
         .order("created_at", { ascending: false })
@@ -39,6 +39,16 @@ const FeaturedProducts = () => {
       return data as Product[];
     },
   });
+
+  const { products: shopifyProducts } = useShopifyProducts();
+
+  const shopifyImageMap = useMemo(() => {
+    const map: Record<string, string[]> = {};
+    shopifyProducts.forEach((p) => {
+      map[p.node.handle] = p.node.images.edges.map((e) => e.node.url);
+    });
+    return map;
+  }, [shopifyProducts]);
 
   return (
     <section className="py-20 relative">
