@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ShoppingBag, ArrowRight, Star } from "lucide-react";
+import { useShopifyProducts } from "@/hooks/useShopifyProducts";
+import { useMemo } from "react";
 
 interface Product {
   id: string;
@@ -18,6 +20,7 @@ interface Product {
   is_featured: boolean;
   is_subscription: boolean;
   subscription_price: number | null;
+  shopify_handle: string | null;
 }
 
 const FeaturedProducts = () => {
