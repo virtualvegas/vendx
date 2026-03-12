@@ -761,6 +761,14 @@ const StandsManager = () => {
                         <Button
                           variant="ghost"
                           size="icon"
+                          onClick={() => setMachineDialogStand(stand)}
+                          title="Assign Machines"
+                        >
+                          <Cpu className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
                           onClick={() => handleEditStand(stand)}
                         >
                           <Pencil className="h-4 w-4" />
