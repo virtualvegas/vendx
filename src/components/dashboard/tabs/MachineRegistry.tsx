@@ -99,6 +99,10 @@ const MachineRegistry = () => {
   const [machines, setMachines] = useState<Machine[]>([]);
   const [locations, setLocations] = useState<Location[]>([]);
   const [sessions, setSessions] = useState<Session[]>([]);
+  const [stands, setStands] = useState<{ id: string; name: string }[]>([]);
+  const [events, setEvents] = useState<{ id: string; name: string }[]>([]);
+  const [standAssignments, setStandAssignments] = useState<Record<string, string[]>>({});
+  const [eventAssignments, setEventAssignments] = useState<Record<string, string[]>>({});
   const [machineInventory, setMachineInventory] = useState<MachineInventoryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
