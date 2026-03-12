@@ -14,7 +14,7 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Monitor, Plus, Key, RefreshCw, Copy, Eye, EyeOff, MapPin, Package, Search, Settings, Trash2, Edit, DollarSign, Activity, Gamepad2, ShoppingCart } from "lucide-react";
+import { Monitor, Plus, Key, RefreshCw, Copy, Eye, EyeOff, MapPin, Package, Search, Settings, Trash2, Edit, DollarSign, Activity, Gamepad2, ShoppingCart, Store, Calendar } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { 
   MachineStatsCards, 
@@ -99,6 +99,10 @@ const MachineRegistry = () => {
   const [machines, setMachines] = useState<Machine[]>([]);
   const [locations, setLocations] = useState<Location[]>([]);
   const [sessions, setSessions] = useState<Session[]>([]);
+  const [stands, setStands] = useState<{ id: string; name: string }[]>([]);
+  const [events, setEvents] = useState<{ id: string; name: string }[]>([]);
+  const [standAssignments, setStandAssignments] = useState<Record<string, string[]>>({});
+  const [eventAssignments, setEventAssignments] = useState<Record<string, string[]>>({});
   const [machineInventory, setMachineInventory] = useState<MachineInventoryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -151,18 +155,38 @@ const MachineRegistry = () => {
         supabase.from("machine_sessions").select("*").order("created_at", { ascending: false }).limit(100),
       ]);
 
+      // Fetch stands, events, and assignments separately to avoid TS deep instantiation
+      const { data: standsData } = await supabase.from("stands" as any).select("id, name").eq("is_active", true).order("name");
+      const { data: eventsData } = await supabase.from("events" as any).select("id, name").eq("event_type", "rental").order("name");
+      const { data: standAssignData } = await supabase.from("stand_machine_assignments" as any).select("machine_id, stand_id");
+      const { data: eventAssignData } = await supabase.from("event_machine_assignments" as any).select("machine_id, event_id");
+
       const machinesData = machinesRes.data || [];
       const locationsData = locationsRes.data || [];
       
-      // Merge location data into machines
       const machinesWithLocations = machinesData.map(m => ({
         ...m,
         location: locationsData.find(l => l.id === m.location_id),
       }));
 
+      const sMap: Record<string, string[]> = {};
+      (standAssignData || []).forEach((a: any) => {
+        if (!sMap[a.machine_id]) sMap[a.machine_id] = [];
+        sMap[a.machine_id].push(a.stand_id);
+      });
+      const eMap: Record<string, string[]> = {};
+      (eventAssignData || []).forEach((a: any) => {
+        if (!eMap[a.machine_id]) eMap[a.machine_id] = [];
+        eMap[a.machine_id].push(a.event_id);
+      });
+
       setMachines(machinesWithLocations);
       setLocations(locationsData);
       setSessions(sessionsRes.data || []);
+      setStands((standsData || []) as any);
+      setEvents((eventsData || []) as any);
+      setStandAssignments(sMap);
+      setEventAssignments(eMap);
     } catch (error) {
       console.error("Error fetching data:", error);
       toast({ title: "Error loading data", variant: "destructive" });
@@ -584,6 +608,27 @@ const MachineRegistry = () => {
                                 <MapPin className="w-3 h-3 text-muted-foreground flex-shrink-0" />
                                 <span className="text-sm truncate max-w-[120px]">{machine.location.name || `${machine.location.city}`}</span>
                               </div>
+                            ) : (standAssignments[machine.id] || eventAssignments[machine.id]) ? (
+                              <div className="space-y-0.5">
+                                {(standAssignments[machine.id] || []).map(sid => {
+                                  const stand = stands.find((s: any) => s.id === sid) as any;
+                                  return stand ? (
+                                    <div key={sid} className="flex items-center gap-1">
+                                      <Store className="w-3 h-3 text-muted-foreground flex-shrink-0" />
+                                      <span className="text-xs truncate max-w-[110px]">{stand.name}</span>
+                                    </div>
+                                  ) : null;
+                                })}
+                                {(eventAssignments[machine.id] || []).map(eid => {
+                                  const event = events.find((e: any) => e.id === eid) as any;
+                                  return event ? (
+                                    <div key={eid} className="flex items-center gap-1">
+                                      <Calendar className="w-3 h-3 text-muted-foreground flex-shrink-0" />
+                                      <span className="text-xs truncate max-w-[110px]">{event.name}</span>
+                                    </div>
+                                  ) : null;
+                                })}
+                              </div>
                             ) : (
                               <span className="text-muted-foreground text-sm">Unassigned</span>
                             )}
@@ -805,6 +850,88 @@ const MachineRegistry = () => {
                 searchPlaceholder="Search locations..."
               />
             </div>
+            {/* Stand / Event Assignment - shown when no location selected */}
+            {(!machineForm.location_id || machineForm.location_id === "none") && editingMachine && (
+              <div className="space-y-3 p-3 rounded-lg border border-dashed border-muted-foreground/30 bg-muted/30">
+                <Label className="text-sm flex items-center gap-2">
+                  <Store className="w-4 h-4" />
+                  Assign to Stand or Event Rental
+                </Label>
+                <p className="text-xs text-muted-foreground">
+                  Since no location is set, you can assign this machine to a stand or private event rental.
+                </p>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-2">
+                    <Label className="text-xs flex items-center gap-1">
+                      <Store className="w-3 h-3" /> Stands
+                    </Label>
+                    <div className="max-h-[120px] overflow-y-auto space-y-1 border rounded p-1.5 bg-background">
+                      {stands.length === 0 ? (
+                        <p className="text-xs text-muted-foreground text-center py-2">No stands</p>
+                      ) : stands.map((s: any) => {
+                        const isAssigned = (standAssignments[editingMachine.id] || []).includes(s.id);
+                        return (
+                          <label key={s.id} className={`flex items-center gap-2 p-1.5 rounded text-xs cursor-pointer transition-colors ${isAssigned ? 'bg-primary/10' : 'hover:bg-muted/50'}`}>
+                            <input
+                              type="checkbox"
+                              checked={isAssigned}
+                              onChange={async () => {
+                                try {
+                                  if (isAssigned) {
+                                    await supabase.from("stand_machine_assignments").delete().eq("stand_id", s.id).eq("machine_id", editingMachine.id);
+                                  } else {
+                                    await supabase.from("stand_machine_assignments").insert({ stand_id: s.id, machine_id: editingMachine.id });
+                                  }
+                                  fetchData();
+                                } catch (e: any) {
+                                  toast({ title: "Error", description: e.message, variant: "destructive" });
+                                }
+                              }}
+                              className="rounded"
+                            />
+                            <span className="truncate">{s.name}</span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs flex items-center gap-1">
+                      <Calendar className="w-3 h-3" /> Event Rentals
+                    </Label>
+                    <div className="max-h-[120px] overflow-y-auto space-y-1 border rounded p-1.5 bg-background">
+                      {events.length === 0 ? (
+                        <p className="text-xs text-muted-foreground text-center py-2">No rentals</p>
+                      ) : events.map((e: any) => {
+                        const isAssigned = (eventAssignments[editingMachine.id] || []).includes(e.id);
+                        return (
+                          <label key={e.id} className={`flex items-center gap-2 p-1.5 rounded text-xs cursor-pointer transition-colors ${isAssigned ? 'bg-primary/10' : 'hover:bg-muted/50'}`}>
+                            <input
+                              type="checkbox"
+                              checked={isAssigned}
+                              onChange={async () => {
+                                try {
+                                  if (isAssigned) {
+                                    await supabase.from("event_machine_assignments").delete().eq("event_id", e.id).eq("machine_id", editingMachine.id);
+                                  } else {
+                                    await supabase.from("event_machine_assignments").insert({ event_id: e.id, machine_id: editingMachine.id });
+                                  }
+                                  fetchData();
+                                } catch (err: any) {
+                                  toast({ title: "Error", description: err.message, variant: "destructive" });
+                                }
+                              }}
+                              className="rounded"
+                            />
+                            <span className="truncate">{e.name}</span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
             <div className="space-y-2">
               <Label>Notes</Label>
               <Textarea
