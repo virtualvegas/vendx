@@ -146,6 +146,9 @@ const StandsManager = () => {
     name: string;
   } | null>(null);
 
+  // Machine assignment state
+  const [machineDialogStand, setMachineDialogStand] = useState<Stand | null>(null);
+
   // Fetch stands
   const { data: stands = [], isLoading: standsLoading } = useQuery({
     queryKey: ["stands"],
