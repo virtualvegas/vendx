@@ -14,7 +14,7 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Monitor, Plus, Key, RefreshCw, Copy, Eye, EyeOff, MapPin, Package, Search, Settings, Trash2, Edit, DollarSign, Activity, Gamepad2, ShoppingCart } from "lucide-react";
+import { Monitor, Plus, Key, RefreshCw, Copy, Eye, EyeOff, MapPin, Package, Search, Settings, Trash2, Edit, DollarSign, Activity, Gamepad2, ShoppingCart, Store, Calendar } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { 
   MachineStatsCards, 
