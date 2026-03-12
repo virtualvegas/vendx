@@ -155,12 +155,33 @@ const MachineRegistry = () => {
         supabase.from("machine_sessions").select("*").order("created_at", { ascending: false }).limit(100),
       ]);
 
-      // Fetch stands, events, and assignments (use rpc-style to avoid deep type instantiation)
+      // Fetch stands, events, and assignments (use any-cast to avoid deep type instantiation)
       const client = supabase as any;
-      const standsData: any[] = (await client.from("stands").select("id, name").eq("is_active", true).order("name")).data || [];
-      const eventsData: any[] = (await client.from("events").select("id, name").eq("event_type", "rental").order("name")).data || [];
-      const standAssignData: any[] = (await client.from("stand_machine_assignments").select("machine_id, stand_id")).data || [];
-      const eventAssignData: any[] = (await client.from("event_machine_assignments").select("machine_id, event_id")).data || [];
+      const [standsRes, eventsRes, standAssignRes, eventAssignRes] = await Promise.all([
+        client.from("stands").select("id, name, status").order("name"),
+        client.from("events").select("id, name, event_type").order("name"),
+        client.from("stand_machine_assignments").select("machine_id, stand_id"),
+        client.from("event_machine_assignments").select("machine_id, event_id"),
+      ]);
+
+      if (standsRes.error) console.error("Error loading stands:", standsRes.error);
+      if (eventsRes.error) console.error("Error loading events:", eventsRes.error);
+      if (standAssignRes.error) console.error("Error loading stand assignments:", standAssignRes.error);
+      if (eventAssignRes.error) console.error("Error loading event assignments:", eventAssignRes.error);
+
+      const standsData: any[] = ((standsRes.data || []) as any[])
+        .filter((s) => !s.status || s.status !== "inactive")
+        .map((s) => ({ id: s.id, name: s.name }));
+
+      const eventsRaw: any[] = (eventsRes.data || []) as any[];
+      const rentalEvents = eventsRaw.filter((e) =>
+        String(e.event_type || "").toLowerCase().includes("rental")
+      );
+      const eventsData: any[] = (rentalEvents.length > 0 ? rentalEvents : eventsRaw)
+        .map((e) => ({ id: e.id, name: e.name }));
+
+      const standAssignData: any[] = (standAssignRes.data || []) as any[];
+      const eventAssignData: any[] = (eventAssignRes.data || []) as any[];
 
       const machinesData = machinesRes.data || [];
       const locationsData = locationsRes.data || [];
