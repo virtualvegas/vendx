@@ -155,11 +155,12 @@ const MachineRegistry = () => {
         supabase.from("machine_sessions").select("*").order("created_at", { ascending: false }).limit(100),
       ]);
 
-      // Fetch stands, events, and assignments separately to avoid TS deep instantiation
-      const { data: standsData } = await supabase.from("stands" as any).select("id, name").eq("is_active", true).order("name");
-      const { data: eventsData } = await supabase.from("events" as any).select("id, name").eq("event_type", "rental").order("name");
-      const { data: standAssignData } = await supabase.from("stand_machine_assignments" as any).select("machine_id, stand_id");
-      const { data: eventAssignData } = await supabase.from("event_machine_assignments" as any).select("machine_id, event_id");
+      // Fetch stands, events, and assignments (use rpc-style to avoid deep type instantiation)
+      const client = supabase as any;
+      const standsData: any[] = (await client.from("stands").select("id, name").eq("is_active", true).order("name")).data || [];
+      const eventsData: any[] = (await client.from("events").select("id, name").eq("event_type", "rental").order("name")).data || [];
+      const standAssignData: any[] = (await client.from("stand_machine_assignments").select("machine_id, stand_id")).data || [];
+      const eventAssignData: any[] = (await client.from("event_machine_assignments").select("machine_id, event_id")).data || [];
 
       const machinesData = machinesRes.data || [];
       const locationsData = locationsRes.data || [];
