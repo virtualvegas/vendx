@@ -608,6 +608,27 @@ const MachineRegistry = () => {
                                 <MapPin className="w-3 h-3 text-muted-foreground flex-shrink-0" />
                                 <span className="text-sm truncate max-w-[120px]">{machine.location.name || `${machine.location.city}`}</span>
                               </div>
+                            ) : (standAssignments[machine.id] || eventAssignments[machine.id]) ? (
+                              <div className="space-y-0.5">
+                                {(standAssignments[machine.id] || []).map(sid => {
+                                  const stand = stands.find((s: any) => s.id === sid) as any;
+                                  return stand ? (
+                                    <div key={sid} className="flex items-center gap-1">
+                                      <Store className="w-3 h-3 text-muted-foreground flex-shrink-0" />
+                                      <span className="text-xs truncate max-w-[110px]">{stand.name}</span>
+                                    </div>
+                                  ) : null;
+                                })}
+                                {(eventAssignments[machine.id] || []).map(eid => {
+                                  const event = events.find((e: any) => e.id === eid) as any;
+                                  return event ? (
+                                    <div key={eid} className="flex items-center gap-1">
+                                      <Calendar className="w-3 h-3 text-muted-foreground flex-shrink-0" />
+                                      <span className="text-xs truncate max-w-[110px]">{event.name}</span>
+                                    </div>
+                                  ) : null;
+                                })}
+                              </div>
                             ) : (
                               <span className="text-muted-foreground text-sm">Unassigned</span>
                             )}
