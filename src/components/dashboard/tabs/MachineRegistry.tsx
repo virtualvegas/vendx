@@ -829,6 +829,88 @@ const MachineRegistry = () => {
                 searchPlaceholder="Search locations..."
               />
             </div>
+            {/* Stand / Event Assignment - shown when no location selected */}
+            {(!machineForm.location_id || machineForm.location_id === "none") && editingMachine && (
+              <div className="space-y-3 p-3 rounded-lg border border-dashed border-muted-foreground/30 bg-muted/30">
+                <Label className="text-sm flex items-center gap-2">
+                  <Store className="w-4 h-4" />
+                  Assign to Stand or Event Rental
+                </Label>
+                <p className="text-xs text-muted-foreground">
+                  Since no location is set, you can assign this machine to a stand or private event rental.
+                </p>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-2">
+                    <Label className="text-xs flex items-center gap-1">
+                      <Store className="w-3 h-3" /> Stands
+                    </Label>
+                    <div className="max-h-[120px] overflow-y-auto space-y-1 border rounded p-1.5 bg-background">
+                      {stands.length === 0 ? (
+                        <p className="text-xs text-muted-foreground text-center py-2">No stands</p>
+                      ) : stands.map((s: any) => {
+                        const isAssigned = (standAssignments[editingMachine.id] || []).includes(s.id);
+                        return (
+                          <label key={s.id} className={`flex items-center gap-2 p-1.5 rounded text-xs cursor-pointer transition-colors ${isAssigned ? 'bg-primary/10' : 'hover:bg-muted/50'}`}>
+                            <input
+                              type="checkbox"
+                              checked={isAssigned}
+                              onChange={async () => {
+                                try {
+                                  if (isAssigned) {
+                                    await supabase.from("stand_machine_assignments").delete().eq("stand_id", s.id).eq("machine_id", editingMachine.id);
+                                  } else {
+                                    await supabase.from("stand_machine_assignments").insert({ stand_id: s.id, machine_id: editingMachine.id });
+                                  }
+                                  fetchData();
+                                } catch (e: any) {
+                                  toast({ title: "Error", description: e.message, variant: "destructive" });
+                                }
+                              }}
+                              className="rounded"
+                            />
+                            <span className="truncate">{s.name}</span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs flex items-center gap-1">
+                      <Calendar className="w-3 h-3" /> Event Rentals
+                    </Label>
+                    <div className="max-h-[120px] overflow-y-auto space-y-1 border rounded p-1.5 bg-background">
+                      {events.length === 0 ? (
+                        <p className="text-xs text-muted-foreground text-center py-2">No rentals</p>
+                      ) : events.map((e: any) => {
+                        const isAssigned = (eventAssignments[editingMachine.id] || []).includes(e.id);
+                        return (
+                          <label key={e.id} className={`flex items-center gap-2 p-1.5 rounded text-xs cursor-pointer transition-colors ${isAssigned ? 'bg-primary/10' : 'hover:bg-muted/50'}`}>
+                            <input
+                              type="checkbox"
+                              checked={isAssigned}
+                              onChange={async () => {
+                                try {
+                                  if (isAssigned) {
+                                    await supabase.from("event_machine_assignments").delete().eq("event_id", e.id).eq("machine_id", editingMachine.id);
+                                  } else {
+                                    await supabase.from("event_machine_assignments").insert({ event_id: e.id, machine_id: editingMachine.id });
+                                  }
+                                  fetchData();
+                                } catch (err: any) {
+                                  toast({ title: "Error", description: err.message, variant: "destructive" });
+                                }
+                              }}
+                              className="rounded"
+                            />
+                            <span className="truncate">{e.name}</span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
             <div className="space-y-2">
               <Label>Notes</Label>
               <Textarea
