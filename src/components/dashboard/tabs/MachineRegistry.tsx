@@ -183,8 +183,8 @@ const MachineRegistry = () => {
       setMachines(machinesWithLocations);
       setLocations(locationsData);
       setSessions(sessionsRes.data || []);
-      setStands(standsData || []);
-      setEvents(eventsData || []);
+      setStands((standsData || []) as any);
+      setEvents((eventsData || []) as any);
       setStandAssignments(sMap);
       setEventAssignments(eMap);
     } catch (error) {
