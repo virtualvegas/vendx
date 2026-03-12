@@ -1489,6 +1489,16 @@ const StandsManager = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      {/* Machine Assignment Dialog */}
+      {machineDialogStand && (
+        <MachineAssignmentDialog
+          open={!!machineDialogStand}
+          onOpenChange={(o) => !o && setMachineDialogStand(null)}
+          entityType="stand"
+          entityId={machineDialogStand.id}
+          entityName={machineDialogStand.name}
+        />
+      )}
     </div>
   );
 };
