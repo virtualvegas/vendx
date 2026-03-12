@@ -970,50 +970,110 @@ export type Database = {
           },
         ]
       }
+      event_machine_assignments: {
+        Row: {
+          assigned_at: string
+          condition_notes: string | null
+          created_at: string
+          event_id: string
+          id: string
+          machine_id: string
+          returned_at: string | null
+        }
+        Insert: {
+          assigned_at?: string
+          condition_notes?: string | null
+          created_at?: string
+          event_id: string
+          id?: string
+          machine_id: string
+          returned_at?: string | null
+        }
+        Update: {
+          assigned_at?: string
+          condition_notes?: string | null
+          created_at?: string
+          event_id?: string
+          id?: string
+          machine_id?: string
+          returned_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_machine_assignments_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_machine_assignments_machine_id_fkey"
+            columns: ["machine_id"]
+            isOneToOne: false
+            referencedRelation: "vendx_machines"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       events: {
         Row: {
+          client_company: string | null
+          client_name: string | null
           contact_email: string | null
           contact_phone: string | null
           created_at: string
           created_by: string | null
+          deposit_amount: number | null
           end_date: string
+          event_type: string
           id: string
           location: string
           machines_deployed: number
           name: string
           notes: string | null
+          rental_rate: number | null
           revenue: number | null
           start_date: string
           status: string
           updated_at: string
         }
         Insert: {
+          client_company?: string | null
+          client_name?: string | null
           contact_email?: string | null
           contact_phone?: string | null
           created_at?: string
           created_by?: string | null
+          deposit_amount?: number | null
           end_date: string
+          event_type?: string
           id?: string
           location: string
           machines_deployed?: number
           name: string
           notes?: string | null
+          rental_rate?: number | null
           revenue?: number | null
           start_date: string
           status?: string
           updated_at?: string
         }
         Update: {
+          client_company?: string | null
+          client_name?: string | null
           contact_email?: string | null
           contact_phone?: string | null
           created_at?: string
           created_by?: string | null
+          deposit_amount?: number | null
           end_date?: string
+          event_type?: string
           id?: string
           location?: string
           machines_deployed?: number
           name?: string
           notes?: string | null
+          rental_rate?: number | null
           revenue?: number | null
           start_date?: string
           status?: string
@@ -4099,6 +4159,51 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "stand_events_stand_id_fkey"
+            columns: ["stand_id"]
+            isOneToOne: false
+            referencedRelation: "stands"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stand_machine_assignments: {
+        Row: {
+          assigned_at: string
+          created_at: string
+          id: string
+          machine_id: string
+          notes: string | null
+          removed_at: string | null
+          stand_id: string
+        }
+        Insert: {
+          assigned_at?: string
+          created_at?: string
+          id?: string
+          machine_id: string
+          notes?: string | null
+          removed_at?: string | null
+          stand_id: string
+        }
+        Update: {
+          assigned_at?: string
+          created_at?: string
+          id?: string
+          machine_id?: string
+          notes?: string | null
+          removed_at?: string | null
+          stand_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stand_machine_assignments_machine_id_fkey"
+            columns: ["machine_id"]
+            isOneToOne: false
+            referencedRelation: "vendx_machines"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stand_machine_assignments_stand_id_fkey"
             columns: ["stand_id"]
             isOneToOne: false
             referencedRelation: "stands"

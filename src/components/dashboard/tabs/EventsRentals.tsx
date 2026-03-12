@@ -6,12 +6,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Calendar, MapPin, Trash2, Edit } from "lucide-react";
+import { Plus, Calendar, MapPin, Trash2, Edit, Cpu, DollarSign, Users } from "lucide-react";
+import { MachineAssignmentDialog } from "./shared/MachineAssignmentDialog";
 
-interface Event {
+interface EventRental {
   id: string;
   name: string;
   location: string;
@@ -19,15 +21,21 @@ interface Event {
   end_date: string;
   machines_deployed: number;
   status: string;
-  revenue: number;
+  revenue: number | null;
   contact_email: string | null;
   contact_phone: string | null;
   notes: string | null;
+  event_type: string;
+  rental_rate: number | null;
+  deposit_amount: number | null;
+  client_name: string | null;
+  client_company: string | null;
 }
 
 const EventsRentals = () => {
   const [open, setOpen] = useState(false);
-  const [editingEvent, setEditingEvent] = useState<Event | null>(null);
+  const [editingEvent, setEditingEvent] = useState<EventRental | null>(null);
+  const [machineDialogEvent, setMachineDialogEvent] = useState<EventRental | null>(null);
   const [formData, setFormData] = useState({
     name: "",
     location: "",
@@ -39,30 +47,51 @@ const EventsRentals = () => {
     contact_email: "",
     contact_phone: "",
     notes: "",
+    rental_rate: 0,
+    deposit_amount: 0,
+    client_name: "",
+    client_company: "",
   });
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
   const { data: events, isLoading } = useQuery({
-    queryKey: ["events"],
+    queryKey: ["event-rentals"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("events")
         .select("*")
+        .eq("event_type", "rental")
         .order("start_date", { ascending: false });
       if (error) throw error;
-      return data as Event[];
+      return data as EventRental[];
+    },
+  });
+
+  // Fetch assignment counts
+  const { data: assignmentCounts = {} } = useQuery({
+    queryKey: ["event-machine-assignment-counts"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("event_machine_assignments")
+        .select("event_id");
+      if (error) throw error;
+      const counts: Record<string, number> = {};
+      (data as any[]).forEach((r) => {
+        counts[r.event_id] = (counts[r.event_id] || 0) + 1;
+      });
+      return counts;
     },
   });
 
   const createMutation = useMutation({
     mutationFn: async (data: typeof formData) => {
-      const { error } = await supabase.from("events").insert([data]);
+      const { error } = await supabase.from("events").insert([{ ...data, event_type: "rental" }]);
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["events"] });
-      toast({ title: "Success", description: "Event created successfully" });
+      queryClient.invalidateQueries({ queryKey: ["event-rentals"] });
+      toast({ title: "Success", description: "Rental created" });
       setOpen(false);
       resetForm();
     },
@@ -77,8 +106,8 @@ const EventsRentals = () => {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["events"] });
-      toast({ title: "Success", description: "Event updated successfully" });
+      queryClient.invalidateQueries({ queryKey: ["event-rentals"] });
+      toast({ title: "Success", description: "Rental updated" });
       setOpen(false);
       resetForm();
     },
@@ -93,8 +122,8 @@ const EventsRentals = () => {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["events"] });
-      toast({ title: "Success", description: "Event deleted successfully" });
+      queryClient.invalidateQueries({ queryKey: ["event-rentals"] });
+      toast({ title: "Success", description: "Rental deleted" });
     },
     onError: (error: any) => {
       toast({ title: "Error", description: error.message, variant: "destructive" });
@@ -103,16 +132,10 @@ const EventsRentals = () => {
 
   const resetForm = () => {
     setFormData({
-      name: "",
-      location: "",
-      start_date: "",
-      end_date: "",
-      machines_deployed: 0,
-      status: "upcoming",
-      revenue: 0,
-      contact_email: "",
-      contact_phone: "",
-      notes: "",
+      name: "", location: "", start_date: "", end_date: "",
+      machines_deployed: 0, status: "upcoming", revenue: 0,
+      contact_email: "", contact_phone: "", notes: "",
+      rental_rate: 0, deposit_amount: 0, client_name: "", client_company: "",
     });
     setEditingEvent(null);
   };
@@ -126,7 +149,7 @@ const EventsRentals = () => {
     }
   };
 
-  const handleEdit = (event: Event) => {
+  const handleEdit = (event: EventRental) => {
     setEditingEvent(event);
     setFormData({
       name: event.name,
@@ -135,16 +158,30 @@ const EventsRentals = () => {
       end_date: event.end_date.split("T")[0],
       machines_deployed: event.machines_deployed,
       status: event.status,
-      revenue: event.revenue,
+      revenue: event.revenue || 0,
       contact_email: event.contact_email || "",
       contact_phone: event.contact_phone || "",
       notes: event.notes || "",
+      rental_rate: event.rental_rate || 0,
+      deposit_amount: event.deposit_amount || 0,
+      client_name: event.client_name || "",
+      client_company: event.client_company || "",
     });
     setOpen(true);
   };
 
   const activeEvents = events?.filter((e) => e.status === "active") || [];
-  const totalMachines = events?.reduce((sum, e) => sum + e.machines_deployed, 0) || 0;
+  const totalRevenue = events?.reduce((sum, e) => sum + (e.revenue || 0), 0) || 0;
+
+  const statusColor = (status: string) => {
+    switch (status) {
+      case "active": return "bg-green-500/10 text-green-500";
+      case "upcoming": return "bg-blue-500/10 text-blue-500";
+      case "completed": return "bg-muted text-muted-foreground";
+      case "cancelled": return "bg-destructive/10 text-destructive";
+      default: return "bg-muted text-muted-foreground";
+    }
+  };
 
   if (isLoading) {
     return <div className="flex items-center justify-center h-64"><p className="text-muted-foreground">Loading...</p></div>;
@@ -154,76 +191,50 @@ const EventsRentals = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-3xl font-bold text-foreground mb-2">Events & Rentals</h2>
-          <p className="text-muted-foreground">Manage event bookings and rental machine deployments</p>
+          <h2 className="text-3xl font-bold text-foreground mb-2">Private Event Rentals</h2>
+          <p className="text-muted-foreground">Manage private event machine rentals (weddings, corporate, parties)</p>
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
             <Button onClick={resetForm}>
               <Plus className="w-4 h-4 mr-2" />
-              Add Event
+              New Rental
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-2xl">
             <DialogHeader>
-              <DialogTitle>{editingEvent ? "Edit Event" : "Create New Event"}</DialogTitle>
+              <DialogTitle>{editingEvent ? "Edit Rental" : "Create New Rental"}</DialogTitle>
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="name">Event Name</Label>
-                  <Input
-                    id="name"
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    required
-                  />
+                  <Label>Event Name</Label>
+                  <Input value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} required />
                 </div>
                 <div>
-                  <Label htmlFor="location">Location</Label>
-                  <Input
-                    id="location"
-                    value={formData.location}
-                    onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                    required
-                  />
+                  <Label>Location / Venue</Label>
+                  <Input value={formData.location} onChange={(e) => setFormData({ ...formData, location: e.target.value })} required />
                 </div>
                 <div>
-                  <Label htmlFor="start_date">Start Date</Label>
-                  <Input
-                    id="start_date"
-                    type="date"
-                    value={formData.start_date}
-                    onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
-                    required
-                  />
+                  <Label>Client Name</Label>
+                  <Input value={formData.client_name} onChange={(e) => setFormData({ ...formData, client_name: e.target.value })} />
                 </div>
                 <div>
-                  <Label htmlFor="end_date">End Date</Label>
-                  <Input
-                    id="end_date"
-                    type="date"
-                    value={formData.end_date}
-                    onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
-                    required
-                  />
+                  <Label>Client Company</Label>
+                  <Input value={formData.client_company} onChange={(e) => setFormData({ ...formData, client_company: e.target.value })} />
                 </div>
                 <div>
-                  <Label htmlFor="machines">Machines Deployed</Label>
-                  <Input
-                    id="machines"
-                    type="number"
-                    value={formData.machines_deployed}
-                    onChange={(e) => setFormData({ ...formData, machines_deployed: parseInt(e.target.value) })}
-                    required
-                  />
+                  <Label>Start Date</Label>
+                  <Input type="date" value={formData.start_date} onChange={(e) => setFormData({ ...formData, start_date: e.target.value })} required />
                 </div>
                 <div>
-                  <Label htmlFor="status">Status</Label>
+                  <Label>End Date</Label>
+                  <Input type="date" value={formData.end_date} onChange={(e) => setFormData({ ...formData, end_date: e.target.value })} required />
+                </div>
+                <div>
+                  <Label>Status</Label>
                   <Select value={formData.status} onValueChange={(v) => setFormData({ ...formData, status: v })}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="upcoming">Upcoming</SelectItem>
                       <SelectItem value="active">Active</SelectItem>
@@ -233,115 +244,111 @@ const EventsRentals = () => {
                   </Select>
                 </div>
                 <div>
-                  <Label htmlFor="revenue">Revenue ($)</Label>
-                  <Input
-                    id="revenue"
-                    type="number"
-                    step="0.01"
-                    value={formData.revenue}
-                    onChange={(e) => setFormData({ ...formData, revenue: parseFloat(e.target.value) })}
-                  />
+                  <Label>Machines Deployed (manual count)</Label>
+                  <Input type="number" value={formData.machines_deployed} onChange={(e) => setFormData({ ...formData, machines_deployed: parseInt(e.target.value) || 0 })} />
                 </div>
                 <div>
-                  <Label htmlFor="contact_email">Contact Email</Label>
-                  <Input
-                    id="contact_email"
-                    type="email"
-                    value={formData.contact_email}
-                    onChange={(e) => setFormData({ ...formData, contact_email: e.target.value })}
-                  />
+                  <Label>Rental Rate ($)</Label>
+                  <Input type="number" step="0.01" value={formData.rental_rate} onChange={(e) => setFormData({ ...formData, rental_rate: parseFloat(e.target.value) || 0 })} />
                 </div>
                 <div>
-                  <Label htmlFor="contact_phone">Contact Phone</Label>
-                  <Input
-                    id="contact_phone"
-                    value={formData.contact_phone}
-                    onChange={(e) => setFormData({ ...formData, contact_phone: e.target.value })}
-                  />
+                  <Label>Deposit ($)</Label>
+                  <Input type="number" step="0.01" value={formData.deposit_amount} onChange={(e) => setFormData({ ...formData, deposit_amount: parseFloat(e.target.value) || 0 })} />
+                </div>
+                <div>
+                  <Label>Revenue ($)</Label>
+                  <Input type="number" step="0.01" value={formData.revenue} onChange={(e) => setFormData({ ...formData, revenue: parseFloat(e.target.value) || 0 })} />
+                </div>
+                <div>
+                  <Label>Contact Email</Label>
+                  <Input type="email" value={formData.contact_email} onChange={(e) => setFormData({ ...formData, contact_email: e.target.value })} />
+                </div>
+                <div className="col-span-2">
+                  <Label>Contact Phone</Label>
+                  <Input value={formData.contact_phone} onChange={(e) => setFormData({ ...formData, contact_phone: e.target.value })} />
                 </div>
               </div>
               <div>
-                <Label htmlFor="notes">Notes</Label>
-                <Textarea
-                  id="notes"
-                  value={formData.notes}
-                  onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                  rows={3}
-                />
+                <Label>Notes</Label>
+                <Textarea value={formData.notes} onChange={(e) => setFormData({ ...formData, notes: e.target.value })} rows={3} />
               </div>
               <div className="flex justify-end gap-2">
                 <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-                <Button type="submit">{editingEvent ? "Update" : "Create"} Event</Button>
+                <Button type="submit">{editingEvent ? "Update" : "Create"} Rental</Button>
               </div>
             </form>
           </DialogContent>
         </Dialog>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      {/* Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
-          <CardHeader>
-            <CardTitle className="text-sm font-medium text-muted-foreground">Total Events</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-3xl font-bold text-foreground">{events?.length || 0}</p>
-          </CardContent>
+          <CardHeader className="pb-2"><CardTitle className="text-sm font-medium text-muted-foreground">Total Rentals</CardTitle></CardHeader>
+          <CardContent><p className="text-3xl font-bold text-foreground">{events?.length || 0}</p></CardContent>
         </Card>
         <Card>
-          <CardHeader>
-            <CardTitle className="text-sm font-medium text-muted-foreground">Active Events</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-3xl font-bold text-foreground">{activeEvents.length}</p>
-          </CardContent>
+          <CardHeader className="pb-2"><CardTitle className="text-sm font-medium text-muted-foreground">Active</CardTitle></CardHeader>
+          <CardContent><p className="text-3xl font-bold text-green-500">{activeEvents.length}</p></CardContent>
         </Card>
         <Card>
-          <CardHeader>
-            <CardTitle className="text-sm font-medium text-muted-foreground">Machines Deployed</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-3xl font-bold text-foreground">{totalMachines}</p>
-          </CardContent>
+          <CardHeader className="pb-2"><CardTitle className="text-sm font-medium text-muted-foreground">Machines Assigned</CardTitle></CardHeader>
+          <CardContent><p className="text-3xl font-bold text-foreground">{Object.values(assignmentCounts).reduce((a, b) => a + b, 0)}</p></CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2"><CardTitle className="text-sm font-medium text-muted-foreground">Total Revenue</CardTitle></CardHeader>
+          <CardContent><p className="text-3xl font-bold text-foreground">${totalRevenue.toLocaleString()}</p></CardContent>
         </Card>
       </div>
 
+      {/* Events List */}
       <Card>
-        <CardHeader>
-          <CardTitle>All Events</CardTitle>
-        </CardHeader>
+        <CardHeader><CardTitle>All Rentals</CardTitle></CardHeader>
         <CardContent>
           <div className="space-y-4">
             {events?.length === 0 ? (
-              <p className="text-center text-muted-foreground py-8">No events found. Create one to get started!</p>
+              <p className="text-center text-muted-foreground py-8">No private event rentals yet.</p>
             ) : (
               events?.map((event) => (
-                <div key={event.id} className="flex items-center justify-between border-b border-border pb-4">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
+                <div key={event.id} className="flex items-start justify-between border-b border-border pb-4 gap-4">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-3 mb-1 flex-wrap">
                       <h3 className="font-semibold text-foreground">{event.name}</h3>
-                      <span className={`text-xs px-2 py-1 rounded-full ${
-                        event.status === "active" ? "bg-green-500/10 text-green-500" :
-                        event.status === "upcoming" ? "bg-blue-500/10 text-blue-500" :
-                        event.status === "completed" ? "bg-gray-500/10 text-gray-500" :
-                        "bg-red-500/10 text-red-500"
-                      }`}>
+                      <span className={`text-xs px-2 py-0.5 rounded-full ${statusColor(event.status)}`}>
                         {event.status}
                       </span>
                     </div>
-                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                    {(event.client_name || event.client_company) && (
+                      <p className="text-sm text-muted-foreground mb-1 flex items-center gap-1">
+                        <Users className="w-3 h-3" />
+                        {[event.client_name, event.client_company].filter(Boolean).join(" — ")}
+                      </p>
+                    )}
+                    <div className="flex items-center gap-4 text-sm text-muted-foreground flex-wrap">
                       <span className="flex items-center gap-1">
-                        <MapPin className="w-4 h-4" />
+                        <MapPin className="w-3.5 h-3.5" />
                         {event.location}
                       </span>
                       <span className="flex items-center gap-1">
-                        <Calendar className="w-4 h-4" />
-                        {new Date(event.start_date).toLocaleDateString()} - {new Date(event.end_date).toLocaleDateString()}
+                        <Calendar className="w-3.5 h-3.5" />
+                        {new Date(event.start_date).toLocaleDateString()} – {new Date(event.end_date).toLocaleDateString()}
                       </span>
-                      <span>{event.machines_deployed} machines</span>
-                      <span>${event.revenue.toLocaleString()}</span>
+                      <span className="flex items-center gap-1">
+                        <Cpu className="w-3.5 h-3.5" />
+                        {assignmentCounts[event.id] || 0} assigned
+                      </span>
+                      {(event.revenue ?? 0) > 0 && (
+                        <span className="flex items-center gap-1">
+                          <DollarSign className="w-3.5 h-3.5" />
+                          ${(event.revenue ?? 0).toLocaleString()}
+                        </span>
+                      )}
                     </div>
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex gap-1.5 shrink-0">
+                    <Button variant="outline" size="sm" onClick={() => setMachineDialogEvent(event)} title="Assign machines">
+                      <Cpu className="w-4 h-4" />
+                    </Button>
                     <Button variant="outline" size="sm" onClick={() => handleEdit(event)}>
                       <Edit className="w-4 h-4" />
                     </Button>
@@ -355,6 +362,17 @@ const EventsRentals = () => {
           </div>
         </CardContent>
       </Card>
+
+      {/* Machine Assignment Dialog */}
+      {machineDialogEvent && (
+        <MachineAssignmentDialog
+          open={!!machineDialogEvent}
+          onOpenChange={(o) => !o && setMachineDialogEvent(null)}
+          entityType="event"
+          entityId={machineDialogEvent.id}
+          entityName={machineDialogEvent.name}
+        />
+      )}
     </div>
   );
 };

@@ -47,7 +47,9 @@ import {
   DollarSign,
   Upload,
   Loader2,
+  Cpu,
 } from "lucide-react";
+import { MachineAssignmentDialog } from "./shared/MachineAssignmentDialog";
 import { format } from "date-fns";
 
 interface Stand {
@@ -143,6 +145,9 @@ const StandsManager = () => {
     id: string;
     name: string;
   } | null>(null);
+
+  // Machine assignment state
+  const [machineDialogStand, setMachineDialogStand] = useState<Stand | null>(null);
 
   // Fetch stands
   const { data: stands = [], isLoading: standsLoading } = useQuery({
@@ -752,6 +757,14 @@ const StandsManager = () => {
                           title="Manage Menu"
                         >
                           <UtensilsCrossed className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => setMachineDialogStand(stand)}
+                          title="Assign Machines"
+                        >
+                          <Cpu className="h-4 w-4" />
                         </Button>
                         <Button
                           variant="ghost"
@@ -1476,6 +1489,16 @@ const StandsManager = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      {/* Machine Assignment Dialog */}
+      {machineDialogStand && (
+        <MachineAssignmentDialog
+          open={!!machineDialogStand}
+          onOpenChange={(o) => !o && setMachineDialogStand(null)}
+          entityType="stand"
+          entityId={machineDialogStand.id}
+          entityName={machineDialogStand.name}
+        />
+      )}
     </div>
   );
 };
