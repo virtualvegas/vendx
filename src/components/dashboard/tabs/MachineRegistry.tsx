@@ -456,6 +456,8 @@ const MachineRegistry = () => {
 
   const openEditMachine = (machine: Machine) => {
     setEditingMachine(machine);
+    setPendingStandAssignments(standAssignments[machine.id] || []);
+    setPendingEventAssignments(eventAssignments[machine.id] || []);
     setMachineForm({
       name: machine.name,
       machine_code: machine.machine_code,
