@@ -149,10 +149,14 @@ const MachineRegistry = () => {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [machinesRes, locationsRes, sessionsRes] = await Promise.all([
+      const [machinesRes, locationsRes, sessionsRes, standsRes, eventsRes, standAssignRes, eventAssignRes] = await Promise.all([
         supabase.from("vendx_machines").select("*").order("created_at", { ascending: false }),
         supabase.from("locations").select("id, name, city, country, address").eq("status", "active"),
         supabase.from("machine_sessions").select("*").order("created_at", { ascending: false }).limit(100),
+        supabase.from("stands").select("id, name").eq("is_active", true).order("name"),
+        supabase.from("events").select("id, name").eq("event_type", "rental").order("name"),
+        supabase.from("stand_machine_assignments").select("machine_id, stand_id"),
+        supabase.from("event_machine_assignments").select("machine_id, event_id"),
       ]);
 
       const machinesData = machinesRes.data || [];
@@ -164,9 +168,25 @@ const MachineRegistry = () => {
         location: locationsData.find(l => l.id === m.location_id),
       }));
 
+      // Build assignment maps (machine_id -> entity_id[])
+      const sMap: Record<string, string[]> = {};
+      (standAssignRes.data || []).forEach((a: any) => {
+        if (!sMap[a.machine_id]) sMap[a.machine_id] = [];
+        sMap[a.machine_id].push(a.stand_id);
+      });
+      const eMap: Record<string, string[]> = {};
+      (eventAssignRes.data || []).forEach((a: any) => {
+        if (!eMap[a.machine_id]) eMap[a.machine_id] = [];
+        eMap[a.machine_id].push(a.event_id);
+      });
+
       setMachines(machinesWithLocations);
       setLocations(locationsData);
       setSessions(sessionsRes.data || []);
+      setStands(standsRes.data || []);
+      setEvents(eventsRes.data || []);
+      setStandAssignments(sMap);
+      setEventAssignments(eMap);
     } catch (error) {
       console.error("Error fetching data:", error);
       toast({ title: "Error loading data", variant: "destructive" });
