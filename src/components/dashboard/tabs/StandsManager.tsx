@@ -47,7 +47,9 @@ import {
   DollarSign,
   Upload,
   Loader2,
+  Cpu,
 } from "lucide-react";
+import { MachineAssignmentDialog } from "./shared/MachineAssignmentDialog";
 import { format } from "date-fns";
 
 interface Stand {
