@@ -155,10 +155,14 @@ const MachineRegistry = () => {
         supabase.from("machine_sessions").select("*").order("created_at", { ascending: false }).limit(100),
       ]);
 
-      const standsRes = await (supabase.from("stands").select("id, name").eq("is_active", true).order("name") as any);
-      const eventsRes = await (supabase.from("events").select("id, name").eq("event_type", "rental").order("name") as any);
-      const standAssignRes = await (supabase.from("stand_machine_assignments").select("machine_id, stand_id") as any);
-      const eventAssignRes = await (supabase.from("event_machine_assignments").select("machine_id, event_id") as any);
+      const standsQuery: any = supabase.from("stands").select("id, name").eq("is_active", true).order("name");
+      const standsRes = await standsQuery;
+      const eventsQuery: any = supabase.from("events").select("id, name").eq("event_type", "rental").order("name");
+      const eventsRes = await eventsQuery;
+      const standAssignQuery: any = supabase.from("stand_machine_assignments").select("machine_id, stand_id");
+      const standAssignRes = await standAssignQuery;
+      const eventAssignQuery: any = supabase.from("event_machine_assignments").select("machine_id, event_id");
+      const eventAssignRes = await eventAssignQuery;
 
       const machinesData = machinesRes.data || [];
       const locationsData = locationsRes.data || [];
