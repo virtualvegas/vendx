@@ -121,6 +121,8 @@ const MachineRegistry = () => {
   const [selectedMachine, setSelectedMachine] = useState<Machine | null>(null);
   const [editingMachine, setEditingMachine] = useState<Machine | null>(null);
   const [showApiKey, setShowApiKey] = useState(false);
+  const [pendingStandAssignments, setPendingStandAssignments] = useState<string[]>([]);
+  const [pendingEventAssignments, setPendingEventAssignments] = useState<string[]>([]);
   
   const [machineForm, setMachineForm] = useState({
     name: "",
@@ -155,12 +157,33 @@ const MachineRegistry = () => {
         supabase.from("machine_sessions").select("*").order("created_at", { ascending: false }).limit(100),
       ]);
 
-      // Fetch stands, events, and assignments (use rpc-style to avoid deep type instantiation)
+      // Fetch stands, events, and assignments (use any-cast to avoid deep type instantiation)
       const client = supabase as any;
-      const standsData: any[] = (await client.from("stands").select("id, name").eq("is_active", true).order("name")).data || [];
-      const eventsData: any[] = (await client.from("events").select("id, name").eq("event_type", "rental").order("name")).data || [];
-      const standAssignData: any[] = (await client.from("stand_machine_assignments").select("machine_id, stand_id")).data || [];
-      const eventAssignData: any[] = (await client.from("event_machine_assignments").select("machine_id, event_id")).data || [];
+      const [standsRes, eventsRes, standAssignRes, eventAssignRes] = await Promise.all([
+        client.from("stands").select("id, name, status").order("name"),
+        client.from("events").select("id, name, event_type").order("name"),
+        client.from("stand_machine_assignments").select("machine_id, stand_id"),
+        client.from("event_machine_assignments").select("machine_id, event_id"),
+      ]);
+
+      if (standsRes.error) console.error("Error loading stands:", standsRes.error);
+      if (eventsRes.error) console.error("Error loading events:", eventsRes.error);
+      if (standAssignRes.error) console.error("Error loading stand assignments:", standAssignRes.error);
+      if (eventAssignRes.error) console.error("Error loading event assignments:", eventAssignRes.error);
+
+      const standsData: any[] = ((standsRes.data || []) as any[])
+        .filter((s) => !s.status || s.status !== "inactive")
+        .map((s) => ({ id: s.id, name: s.name }));
+
+      const eventsRaw: any[] = (eventsRes.data || []) as any[];
+      const rentalEvents = eventsRaw.filter((e) =>
+        String(e.event_type || "").toLowerCase().includes("rental")
+      );
+      const eventsData: any[] = (rentalEvents.length > 0 ? rentalEvents : eventsRaw)
+        .map((e) => ({ id: e.id, name: e.name }));
+
+      const standAssignData: any[] = (standAssignRes.data || []) as any[];
+      const eventAssignData: any[] = (eventAssignRes.data || []) as any[];
 
       const machinesData = machinesRes.data || [];
       const locationsData = locationsRes.data || [];
@@ -247,7 +270,7 @@ const MachineRegistry = () => {
         toast({ title: "Machine updated successfully" });
       } else {
         const apiKey = generateApiKey();
-        const { error } = await supabase
+        const { data: insertedMachine, error } = await supabase
           .from("vendx_machines")
           .insert({
             name: machineForm.name,
@@ -261,9 +284,38 @@ const MachineRegistry = () => {
             notes: machineForm.notes || null,
             api_key: apiKey,
             installed_at: new Date().toISOString(),
-          });
+          })
+          .select("id")
+          .single();
 
         if (error) throw error;
+
+        if (insertedMachine?.id && (!machineForm.location_id || machineForm.location_id === "none")) {
+          if (pendingStandAssignments.length > 0) {
+            const { error: standAssignError } = await supabase
+              .from("stand_machine_assignments")
+              .insert(
+                pendingStandAssignments.map((standId) => ({
+                  stand_id: standId,
+                  machine_id: insertedMachine.id,
+                }))
+              );
+            if (standAssignError) throw standAssignError;
+          }
+
+          if (pendingEventAssignments.length > 0) {
+            const { error: eventAssignError } = await supabase
+              .from("event_machine_assignments")
+              .insert(
+                pendingEventAssignments.map((eventId) => ({
+                  event_id: eventId,
+                  machine_id: insertedMachine.id,
+                }))
+              );
+            if (eventAssignError) throw eventAssignError;
+          }
+        }
+
         toast({ title: "Machine registered successfully" });
       }
 
@@ -397,11 +449,15 @@ const MachineRegistry = () => {
       accepts_cards: true,
       notes: "" 
     });
+    setPendingStandAssignments([]);
+    setPendingEventAssignments([]);
     setEditingMachine(null);
   };
 
   const openEditMachine = (machine: Machine) => {
     setEditingMachine(machine);
+    setPendingStandAssignments(standAssignments[machine.id] || []);
+    setPendingEventAssignments(eventAssignments[machine.id] || []);
     setMachineForm({
       name: machine.name,
       machine_code: machine.machine_code,
@@ -852,7 +908,7 @@ const MachineRegistry = () => {
               />
             </div>
             {/* Stand / Event Assignment - shown when no location selected */}
-            {(!machineForm.location_id || machineForm.location_id === "none") && editingMachine && (
+            {(!machineForm.location_id || machineForm.location_id === "none") && (
               <div className="space-y-3 p-3 rounded-lg border border-dashed border-muted-foreground/30 bg-muted/30">
                 <Label className="text-sm flex items-center gap-2">
                   <Store className="w-4 h-4" />
@@ -870,22 +926,31 @@ const MachineRegistry = () => {
                       {stands.length === 0 ? (
                         <p className="text-xs text-muted-foreground text-center py-2">No stands</p>
                       ) : stands.map((s: any) => {
-                        const isAssigned = (standAssignments[editingMachine.id] || []).includes(s.id);
+                        const isAssigned = editingMachine
+                          ? (standAssignments[editingMachine.id] || []).includes(s.id)
+                          : pendingStandAssignments.includes(s.id);
+
                         return (
                           <label key={s.id} className={`flex items-center gap-2 p-1.5 rounded text-xs cursor-pointer transition-colors ${isAssigned ? 'bg-primary/10' : 'hover:bg-muted/50'}`}>
                             <input
                               type="checkbox"
                               checked={isAssigned}
                               onChange={async () => {
-                                try {
-                                  if (isAssigned) {
-                                    await supabase.from("stand_machine_assignments").delete().eq("stand_id", s.id).eq("machine_id", editingMachine.id);
-                                  } else {
-                                    await supabase.from("stand_machine_assignments").insert({ stand_id: s.id, machine_id: editingMachine.id });
+                                if (editingMachine) {
+                                  try {
+                                    if (isAssigned) {
+                                      await supabase.from("stand_machine_assignments").delete().eq("stand_id", s.id).eq("machine_id", editingMachine.id);
+                                    } else {
+                                      await supabase.from("stand_machine_assignments").insert({ stand_id: s.id, machine_id: editingMachine.id });
+                                    }
+                                    fetchData();
+                                  } catch (e: any) {
+                                    toast({ title: "Error", description: e.message, variant: "destructive" });
                                   }
-                                  fetchData();
-                                } catch (e: any) {
-                                  toast({ title: "Error", description: e.message, variant: "destructive" });
+                                } else {
+                                  setPendingStandAssignments((prev) =>
+                                    isAssigned ? prev.filter((id) => id !== s.id) : [...prev, s.id]
+                                  );
                                 }
                               }}
                               className="rounded"
@@ -904,22 +969,31 @@ const MachineRegistry = () => {
                       {events.length === 0 ? (
                         <p className="text-xs text-muted-foreground text-center py-2">No rentals</p>
                       ) : events.map((e: any) => {
-                        const isAssigned = (eventAssignments[editingMachine.id] || []).includes(e.id);
+                        const isAssigned = editingMachine
+                          ? (eventAssignments[editingMachine.id] || []).includes(e.id)
+                          : pendingEventAssignments.includes(e.id);
+
                         return (
                           <label key={e.id} className={`flex items-center gap-2 p-1.5 rounded text-xs cursor-pointer transition-colors ${isAssigned ? 'bg-primary/10' : 'hover:bg-muted/50'}`}>
                             <input
                               type="checkbox"
                               checked={isAssigned}
                               onChange={async () => {
-                                try {
-                                  if (isAssigned) {
-                                    await supabase.from("event_machine_assignments").delete().eq("event_id", e.id).eq("machine_id", editingMachine.id);
-                                  } else {
-                                    await supabase.from("event_machine_assignments").insert({ event_id: e.id, machine_id: editingMachine.id });
+                                if (editingMachine) {
+                                  try {
+                                    if (isAssigned) {
+                                      await supabase.from("event_machine_assignments").delete().eq("event_id", e.id).eq("machine_id", editingMachine.id);
+                                    } else {
+                                      await supabase.from("event_machine_assignments").insert({ event_id: e.id, machine_id: editingMachine.id });
+                                    }
+                                    fetchData();
+                                  } catch (err: any) {
+                                    toast({ title: "Error", description: err.message, variant: "destructive" });
                                   }
-                                  fetchData();
-                                } catch (err: any) {
-                                  toast({ title: "Error", description: err.message, variant: "destructive" });
+                                } else {
+                                  setPendingEventAssignments((prev) =>
+                                    isAssigned ? prev.filter((id) => id !== e.id) : [...prev, e.id]
+                                  );
                                 }
                               }}
                               className="rounded"
