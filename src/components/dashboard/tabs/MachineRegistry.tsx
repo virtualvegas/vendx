@@ -155,15 +155,12 @@ const MachineRegistry = () => {
         supabase.from("machine_sessions").select("*").order("created_at", { ascending: false }).limit(100),
       ]);
 
-      // Fetch stands, events, and assignments
-      const standsRes = await supabase.from("stands").select("id, name").eq("is_active", true).order("name");
-      const eventsRes = await supabase.from("events").select("id, name").eq("event_type", "rental").order("name");
-      const standAssignRes = await supabase.from("stand_machine_assignments").select("machine_id, stand_id");
-      const eventAssignRes = await supabase.from("event_machine_assignments").select("machine_id, event_id");
-      const standsData = standsRes.data as any[] | null;
-      const eventsData = eventsRes.data as any[] | null;
-      const standAssignData = standAssignRes.data as any[] | null;
-      const eventAssignData = eventAssignRes.data as any[] | null;
+      // Fetch stands, events, and assignments (use rpc-style to avoid deep type instantiation)
+      const client = supabase as any;
+      const standsData: any[] = (await client.from("stands").select("id, name").eq("is_active", true).order("name")).data || [];
+      const eventsData: any[] = (await client.from("events").select("id, name").eq("event_type", "rental").order("name")).data || [];
+      const standAssignData: any[] = (await client.from("stand_machine_assignments").select("machine_id, stand_id")).data || [];
+      const eventAssignData: any[] = (await client.from("event_machine_assignments").select("machine_id, event_id")).data || [];
 
       const machinesData = machinesRes.data || [];
       const locationsData = locationsRes.data || [];
