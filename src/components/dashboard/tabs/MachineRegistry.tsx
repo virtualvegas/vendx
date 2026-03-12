@@ -170,12 +170,12 @@ const MachineRegistry = () => {
       }));
 
       const sMap: Record<string, string[]> = {};
-      (standAssignRes.data || []).forEach((a: any) => {
+      (standAssignData || []).forEach((a: any) => {
         if (!sMap[a.machine_id]) sMap[a.machine_id] = [];
         sMap[a.machine_id].push(a.stand_id);
       });
       const eMap: Record<string, string[]> = {};
-      (eventAssignRes.data || []).forEach((a: any) => {
+      (eventAssignData || []).forEach((a: any) => {
         if (!eMap[a.machine_id]) eMap[a.machine_id] = [];
         eMap[a.machine_id].push(a.event_id);
       });
@@ -183,8 +183,8 @@ const MachineRegistry = () => {
       setMachines(machinesWithLocations);
       setLocations(locationsData);
       setSessions(sessionsRes.data || []);
-      setStands(standsRes.data || []);
-      setEvents(eventsRes.data || []);
+      setStands(standsData || []);
+      setEvents(eventsData || []);
       setStandAssignments(sMap);
       setEventAssignments(eMap);
     } catch (error) {
