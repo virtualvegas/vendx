@@ -149,10 +149,13 @@ const MachineRegistry = () => {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [machinesRes, locationsRes, sessionsRes, standsRes, eventsRes, standAssignRes, eventAssignRes] = await Promise.all([
+      const [machinesRes, locationsRes, sessionsRes] = await Promise.all([
         supabase.from("vendx_machines").select("*").order("created_at", { ascending: false }),
         supabase.from("locations").select("id, name, city, country, address").eq("status", "active"),
         supabase.from("machine_sessions").select("*").order("created_at", { ascending: false }).limit(100),
+      ]);
+
+      const [standsRes, eventsRes, standAssignRes, eventAssignRes] = await Promise.all([
         supabase.from("stands").select("id, name").eq("is_active", true).order("name"),
         supabase.from("events").select("id, name").eq("event_type", "rental").order("name"),
         supabase.from("stand_machine_assignments").select("machine_id, stand_id"),
@@ -162,13 +165,11 @@ const MachineRegistry = () => {
       const machinesData = machinesRes.data || [];
       const locationsData = locationsRes.data || [];
       
-      // Merge location data into machines
       const machinesWithLocations = machinesData.map(m => ({
         ...m,
         location: locationsData.find(l => l.id === m.location_id),
       }));
 
-      // Build assignment maps (machine_id -> entity_id[])
       const sMap: Record<string, string[]> = {};
       (standAssignRes.data || []).forEach((a: any) => {
         if (!sMap[a.machine_id]) sMap[a.machine_id] = [];
