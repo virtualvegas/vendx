@@ -156,7 +156,7 @@ const MachineRegistry = () => {
       ]);
 
       const standsRes = await supabase.from("stands").select("id, name").eq("is_active", true).order("name");
-      const eventsRes = await supabase.from("events").select("id, name").eq("event_type", "rental").order("name");
+      const eventsRes = await supabase.from("events").select("id, name").eq("event_type", "rental").order("name") as any;
       const standAssignRes = await supabase.from("stand_machine_assignments").select("machine_id, stand_id");
       const eventAssignRes = await supabase.from("event_machine_assignments").select("machine_id, event_id");
 
