@@ -67,18 +67,34 @@ export const MachineAssignmentDialog = ({
 
   const toggleMutation = useMutation({
     mutationFn: async ({ machineId, assign }: { machineId: string; assign: boolean }) => {
-      if (assign) {
-        const { error } = await supabase
-          .from(tableName)
-          .insert({ [fkColumn]: entityId, machine_id: machineId } as any);
-        if (error) throw error;
+      if (entityType === "stand") {
+        if (assign) {
+          const { error } = await supabase
+            .from("stand_machine_assignments")
+            .insert({ stand_id: entityId, machine_id: machineId });
+          if (error) throw error;
+        } else {
+          const { error } = await supabase
+            .from("stand_machine_assignments")
+            .delete()
+            .eq("stand_id", entityId)
+            .eq("machine_id", machineId);
+          if (error) throw error;
+        }
       } else {
-        const { error } = await supabase
-          .from(tableName)
-          .delete()
-          .eq(fkColumn, entityId)
-          .eq("machine_id", machineId);
-        if (error) throw error;
+        if (assign) {
+          const { error } = await supabase
+            .from("event_machine_assignments")
+            .insert({ event_id: entityId, machine_id: machineId });
+          if (error) throw error;
+        } else {
+          const { error } = await supabase
+            .from("event_machine_assignments")
+            .delete()
+            .eq("event_id", entityId)
+            .eq("machine_id", machineId);
+          if (error) throw error;
+        }
       }
     },
     onSuccess: () => {
