@@ -255,7 +255,7 @@ export const MachineAssignmentDialog = ({
             {sorted.map((machine) => {
               const isAssigned = assigned.includes(machine.id);
               const locationName = machine.location_id ? locationMap[machine.location_id] : null;
-              const otherDeployments = deploymentMap[machine.machine_id] || [];
+              const otherDeployments = deploymentMap[machine.id] || [];
 
               return (
                 <label
