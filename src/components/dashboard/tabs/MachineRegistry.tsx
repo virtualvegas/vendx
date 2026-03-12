@@ -121,6 +121,8 @@ const MachineRegistry = () => {
   const [selectedMachine, setSelectedMachine] = useState<Machine | null>(null);
   const [editingMachine, setEditingMachine] = useState<Machine | null>(null);
   const [showApiKey, setShowApiKey] = useState(false);
+  const [pendingStandAssignments, setPendingStandAssignments] = useState<string[]>([]);
+  const [pendingEventAssignments, setPendingEventAssignments] = useState<string[]>([]);
   
   const [machineForm, setMachineForm] = useState({
     name: "",
