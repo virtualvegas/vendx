@@ -270,7 +270,7 @@ const MachineRegistry = () => {
         toast({ title: "Machine updated successfully" });
       } else {
         const apiKey = generateApiKey();
-        const { error } = await supabase
+        const { data: insertedMachine, error } = await supabase
           .from("vendx_machines")
           .insert({
             name: machineForm.name,
@@ -284,9 +284,38 @@ const MachineRegistry = () => {
             notes: machineForm.notes || null,
             api_key: apiKey,
             installed_at: new Date().toISOString(),
-          });
+          })
+          .select("id")
+          .single();
 
         if (error) throw error;
+
+        if (insertedMachine?.id && (!machineForm.location_id || machineForm.location_id === "none")) {
+          if (pendingStandAssignments.length > 0) {
+            const { error: standAssignError } = await supabase
+              .from("stand_machine_assignments")
+              .insert(
+                pendingStandAssignments.map((standId) => ({
+                  stand_id: standId,
+                  machine_id: insertedMachine.id,
+                }))
+              );
+            if (standAssignError) throw standAssignError;
+          }
+
+          if (pendingEventAssignments.length > 0) {
+            const { error: eventAssignError } = await supabase
+              .from("event_machine_assignments")
+              .insert(
+                pendingEventAssignments.map((eventId) => ({
+                  event_id: eventId,
+                  machine_id: insertedMachine.id,
+                }))
+              );
+            if (eventAssignError) throw eventAssignError;
+          }
+        }
+
         toast({ title: "Machine registered successfully" });
       }
 
