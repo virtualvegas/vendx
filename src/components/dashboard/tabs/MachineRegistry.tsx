@@ -449,6 +449,8 @@ const MachineRegistry = () => {
       accepts_cards: true,
       notes: "" 
     });
+    setPendingStandAssignments([]);
+    setPendingEventAssignments([]);
     setEditingMachine(null);
   };
 
