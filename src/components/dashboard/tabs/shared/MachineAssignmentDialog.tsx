@@ -46,12 +46,21 @@ export const MachineAssignmentDialog = ({
   const { data: assigned = [], isLoading } = useQuery({
     queryKey: [`${tableName}-assignments`, entityId],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from(tableName)
-        .select("machine_id")
-        .eq(fkColumn, entityId);
+      let query;
+      if (entityType === "stand") {
+        query = supabase
+          .from("stand_machine_assignments")
+          .select("machine_id")
+          .eq("stand_id", entityId);
+      } else {
+        query = supabase
+          .from("event_machine_assignments")
+          .select("machine_id")
+          .eq("event_id", entityId);
+      }
+      const { data, error } = await query;
       if (error) throw error;
-      return data.map((r: any) => r.machine_id as string);
+      return (data as any[]).map((r) => r.machine_id as string);
     },
     enabled: open && !!entityId,
   });
