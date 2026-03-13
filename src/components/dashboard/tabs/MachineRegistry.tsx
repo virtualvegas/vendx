@@ -495,7 +495,20 @@ const MachineRegistry = () => {
     return machines.filter(m => {
       const matchesSearch = m.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         m.machine_code.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesStatus = filterStatus === "all" || m.status === filterStatus;
+      const connStatus = (m as any).connection_status || "offline";
+      let matchesStatus = false;
+      if (filterStatus === "all") {
+        matchesStatus = true;
+      } else if (filterStatus === "online") {
+        matchesStatus = connStatus === "online";
+      } else if (filterStatus === "offline") {
+        matchesStatus = connStatus === "offline";
+      } else if (filterStatus === "intermittent") {
+        matchesStatus = connStatus === "intermittent";
+      } else {
+        // active, inactive, maintenance match on m.status
+        matchesStatus = m.status === filterStatus;
+      }
       const matchesLocation = filterLocation === "all" || m.location_id === filterLocation;
       const matchesType = filterType === "all" || m.machine_type === filterType;
       return matchesSearch && matchesStatus && matchesLocation && matchesType;
