@@ -495,7 +495,20 @@ const MachineRegistry = () => {
     return machines.filter(m => {
       const matchesSearch = m.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         m.machine_code.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesStatus = filterStatus === "all" || m.status === filterStatus;
+      const connStatus = (m as any).connection_status || "offline";
+      let matchesStatus = false;
+      if (filterStatus === "all") {
+        matchesStatus = true;
+      } else if (filterStatus === "online") {
+        matchesStatus = connStatus === "online";
+      } else if (filterStatus === "offline") {
+        matchesStatus = connStatus === "offline";
+      } else if (filterStatus === "intermittent") {
+        matchesStatus = connStatus === "intermittent";
+      } else {
+        // active, inactive, maintenance match on m.status
+        matchesStatus = m.status === filterStatus;
+      }
       const matchesLocation = filterLocation === "all" || m.location_id === filterLocation;
       const matchesType = filterType === "all" || m.machine_type === filterType;
       return matchesSearch && matchesStatus && matchesLocation && matchesType;
@@ -512,8 +525,8 @@ const MachineRegistry = () => {
       total: machines.length,
       active: machines.filter(m => m.status === "active").length,
       vendxPayEnabled: machines.filter(m => m.vendx_pay_enabled).length,
-      online: machines.filter(m => m.last_seen && new Date(m.last_seen).getTime() > fiveMinutesAgo).length,
-      offline: machines.filter(m => m.status === "active" && (!m.last_seen || new Date(m.last_seen).getTime() <= fiveMinutesAgo)).length,
+      online: machines.filter(m => (m as any).connection_status === "online").length,
+      offline: machines.filter(m => !((m as any).connection_status) || (m as any).connection_status === "offline").length,
       totalRevenue: machines.reduce((sum, m) => sum + (m.lifetime_revenue || 0), 0),
       totalPlays: machines.reduce((sum, m) => sum + (m.total_plays || 0), 0),
       totalVends: machines.reduce((sum, m) => sum + (m.total_vends || 0), 0),
@@ -601,7 +614,9 @@ const MachineRegistry = () => {
                       { value: "active", label: "Active" },
                       { value: "inactive", label: "Inactive" },
                       { value: "maintenance", label: "Maintenance" },
-                      { value: "offline", label: "Offline" },
+                      { value: "online", label: "🟢 Online" },
+                      { value: "offline", label: "🔴 Offline" },
+                      { value: "intermittent", label: "🟡 Intermittent" },
                     ]}
                     value={filterStatus}
                     onValueChange={setFilterStatus}
