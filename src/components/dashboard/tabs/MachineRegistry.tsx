@@ -614,7 +614,9 @@ const MachineRegistry = () => {
                       { value: "active", label: "Active" },
                       { value: "inactive", label: "Inactive" },
                       { value: "maintenance", label: "Maintenance" },
-                      { value: "offline", label: "Offline" },
+                      { value: "online", label: "🟢 Online" },
+                      { value: "offline", label: "🔴 Offline" },
+                      { value: "intermittent", label: "🟡 Intermittent" },
                     ]}
                     value={filterStatus}
                     onValueChange={setFilterStatus}
