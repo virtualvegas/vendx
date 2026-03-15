@@ -110,7 +110,7 @@ const App = () => (
               <Route path="/auth" element={<AuthPage />} />
               <Route path="/dashboard" element={<DashboardPage />} />
               <Route path="/dashboard/:tab" element={<DashboardPage />} />
-              <Route path="/wallet" element={<WalletPage />} />
+              <Route path="/wallet" element={<Navigate to="/dashboard/my-wallet" replace />} />
               <Route path="/rewards" element={<RewardsPage />} />
               <Route path="/arcade-pay" element={<ArcadePayPage />} />
               <Route path="/kiosk" element={<KioskPage />} />
