@@ -3,10 +3,11 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Wallet, KeyRound, Clock, Copy, Check } from "lucide-react";
+import { Wallet, KeyRound, Clock, Copy, Check, Users } from "lucide-react";
 import { format } from "date-fns";
 import WalletLoadDialog from "@/components/vendx-pay/WalletLoadDialog";
 import { WalletHierarchyView } from "@/components/wallet";
+import { ChildWalletManager } from "@/components/arcade";
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -95,6 +96,10 @@ const CustomerWallet = () => {
             <Wallet className="h-4 w-4" />
             Wallets
           </TabsTrigger>
+          <TabsTrigger value="children" className="flex items-center gap-2">
+            <Users className="h-4 w-4" />
+            Child Wallets
+          </TabsTrigger>
           <TabsTrigger value="pay" className="flex items-center gap-2">
             <KeyRound className="h-4 w-4" />
             Payment Code
@@ -103,6 +108,10 @@ const CustomerWallet = () => {
 
         <TabsContent value="hierarchy" className="mt-4">
           <WalletHierarchyView />
+        </TabsContent>
+
+        <TabsContent value="children" className="mt-4">
+          <ChildWalletManager />
         </TabsContent>
 
         <TabsContent value="pay" className="mt-4">
