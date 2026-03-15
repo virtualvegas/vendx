@@ -1125,6 +1125,51 @@ export type Database = {
           },
         ]
       }
+      gift_cards: {
+        Row: {
+          code: string
+          created_at: string
+          created_by: string | null
+          expires_at: string | null
+          id: string
+          notes: string | null
+          redeemed_at: string | null
+          redeemed_by: string | null
+          remaining_value: number
+          status: string
+          updated_at: string
+          value: number
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string | null
+          id?: string
+          notes?: string | null
+          redeemed_at?: string | null
+          redeemed_by?: string | null
+          remaining_value?: number
+          status?: string
+          updated_at?: string
+          value?: number
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string | null
+          id?: string
+          notes?: string | null
+          redeemed_at?: string | null
+          redeemed_by?: string | null
+          remaining_value?: number
+          status?: string
+          updated_at?: string
+          value?: number
+        }
+        Relationships: []
+      }
       inventory_items: {
         Row: {
           category: string
