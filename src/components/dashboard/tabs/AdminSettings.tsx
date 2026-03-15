@@ -44,6 +44,7 @@ const roleLabels: Record<AppRole, string> = {
   employee_operator: "Employee / Operator",
   customer: "Customer",
   business_owner: "Business Owner",
+  support: "Support Agent",
 };
 
 const roleDescriptions: Record<AppRole, string> = {
