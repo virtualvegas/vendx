@@ -261,15 +261,15 @@ const CustomerWallet = () => {
       </Card>
 
       {/* Main Content Tabs */}
-      <Tabs defaultValue="family" className="w-full">
+      <Tabs defaultValue="transactions" className="w-full">
         <TabsList className="w-full sm:w-auto">
-          <TabsTrigger value="family" className="flex items-center gap-2">
-            <Users className="h-4 w-4" />
-            Family
-          </TabsTrigger>
           <TabsTrigger value="transactions" className="flex items-center gap-2">
             <Clock className="h-4 w-4" />
             Transactions
+          </TabsTrigger>
+          <TabsTrigger value="family" className="flex items-center gap-2">
+            <Users className="h-4 w-4" />
+            Family
           </TabsTrigger>
         </TabsList>
 
