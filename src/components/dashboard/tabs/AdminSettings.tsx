@@ -44,6 +44,7 @@ const roleLabels: Record<AppRole, string> = {
   employee_operator: "Employee / Operator",
   customer: "Customer",
   business_owner: "Business Owner",
+  support: "Support Agent",
 };
 
 const roleDescriptions: Record<AppRole, string> = {
@@ -58,6 +59,7 @@ const roleDescriptions: Record<AppRole, string> = {
   employee_operator: "Daily operational tasks",
   customer: "Standard customer access with wallet and rewards",
   business_owner: "View location performance and payouts",
+  support: "Handle customer support tickets and inquiries",
 };
 
 const AdminSettings = () => {

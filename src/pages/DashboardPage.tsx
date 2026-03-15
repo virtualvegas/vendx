@@ -76,7 +76,8 @@ export type AppRole =
   | "regional_manager"
   | "employee_operator"
   | "customer"
-  | "business_owner";
+  | "business_owner"
+  | "support";
 
 const DashboardPage = () => {
   useSEO({
@@ -106,6 +107,10 @@ const DashboardPage = () => {
     // Field operators get their route view
     if (userRoles.includes("employee_operator")) {
       return "my-route";
+    }
+    // Support agents
+    if (userRoles.includes("support")) {
+      return "technical-support";
     }
     // Tech support leads
     if (userRoles.includes("tech_support_lead")) {

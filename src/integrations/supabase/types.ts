@@ -5855,6 +5855,7 @@ export type Database = {
         | "employee_operator"
         | "customer"
         | "business_owner"
+        | "support"
       quest_completion_status:
         | "in_progress"
         | "completed"
@@ -6002,6 +6003,7 @@ export const Constants = {
         "employee_operator",
         "customer",
         "business_owner",
+        "support",
       ],
       quest_completion_status: [
         "in_progress",
