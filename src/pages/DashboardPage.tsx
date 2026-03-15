@@ -108,6 +108,10 @@ const DashboardPage = () => {
     if (userRoles.includes("employee_operator")) {
       return "my-route";
     }
+    // Support agents
+    if (userRoles.includes("support")) {
+      return "technical-support";
+    }
     // Tech support leads
     if (userRoles.includes("tech_support_lead")) {
       return "technical-support";
