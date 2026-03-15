@@ -59,6 +59,7 @@ const roleDescriptions: Record<AppRole, string> = {
   employee_operator: "Daily operational tasks",
   customer: "Standard customer access with wallet and rewards",
   business_owner: "View location performance and payouts",
+  support: "Handle customer support tickets and inquiries",
 };
 
 const AdminSettings = () => {
