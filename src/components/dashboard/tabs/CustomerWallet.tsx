@@ -7,9 +7,9 @@ import { Wallet, KeyRound, Clock, Copy, Check, Users } from "lucide-react";
 import { format } from "date-fns";
 import WalletLoadDialog from "@/components/vendx-pay/WalletLoadDialog";
 import { WalletHierarchyView } from "@/components/wallet";
-import { ChildWalletManager } from "@/components/arcade";
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ChildWalletManager } from "@/components/arcade";
 
 const CustomerWallet = () => {
   const [loadDialogOpen, setLoadDialogOpen] = useState(false);
