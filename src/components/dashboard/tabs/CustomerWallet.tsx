@@ -17,6 +17,12 @@ const CustomerWallet = () => {
   const [timeRemaining, setTimeRemaining] = useState(60);
   const [copied, setCopied] = useState(false);
   const [hasTotp, setHasTotp] = useState(false);
+  const [user, setUser] = useState<any>(null);
+  const { toast } = useToast();
+  const TIME_STEP = 60;
+  const [timeRemaining, setTimeRemaining] = useState(60);
+  const [copied, setCopied] = useState(false);
+  const [hasTotp, setHasTotp] = useState(false);
   const { toast } = useToast();
   const TIME_STEP = 60;
 
