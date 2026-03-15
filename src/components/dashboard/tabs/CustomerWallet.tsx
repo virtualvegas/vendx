@@ -3,12 +3,13 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Wallet, KeyRound, Clock, Copy, Check } from "lucide-react";
+import { Wallet, KeyRound, Clock, Copy, Check, Users } from "lucide-react";
 import { format } from "date-fns";
 import WalletLoadDialog from "@/components/vendx-pay/WalletLoadDialog";
 import { WalletHierarchyView } from "@/components/wallet";
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ChildWalletManager } from "@/components/arcade";
 
 const CustomerWallet = () => {
   const [loadDialogOpen, setLoadDialogOpen] = useState(false);
@@ -16,8 +17,13 @@ const CustomerWallet = () => {
   const [timeRemaining, setTimeRemaining] = useState(60);
   const [copied, setCopied] = useState(false);
   const [hasTotp, setHasTotp] = useState(false);
+  const [user, setUser] = useState<any>(null);
   const { toast } = useToast();
   const TIME_STEP = 60;
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => setUser(data.user));
+  }, []);
 
   const { data: wallet, isLoading: walletLoading } = useQuery({
     queryKey: ["customer-wallet"],
@@ -95,6 +101,10 @@ const CustomerWallet = () => {
             <Wallet className="h-4 w-4" />
             Wallets
           </TabsTrigger>
+          <TabsTrigger value="children" className="flex items-center gap-2">
+            <Users className="h-4 w-4" />
+            Child Wallets
+          </TabsTrigger>
           <TabsTrigger value="pay" className="flex items-center gap-2">
             <KeyRound className="h-4 w-4" />
             Payment Code
@@ -103,6 +113,18 @@ const CustomerWallet = () => {
 
         <TabsContent value="hierarchy" className="mt-4">
           <WalletHierarchyView />
+        </TabsContent>
+
+        <TabsContent value="children" className="mt-4">
+          {user && wallet ? (
+            <ChildWalletManager 
+              user={user} 
+              parentWalletBalance={Number(wallet.balance || 0)} 
+              onRefresh={() => {}} 
+            />
+          ) : (
+            <p className="text-muted-foreground text-center py-8">Loading...</p>
+          )}
         </TabsContent>
 
         <TabsContent value="pay" className="mt-4">
