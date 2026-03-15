@@ -116,7 +116,15 @@ const CustomerWallet = () => {
         </TabsContent>
 
         <TabsContent value="children" className="mt-4">
-          <ChildWalletManager />
+          {user && wallet ? (
+            <ChildWalletManager 
+              user={user} 
+              parentWalletBalance={Number(wallet.balance || 0)} 
+              onRefresh={() => {}} 
+            />
+          ) : (
+            <p className="text-muted-foreground text-center py-8">Loading...</p>
+          )}
         </TabsContent>
 
         <TabsContent value="pay" className="mt-4">
