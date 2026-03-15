@@ -76,7 +76,8 @@ export type AppRole =
   | "regional_manager"
   | "employee_operator"
   | "customer"
-  | "business_owner";
+  | "business_owner"
+  | "support";
 
 const DashboardPage = () => {
   useSEO({
