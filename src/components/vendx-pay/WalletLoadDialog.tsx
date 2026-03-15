@@ -254,7 +254,7 @@ const WalletLoadDialog = ({ open, onOpenChange }: WalletLoadDialogProps) => {
                     value={giftCardCode}
                     onChange={(e) => setGiftCardCode(e.target.value.toUpperCase())}
                     className="text-center text-lg font-mono tracking-wider h-14"
-                    maxLength={22}
+                    maxLength={24}
                   />
                 </div>
 
