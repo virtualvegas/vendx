@@ -63,6 +63,7 @@ import ArtistsManager from "@/components/dashboard/tabs/ArtistsManager";
 import ReleaseTracksManager from "@/components/dashboard/tabs/ReleaseTracksManager";
 import BusinessAdReach from "@/components/dashboard/tabs/business-owner/BusinessAdReach";
 import ArtistPayoutsManager from "@/components/dashboard/tabs/ArtistPayoutsManager";
+import GiftCardManager from "@/components/dashboard/tabs/GiftCardManager";
 import { useSEO } from "@/hooks/useSEO";
 export type AppRole =
   | "super_admin"
@@ -259,6 +260,8 @@ const DashboardPage = () => {
         content = <GlobalLocations />; break;
       case "vendx-pay":
         content = <VendXPayManager />; break;
+      case "gift-cards":
+        content = <GiftCardManager />; break;
       case "rewards-manager":
         content = <RewardsManager />; break;
       case "machine-registry":
