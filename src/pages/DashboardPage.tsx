@@ -260,6 +260,8 @@ const DashboardPage = () => {
         content = <GlobalLocations />; break;
       case "vendx-pay":
         content = <VendXPayManager />; break;
+      case "gift-cards":
+        content = <GiftCardManager />; break;
       case "rewards-manager":
         content = <RewardsManager />; break;
       case "machine-registry":
