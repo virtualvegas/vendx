@@ -117,7 +117,7 @@ serve(async (req) => {
         amount: amount,
         currency: "usd",
         status: "completed",
-        description: `EcoSnack: ${item_name} (Locker ${locker_number}) at ${machine_code}`,
+        description: `EcoVend: ${item_name} (Locker ${locker_number}) at ${machine_code}`,
         customer_email: userData.user.email || null,
         customer_name: null,
         transaction_date: new Date().toISOString(),
