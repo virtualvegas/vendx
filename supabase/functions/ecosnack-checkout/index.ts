@@ -75,7 +75,7 @@ serve(async (req) => {
         wallet_id: wallet.id,
         amount: -amount,
         transaction_type: "ecosnack_purchase",
-        description: `EcoSnack: ${item_name} (Locker ${locker_number})`,
+        description: `EcoVend: ${item_name} (Locker ${locker_number})`,
         status: "completed",
       });
 
@@ -117,7 +117,7 @@ serve(async (req) => {
         amount: amount,
         currency: "usd",
         status: "completed",
-        description: `EcoSnack: ${item_name} (Locker ${locker_number}) at ${machine_code}`,
+        description: `EcoVend: ${item_name} (Locker ${locker_number}) at ${machine_code}`,
         customer_email: userData.user.email || null,
         customer_name: null,
         transaction_date: new Date().toISOString(),
@@ -212,7 +212,7 @@ serve(async (req) => {
           price_data: {
             currency: "usd",
             product_data: {
-              name: `EcoSnack - ${item_name}`,
+              name: `EcoVend - ${item_name}`,
               description: `Locker #${locker_number} at machine ${machine_code}`,
             },
             unit_amount: Math.round(amount * 100),
@@ -318,7 +318,7 @@ serve(async (req) => {
             amount: purchase.amount,
             currency: "usd",
             status: "completed",
-            description: `EcoSnack: ${purchase.item_name} (Locker ${purchase.locker_number}) at ${purchase.machine_code}`,
+            description: `EcoVend: ${purchase.item_name} (Locker ${purchase.locker_number}) at ${purchase.machine_code}`,
             customer_email: null,
             customer_name: null,
             transaction_date: new Date().toISOString(),
@@ -348,7 +348,7 @@ serve(async (req) => {
     });
 
   } catch (error: unknown) {
-    console.error("EcoSnack checkout error:", error);
+    console.error("EcoVend checkout error:", error);
     const message = error instanceof Error ? error.message : "Unknown error";
     return new Response(JSON.stringify({ error: message }), {
       status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },

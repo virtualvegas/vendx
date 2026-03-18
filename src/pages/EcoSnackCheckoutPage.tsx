@@ -152,7 +152,7 @@ const EcoSnackCheckoutPage = () => {
         <div className="container mx-auto px-4 pt-24 pb-16 text-center">
           <TreePine className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
           <h1 className="text-xl font-bold text-foreground mb-2">Machine Not Found</h1>
-          <p className="text-sm text-muted-foreground">This EcoSnack machine doesn't exist or isn't available.</p>
+          <p className="text-sm text-muted-foreground">This EcoVend machine doesn't exist or isn't available.</p>
         </div>
         <Footer />
       </div>
@@ -193,12 +193,12 @@ const EcoSnackCheckoutPage = () => {
             <div className="min-w-0">
               <h1 className="text-lg sm:text-2xl font-bold text-foreground truncate">{machine.name}</h1>
               <p className="text-xs sm:text-sm text-muted-foreground truncate">
-                {(machine.location as any)?.name || (machine.location as any)?.city || "EcoSnack Machine"}
+                {(machine.location as any)?.name || (machine.location as any)?.city || "EcoVend Machine"}
               </p>
             </div>
           </div>
           <Badge variant="outline" className="border-accent/50 text-accent text-xs">
-            <Leaf className="h-3 w-3 mr-1" /> EcoSnack
+            <Leaf className="h-3 w-3 mr-1" /> EcoVend
           </Badge>
         </div>
 

@@ -158,7 +158,7 @@ const GlobalAnalytics = () => {
     { name: "Store", value: totals.storeRevenue },
     { name: "Vending", value: totals.vendingRevenue },
     { name: "Arcade", value: totals.arcadeRevenue },
-    { name: "EcoSnack", value: totals.ecosnackRevenue },
+    { name: "EcoVend", value: totals.ecosnackRevenue },
     { name: "PayPal (Other)", value: revenueBySource.paypal },
     { name: "Other", value: revenueBySource.other },
   ].filter(d => d.value > 0), [totals, revenueBySource]);
@@ -308,7 +308,7 @@ const GlobalAnalytics = () => {
                     <Area type="monotone" dataKey="store" stackId="1" fill="#10b981" stroke="#10b981" fillOpacity={0.6} name="Store" />
                     <Area type="monotone" dataKey="vending" stackId="1" fill="hsl(var(--primary))" stroke="hsl(var(--primary))" fillOpacity={0.6} name="Vending" />
                     <Area type="monotone" dataKey="arcade" stackId="1" fill="#8b5cf6" stroke="#8b5cf6" fillOpacity={0.6} name="Arcade" />
-                    <Area type="monotone" dataKey="ecosnack" stackId="1" fill="#f59e0b" stroke="#f59e0b" fillOpacity={0.6} name="EcoSnack" />
+                    <Area type="monotone" dataKey="ecosnack" stackId="1" fill="#f59e0b" stroke="#f59e0b" fillOpacity={0.6} name="EcoVend" />
                     <Area type="monotone" dataKey="other" stackId="1" fill="#06b6d4" stroke="#06b6d4" fillOpacity={0.4} name="Other" />
                     <Legend />
                   </AreaChart>
@@ -388,7 +388,7 @@ const GlobalAnalytics = () => {
                 { name: "Online Store", icon: ShoppingCart, revenue: totals.storeRevenue, txns: storeOrders?.length || 0, color: "text-emerald-500" },
                 { name: "Vending Machines", icon: Package, revenue: totals.vendingRevenue, txns: machineTransactions?.length || 0, color: "text-primary" },
                 { name: "Arcade", icon: Gamepad2, revenue: totals.arcadeRevenue, txns: arcadeSessions?.length || 0, color: "text-purple-500" },
-                { name: "EcoSnack", icon: Leaf, revenue: totals.ecosnackRevenue, txns: 0, color: "text-amber-500" },
+                { name: "EcoVend", icon: Leaf, revenue: totals.ecosnackRevenue, txns: 0, color: "text-amber-500" },
               ].map((div) => (
                 <div key={div.name} className="flex items-center justify-between p-3 border border-border rounded-lg">
                   <div className="flex items-center gap-3">

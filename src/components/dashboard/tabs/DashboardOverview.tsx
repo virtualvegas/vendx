@@ -353,7 +353,7 @@ const DashboardOverview = () => {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">EcoSnack</p>
+                <p className="text-sm text-muted-foreground">EcoVend</p>
                 <p className="text-xl font-bold">${revenueBySource.ecosnack.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
               </div>
               <Leaf className="w-6 h-6 text-primary opacity-50" />
@@ -406,7 +406,7 @@ const DashboardOverview = () => {
                   />
                   <Area type="monotone" dataKey="vending" stackId="1" fill="hsl(var(--primary))" stroke="hsl(var(--primary))" fillOpacity={0.5} name="Vending" />
                   <Area type="monotone" dataKey="arcade" stackId="1" fill="#8b5cf6" stroke="#8b5cf6" fillOpacity={0.5} name="Arcade" />
-                  <Area type="monotone" dataKey="ecosnack" stackId="1" fill="#10b981" stroke="#10b981" fillOpacity={0.5} name="EcoSnack" />
+                  <Area type="monotone" dataKey="ecosnack" stackId="1" fill="#10b981" stroke="#10b981" fillOpacity={0.5} name="EcoVend" />
                   <Area type="monotone" dataKey="store" stackId="1" fill="#f59e0b" stroke="#f59e0b" fillOpacity={0.5} name="Store" />
                   <Area type="monotone" dataKey="wallet" stackId="1" fill="#06b6d4" stroke="#06b6d4" fillOpacity={0.5} name="Wallet Loads" />
                   <Area type="monotone" dataKey="other" stackId="1" fill="#6b7280" stroke="#6b7280" fillOpacity={0.3} name="Other" />

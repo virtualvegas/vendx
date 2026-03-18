@@ -250,7 +250,7 @@ const EcoSnackLockersManager = () => {
             <Leaf className="h-5 w-5 text-accent" />
           </div>
           <div>
-            <h2 className="text-2xl font-bold text-foreground">EcoSnack Lockers</h2>
+            <h2 className="text-2xl font-bold text-foreground">EcoVend Lockers</h2>
             <p className="text-sm text-muted-foreground">Manage locker codes, purchases & restocking</p>
           </div>
         </div>

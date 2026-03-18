@@ -48,7 +48,7 @@ const EcoSnackPostPaymentFlow = ({
           user_id: user.id,
           points: 5,
           transaction_type: "ecosnack_review",
-          description: `EcoSnack review: ${itemName} (${rating}★) - ${reviewText || "No comment"}`,
+          description: `EcoVend review: ${itemName} (${rating}★) - ${reviewText || "No comment"}`,
           reference_id: purchaseId || null,
         });
       }
@@ -68,7 +68,7 @@ const EcoSnackPostPaymentFlow = ({
       await supabase.from("support_tickets").insert({
         ticket_number: ticketNumber,
         machine_id: machineCode,
-        location: `EcoSnack Machine: ${machineCode}`,
+        location: `EcoVend Machine: ${machineCode}`,
         issue_type: "item_not_received",
         description: `Customer did not receive item "${itemName}" from locker #${lockerNumber}. Purchase ID: ${purchaseId || "N/A"}. ${ticketNotes ? `\nNotes: ${ticketNotes}` : ""}`,
         priority: "high",
@@ -183,7 +183,7 @@ const EcoSnackPostPaymentFlow = ({
               <Star className="h-8 w-8 text-yellow-500" />
             </div>
             <h2 className="text-xl font-bold text-foreground">Quick Review</h2>
-            <p className="text-sm text-muted-foreground">How was your EcoSnack experience?</p>
+            <p className="text-sm text-muted-foreground">How was your EcoVend experience?</p>
             <div className="flex justify-center gap-2">
               {[1, 2, 3, 4, 5].map((star) => (
                 <button
@@ -292,7 +292,7 @@ const StepItem = ({ number, text, detail }: { number: number; text: string; deta
 const EcoSnackBadge = () => (
   <div className="flex items-center justify-center gap-1 text-xs text-accent/60 pt-2">
     <Leaf className="h-3 w-3" />
-    <span>EcoSnack by VendX</span>
+    <span>EcoVend by VendX</span>
   </div>
 );
 
