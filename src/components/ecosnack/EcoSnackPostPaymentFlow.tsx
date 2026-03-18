@@ -48,7 +48,7 @@ const EcoSnackPostPaymentFlow = ({
           user_id: user.id,
           points: 5,
           transaction_type: "ecosnack_review",
-          description: `EcoSnack review: ${itemName} (${rating}★) - ${reviewText || "No comment"}`,
+          description: `EcoVend review: ${itemName} (${rating}★) - ${reviewText || "No comment"}`,
           reference_id: purchaseId || null,
         });
       }
