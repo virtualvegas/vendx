@@ -338,6 +338,8 @@ const DashboardPage = () => {
         content = <PoliciesManager />; break;
       case "artist-payouts":
         content = <ArtistPayoutsManager />; break;
+      case "audit-logs":
+        content = <AuditLogsViewer />; break;
       default:
         content = <CustomerOrders />; break;
     }
