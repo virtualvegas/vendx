@@ -193,6 +193,14 @@ const AdminSettings = () => {
         description: `${roleLabels[role]} role removed successfully`,
       });
 
+      const user = users.find(u => u.id === userId);
+      await logAuditEvent({
+        action: "Removed Role",
+        entity_type: "User Role",
+        entity_id: userId,
+        details: { role, user_email: user?.email },
+      });
+
       await fetchUsers();
     } catch (error: any) {
       toast({
