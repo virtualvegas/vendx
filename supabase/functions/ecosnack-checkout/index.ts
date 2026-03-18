@@ -75,7 +75,7 @@ serve(async (req) => {
         wallet_id: wallet.id,
         amount: -amount,
         transaction_type: "ecosnack_purchase",
-        description: `EcoSnack: ${item_name} (Locker ${locker_number})`,
+        description: `EcoVend: ${item_name} (Locker ${locker_number})`,
         status: "completed",
       });
 
