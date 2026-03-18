@@ -212,7 +212,7 @@ serve(async (req) => {
           price_data: {
             currency: "usd",
             product_data: {
-              name: `EcoSnack - ${item_name}`,
+              name: `EcoVend - ${item_name}`,
               description: `Locker #${locker_number} at machine ${machine_code}`,
             },
             unit_amount: Math.round(amount * 100),
