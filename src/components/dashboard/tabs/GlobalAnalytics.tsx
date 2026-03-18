@@ -308,7 +308,7 @@ const GlobalAnalytics = () => {
                     <Area type="monotone" dataKey="store" stackId="1" fill="#10b981" stroke="#10b981" fillOpacity={0.6} name="Store" />
                     <Area type="monotone" dataKey="vending" stackId="1" fill="hsl(var(--primary))" stroke="hsl(var(--primary))" fillOpacity={0.6} name="Vending" />
                     <Area type="monotone" dataKey="arcade" stackId="1" fill="#8b5cf6" stroke="#8b5cf6" fillOpacity={0.6} name="Arcade" />
-                    <Area type="monotone" dataKey="ecosnack" stackId="1" fill="#f59e0b" stroke="#f59e0b" fillOpacity={0.6} name="EcoSnack" />
+                    <Area type="monotone" dataKey="ecosnack" stackId="1" fill="#f59e0b" stroke="#f59e0b" fillOpacity={0.6} name="EcoVend" />
                     <Area type="monotone" dataKey="other" stackId="1" fill="#06b6d4" stroke="#06b6d4" fillOpacity={0.4} name="Other" />
                     <Legend />
                   </AreaChart>
