@@ -353,7 +353,7 @@ const DashboardOverview = () => {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">EcoSnack</p>
+                <p className="text-sm text-muted-foreground">EcoVend</p>
                 <p className="text-xl font-bold">${revenueBySource.ecosnack.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
               </div>
               <Leaf className="w-6 h-6 text-primary opacity-50" />
