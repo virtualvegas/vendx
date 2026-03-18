@@ -151,6 +151,14 @@ const AdminSettings = () => {
         description: `${roleLabels[selectedRole]} role added successfully`,
       });
 
+      const user = users.find(u => u.id === selectedUser);
+      await logAuditEvent({
+        action: "Assigned Role",
+        entity_type: "User Role",
+        entity_id: selectedUser,
+        details: { role: selectedRole, user_email: user?.email },
+      });
+
       await fetchUsers();
       setSelectedUser("");
       setSelectedRole("");
