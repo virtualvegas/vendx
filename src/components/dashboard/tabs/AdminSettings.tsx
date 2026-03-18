@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { logAuditEvent } from "@/hooks/useAuditLog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -150,6 +151,14 @@ const AdminSettings = () => {
         description: `${roleLabels[selectedRole]} role added successfully`,
       });
 
+      const user = users.find(u => u.id === selectedUser);
+      await logAuditEvent({
+        action: "Assigned Role",
+        entity_type: "User Role",
+        entity_id: selectedUser,
+        details: { role: selectedRole, user_email: user?.email },
+      });
+
       await fetchUsers();
       setSelectedUser("");
       setSelectedRole("");
@@ -182,6 +191,14 @@ const AdminSettings = () => {
       toast({
         title: "Success",
         description: `${roleLabels[role]} role removed successfully`,
+      });
+
+      const user = users.find(u => u.id === userId);
+      await logAuditEvent({
+        action: "Removed Role",
+        entity_type: "User Role",
+        entity_id: userId,
+        details: { role, user_email: user?.email },
       });
 
       await fetchUsers();

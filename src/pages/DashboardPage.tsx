@@ -64,6 +64,7 @@ import ReleaseTracksManager from "@/components/dashboard/tabs/ReleaseTracksManag
 import BusinessAdReach from "@/components/dashboard/tabs/business-owner/BusinessAdReach";
 import ArtistPayoutsManager from "@/components/dashboard/tabs/ArtistPayoutsManager";
 import GiftCardManager from "@/components/dashboard/tabs/GiftCardManager";
+import AuditLogsViewer from "@/components/dashboard/tabs/AuditLogsViewer";
 import { useSEO } from "@/hooks/useSEO";
 export type AppRole =
   | "super_admin"
@@ -337,6 +338,8 @@ const DashboardPage = () => {
         content = <PoliciesManager />; break;
       case "artist-payouts":
         content = <ArtistPayoutsManager />; break;
+      case "audit-logs":
+        content = <AuditLogsViewer />; break;
       default:
         content = <CustomerOrders />; break;
     }

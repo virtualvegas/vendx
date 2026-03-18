@@ -222,6 +222,7 @@ const tabGroups: TabGroup[] = [
       { id: "quests-manager", label: "Quest Builder", icon: Swords, requiredRoles: ["super_admin", "marketing_sales"] },
       { id: "site-policies", label: "Site Policies", icon: FileText, requiredRoles: ["super_admin"] },
       { id: "admin-settings", label: "System Settings", icon: Settings, requiredRoles: ["super_admin"] },
+      { id: "audit-logs", label: "Audit Logs", icon: FileText, requiredRoles: ["super_admin"] },
     ],
   },
 ];
