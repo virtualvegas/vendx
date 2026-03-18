@@ -193,7 +193,7 @@ const EcoSnackCheckoutPage = () => {
             <div className="min-w-0">
               <h1 className="text-lg sm:text-2xl font-bold text-foreground truncate">{machine.name}</h1>
               <p className="text-xs sm:text-sm text-muted-foreground truncate">
-                {(machine.location as any)?.name || (machine.location as any)?.city || "EcoSnack Machine"}
+                {(machine.location as any)?.name || (machine.location as any)?.city || "EcoVend Machine"}
               </p>
             </div>
           </div>
