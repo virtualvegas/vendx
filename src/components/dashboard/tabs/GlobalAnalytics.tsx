@@ -158,7 +158,7 @@ const GlobalAnalytics = () => {
     { name: "Store", value: totals.storeRevenue },
     { name: "Vending", value: totals.vendingRevenue },
     { name: "Arcade", value: totals.arcadeRevenue },
-    { name: "EcoSnack", value: totals.ecosnackRevenue },
+    { name: "EcoVend", value: totals.ecosnackRevenue },
     { name: "PayPal (Other)", value: revenueBySource.paypal },
     { name: "Other", value: revenueBySource.other },
   ].filter(d => d.value > 0), [totals, revenueBySource]);
