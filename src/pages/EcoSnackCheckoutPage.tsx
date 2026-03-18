@@ -152,7 +152,7 @@ const EcoSnackCheckoutPage = () => {
         <div className="container mx-auto px-4 pt-24 pb-16 text-center">
           <TreePine className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
           <h1 className="text-xl font-bold text-foreground mb-2">Machine Not Found</h1>
-          <p className="text-sm text-muted-foreground">This EcoSnack machine doesn't exist or isn't available.</p>
+          <p className="text-sm text-muted-foreground">This EcoVend machine doesn't exist or isn't available.</p>
         </div>
         <Footer />
       </div>
