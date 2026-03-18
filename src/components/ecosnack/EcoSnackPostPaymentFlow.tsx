@@ -183,7 +183,7 @@ const EcoSnackPostPaymentFlow = ({
               <Star className="h-8 w-8 text-yellow-500" />
             </div>
             <h2 className="text-xl font-bold text-foreground">Quick Review</h2>
-            <p className="text-sm text-muted-foreground">How was your EcoSnack experience?</p>
+            <p className="text-sm text-muted-foreground">How was your EcoVend experience?</p>
             <div className="flex justify-center gap-2">
               {[1, 2, 3, 4, 5].map((star) => (
                 <button
