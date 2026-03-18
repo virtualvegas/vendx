@@ -292,7 +292,7 @@ const StepItem = ({ number, text, detail }: { number: number; text: string; deta
 const EcoSnackBadge = () => (
   <div className="flex items-center justify-center gap-1 text-xs text-accent/60 pt-2">
     <Leaf className="h-3 w-3" />
-    <span>EcoSnack by VendX</span>
+    <span>EcoVend by VendX</span>
   </div>
 );
 

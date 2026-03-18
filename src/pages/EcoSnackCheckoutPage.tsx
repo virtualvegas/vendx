@@ -198,7 +198,7 @@ const EcoSnackCheckoutPage = () => {
             </div>
           </div>
           <Badge variant="outline" className="border-accent/50 text-accent text-xs">
-            <Leaf className="h-3 w-3 mr-1" /> EcoSnack
+            <Leaf className="h-3 w-3 mr-1" /> EcoVend
           </Badge>
         </div>
 
