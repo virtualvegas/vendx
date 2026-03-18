@@ -68,7 +68,7 @@ const EcoSnackPostPaymentFlow = ({
       await supabase.from("support_tickets").insert({
         ticket_number: ticketNumber,
         machine_id: machineCode,
-        location: `EcoSnack Machine: ${machineCode}`,
+        location: `EcoVend Machine: ${machineCode}`,
         issue_type: "item_not_received",
         description: `Customer did not receive item "${itemName}" from locker #${lockerNumber}. Purchase ID: ${purchaseId || "N/A"}. ${ticketNotes ? `\nNotes: ${ticketNotes}` : ""}`,
         priority: "high",
