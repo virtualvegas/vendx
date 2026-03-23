@@ -355,6 +355,9 @@ const WalletPage = () => {
             </TabsList>
 
             <TabsContent value="overview" className="space-y-4">
+              {/* Auto-Reload Settings */}
+              {wallet && <AutoReloadSettings walletId={wallet.id} currentBalance={wallet.balance || 0} />}
+
               {/* Ticket Balance Card */}
               <TicketBalanceCard />
               
