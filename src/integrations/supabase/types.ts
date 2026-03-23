@@ -5679,6 +5679,62 @@ export type Database = {
         }
         Relationships: []
       }
+      wallet_auto_reload: {
+        Row: {
+          created_at: string
+          id: string
+          is_enabled: boolean
+          last_reload_at: string | null
+          next_scheduled_reload: string | null
+          preferred_payment_method: string
+          reload_amount: number
+          reload_type: string
+          schedule_interval: string | null
+          threshold_amount: number | null
+          updated_at: string
+          user_id: string
+          wallet_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_enabled?: boolean
+          last_reload_at?: string | null
+          next_scheduled_reload?: string | null
+          preferred_payment_method?: string
+          reload_amount?: number
+          reload_type?: string
+          schedule_interval?: string | null
+          threshold_amount?: number | null
+          updated_at?: string
+          user_id: string
+          wallet_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_enabled?: boolean
+          last_reload_at?: string | null
+          next_scheduled_reload?: string | null
+          preferred_payment_method?: string
+          reload_amount?: number
+          reload_type?: string
+          schedule_interval?: string | null
+          threshold_amount?: number | null
+          updated_at?: string
+          user_id?: string
+          wallet_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wallet_auto_reload_wallet_id_fkey"
+            columns: ["wallet_id"]
+            isOneToOne: false
+            referencedRelation: "wallets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       wallet_transactions: {
         Row: {
           amount: number

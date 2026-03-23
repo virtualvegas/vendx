@@ -18,7 +18,7 @@ import WalletLoadDialog from "@/components/vendx-pay/WalletLoadDialog";
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useWalletHierarchy, ChildWalletForm } from "@/hooks/useWalletHierarchy";
-import { ChildWalletCard, GuestWalletBanner, ParentTransactionHistory, TicketBalanceCard } from "@/components/wallet";
+import { ChildWalletCard, GuestWalletBanner, ParentTransactionHistory, TicketBalanceCard, AutoReloadSettings } from "@/components/wallet";
 import { CreateChildDialog, EditChildDialog, TransferDialog } from "@/components/wallet/WalletDialogs";
 import type { ChildWallet as ChildWalletType } from "@/hooks/useWalletHierarchy";
 
@@ -259,6 +259,9 @@ const CustomerWallet = () => {
           </div>
         </div>
       </Card>
+
+      {/* Auto-Reload Settings */}
+      <AutoReloadSettings walletId={parentWallet.id} currentBalance={Number(parentWallet.balance)} />
 
       {/* Main Content Tabs */}
       <Tabs defaultValue="transactions" className="w-full">
