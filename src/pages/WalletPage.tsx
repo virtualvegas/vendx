@@ -13,7 +13,7 @@ import { Wallet, Plus, History, Gift, QrCode, Star, TrendingUp, ArrowUpRight, Ar
 import WalletLoadDialog from "@/components/vendx-pay/WalletLoadDialog";
 import QRCodeGenerator from "@/components/vendx-pay/QRCodeGenerator";
 import { ArcadePaymentFlow, ArcadeMachineScanner, ChildWalletManager } from "@/components/arcade";
-import { TicketBalanceCard } from "@/components/wallet";
+import { TicketBalanceCard, AutoReloadSettings } from "@/components/wallet";
 import { useSEO } from "@/hooks/useSEO";
 
 interface WalletData {
