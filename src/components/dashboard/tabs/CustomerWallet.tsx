@@ -260,6 +260,9 @@ const CustomerWallet = () => {
         </div>
       </Card>
 
+      {/* Auto-Reload Settings */}
+      <AutoReloadSettings walletId={parentWallet.id} currentBalance={Number(parentWallet.balance)} />
+
       {/* Main Content Tabs */}
       <Tabs defaultValue="transactions" className="w-full">
         <TabsList className="w-full sm:w-auto">
