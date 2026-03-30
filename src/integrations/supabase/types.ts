@@ -1009,6 +1009,85 @@ export type Database = {
           },
         ]
       }
+      ecovend_suggestion_votes: {
+        Row: {
+          created_at: string | null
+          id: string
+          session_id: string
+          suggestion_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          session_id: string
+          suggestion_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          session_id?: string
+          suggestion_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ecovend_suggestion_votes_suggestion_id_fkey"
+            columns: ["suggestion_id"]
+            isOneToOne: false
+            referencedRelation: "ecovend_suggestions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ecovend_suggestions: {
+        Row: {
+          admin_notes: string | null
+          category: string | null
+          created_at: string | null
+          id: string
+          machine_code: string
+          machine_id: string | null
+          status: string | null
+          suggestion_text: string
+          updated_at: string | null
+          upvotes: number | null
+          user_id: string | null
+        }
+        Insert: {
+          admin_notes?: string | null
+          category?: string | null
+          created_at?: string | null
+          id?: string
+          machine_code: string
+          machine_id?: string | null
+          status?: string | null
+          suggestion_text: string
+          updated_at?: string | null
+          upvotes?: number | null
+          user_id?: string | null
+        }
+        Update: {
+          admin_notes?: string | null
+          category?: string | null
+          created_at?: string | null
+          id?: string
+          machine_code?: string
+          machine_id?: string | null
+          status?: string | null
+          suggestion_text?: string
+          updated_at?: string | null
+          upvotes?: number | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ecovend_suggestions_machine_id_fkey"
+            columns: ["machine_id"]
+            isOneToOne: false
+            referencedRelation: "vendx_machines"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       event_machine_assignments: {
         Row: {
           assigned_at: string
