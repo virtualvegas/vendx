@@ -61,6 +61,8 @@ const Finance = () => {
   const [open, setOpen] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
   const [providerFilter, setProviderFilter] = useState<string>("all");
+  const [editingSyncedId, setEditingSyncedId] = useState<string | null>(null);
+  const [syncedEditData, setSyncedEditData] = useState<{ transaction_type: string; category: string }>({ transaction_type: "", category: "" });
   const [formData, setFormData] = useState({
     transaction_type: "revenue",
     category: "",
