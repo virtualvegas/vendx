@@ -85,6 +85,19 @@ async function syncStripeTransactions(supabase: any, startDate?: string): Promis
       for (const charge of charges.data) {
         if (charge.status !== "succeeded") continue;
 
+        // Check if already exists to avoid re-counting
+        const { data: existing } = await supabase
+          .from("synced_transactions")
+          .select("id")
+          .eq("provider", "stripe")
+          .eq("provider_transaction_id", charge.id)
+          .maybeSingle();
+
+        if (existing) {
+          skipped++;
+          continue;
+        }
+
         const customer = charge.customer as Stripe.Customer | null;
         
         const transaction = {
@@ -108,10 +121,10 @@ async function syncStripeTransactions(supabase: any, startDate?: string): Promis
 
         const { error } = await supabase
           .from("synced_transactions")
-          .upsert(transaction, { onConflict: "provider,provider_transaction_id" });
+          .insert(transaction);
 
         if (error) {
-          logStep("Error upserting Stripe transaction", { error, id: charge.id });
+          logStep("Error inserting Stripe transaction", { error, id: charge.id });
         } else {
           synced++;
         }
