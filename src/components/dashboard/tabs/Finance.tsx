@@ -214,7 +214,30 @@ const Finance = () => {
     },
   });
 
-  const resetForm = () => {
+  const updateSyncedMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: { transaction_type?: string; category?: string } }) => {
+      const { error } = await supabase.from("synced_transactions").update(data).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["synced-transactions"] });
+      toast({ title: "Updated", description: "Transaction updated" });
+      setEditingSyncedId(null);
+    },
+    onError: (error: any) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const startEditSynced = (txn: SyncedTransaction) => {
+    setEditingSyncedId(txn.id);
+    setSyncedEditData({ transaction_type: txn.transaction_type, category: txn.category || "uncategorized" });
+  };
+
+  const saveSyncedEdit = () => {
+    if (!editingSyncedId) return;
+    updateSyncedMutation.mutate({ id: editingSyncedId, data: syncedEditData });
+  };
     setFormData({
       transaction_type: "revenue",
       category: "",
