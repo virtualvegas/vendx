@@ -1292,7 +1292,10 @@ export type Database = {
         Row: {
           category: string
           created_at: string
+          default_retail_price: number | null
           id: string
+          image_url: string | null
+          is_active: boolean | null
           last_restocked: string | null
           location: string
           min_stock_level: number
@@ -1306,7 +1309,10 @@ export type Database = {
         Insert: {
           category: string
           created_at?: string
+          default_retail_price?: number | null
           id?: string
+          image_url?: string | null
+          is_active?: boolean | null
           last_restocked?: string | null
           location: string
           min_stock_level?: number
@@ -1320,7 +1326,10 @@ export type Database = {
         Update: {
           category?: string
           created_at?: string
+          default_retail_price?: number | null
           id?: string
+          image_url?: string | null
+          is_active?: boolean | null
           last_restocked?: string | null
           location?: string
           min_stock_level?: number
