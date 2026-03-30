@@ -236,6 +236,7 @@ async function syncPayPalTransactions(supabase: any, startDate?: string): Promis
     .eq("provider", "paypal");
 
   let synced = 0;
+  let skipped = 0;
 
   try {
     const accessToken = await getPayPalAccessToken();
