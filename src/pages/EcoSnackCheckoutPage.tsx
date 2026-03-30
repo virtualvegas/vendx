@@ -9,6 +9,8 @@ import { toast } from "sonner";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import EcoSnackPostPaymentFlow from "@/components/ecosnack/EcoSnackPostPaymentFlow";
+import EcoVendSuggestions from "@/components/ecosnack/EcoVendSuggestions";
+import EcoVendRecommendations from "@/components/ecosnack/EcoVendRecommendations";
 
 interface LockerItem {
   locker_number: string;
