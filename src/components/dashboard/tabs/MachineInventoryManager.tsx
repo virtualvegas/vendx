@@ -15,7 +15,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import {
   Plus, Package, AlertTriangle, Trash2, Edit, Search,
-  RefreshCw, Monitor, ChevronDown, ChevronRight, Copy,
+  RefreshCw, Monitor, ChevronDown, ChevronRight, Warehouse,
 } from "lucide-react";
 
 const CATEGORIES = [
@@ -46,6 +46,17 @@ interface Machine {
   location?: { name: string | null; city: string } | null;
 }
 
+interface WarehouseProduct {
+  id: string;
+  product_name: string;
+  sku: string;
+  category: string;
+  unit_cost: number;
+  default_retail_price: number;
+  quantity: number;
+  is_active: boolean;
+}
+
 const MachineInventoryManager = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -57,8 +68,9 @@ const MachineInventoryManager = () => {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [editingItem, setEditingItem] = useState<MachineInventoryItem | null>(null);
   const [deletingItem, setDeletingItem] = useState<MachineInventoryItem | null>(null);
+  const [selectedWarehouseProduct, setSelectedWarehouseProduct] = useState<string>("custom");
 
-  // Assign product to multiple machines state
+  // Assign form
   const [assignForm, setAssignForm] = useState({
     product_name: "",
     sku: "",
@@ -97,6 +109,18 @@ const MachineInventoryManager = () => {
     },
   });
 
+  const { data: warehouseProducts = [] } = useQuery({
+    queryKey: ["warehouse-products-for-assign"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("inventory_items")
+        .select("id, product_name, sku, category, unit_cost, default_retail_price, quantity, is_active")
+        .order("product_name");
+      if (error) throw error;
+      return (data || []).filter((p: any) => p.is_active !== false) as WarehouseProduct[];
+    },
+  });
+
   const { data: inventoryItems = [], isLoading } = useQuery({
     queryKey: ["machine-inventory-all"],
     queryFn: async () => {
@@ -109,7 +133,7 @@ const MachineInventoryManager = () => {
     },
   });
 
-  // Group inventory by machine
+  // Group by machine
   const machineGroups = useMemo(() => {
     const filtered = inventoryItems.filter((item) => {
       const matchesSearch =
@@ -119,7 +143,6 @@ const MachineInventoryManager = () => {
       const matchesMachine = filterMachine === "all" || item.machine_id === filterMachine;
       return matchesSearch && matchesMachine;
     });
-
     const groups = new Map<string, MachineInventoryItem[]>();
     filtered.forEach((item) => {
       const list = groups.get(item.machine_id) || [];
@@ -129,7 +152,6 @@ const MachineInventoryManager = () => {
     return groups;
   }, [inventoryItems, searchTerm, filterMachine]);
 
-  // Stats
   const stats = useMemo(() => ({
     totalSlots: inventoryItems.length,
     uniqueMachines: new Set(inventoryItems.map((i) => i.machine_id)).size,
@@ -159,7 +181,7 @@ const MachineInventoryManager = () => {
       toast({ title: `Product assigned to ${vars.machineIds.length} machine(s)` });
       setShowAssignDialog(false);
       setSelectedMachineIds([]);
-      setAssignForm({ product_name: "", sku: "", category: "Snacks", unit_price: 0, cost_of_goods: 0, max_capacity: 10, quantity: 0, slot_number: "" });
+      resetAssignForm();
     },
     onError: (e: any) => toast({ title: "Error", description: e.message, variant: "destructive" }),
   });
@@ -191,6 +213,32 @@ const MachineInventoryManager = () => {
     },
     onError: (e: any) => toast({ title: "Error", description: e.message, variant: "destructive" }),
   });
+
+  const resetAssignForm = () => {
+    setAssignForm({ product_name: "", sku: "", category: "Snacks", unit_price: 0, cost_of_goods: 0, max_capacity: 10, quantity: 0, slot_number: "" });
+    setSelectedWarehouseProduct("custom");
+  };
+
+  const handleSelectWarehouseProduct = (productId: string) => {
+    setSelectedWarehouseProduct(productId);
+    if (productId === "custom") {
+      resetAssignForm();
+      return;
+    }
+    const wp = warehouseProducts.find(p => p.id === productId);
+    if (wp) {
+      setAssignForm({
+        product_name: wp.product_name,
+        sku: wp.sku,
+        category: wp.category,
+        unit_price: wp.default_retail_price || 0,
+        cost_of_goods: wp.unit_cost || 0,
+        max_capacity: 10,
+        quantity: 0,
+        slot_number: "",
+      });
+    }
+  };
 
   const toggleMachine = (id: string) => {
     setCollapsedMachines((prev) => {
@@ -236,16 +284,16 @@ const MachineInventoryManager = () => {
             <Package className="w-5 h-5 sm:w-6 sm:h-6 text-primary flex-shrink-0" />
             <span className="truncate">Machine Inventory</span>
           </h2>
-          <p className="text-sm text-muted-foreground">Manage product slots across all machines</p>
+          <p className="text-sm text-muted-foreground">Assign warehouse products to machine slots with custom pricing</p>
         </div>
         <div className="flex gap-2 flex-shrink-0">
           <Button variant="outline" size="sm" onClick={() => queryClient.invalidateQueries({ queryKey: ["machine-inventory-all"] })}>
             <RefreshCw className="w-4 h-4 sm:mr-2" />
             <span className="hidden sm:inline">Refresh</span>
           </Button>
-          <Button size="sm" onClick={() => setShowAssignDialog(true)}>
-            <Copy className="w-4 h-4 sm:mr-2" />
-            <span className="hidden sm:inline">Assign Product</span>
+          <Button size="sm" onClick={() => { resetAssignForm(); setShowAssignDialog(true); }}>
+            <Warehouse className="w-4 h-4 sm:mr-2" />
+            <span className="hidden sm:inline">Assign from Catalog</span>
             <span className="sm:hidden">Assign</span>
           </Button>
         </div>
@@ -253,10 +301,10 @@ const MachineInventoryManager = () => {
 
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card><CardContent className="p-6"><p className="text-sm text-muted-foreground">Total Slots</p><p className="text-2xl font-bold">{stats.totalSlots}</p></CardContent></Card>
-        <Card><CardContent className="p-6"><p className="text-sm text-muted-foreground">Machines</p><p className="text-2xl font-bold">{stats.uniqueMachines}</p></CardContent></Card>
-        <Card className={stats.lowStock > 0 ? "border-yellow-500/50" : ""}><CardContent className="p-6"><p className="text-sm text-muted-foreground">Low Stock</p><p className={`text-2xl font-bold ${stats.lowStock > 0 ? "text-yellow-500" : ""}`}>{stats.lowStock}</p></CardContent></Card>
-        <Card className={stats.emptySlots > 0 ? "border-destructive/50" : ""}><CardContent className="p-6"><p className="text-sm text-muted-foreground">Empty Slots</p><p className={`text-2xl font-bold ${stats.emptySlots > 0 ? "text-destructive" : ""}`}>{stats.emptySlots}</p></CardContent></Card>
+        <Card><CardContent className="p-4"><p className="text-xs text-muted-foreground">Total Slots</p><p className="text-xl font-bold">{stats.totalSlots}</p></CardContent></Card>
+        <Card><CardContent className="p-4"><p className="text-xs text-muted-foreground">Machines</p><p className="text-xl font-bold">{stats.uniqueMachines}</p></CardContent></Card>
+        <Card className={stats.lowStock > 0 ? "border-yellow-500/50" : ""}><CardContent className="p-4"><p className="text-xs text-muted-foreground">Low Stock</p><p className={`text-xl font-bold ${stats.lowStock > 0 ? "text-yellow-500" : ""}`}>{stats.lowStock}</p></CardContent></Card>
+        <Card className={stats.emptySlots > 0 ? "border-destructive/50" : ""}><CardContent className="p-4"><p className="text-xs text-muted-foreground">Empty Slots</p><p className={`text-xl font-bold ${stats.emptySlots > 0 ? "text-destructive" : ""}`}>{stats.emptySlots}</p></CardContent></Card>
       </div>
 
       {/* Filters */}
@@ -286,7 +334,7 @@ const MachineInventoryManager = () => {
         <Card><CardContent className="p-12 text-center text-muted-foreground">
           <Package className="w-12 h-12 mx-auto mb-4 opacity-50" />
           <p className="text-lg font-medium">No inventory found</p>
-          <p className="text-sm mt-1">Use "Assign Product" to add products to machines.</p>
+          <p className="text-sm mt-1">Use "Assign from Catalog" to add warehouse products to machines.</p>
         </CardContent></Card>
       ) : (
         Array.from(machineGroups.entries()).map(([machineId, items]) => {
@@ -306,7 +354,7 @@ const MachineInventoryManager = () => {
                     {isCollapsed ? <ChevronRight className="w-5 h-5 flex-shrink-0" /> : <ChevronDown className="w-5 h-5 flex-shrink-0" />}
                     <Monitor className="w-5 h-5 text-primary flex-shrink-0" />
                     <div className="min-w-0">
-                      <CardTitle className="text-base sm:text-lg truncate">{machine?.name || "Unknown Machine"}</CardTitle>
+                      <CardTitle className="text-base sm:text-lg truncate">{machine?.name || "Unknown"}</CardTitle>
                       <p className="text-xs sm:text-sm text-muted-foreground truncate">
                         {machine?.machine_code} • {machine?.location?.name || machine?.location?.city || "No location"} • {items.length} slot{items.length !== 1 ? "s" : ""}
                       </p>
@@ -328,7 +376,7 @@ const MachineInventoryManager = () => {
                         <TableHead className="hidden md:table-cell">Category</TableHead>
                         <TableHead>Qty</TableHead>
                         <TableHead className="hidden sm:table-cell">COGS</TableHead>
-                        <TableHead className="hidden sm:table-cell">Retail</TableHead>
+                        <TableHead className="hidden sm:table-cell">Machine Price</TableHead>
                         <TableHead className="hidden lg:table-cell">Margin</TableHead>
                         <TableHead className="text-right">Actions</TableHead>
                       </TableRow>
@@ -337,6 +385,9 @@ const MachineInventoryManager = () => {
                       {items.map((item) => {
                         const margin = item.unit_price - (item.cost_of_goods || 0);
                         const marginPct = item.unit_price > 0 ? (margin / item.unit_price) * 100 : 0;
+                        // Check if price differs from warehouse default
+                        const wp = warehouseProducts.find(p => p.sku === item.sku);
+                        const priceOverridden = wp && wp.default_retail_price > 0 && wp.default_retail_price !== item.unit_price;
                         return (
                           <TableRow key={item.id} className={item.quantity === 0 ? "bg-destructive/5" : item.quantity <= 2 ? "bg-yellow-500/5" : ""}>
                             <TableCell className="font-mono">{item.slot_number || "—"}</TableCell>
@@ -352,7 +403,12 @@ const MachineInventoryManager = () => {
                               <span className="text-muted-foreground">/{item.max_capacity}</span>
                             </TableCell>
                             <TableCell className="hidden sm:table-cell text-muted-foreground">${(item.cost_of_goods || 0).toFixed(2)}</TableCell>
-                            <TableCell className="hidden sm:table-cell font-medium">${item.unit_price.toFixed(2)}</TableCell>
+                            <TableCell className="hidden sm:table-cell">
+                              <span className="font-medium">${item.unit_price.toFixed(2)}</span>
+                              {priceOverridden && (
+                                <Badge variant="outline" className="ml-1 text-[10px] px-1 py-0 border-primary/50 text-primary">Custom</Badge>
+                              )}
+                            </TableCell>
                             <TableCell className="hidden lg:table-cell">
                               <span className={marginPct >= 30 ? "text-green-600" : marginPct >= 15 ? "text-yellow-500" : "text-destructive"}>
                                 {marginPct.toFixed(0)}%
@@ -376,22 +432,43 @@ const MachineInventoryManager = () => {
         })
       )}
 
-      {/* Assign Product to Multiple Machines Dialog */}
+      {/* Assign Product Dialog */}
       <Dialog open={showAssignDialog} onOpenChange={setShowAssignDialog}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Assign Product to Machines</DialogTitle>
-            <DialogDescription>Fill in product details, then select which machines to assign it to.</DialogDescription>
+            <DialogDescription>Select a product from the warehouse catalog or enter custom details.</DialogDescription>
           </DialogHeader>
           <form onSubmit={(e) => { e.preventDefault(); assignMutation.mutate({ form: assignForm, machineIds: selectedMachineIds }); }} className="space-y-5">
+            
+            {/* Warehouse Product Picker */}
+            <div className="space-y-2">
+              <Label className="text-base font-semibold flex items-center gap-2">
+                <Warehouse className="w-4 h-4" /> Select from Catalog
+              </Label>
+              <SearchableSelect
+                options={[
+                  { value: "custom", label: "— Custom Product (not in catalog) —" },
+                  ...warehouseProducts.map(p => ({
+                    value: p.id,
+                    label: `${p.product_name} (${p.sku}) — COGS: $${p.unit_cost.toFixed(2)} / Retail: $${(p.default_retail_price || 0).toFixed(2)}${p.quantity > 0 ? ` • ${p.quantity} in stock` : " • Out of stock"}`,
+                  })),
+                ]}
+                value={selectedWarehouseProduct}
+                onValueChange={handleSelectWarehouseProduct}
+                placeholder="Choose a product..."
+                searchPlaceholder="Search warehouse products..."
+              />
+            </div>
+
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Product Name *</Label>
-                <Input value={assignForm.product_name} onChange={(e) => setAssignForm({ ...assignForm, product_name: e.target.value })} placeholder="Coca-Cola 12oz" required />
+                <Input value={assignForm.product_name} onChange={(e) => setAssignForm({ ...assignForm, product_name: e.target.value })} required />
               </div>
               <div className="space-y-2">
                 <Label>SKU *</Label>
-                <Input value={assignForm.sku} onChange={(e) => setAssignForm({ ...assignForm, sku: e.target.value })} placeholder="COK-12OZ" required />
+                <Input value={assignForm.sku} onChange={(e) => setAssignForm({ ...assignForm, sku: e.target.value })} required />
               </div>
               <div className="space-y-2">
                 <Label>Category</Label>
@@ -405,29 +482,40 @@ const MachineInventoryManager = () => {
                 <Input value={assignForm.slot_number} onChange={(e) => setAssignForm({ ...assignForm, slot_number: e.target.value })} placeholder="A1 (optional)" />
               </div>
               <div className="space-y-2">
-                <Label>Quantity</Label>
+                <Label>Quantity to Load</Label>
                 <Input type="number" value={assignForm.quantity} onChange={(e) => setAssignForm({ ...assignForm, quantity: parseInt(e.target.value) || 0 })} />
               </div>
               <div className="space-y-2">
-                <Label>Max Capacity</Label>
+                <Label>Max Slot Capacity</Label>
                 <Input type="number" value={assignForm.max_capacity} onChange={(e) => setAssignForm({ ...assignForm, max_capacity: parseInt(e.target.value) || 10 })} />
               </div>
               <div className="space-y-2">
-                <Label>Cost of Goods ($)</Label>
+                <Label>COGS ($)</Label>
                 <Input type="number" step="0.01" value={assignForm.cost_of_goods} onChange={(e) => setAssignForm({ ...assignForm, cost_of_goods: parseFloat(e.target.value) || 0 })} />
+                <p className="text-xs text-muted-foreground">From warehouse catalog</p>
               </div>
               <div className="space-y-2">
-                <Label>Retail Price ($)</Label>
+                <Label>Machine Retail Price ($) *</Label>
                 <Input type="number" step="0.01" value={assignForm.unit_price} onChange={(e) => setAssignForm({ ...assignForm, unit_price: parseFloat(e.target.value) || 0 })} />
+                <p className="text-xs text-muted-foreground">Override the catalog default if needed</p>
               </div>
             </div>
+
+            {assignForm.cost_of_goods > 0 && assignForm.unit_price > 0 && (
+              <div className="bg-muted/50 rounded-lg p-3 text-sm">
+                <span className="text-muted-foreground">Machine Margin: </span>
+                <span className="font-medium text-primary">
+                  ${(assignForm.unit_price - assignForm.cost_of_goods).toFixed(2)} ({(((assignForm.unit_price - assignForm.cost_of_goods) / assignForm.unit_price) * 100).toFixed(1)}%)
+                </span>
+              </div>
+            )}
 
             {/* Machine Selection */}
             <div className="space-y-2">
               <Label className="text-base font-semibold">Select Machines *</Label>
               <p className="text-sm text-muted-foreground">Choose one or more machines to assign this product to.</p>
-              <ScrollArea className="h-[200px] rounded-md border p-3">
-                <div className="space-y-2">
+              <ScrollArea className="h-[180px] rounded-md border p-3">
+                <div className="space-y-1">
                   {machines.map((m) => (
                     <label key={m.id} className="flex items-center gap-3 p-2 rounded-md hover:bg-muted/50 cursor-pointer">
                       <Checkbox
@@ -435,8 +523,8 @@ const MachineInventoryManager = () => {
                         onCheckedChange={() => toggleSelectMachine(m.id)}
                       />
                       <Monitor className="w-4 h-4 text-muted-foreground" />
-                      <div className="flex-1">
-                        <span className="font-medium">{m.name}</span>
+                      <div className="flex-1 min-w-0">
+                        <span className="font-medium text-sm">{m.name}</span>
                         <span className="text-xs text-muted-foreground ml-2">{m.machine_code}</span>
                       </div>
                       <span className="text-xs text-muted-foreground">{m.location?.name || m.location?.city || "—"}</span>
@@ -451,7 +539,7 @@ const MachineInventoryManager = () => {
 
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setShowAssignDialog(false)}>Cancel</Button>
-              <Button type="submit" disabled={selectedMachineIds.length === 0 || assignMutation.isPending}>
+              <Button type="submit" disabled={selectedMachineIds.length === 0 || !assignForm.product_name || assignMutation.isPending}>
                 Assign to {selectedMachineIds.length} Machine{selectedMachineIds.length !== 1 ? "s" : ""}
               </Button>
             </DialogFooter>
@@ -461,9 +549,10 @@ const MachineInventoryManager = () => {
 
       {/* Edit Item Dialog */}
       <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
-        <DialogContent>
+        <DialogContent className="max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Edit Inventory Slot</DialogTitle>
+            <DialogTitle>Edit Machine Slot</DialogTitle>
+            <DialogDescription>Adjust pricing, quantity, and slot config for this machine.</DialogDescription>
           </DialogHeader>
           <form onSubmit={(e) => { e.preventDefault(); if (editingItem) updateMutation.mutate({ id: editingItem.id, data: editForm }); }} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
@@ -499,10 +588,18 @@ const MachineInventoryManager = () => {
                 <Input type="number" step="0.01" value={editForm.cost_of_goods} onChange={(e) => setEditForm({ ...editForm, cost_of_goods: parseFloat(e.target.value) || 0 })} />
               </div>
               <div className="space-y-2">
-                <Label>Retail ($)</Label>
+                <Label>Machine Retail Price ($)</Label>
                 <Input type="number" step="0.01" value={editForm.unit_price} onChange={(e) => setEditForm({ ...editForm, unit_price: parseFloat(e.target.value) || 0 })} />
               </div>
             </div>
+            {editForm.cost_of_goods > 0 && editForm.unit_price > 0 && (
+              <div className="bg-muted/50 rounded-lg p-3 text-sm">
+                <span className="text-muted-foreground">Margin: </span>
+                <span className="font-medium text-primary">
+                  ${(editForm.unit_price - editForm.cost_of_goods).toFixed(2)} ({(((editForm.unit_price - editForm.cost_of_goods) / editForm.unit_price) * 100).toFixed(1)}%)
+                </span>
+              </div>
+            )}
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setShowEditDialog(false)}>Cancel</Button>
               <Button type="submit" disabled={updateMutation.isPending}>Update</Button>
