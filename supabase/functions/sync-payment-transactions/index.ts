@@ -61,6 +61,7 @@ async function syncStripeTransactions(supabase: any, startDate?: string): Promis
     .eq("provider", "stripe");
 
   let synced = 0;
+  let skipped = 0;
   let hasMore = true;
   let startingAfter: string | undefined;
 
@@ -83,6 +84,19 @@ async function syncStripeTransactions(supabase: any, startDate?: string): Promis
 
       for (const charge of charges.data) {
         if (charge.status !== "succeeded") continue;
+
+        // Check if already exists to avoid re-counting
+        const { data: existing } = await supabase
+          .from("synced_transactions")
+          .select("id")
+          .eq("provider", "stripe")
+          .eq("provider_transaction_id", charge.id)
+          .maybeSingle();
+
+        if (existing) {
+          skipped++;
+          continue;
+        }
 
         const customer = charge.customer as Stripe.Customer | null;
         
@@ -107,10 +121,10 @@ async function syncStripeTransactions(supabase: any, startDate?: string): Promis
 
         const { error } = await supabase
           .from("synced_transactions")
-          .upsert(transaction, { onConflict: "provider,provider_transaction_id" });
+          .insert(transaction);
 
         if (error) {
-          logStep("Error upserting Stripe transaction", { error, id: charge.id });
+          logStep("Error inserting Stripe transaction", { error, id: charge.id });
         } else {
           synced++;
         }
@@ -138,6 +152,19 @@ async function syncStripeTransactions(supabase: any, startDate?: string): Promis
       logStep(`Fetched ${refunds.data.length} Stripe refunds`);
 
       for (const refund of refunds.data) {
+        // Check if already exists
+        const { data: existing } = await supabase
+          .from("synced_transactions")
+          .select("id")
+          .eq("provider", "stripe")
+          .eq("provider_transaction_id", `refund_${refund.id}`)
+          .maybeSingle();
+
+        if (existing) {
+          skipped++;
+          continue;
+        }
+
         const charge = refund.charge as Stripe.Charge | null;
 
         const transaction = {
@@ -160,10 +187,10 @@ async function syncStripeTransactions(supabase: any, startDate?: string): Promis
 
         const { error } = await supabase
           .from("synced_transactions")
-          .upsert(transaction, { onConflict: "provider,provider_transaction_id" });
+          .insert(transaction);
 
         if (error) {
-          logStep("Error upserting Stripe refund", { error, id: refund.id });
+          logStep("Error inserting Stripe refund", { error, id: refund.id });
         } else {
           synced++;
         }
@@ -209,6 +236,7 @@ async function syncPayPalTransactions(supabase: any, startDate?: string): Promis
     .eq("provider", "paypal");
 
   let synced = 0;
+  let skipped = 0;
 
   try {
     const accessToken = await getPayPalAccessToken();
@@ -256,6 +284,19 @@ async function syncPayPalTransactions(supabase: any, startDate?: string): Promis
         // Only process completed transactions
         if (info.transaction_status !== "S") continue;
 
+        // Check if already exists
+        const { data: existing } = await supabase
+          .from("synced_transactions")
+          .select("id")
+          .eq("provider", "paypal")
+          .eq("provider_transaction_id", info.transaction_id)
+          .maybeSingle();
+
+        if (existing) {
+          skipped++;
+          continue;
+        }
+
         const amount = parseFloat(info.transaction_amount?.value || "0");
         const isRefund = info.transaction_event_code?.startsWith("T11") || amount < 0;
 
@@ -263,7 +304,7 @@ async function syncPayPalTransactions(supabase: any, startDate?: string): Promis
           provider: "paypal",
           provider_transaction_id: info.transaction_id,
           transaction_type: isRefund ? "expense" : "revenue",
-          amount: Math.abs(amount),
+          amount: isRefund ? -Math.abs(amount) : Math.abs(amount),
           currency: info.transaction_amount?.currency_code || "USD",
           status: "completed",
           description: info.transaction_subject || info.transaction_note || `PayPal transaction ${info.transaction_id}`,
@@ -278,17 +319,12 @@ async function syncPayPalTransactions(supabase: any, startDate?: string): Promis
           synced_at: new Date().toISOString(),
         };
 
-        // Handle negative amounts for refunds
-        if (isRefund) {
-          transaction.amount = -Math.abs(amount);
-        }
-
         const { error } = await supabase
           .from("synced_transactions")
-          .upsert(transaction, { onConflict: "provider,provider_transaction_id" });
+          .insert(transaction);
 
         if (error) {
-          logStep("Error upserting PayPal transaction", { error, id: info.transaction_id });
+          logStep("Error inserting PayPal transaction", { error, id: info.transaction_id });
         } else {
           synced++;
         }

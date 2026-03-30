@@ -5219,6 +5219,7 @@ export type Database = {
       synced_transactions: {
         Row: {
           amount: number
+          category: string | null
           created_at: string
           currency: string
           customer_email: string | null
@@ -5235,6 +5236,7 @@ export type Database = {
         }
         Insert: {
           amount: number
+          category?: string | null
           created_at?: string
           currency?: string
           customer_email?: string | null
@@ -5251,6 +5253,7 @@ export type Database = {
         }
         Update: {
           amount?: number
+          category?: string | null
           created_at?: string
           currency?: string
           customer_email?: string | null

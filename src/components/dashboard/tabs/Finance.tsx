@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, DollarSign, Trash2, Edit, RefreshCw, CreditCard, Loader2, Download, TrendingUp } from "lucide-react";
+import { Plus, DollarSign, Trash2, Edit, RefreshCw, CreditCard, Loader2, Download, TrendingUp, Pencil, Check, X } from "lucide-react";
 import { format, subDays } from "date-fns";
 import { formatDisplayDate } from "@/lib/dateUtils";
 import {
@@ -34,6 +34,7 @@ interface SyncedTransaction {
   provider: string;
   provider_transaction_id: string;
   transaction_type: string;
+  category: string;
   amount: number;
   currency: string;
   status: string;
@@ -60,6 +61,8 @@ const Finance = () => {
   const [open, setOpen] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
   const [providerFilter, setProviderFilter] = useState<string>("all");
+  const [editingSyncedId, setEditingSyncedId] = useState<string | null>(null);
+  const [syncedEditData, setSyncedEditData] = useState<{ transaction_type: string; category: string }>({ transaction_type: "", category: "" });
   const [formData, setFormData] = useState({
     transaction_type: "revenue",
     category: "",
@@ -210,6 +213,31 @@ const Finance = () => {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     },
   });
+
+  const updateSyncedMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: { transaction_type?: string; category?: string } }) => {
+      const { error } = await supabase.from("synced_transactions").update(data).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["synced-transactions"] });
+      toast({ title: "Updated", description: "Transaction updated" });
+      setEditingSyncedId(null);
+    },
+    onError: (error: any) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const startEditSynced = (txn: SyncedTransaction) => {
+    setEditingSyncedId(txn.id);
+    setSyncedEditData({ transaction_type: txn.transaction_type, category: txn.category || "uncategorized" });
+  };
+
+  const saveSyncedEdit = () => {
+    if (!editingSyncedId) return;
+    updateSyncedMutation.mutate({ id: editingSyncedId, data: syncedEditData });
+  };
 
   const resetForm = () => {
     setFormData({
@@ -846,8 +874,8 @@ const Finance = () => {
               ) : (
                 <div className="space-y-3">
                   {syncedTransactions?.map((txn) => (
-                    <div key={txn.id} className="flex items-center justify-between border-b border-border pb-3">
-                      <div className="flex-1">
+                    <div key={txn.id} className="flex items-center justify-between border-b border-border pb-3 gap-3">
+                      <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
                           <Badge variant={txn.provider === "stripe" ? "default" : txn.provider === "vendx_pay" ? "outline" : "secondary"}>
                             {txn.provider === "vendx_pay" ? "VendX Pay" : txn.provider}
@@ -857,16 +885,55 @@ const Finance = () => {
                               {(txn.metadata as any).source}
                             </Badge>
                           )}
-                          <span className={`text-xs px-2 py-1 rounded-full ${
-                            txn.transaction_type === "revenue" ? "bg-green-500/10 text-green-500" : 
-                            txn.transaction_type === "wallet_load" ? "bg-blue-500/10 text-blue-500" :
-                            "bg-red-500/10 text-red-500"
-                          }`}>
-                            {txn.transaction_type === "wallet_load" ? "wallet load" : txn.transaction_type}
-                          </span>
-                          <Badge variant="outline" className="text-xs">
-                            {txn.status}
-                          </Badge>
+
+                          {/* Inline edit mode */}
+                          {editingSyncedId === txn.id ? (
+                            <>
+                              <Select value={syncedEditData.transaction_type} onValueChange={(v) => setSyncedEditData(prev => ({ ...prev, transaction_type: v }))}>
+                                <SelectTrigger className="h-7 w-28 text-xs">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="revenue">Revenue</SelectItem>
+                                  <SelectItem value="expense">Expense</SelectItem>
+                                  <SelectItem value="wallet_load">Wallet Load</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              <Input
+                                value={syncedEditData.category}
+                                onChange={(e) => setSyncedEditData(prev => ({ ...prev, category: e.target.value }))}
+                                className="h-7 w-32 text-xs"
+                                placeholder="Category"
+                              />
+                              <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-accent" onClick={saveSyncedEdit}>
+                                <Check className="h-3.5 w-3.5" />
+                              </Button>
+                              <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => setEditingSyncedId(null)}>
+                                <X className="h-3.5 w-3.5" />
+                              </Button>
+                            </>
+                          ) : (
+                            <>
+                              <span className={`text-xs px-2 py-1 rounded-full ${
+                                txn.transaction_type === "revenue" ? "bg-green-500/10 text-green-500" : 
+                                txn.transaction_type === "wallet_load" ? "bg-blue-500/10 text-blue-500" :
+                                "bg-red-500/10 text-red-500"
+                              }`}>
+                                {txn.transaction_type === "wallet_load" ? "wallet load" : txn.transaction_type}
+                              </span>
+                              {txn.category && txn.category !== "uncategorized" && (
+                                <Badge variant="outline" className="text-xs">
+                                  {txn.category}
+                                </Badge>
+                              )}
+                              <Badge variant="outline" className="text-xs">
+                                {txn.status}
+                              </Badge>
+                              <Button size="sm" variant="ghost" className="h-6 w-6 p-0 ml-1 text-muted-foreground hover:text-foreground" onClick={() => startEditSynced(txn)}>
+                                <Pencil className="h-3 w-3" />
+                              </Button>
+                            </>
+                          )}
                         </div>
                         <p className="text-sm text-foreground mt-1 line-clamp-1">
                           {txn.description}
@@ -881,7 +948,7 @@ const Finance = () => {
                           )}
                         </div>
                       </div>
-                      <div className="text-right">
+                      <div className="text-right shrink-0">
                         <p className={`text-lg font-bold ${
                           txn.amount >= 0 ? "text-green-500" : "text-red-500"
                         }`}>
