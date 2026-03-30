@@ -9,6 +9,8 @@ import { toast } from "sonner";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import EcoSnackPostPaymentFlow from "@/components/ecosnack/EcoSnackPostPaymentFlow";
+import EcoVendSuggestions from "@/components/ecosnack/EcoVendSuggestions";
+import EcoVendRecommendations from "@/components/ecosnack/EcoVendRecommendations";
 
 interface LockerItem {
   locker_number: string;
@@ -249,9 +251,9 @@ const EcoSnackCheckoutPage = () => {
           </div>
 
           {/* Desktop checkout panel - hidden on mobile */}
-          <div className="hidden lg:block">
-            <div className="border border-border bg-card rounded-xl sticky top-24 p-5">
-              <h3 className="text-lg font-semibold text-foreground mb-4">Checkout</h3>
+          <div className="hidden lg:block space-y-4">
+            <div className="border border-border bg-card rounded-xl sticky top-24 p-5 space-y-5">
+              <h3 className="text-lg font-semibold text-foreground">Checkout</h3>
               <CheckoutContent
                 selectedLocker={selectedLocker}
                 paymentMethod={paymentMethod}
@@ -260,6 +262,20 @@ const EcoSnackCheckoutPage = () => {
                 isProcessing={isProcessing}
                 handlePurchase={handlePurchase}
               />
+
+              {/* Recommendations */}
+              <EcoVendRecommendations
+                allItems={lockerItems}
+                selectedLocker={selectedLocker}
+                onSelect={setSelectedLocker}
+              />
+
+              {/* Suggestion form */}
+              {machine?.id && (
+                <div className="border-t border-border pt-4">
+                  <EcoVendSuggestions machineId={machine.id} machineCode={machineCode || ""} />
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -319,6 +335,20 @@ const EcoSnackCheckoutPage = () => {
                 isProcessing={isProcessing}
                 handlePurchase={handlePurchase}
               />
+
+              {/* Mobile recommendations */}
+              <EcoVendRecommendations
+                allItems={lockerItems}
+                selectedLocker={selectedLocker}
+                onSelect={setSelectedLocker}
+              />
+
+              {/* Mobile suggestion form */}
+              {machine?.id && (
+                <div className="border-t border-border pt-4">
+                  <EcoVendSuggestions machineId={machine.id} machineCode={machineCode || ""} />
+                </div>
+              )}
             </div>
           </>
         )}

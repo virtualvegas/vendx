@@ -65,6 +65,7 @@ import BusinessAdReach from "@/components/dashboard/tabs/business-owner/Business
 import ArtistPayoutsManager from "@/components/dashboard/tabs/ArtistPayoutsManager";
 import GiftCardManager from "@/components/dashboard/tabs/GiftCardManager";
 import AuditLogsViewer from "@/components/dashboard/tabs/AuditLogsViewer";
+import EcoVendSuggestionsManager from "@/components/dashboard/tabs/EcoVendSuggestionsManager";
 import { useSEO } from "@/hooks/useSEO";
 export type AppRole =
   | "super_admin"
@@ -340,6 +341,8 @@ const DashboardPage = () => {
         content = <ArtistPayoutsManager />; break;
       case "audit-logs":
         content = <AuditLogsViewer />; break;
+      case "ecovend-suggestions":
+        content = <EcoVendSuggestionsManager />; break;
       default:
         content = <CustomerOrders />; break;
     }

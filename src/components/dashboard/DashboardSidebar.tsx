@@ -37,6 +37,7 @@ import {
   Leaf,
   FileText,
   Megaphone,
+  Lightbulb,
 } from "lucide-react";
 import { AppRole } from "@/pages/DashboardPage";
 import { cn } from "@/lib/utils";
@@ -129,6 +130,7 @@ const tabGroups: TabGroup[] = [
     tabs: [
       { id: "machine-registry", label: "Machine Registry", icon: Monitor, requiredRoles: ["super_admin", "tech_support_lead", "support"] },
       { id: "ecosnack-lockers", label: "EcoVend Lockers", icon: Leaf, requiredRoles: ["super_admin", "employee_operator", "tech_support_lead", "support"] },
+      { id: "ecovend-suggestions", label: "EcoVend Suggestions", icon: Lightbulb, requiredRoles: ["super_admin", "global_operations_manager"] },
       { id: "ticket-config", label: "Ticket Payouts", icon: Ticket, requiredRoles: ["super_admin"] },
       { id: "kiosk-categories", label: "Kiosk Setup", icon: Layers, requiredRoles: ["super_admin", "tech_support_lead"] },
       { id: "technical-support", label: "Tech Support", icon: Wrench, requiredRoles: ["super_admin", "tech_support_lead", "support"] },
