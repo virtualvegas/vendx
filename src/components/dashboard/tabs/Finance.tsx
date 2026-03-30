@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, DollarSign, Trash2, Edit, RefreshCw, CreditCard, Loader2, Download, TrendingUp } from "lucide-react";
+import { Plus, DollarSign, Trash2, Edit, RefreshCw, CreditCard, Loader2, Download, TrendingUp, Pencil, Check, X } from "lucide-react";
 import { format, subDays } from "date-fns";
 import { formatDisplayDate } from "@/lib/dateUtils";
 import {
