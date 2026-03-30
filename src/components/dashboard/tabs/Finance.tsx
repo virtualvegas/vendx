@@ -238,6 +238,8 @@ const Finance = () => {
     if (!editingSyncedId) return;
     updateSyncedMutation.mutate({ id: editingSyncedId, data: syncedEditData });
   };
+
+  const resetForm = () => {
     setFormData({
       transaction_type: "revenue",
       category: "",
