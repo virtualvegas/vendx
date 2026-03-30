@@ -61,6 +61,7 @@ async function syncStripeTransactions(supabase: any, startDate?: string): Promis
     .eq("provider", "stripe");
 
   let synced = 0;
+  let skipped = 0;
   let hasMore = true;
   let startingAfter: string | undefined;
 
