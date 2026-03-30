@@ -152,6 +152,19 @@ async function syncStripeTransactions(supabase: any, startDate?: string): Promis
       logStep(`Fetched ${refunds.data.length} Stripe refunds`);
 
       for (const refund of refunds.data) {
+        // Check if already exists
+        const { data: existing } = await supabase
+          .from("synced_transactions")
+          .select("id")
+          .eq("provider", "stripe")
+          .eq("provider_transaction_id", `refund_${refund.id}`)
+          .maybeSingle();
+
+        if (existing) {
+          skipped++;
+          continue;
+        }
+
         const charge = refund.charge as Stripe.Charge | null;
 
         const transaction = {
@@ -174,10 +187,10 @@ async function syncStripeTransactions(supabase: any, startDate?: string): Promis
 
         const { error } = await supabase
           .from("synced_transactions")
-          .upsert(transaction, { onConflict: "provider,provider_transaction_id" });
+          .insert(transaction);
 
         if (error) {
-          logStep("Error upserting Stripe refund", { error, id: refund.id });
+          logStep("Error inserting Stripe refund", { error, id: refund.id });
         } else {
           synced++;
         }
