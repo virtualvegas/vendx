@@ -335,6 +335,20 @@ const EcoSnackCheckoutPage = () => {
                 isProcessing={isProcessing}
                 handlePurchase={handlePurchase}
               />
+
+              {/* Mobile recommendations */}
+              <EcoVendRecommendations
+                allItems={lockerItems}
+                selectedLocker={selectedLocker}
+                onSelect={setSelectedLocker}
+              />
+
+              {/* Mobile suggestion form */}
+              {machine?.id && (
+                <div className="border-t border-border pt-4">
+                  <EcoVendSuggestions machineId={machine.id} machineCode={machineCode || ""} />
+                </div>
+              )}
             </div>
           </>
         )}

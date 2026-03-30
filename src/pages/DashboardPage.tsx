@@ -341,6 +341,8 @@ const DashboardPage = () => {
         content = <ArtistPayoutsManager />; break;
       case "audit-logs":
         content = <AuditLogsViewer />; break;
+      case "ecovend-suggestions":
+        content = <EcoVendSuggestionsManager />; break;
       default:
         content = <CustomerOrders />; break;
     }

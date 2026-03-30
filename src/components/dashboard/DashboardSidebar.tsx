@@ -37,6 +37,7 @@ import {
   Leaf,
   FileText,
   Megaphone,
+  Lightbulb,
 } from "lucide-react";
 import { AppRole } from "@/pages/DashboardPage";
 import { cn } from "@/lib/utils";
