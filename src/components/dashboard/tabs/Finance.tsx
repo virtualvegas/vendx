@@ -34,6 +34,7 @@ interface SyncedTransaction {
   provider: string;
   provider_transaction_id: string;
   transaction_type: string;
+  category: string;
   amount: number;
   currency: string;
   status: string;
