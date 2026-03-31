@@ -16,26 +16,26 @@ const Footer = () => {
           </div>
 
           <div className="space-y-3">
-            <h4 className="font-semibold text-lg">Divisions</h4>
+            <h4 className="font-semibold text-lg">Explore</h4>
             <ul className="space-y-2 text-sm text-muted-foreground">
               <li>
-                <Link to="/divisions/mini" className="hover:text-primary transition-smooth">
-                  VendX Mini
+                <Link to="/store" className="hover:text-primary transition-smooth">
+                  Online Store
                 </Link>
               </li>
               <li>
-                <Link to="/divisions/max" className="hover:text-primary transition-smooth">
-                  VendX Max
+                <Link to="/locations" className="hover:text-primary transition-smooth">
+                  Find Locations
                 </Link>
               </li>
               <li>
-                <Link to="/divisions/fresh" className="hover:text-primary transition-smooth">
-                  VendX Fresh
+                <Link to="/games" className="hover:text-primary transition-smooth">
+                  VendX Interactive
                 </Link>
               </li>
               <li>
-                <Link to="/divisions/digital" className="hover:text-primary transition-smooth">
-                  VendX Digital
+                <Link to="/divisions" className="hover:text-primary transition-smooth">
+                  Our Divisions
                 </Link>
               </li>
             </ul>
@@ -55,13 +55,13 @@ const Footer = () => {
                 </Link>
               </li>
               <li>
-                <Link to="/divisions" className="hover:text-primary transition-smooth">
-                  Press Kit
+                <Link to="/news" className="hover:text-primary transition-smooth">
+                  News
                 </Link>
               </li>
               <li>
-                <Link to="/divisions/mars" className="hover:text-accent transition-smooth">
-                  Mars Division
+                <Link to="/contact" className="hover:text-primary transition-smooth">
+                  Contact Us
                 </Link>
               </li>
             </ul>
