@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { logAuditEvent } from "@/hooks/useAuditLog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -179,6 +180,7 @@ const MachineInventoryManager = () => {
     onSuccess: (_, vars) => {
       queryClient.invalidateQueries({ queryKey: ["machine-inventory-all"] });
       toast({ title: `Product assigned to ${vars.machineIds.length} machine(s)` });
+      logAuditEvent({ action: "Assigned Product to Machine", entity_type: "Machine Inventory", details: { product: vars.form.product_name, sku: vars.form.sku, machines: vars.machineIds.length } });
       setShowAssignDialog(false);
       setSelectedMachineIds([]);
       resetAssignForm();
@@ -191,9 +193,10 @@ const MachineInventoryManager = () => {
       const { error } = await supabase.from("machine_inventory").update(data).eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: (_, { id, data }) => {
       queryClient.invalidateQueries({ queryKey: ["machine-inventory-all"] });
       toast({ title: "Item updated" });
+      logAuditEvent({ action: "Updated Machine Inventory", entity_type: "Machine Inventory", entity_id: id, details: data as Record<string, any> });
       setShowEditDialog(false);
       setEditingItem(null);
     },
@@ -205,9 +208,10 @@ const MachineInventoryManager = () => {
       const { error } = await supabase.from("machine_inventory").delete().eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: (_, id) => {
       queryClient.invalidateQueries({ queryKey: ["machine-inventory-all"] });
       toast({ title: "Item removed" });
+      logAuditEvent({ action: "Removed Machine Inventory Item", entity_type: "Machine Inventory", entity_id: id });
       setShowDeleteConfirm(false);
       setDeletingItem(null);
     },

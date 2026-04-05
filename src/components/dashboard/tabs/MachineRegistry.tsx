@@ -1,5 +1,6 @@
 import { useEffect, useState, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { logAuditEvent } from "@/hooks/useAuditLog";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -268,6 +269,7 @@ const MachineRegistry = () => {
 
         if (error) throw error;
         toast({ title: "Machine updated successfully" });
+        logAuditEvent({ action: "Updated Machine", entity_type: "Machine", entity_id: editingMachine.id, details: { name: machineForm.name, machine_code: machineForm.machine_code, type: machineForm.machine_type, status: machineForm.status } });
       } else {
         const apiKey = generateApiKey();
         const { data: insertedMachine, error } = await supabase
@@ -317,6 +319,7 @@ const MachineRegistry = () => {
         }
 
         toast({ title: "Machine registered successfully" });
+        logAuditEvent({ action: "Created Machine", entity_type: "Machine", entity_id: insertedMachine?.id, details: { name: machineForm.name, machine_code: machineForm.machine_code, type: machineForm.machine_type } });
       }
 
       setShowMachineDialog(false);
@@ -338,6 +341,7 @@ const MachineRegistry = () => {
 
       if (error) throw error;
       toast({ title: "Machine deleted" });
+      logAuditEvent({ action: "Deleted Machine", entity_type: "Machine", entity_id: selectedMachine.id, details: { name: selectedMachine.name, code: selectedMachine.machine_code } });
       setShowDeleteConfirm(false);
       setSelectedMachine(null);
       fetchData();
@@ -357,6 +361,7 @@ const MachineRegistry = () => {
 
       if (error) throw error;
       toast({ title: "API key rotated successfully" });
+      logAuditEvent({ action: "Rotated API Key", entity_type: "Machine", entity_id: selectedMachine.id, details: { name: selectedMachine.name } });
       setSelectedMachine({ ...selectedMachine, api_key: newApiKey });
       fetchData();
     } catch (error: any) {
@@ -373,6 +378,7 @@ const MachineRegistry = () => {
 
       if (error) throw error;
       toast({ title: `Machine set to ${newStatus}` });
+      logAuditEvent({ action: "Changed Machine Status", entity_type: "Machine", entity_id: machine.id, details: { name: machine.name, new_status: newStatus } });
       fetchData();
     } catch (error) {
       console.error("Error updating status:", error);

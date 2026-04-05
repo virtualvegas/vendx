@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { logAuditEvent } from "@/hooks/useAuditLog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -113,9 +114,10 @@ const ProfitSplitsManager = () => {
       });
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: (_, { machineId, vendxPct }) => {
       queryClient.invalidateQueries({ queryKey: ["profit-splits"] });
       toast({ title: "Profit split saved" });
+      logAuditEvent({ action: "Updated Profit Split", entity_type: "Profit Split", details: { machine_id: machineId, vendx_pct: vendxPct, owner_pct: 100 - vendxPct } });
       setShowDialog(false);
       resetForm();
     },
