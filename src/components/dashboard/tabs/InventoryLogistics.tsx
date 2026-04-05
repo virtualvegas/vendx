@@ -80,9 +80,10 @@ const InventoryLogistics = () => {
       const { error } = await supabase.from("inventory_items").insert([data]);
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: (_, data) => {
       queryClient.invalidateQueries({ queryKey: ["inventory-items"] });
       toast({ title: "Product added to catalog" });
+      logAuditEvent({ action: "Created Warehouse Product", entity_type: "Warehouse Inventory", details: { product: data.product_name, sku: data.sku, category: data.category, qty: data.quantity } });
       setShowDialog(false);
       resetForm();
     },
@@ -94,9 +95,10 @@ const InventoryLogistics = () => {
       const { error } = await supabase.from("inventory_items").update(data).eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: (_, { id, data }) => {
       queryClient.invalidateQueries({ queryKey: ["inventory-items"] });
       toast({ title: "Product updated" });
+      logAuditEvent({ action: "Updated Warehouse Product", entity_type: "Warehouse Inventory", entity_id: id, details: data as Record<string, any> });
       setShowDialog(false);
       resetForm();
     },
@@ -108,9 +110,10 @@ const InventoryLogistics = () => {
       const { error } = await supabase.from("inventory_items").delete().eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: (_, id) => {
       queryClient.invalidateQueries({ queryKey: ["inventory-items"] });
       toast({ title: "Product removed" });
+      logAuditEvent({ action: "Deleted Warehouse Product", entity_type: "Warehouse Inventory", entity_id: id });
       setShowDeleteConfirm(false);
       setSelectedItem(null);
     },
@@ -150,6 +153,7 @@ const InventoryLogistics = () => {
       .eq("id", item.id);
     queryClient.invalidateQueries({ queryKey: ["inventory-items"] });
     toast({ title: `Added ${addQty} units to ${item.product_name}` });
+    logAuditEvent({ action: "Restocked Warehouse Product", entity_type: "Warehouse Inventory", entity_id: item.id, details: { product: item.product_name, added: addQty, new_qty: item.quantity + addQty } });
   };
 
   const toggleActive = async (item: WarehouseProduct) => {
