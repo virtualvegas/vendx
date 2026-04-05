@@ -43,12 +43,56 @@ export const useBusinessOwnerData = () => {
     },
   });
 
-  // Fetch assigned locations
+  // Check if user is super_admin
+  const { data: isSuperAdmin } = useQuery({
+    queryKey: ["is-super-admin", currentUser?.id],
+    queryFn: async () => {
+      if (!currentUser) return false;
+      const { data, error } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", currentUser.id)
+        .eq("role", "super_admin");
+      if (error) return false;
+      return (data?.length || 0) > 0;
+    },
+    enabled: !!currentUser,
+  });
+
+  // Fetch assigned locations (or ALL locations for super_admin)
   const { data: assignments, isLoading: assignmentsLoading } = useQuery({
-    queryKey: ["business-owner-assignments"],
+    queryKey: ["business-owner-assignments", isSuperAdmin],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return [];
+
+      if (isSuperAdmin) {
+        // Super admin sees ALL locations as "VendX Global"
+        const { data: allLocations, error } = await supabase
+          .from("locations")
+          .select("id, name, city, country, address, status, machine_count, location_type, contact_name, contact_phone, contact_email")
+          .order("city");
+        if (error) throw error;
+
+        // Also get existing assignments to mark which have partners
+        const { data: existingAssignments } = await supabase
+          .from("location_assignments")
+          .select("location_id, business_owner_id, is_active")
+          .eq("is_active", true);
+
+        const assignmentMap = new Map(
+          (existingAssignments || []).map(a => [a.location_id, a.business_owner_id])
+        );
+
+        return (allLocations || []).map(loc => ({
+          id: `vendx-global-${loc.id}`,
+          location_id: loc.id,
+          is_active: true,
+          is_vendx_global: !assignmentMap.has(loc.id),
+          assigned_partner_id: assignmentMap.get(loc.id) || null,
+          location: loc,
+        }));
+      }
       
       const { data, error } = await supabase
         .from("location_assignments")
@@ -59,8 +103,9 @@ export const useBusinessOwnerData = () => {
         .eq("business_owner_id", user.id)
         .eq("is_active", true);
       if (error) throw error;
-      return data || [];
+      return (data || []).map(d => ({ ...d, is_vendx_global: false, assigned_partner_id: null }));
     },
+    enabled: isSuperAdmin !== undefined,
   });
 
   // Fetch machines at assigned locations
