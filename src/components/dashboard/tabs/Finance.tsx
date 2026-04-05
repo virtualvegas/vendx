@@ -174,9 +174,10 @@ const Finance = () => {
       const { error } = await supabase.from("financial_transactions").insert([data]);
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: (_, data) => {
       queryClient.invalidateQueries({ queryKey: ["financial-transactions"] });
       toast({ title: "Success", description: "Transaction recorded successfully" });
+      logAuditEvent({ action: "Created Financial Transaction", entity_type: "Financial Transaction", details: { type: data.transaction_type, category: data.category, amount: data.amount } });
       setOpen(false);
       resetForm();
     },
@@ -190,9 +191,10 @@ const Finance = () => {
       const { error } = await supabase.from("financial_transactions").update(data).eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: (_, { id, data }) => {
       queryClient.invalidateQueries({ queryKey: ["financial-transactions"] });
       toast({ title: "Success", description: "Transaction updated successfully" });
+      logAuditEvent({ action: "Updated Financial Transaction", entity_type: "Financial Transaction", entity_id: id, details: data });
       setOpen(false);
       resetForm();
     },
@@ -206,9 +208,10 @@ const Finance = () => {
       const { error } = await supabase.from("financial_transactions").delete().eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: (_, id) => {
       queryClient.invalidateQueries({ queryKey: ["financial-transactions"] });
       toast({ title: "Success", description: "Transaction deleted successfully" });
+      logAuditEvent({ action: "Deleted Financial Transaction", entity_type: "Financial Transaction", entity_id: id });
     },
     onError: (error: any) => {
       toast({ title: "Error", description: error.message, variant: "destructive" });
@@ -220,9 +223,10 @@ const Finance = () => {
       const { error } = await supabase.from("synced_transactions").update(data).eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: (_, { id, data }) => {
       queryClient.invalidateQueries({ queryKey: ["synced-transactions"] });
       toast({ title: "Updated", description: "Transaction updated" });
+      logAuditEvent({ action: "Updated Synced Transaction", entity_type: "Synced Transaction", entity_id: id, details: data });
       setEditingSyncedId(null);
     },
     onError: (error: any) => {
