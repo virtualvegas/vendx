@@ -69,13 +69,14 @@ const GiftCardManager = () => {
       const { error } = await client.from("gift_cards").insert(rows);
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: (_, cards) => {
       queryClient.invalidateQueries({ queryKey: ["admin-gift-cards"] });
       setShowCreate(false);
       setNewCode(generateCode());
       setNewNotes("");
       setNewExpiry("");
       toast({ title: "Gift Card(s) Created", description: "New gift card codes are now active." });
+      logAuditEvent({ action: "Created Gift Cards", entity_type: "Gift Card", details: { count: cards.length, total_value: cards.reduce((s, c) => s + c.value, 0) } });
     },
     onError: (err: any) => {
       toast({ title: "Error", description: err.message, variant: "destructive" });
@@ -88,9 +89,10 @@ const GiftCardManager = () => {
       const { error } = await client.from("gift_cards").update({ status }).eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: (_, { id, status }) => {
       queryClient.invalidateQueries({ queryKey: ["admin-gift-cards"] });
       toast({ title: "Status Updated" });
+      logAuditEvent({ action: "Updated Gift Card Status", entity_type: "Gift Card", entity_id: id, details: { new_status: status } });
     },
   });
 

@@ -135,6 +135,7 @@ const TicketConfigManager = () => {
       queryClient.invalidateQueries({ queryKey: ["ticket-configs"] });
       queryClient.invalidateQueries({ queryKey: ["arcade-machines-without-config"] });
       toast.success(editingConfig ? "Configuration updated" : "Configuration created");
+      logAuditEvent({ action: editingConfig ? "Updated Ticket Config" : "Created Ticket Config", entity_type: "Ticket Config", entity_id: editingConfig?.id, details: { machine_id: selectedMachine } });
       handleCloseDialog();
     },
     onError: (error) => {
@@ -151,10 +152,11 @@ const TicketConfigManager = () => {
         .eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: (_, id) => {
       queryClient.invalidateQueries({ queryKey: ["ticket-configs"] });
       queryClient.invalidateQueries({ queryKey: ["arcade-machines-without-config"] });
       toast.success("Configuration deleted");
+      logAuditEvent({ action: "Deleted Ticket Config", entity_type: "Ticket Config", entity_id: id });
     },
     onError: (error) => {
       toast.error(`Failed to delete: ${error.message}`);

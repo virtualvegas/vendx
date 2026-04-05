@@ -117,9 +117,10 @@ const PayoutsManager = () => {
       const { error } = await supabase.from("payouts").update(updateData).eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: (_, { id, status, payment_reference }) => {
       queryClient.invalidateQueries({ queryKey: ["admin-payouts"] });
       toast({ title: "Payout updated" });
+      logAuditEvent({ action: "Updated Payout Status", entity_type: "Payout", entity_id: id, details: { new_status: status, payment_reference } });
     },
     onError: (error: any) => {
       toast({ title: "Error", description: error.message, variant: "destructive" });

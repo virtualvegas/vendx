@@ -366,7 +366,9 @@ const GlobalLocations = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["locations"] });
+      const action = editingLocation ? "Updated Location" : "Created Location";
       toast({ title: editingLocation ? "Location updated" : "Location created" });
+      logAuditEvent({ action, entity_type: "Location", entity_id: editingLocation?.id, details: { name: formData.name, city: formData.city, country: formData.country, status: formData.status } });
       setShowDialog(false);
       resetForm();
     },
@@ -380,9 +382,10 @@ const GlobalLocations = () => {
       const { error } = await supabase.from("locations").delete().eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: (_, id) => {
       queryClient.invalidateQueries({ queryKey: ["locations"] });
       toast({ title: "Location deleted" });
+      logAuditEvent({ action: "Deleted Location", entity_type: "Location", entity_id: id });
       setShowDeleteConfirm(false);
       setSelectedLocation(null);
     },
@@ -451,9 +454,10 @@ const GlobalLocations = () => {
         }, { onConflict: "location_id,business_owner_id" });
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: (_, { locationId, ownerId }) => {
       queryClient.invalidateQueries({ queryKey: ["location-assignments"] });
       toast({ title: "Business owner assigned" });
+      logAuditEvent({ action: "Assigned Business Owner", entity_type: "Location Assignment", details: { location_id: locationId, owner_id: ownerId } });
       setShowOwnerDialog(false);
       setSelectedOwner("none");
     },
@@ -471,9 +475,10 @@ const GlobalLocations = () => {
         .eq("id", assignmentId);
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: (_, assignmentId) => {
       queryClient.invalidateQueries({ queryKey: ["location-assignments"] });
       toast({ title: "Business owner removed" });
+      logAuditEvent({ action: "Removed Business Owner", entity_type: "Location Assignment", entity_id: assignmentId });
     },
     onError: (error: any) => {
       toast({ title: "Error", description: error.message, variant: "destructive" });

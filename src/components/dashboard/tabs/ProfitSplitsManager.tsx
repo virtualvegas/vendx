@@ -114,9 +114,10 @@ const ProfitSplitsManager = () => {
       });
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: (_, { machineId, vendxPct }) => {
       queryClient.invalidateQueries({ queryKey: ["profit-splits"] });
       toast({ title: "Profit split saved" });
+      logAuditEvent({ action: "Updated Profit Split", entity_type: "Profit Split", details: { machine_id: machineId, vendx_pct: vendxPct, owner_pct: 100 - vendxPct } });
       setShowDialog(false);
       resetForm();
     },

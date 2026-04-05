@@ -37,10 +37,11 @@ const PoliciesManager = () => {
         .eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: (_, { id, title }) => {
       queryClient.invalidateQueries({ queryKey: ["admin-policies"] });
       setEditingId(null);
       toast({ title: "Policy updated successfully" });
+      logAuditEvent({ action: "Updated Site Policy", entity_type: "Site Policy", entity_id: id, details: { title } });
     },
     onError: (error: any) => {
       toast({ title: "Error", description: error.message, variant: "destructive" });
