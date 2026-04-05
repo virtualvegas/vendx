@@ -647,9 +647,9 @@ const GlobalLocations = () => {
                             <span className="truncate">{owner.full_name || owner.email}</span>
                           </Button>
                         ) : (
-                          <Button variant="ghost" size="sm" onClick={() => openOwnerDialog(loc)} className="gap-1 text-muted-foreground">
-                            <Users className="w-4 h-4" />
-                            Assign
+                          <Button variant="ghost" size="sm" onClick={() => openOwnerDialog(loc)} className="gap-1">
+                            <UserCheck className="w-4 h-4 text-primary shrink-0" />
+                            <span className="text-foreground font-medium">VendX Global</span>
                           </Button>
                         );
                       })()}
@@ -793,7 +793,7 @@ const GlobalLocations = () => {
               <Label>Business Owner</Label>
               <SearchableSelect
                 options={[
-                  { value: "none", label: "No owner assigned" },
+                  { value: "none", label: "VendX Global (Default)" },
                   ...(businessOwners || []).map(owner => ({
                     value: owner.id,
                     label: owner.full_name || owner.email,
@@ -816,15 +816,15 @@ const GlobalLocations = () => {
             {selectedLocation && (() => {
               const assignment = locationAssignments?.find(a => a.location_id === selectedLocation.id);
               const currentOwner = assignment ? businessOwners?.find(o => o.id === assignment.business_owner_id) : null;
-              if (currentOwner) {
-                return (
-                  <div className="p-3 bg-muted/50 rounded-lg">
-                    <p className="text-sm text-muted-foreground mb-1">Currently assigned:</p>
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="font-medium">{currentOwner.full_name || "Unnamed"}</p>
-                        <p className="text-xs text-muted-foreground">{currentOwner.email}</p>
-                      </div>
+              return (
+                <div className="p-3 bg-muted/50 rounded-lg">
+                  <p className="text-sm text-muted-foreground mb-1">Currently assigned:</p>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-medium">{currentOwner ? (currentOwner.full_name || "Unnamed") : "VendX Global"}</p>
+                      <p className="text-xs text-muted-foreground">{currentOwner ? currentOwner.email : "Default ownership"}</p>
+                    </div>
+                    {currentOwner && assignment && (
                       <Button 
                         size="sm" 
                         variant="outline" 
@@ -832,13 +832,12 @@ const GlobalLocations = () => {
                         disabled={removeOwnerMutation.isPending}
                       >
                         <Trash2 className="w-4 h-4 mr-1" />
-                        Remove
+                        Reset to VendX
                       </Button>
-                    </div>
+                    )}
                   </div>
-                );
-              }
-              return null;
+                </div>
+              );
             })()}
           </div>
           <DialogFooter>
