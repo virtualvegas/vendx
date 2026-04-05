@@ -647,9 +647,9 @@ const GlobalLocations = () => {
                             <span className="truncate">{owner.full_name || owner.email}</span>
                           </Button>
                         ) : (
-                          <Button variant="ghost" size="sm" onClick={() => openOwnerDialog(loc)} className="gap-1 text-muted-foreground">
-                            <Users className="w-4 h-4" />
-                            Assign
+                          <Button variant="ghost" size="sm" onClick={() => openOwnerDialog(loc)} className="gap-1">
+                            <UserCheck className="w-4 h-4 text-primary shrink-0" />
+                            <span className="text-foreground font-medium">VendX Global</span>
                           </Button>
                         );
                       })()}
@@ -793,7 +793,7 @@ const GlobalLocations = () => {
               <Label>Business Owner</Label>
               <SearchableSelect
                 options={[
-                  { value: "none", label: "No owner assigned" },
+                  { value: "none", label: "VendX Global (Default)" },
                   ...(businessOwners || []).map(owner => ({
                     value: owner.id,
                     label: owner.full_name || owner.email,
