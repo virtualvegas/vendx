@@ -816,15 +816,15 @@ const GlobalLocations = () => {
             {selectedLocation && (() => {
               const assignment = locationAssignments?.find(a => a.location_id === selectedLocation.id);
               const currentOwner = assignment ? businessOwners?.find(o => o.id === assignment.business_owner_id) : null;
-              if (currentOwner) {
-                return (
-                  <div className="p-3 bg-muted/50 rounded-lg">
-                    <p className="text-sm text-muted-foreground mb-1">Currently assigned:</p>
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="font-medium">{currentOwner.full_name || "Unnamed"}</p>
-                        <p className="text-xs text-muted-foreground">{currentOwner.email}</p>
-                      </div>
+              return (
+                <div className="p-3 bg-muted/50 rounded-lg">
+                  <p className="text-sm text-muted-foreground mb-1">Currently assigned:</p>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-medium">{currentOwner ? (currentOwner.full_name || "Unnamed") : "VendX Global"}</p>
+                      <p className="text-xs text-muted-foreground">{currentOwner ? currentOwner.email : "Default ownership"}</p>
+                    </div>
+                    {currentOwner && assignment && (
                       <Button 
                         size="sm" 
                         variant="outline" 
@@ -832,13 +832,12 @@ const GlobalLocations = () => {
                         disabled={removeOwnerMutation.isPending}
                       >
                         <Trash2 className="w-4 h-4 mr-1" />
-                        Remove
+                        Reset to VendX
                       </Button>
-                    </div>
+                    )}
                   </div>
-                );
-              }
-              return null;
+                </div>
+              );
             })()}
           </div>
           <DialogFooter>
