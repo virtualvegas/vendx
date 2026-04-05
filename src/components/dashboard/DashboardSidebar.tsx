@@ -79,12 +79,12 @@ const tabGroups: TabGroup[] = [
     id: "business",
     label: "My Business",
     tabs: [
-      { id: "business-overview", label: "Overview", icon: LayoutDashboard, requiredRoles: ["business_owner"] },
-      { id: "business-locations", label: "My Locations", icon: MapPin, requiredRoles: ["business_owner"] },
-      { id: "business-machines", label: "My Machines", icon: Monitor, requiredRoles: ["business_owner"] },
-      { id: "business-payouts", label: "Payouts", icon: DollarSign, requiredRoles: ["business_owner"] },
-      { id: "business-adreach", label: "AdReach", icon: Megaphone, requiredRoles: ["business_owner"] },
-      { id: "business-support", label: "Support", icon: Wrench, requiredRoles: ["business_owner"] },
+      { id: "business-overview", label: "Overview", icon: LayoutDashboard, requiredRoles: ["business_owner", "super_admin"] },
+      { id: "business-locations", label: "My Locations", icon: MapPin, requiredRoles: ["business_owner", "super_admin"] },
+      { id: "business-machines", label: "My Machines", icon: Monitor, requiredRoles: ["business_owner", "super_admin"] },
+      { id: "business-payouts", label: "Payouts", icon: DollarSign, requiredRoles: ["business_owner", "super_admin"] },
+      { id: "business-adreach", label: "AdReach", icon: Megaphone, requiredRoles: ["business_owner", "super_admin"] },
+      { id: "business-support", label: "Support", icon: Wrench, requiredRoles: ["business_owner", "super_admin"] },
     ],
   },
 

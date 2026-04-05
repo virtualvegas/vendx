@@ -194,6 +194,7 @@ const BusinessLocations = () => {
                 const loc = assignment.location;
                 const stats = getLocationStats(assignment.location_id);
                 const typeIcon = LOCATION_TYPE_ICONS[loc?.location_type] || "📍";
+                const isVendxGlobal = assignment.is_vendx_global;
                 
                 return (
                   <Card key={assignment.id} className="border-border/50 hover:border-primary/50 transition-colors cursor-pointer group" onClick={() => setSelectedLocation({ ...assignment, stats })}>
@@ -206,7 +207,14 @@ const BusinessLocations = () => {
                           </div>
                           {loc?.address && <p className="text-sm text-muted-foreground mt-1 truncate">{loc.address}</p>}
                         </div>
-                        <Badge variant={loc?.status === "active" ? "default" : "secondary"} className="ml-2">{loc?.status}</Badge>
+                        <div className="flex flex-col items-end gap-1 ml-2">
+                          <Badge variant={loc?.status === "active" ? "default" : "secondary"}>{loc?.status}</Badge>
+                          {isVendxGlobal ? (
+                            <Badge variant="outline" className="text-[10px] border-primary/50 text-primary">VendX Global</Badge>
+                          ) : assignment.assigned_partner_id ? (
+                            <Badge variant="outline" className="text-[10px] border-yellow-500/50 text-yellow-600">Partner</Badge>
+                          ) : null}
+                        </div>
                       </div>
                       <div className="grid grid-cols-3 gap-2 mt-4 text-center">
                         <div className="p-2 bg-muted/50 rounded-lg">
@@ -219,7 +227,7 @@ const BusinessLocations = () => {
                         </div>
                         <div className="p-2 bg-primary/10 rounded-lg">
                           <p className="text-lg font-bold text-primary">${stats.ownerShare.toFixed(2)}</p>
-                          <p className="text-[10px] text-muted-foreground">Your Share</p>
+                          <p className="text-[10px] text-muted-foreground">{isVendxGlobal ? "Revenue" : "Your Share"}</p>
                         </div>
                       </div>
                       <div className="flex items-center justify-between mt-4 pt-3 border-t">
