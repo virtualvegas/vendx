@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX IF NOT EXISTS synced_transactions_provider_txn_id_unique ON public.synced_transactions (provider, provider_transaction_id);
