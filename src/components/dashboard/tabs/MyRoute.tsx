@@ -1110,56 +1110,88 @@ const MyRoute = () => {
 
       {/* Restock Dialog */}
       <Dialog open={showRestockDialog} onOpenChange={setShowRestockDialog}>
-        <DialogContent className="max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-h-[90vh] overflow-y-auto max-w-lg">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Package className="w-5 h-5 text-primary" />
-              Log Restock
+              Restock Machine
             </DialogTitle>
             <DialogDescription>
-              {selectedStop?.machine?.name}
+              {selectedStop?.machine?.name} — adjust quantities per slot
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
-            {machineInventory && machineInventory.length > 0 && (
-              <div>
-                <Label className="text-sm font-medium">Items to Restock</Label>
-                <ScrollArea className="h-[200px] mt-2">
-                  <div className="space-y-2">
-                    {machineInventory.map(item => (
-                      <div key={item.id} className="flex items-center justify-between p-2 bg-muted/30 rounded text-sm">
-                        <span className="truncate flex-1">{item.product_name}</span>
-                        <div className="flex items-center gap-2">
-                          <span className={item.quantity <= 2 ? "text-destructive" : ""}>
-                            {item.quantity}/{item.max_capacity}
-                          </span>
-                          {item.quantity < item.max_capacity && (
-                            <Badge variant="outline" className="text-xs text-green-600">
-                              +{item.max_capacity - item.quantity}
-                            </Badge>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </ScrollArea>
-              </div>
+            {machineInventory && machineInventory.length > 0 ? (
+              <ScrollArea className="max-h-[350px]">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Slot</TableHead>
+                      <TableHead>Product</TableHead>
+                      <TableHead>Current</TableHead>
+                      <TableHead>Add</TableHead>
+                      <TableHead>New</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {machineInventory.map(item => {
+                      const toAdd = restockQuantities[item.id] ?? (item.max_capacity - item.quantity);
+                      const newQty = Math.min(item.max_capacity, item.quantity + Math.max(0, toAdd));
+                      return (
+                        <TableRow key={item.id} className={item.quantity === 0 ? "bg-destructive/5" : item.quantity <= 2 ? "bg-yellow-500/5" : ""}>
+                          <TableCell className="font-mono text-xs">{item.slot_number || "—"}</TableCell>
+                          <TableCell>
+                            <span className="font-medium text-sm">{item.product_name}</span>
+                            <span className="block text-xs text-muted-foreground">{item.sku}</span>
+                          </TableCell>
+                          <TableCell>
+                            <span className={item.quantity === 0 ? "text-destructive font-bold" : ""}>{item.quantity}/{item.max_capacity}</span>
+                          </TableCell>
+                          <TableCell>
+                            <Input
+                              type="number"
+                              min={0}
+                              max={item.max_capacity - item.quantity}
+                              value={toAdd}
+                              onChange={e => setRestockQuantities(prev => ({ ...prev, [item.id]: parseInt(e.target.value) || 0 }))}
+                              className="w-16 h-8"
+                            />
+                          </TableCell>
+                          <TableCell className="font-bold text-primary">{newQty}</TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </ScrollArea>
+            ) : (
+              <p className="text-center text-muted-foreground py-4">No inventory slots configured</p>
             )}
             <div>
-              <Label htmlFor="notes">Notes</Label>
+              <Label htmlFor="restock-notes">Notes</Label>
               <Textarea
-                id="notes"
+                id="restock-notes"
                 placeholder="Any issues or observations..."
                 value={restockNotes}
                 onChange={(e) => setRestockNotes(e.target.value)}
-                rows={3}
+                rows={2}
               />
+            </div>
+            <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-3">
+              <p className="text-sm text-yellow-700 dark:text-yellow-400 flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4" />
+                Warehouse stock will be auto-deducted on confirm
+              </p>
             </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowRestockDialog(false)}>Cancel</Button>
             <Button 
-              onClick={() => selectedStop?.machine && logRestockMutation.mutate({ machineId: selectedStop.machine.id, notes: restockNotes })}
+              onClick={() => selectedStop?.machine && logRestockMutation.mutate({ 
+                machineId: selectedStop.machine.id, 
+                notes: restockNotes,
+                quantities: restockQuantities,
+              })}
               disabled={logRestockMutation.isPending}
             >
               <CheckCircle className="w-4 h-4 mr-2" />
