@@ -827,7 +827,7 @@ const MyRoute = () => {
                           variant="secondary"
                           size="sm"
                           className="h-10"
-                          onClick={() => { setSelectedStop(currentStop); setShowRestockDialog(true); }}
+                          onClick={() => { setSelectedStop(currentStop); setRestockQuantities({}); setShowRestockDialog(true); }}
                         >
                           <Package className="w-4 h-4 mr-1" />
                           Restock
