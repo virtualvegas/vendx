@@ -291,35 +291,62 @@ const MyRoute = () => {
     },
   });
 
-  // Log restock mutation
+  // Log restock mutation - now also deducts from warehouse
   const logRestockMutation = useMutation({
     mutationFn: async ({ machineId, notes }: { machineId: string; notes: string }) => {
       const { data: { user } } = await supabase.auth.getUser();
+      const restockedItems = machineInventory?.map(i => ({
+        product_name: i.product_name,
+        sku: i.sku,
+        quantity_added: i.max_capacity - i.quantity,
+        previous_quantity: i.quantity,
+        new_quantity: i.max_capacity,
+      })) || [];
+
+      // Log the restock
       const { error } = await supabase
         .from("restock_logs")
         .insert({
           machine_id: machineId,
           performed_by: user?.id,
           notes,
-          items_restocked: machineInventory?.map(i => ({
-            product_name: i.product_name,
-            quantity_added: i.max_capacity - i.quantity,
-          })) || [],
+          items_restocked: restockedItems,
         });
       if (error) throw error;
 
+      // Update machine inventory to max capacity AND deduct from warehouse
       if (machineInventory && machineInventory.length > 0) {
         for (const item of machineInventory) {
+          const qtyToAdd = item.max_capacity - item.quantity;
+          if (qtyToAdd <= 0) continue;
+
+          // Update machine slot to full
           await supabase
             .from("machine_inventory")
             .update({ quantity: item.max_capacity, last_restocked: new Date().toISOString() })
             .eq("id", item.id);
+
+          // Deduct from warehouse by SKU
+          const { data: warehouseItem } = await supabase
+            .from("inventory_items")
+            .select("id, quantity")
+            .eq("sku", item.sku)
+            .single();
+
+          if (warehouseItem) {
+            const newWarehouseQty = Math.max(0, warehouseItem.quantity - qtyToAdd);
+            await supabase
+              .from("inventory_items")
+              .update({ quantity: newWarehouseQty })
+              .eq("id", warehouseItem.id);
+          }
         }
       }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["machine-inventory"] });
-      toast({ title: "Restock Logged", description: "Inventory updated" });
+      queryClient.invalidateQueries({ queryKey: ["inventory-items"] });
+      toast({ title: "Restock Logged", description: "Inventory updated, warehouse stock deducted" });
       setShowRestockDialog(false);
       setRestockNotes("");
     },
