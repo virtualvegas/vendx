@@ -91,6 +91,7 @@ const MyRoute = () => {
   const [showTaskDialog, setShowTaskDialog] = useState(false);
   const [selectedStop, setSelectedStop] = useState<RouteStop | null>(null);
   const [restockNotes, setRestockNotes] = useState("");
+  const [restockQuantities, setRestockQuantities] = useState<Record<string, number>>({});
   const [issueDescription, setIssueDescription] = useState("");
   const [revenueForm, setRevenueForm] = useState({ cashAmount: "", coinsAmount: "", notes: "" });
   const [taskForm, setTaskForm] = useState({ title: "", description: "", priority: "medium" });
@@ -291,56 +292,68 @@ const MyRoute = () => {
     },
   });
 
-  // Log restock mutation - now also deducts from warehouse
+  // Log restock mutation - per-item quantities, deducts from warehouse
   const logRestockMutation = useMutation({
-    mutationFn: async ({ machineId, notes }: { machineId: string; notes: string }) => {
+    mutationFn: async ({ machineId, notes, quantities }: { machineId: string; notes: string; quantities: Record<string, number> }) => {
       const { data: { user } } = await supabase.auth.getUser();
-      const restockedItems = machineInventory?.map(i => ({
-        product_name: i.product_name,
-        sku: i.sku,
-        quantity_added: i.max_capacity - i.quantity,
-        previous_quantity: i.quantity,
-        new_quantity: i.max_capacity,
-      })) || [];
+      if (!machineInventory || machineInventory.length === 0) return;
 
-      // Log the restock
-      const { error } = await supabase
-        .from("restock_logs")
-        .insert({
-          machine_id: machineId,
-          performed_by: user?.id,
-          notes,
-          items_restocked: restockedItems,
+      const restockedItems: any[] = [];
+
+      for (const item of machineInventory) {
+        const qtyToAdd = quantities[item.id] ?? (item.max_capacity - item.quantity);
+        if (qtyToAdd <= 0) continue;
+
+        const newQty = Math.min(item.max_capacity, item.quantity + qtyToAdd);
+        restockedItems.push({
+          inventory_id: item.id,
+          product_name: item.product_name,
+          sku: item.sku,
+          slot_number: item.slot_number,
+          previous_quantity: item.quantity,
+          quantity_added: qtyToAdd,
+          new_quantity: newQty,
         });
-      if (error) throw error;
 
-      // Update machine inventory to max capacity AND deduct from warehouse
-      if (machineInventory && machineInventory.length > 0) {
-        for (const item of machineInventory) {
-          const qtyToAdd = item.max_capacity - item.quantity;
-          if (qtyToAdd <= 0) continue;
+        // Update machine slot
+        await supabase
+          .from("machine_inventory")
+          .update({ quantity: newQty, last_restocked: new Date().toISOString() })
+          .eq("id", item.id);
 
-          // Update machine slot to full
+        // Deduct from warehouse by SKU
+        const { data: warehouseItem } = await supabase
+          .from("inventory_items")
+          .select("id, quantity")
+          .eq("sku", item.sku)
+          .single();
+
+        if (warehouseItem) {
+          const newWarehouseQty = Math.max(0, warehouseItem.quantity - qtyToAdd);
           await supabase
-            .from("machine_inventory")
-            .update({ quantity: item.max_capacity, last_restocked: new Date().toISOString() })
-            .eq("id", item.id);
-
-          // Deduct from warehouse by SKU
-          const { data: warehouseItem } = await supabase
             .from("inventory_items")
-            .select("id, quantity")
-            .eq("sku", item.sku)
-            .single();
-
-          if (warehouseItem) {
-            const newWarehouseQty = Math.max(0, warehouseItem.quantity - qtyToAdd);
-            await supabase
-              .from("inventory_items")
-              .update({ quantity: newWarehouseQty })
-              .eq("id", warehouseItem.id);
-          }
+            .update({ quantity: newWarehouseQty })
+            .eq("id", warehouseItem.id);
         }
+      }
+
+      if (restockedItems.length > 0) {
+        // Log the restock
+        await supabase
+          .from("restock_logs")
+          .insert({
+            machine_id: machineId,
+            performed_by: user?.id,
+            notes,
+            items_restocked: restockedItems,
+          });
+
+        logAuditEvent({
+          action: "Machine Restocked",
+          entity_type: "Machine Inventory",
+          entity_id: machineId,
+          details: { items: restockedItems.length, total_added: restockedItems.reduce((s, i) => s + i.quantity_added, 0) },
+        });
       }
     },
     onSuccess: () => {
@@ -349,6 +362,7 @@ const MyRoute = () => {
       toast({ title: "Restock Logged", description: "Inventory updated, warehouse stock deducted" });
       setShowRestockDialog(false);
       setRestockNotes("");
+      setRestockQuantities({});
     },
     onError: (error: any) => {
       toast({ title: "Error", description: error.message, variant: "destructive" });
