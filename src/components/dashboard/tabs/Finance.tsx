@@ -322,8 +322,8 @@ const Finance = () => {
       else entry.expenses += t.amount;
     });
     
-    // Synced transactions (include in chart for complete picture)
-    syncedTransactions?.forEach(t => {
+    // Synced transactions (use ALL data for complete picture)
+    allSyncedTransactions?.forEach(t => {
       const day = t.transaction_date;
       const entry = ensureDay(day);
       if (t.transaction_type === "revenue" && t.amount > 0) entry.revenue += t.amount;
