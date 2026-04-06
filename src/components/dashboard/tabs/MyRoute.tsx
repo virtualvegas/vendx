@@ -430,6 +430,13 @@ const MyRoute = () => {
           notes: notes || null,
         });
       if (error) throw error;
+
+      logAuditEvent({
+        action: "Revenue Collected",
+        entity_type: "Revenue Collection",
+        entity_id: machineId,
+        details: { cash: cashAmount, coins: coinsAmount, total: totalAmount, stop_id: stopId },
+      });
     },
     onSuccess: () => {
       toast({ 
