@@ -81,22 +81,31 @@ const DashboardOverview = () => {
   });
 
   // Calculate combined revenue from all sources (no double counting)
+  // machine_transactions = VendX Pay wallet-based purchases at machines (NOT in synced_transactions)
+  // synced_transactions = Stripe/PayPal charges (EcoVend, Store, Arcade direct purchases)
+  // Wallet loads (type "wallet_load") are excluded to avoid counting money twice
   const revenue = useMemo(() => {
     const todayStart = new Date(new Date().setHours(0, 0, 0, 0));
     const weekStart = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
     const monthStart = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
 
-    // Use synced_transactions as primary unified source
-    // Plus machine_transactions for VendX Pay vending (not in synced)
-    const allRevenue: { amount: number; created_at: string; source: string }[] = [];
+    const allRevenue: { amount: number; created_at: string }[] = [];
     
-    // Add machine_transactions (VendX Pay vending purchases)
-    transactions?.forEach(t => allRevenue.push({ amount: Number(t.amount), created_at: t.created_at, source: "vending" }));
+    // Machine transactions (wallet-based vending) - these are actual product sales
+    transactions?.forEach(t => allRevenue.push({ amount: Number(t.amount), created_at: t.created_at }));
     
-    // Add synced_transactions (Stripe/PayPal - EcoSnack, Store, etc.)
+    // Synced transactions - only actual revenue, NOT wallet loads (which would double-count)
     syncedTransactions?.forEach(t => {
-      if (Number(t.amount) > 0) {
-        allRevenue.push({ amount: Number(t.amount), created_at: t.created_at, source: "synced" });
+      const amt = Number(t.amount);
+      if (amt > 0) {
+        const meta = t.metadata as any;
+        const source = (meta?.source || "").toLowerCase();
+        const desc = (t.description || "").toLowerCase();
+        // Skip wallet loads - that money is already counted when spent at machines
+        const isWalletLoad = source === "wallet" || desc.includes("wallet") || desc.includes("vendx pay load");
+        if (!isWalletLoad) {
+          allRevenue.push({ amount: amt, created_at: t.created_at });
+        }
       }
     });
 

@@ -143,6 +143,7 @@ export const useBusinessOwnerData = () => {
   });
 
   // Fetch LIVE synced transactions matching machine codes (30 days)
+  // Only fetch revenue type, exclude wallet loads (they'd double-count with machine_transactions)
   const { data: syncedTransactions } = useQuery({
     queryKey: ["business-owner-synced-txns"],
     queryFn: async () => {
@@ -153,7 +154,13 @@ export const useBusinessOwnerData = () => {
         .eq("transaction_type", "revenue")
         .gte("created_at", new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString());
       if (error) throw error;
-      return data || [];
+      // Filter out wallet loads to prevent double-counting
+      return (data || []).filter(t => {
+        const meta = t.metadata as any;
+        const source = (meta?.source || "").toLowerCase();
+        const desc = (t.description || "").toLowerCase();
+        return !(source === "wallet" || desc.includes("wallet load") || desc.includes("vendx pay load"));
+      });
     },
   });
 

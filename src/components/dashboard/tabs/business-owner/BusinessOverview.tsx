@@ -44,15 +44,19 @@ const BusinessOverview = () => {
 
   // Calculate earnings from LIVE transaction data
   const earnings = useMemo(() => {
-    if (!machines || !profitSplits) return { grossRevenue: 0, myShare: 0, pending: 0, lifetimeRevenue: 0, totalPaid: 0 };
+    if (!machines || !profitSplits) return { grossRevenue: 0, myShare: 0, pending: 0, lifetimeRevenue: 0, totalPaid: 0, machinesWithoutSplit: 0 };
 
     let grossRevenue = 0;
     let myShare = 0;
     let lifetimeRevenue = 0;
+    let machinesWithoutSplit = 0;
 
     machines.forEach(machine => {
       const split = profitSplits.find(s => s.machine_id === machine.id);
-      const ownerPercentage = split?.business_owner_percentage || 30;
+      // If no profit split is configured, default to 0% (pending admin setup)
+      const ownerPercentage = split ? split.business_owner_percentage : 0;
+      if (!split) machinesWithoutSplit++;
+      
       const rev = machineRevenue.get(machine.id);
       const periodRev = rev?.period || 0;
       const lifetimeRev = rev?.lifetime || 0;
@@ -70,7 +74,7 @@ const BusinessOverview = () => {
       ?.filter(p => p.status === "paid")
       .reduce((sum, p) => sum + Number(p.amount), 0) || 0;
 
-    return { grossRevenue, myShare, pending, lifetimeRevenue, totalPaid };
+    return { grossRevenue, myShare, pending, lifetimeRevenue, totalPaid, machinesWithoutSplit };
   }, [machines, machineRevenue, profitSplits, payouts]);
 
   // Calculate machine stats
@@ -159,6 +163,9 @@ const BusinessOverview = () => {
           <CardContent>
             <p className="text-2xl lg:text-3xl font-bold text-green-500">${earnings.myShare.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
             <p className="text-xs text-muted-foreground mt-1">From ${earnings.grossRevenue.toLocaleString(undefined, { minimumFractionDigits: 2 })} gross</p>
+            {earnings.machinesWithoutSplit > 0 && (
+              <p className="text-xs text-yellow-500 mt-1">⚠ {earnings.machinesWithoutSplit} machine(s) pending profit split setup</p>
+            )}
           </CardContent>
         </Card>
         <Card className="bg-gradient-to-br from-yellow-500/10 to-yellow-600/5 border-yellow-500/20">
