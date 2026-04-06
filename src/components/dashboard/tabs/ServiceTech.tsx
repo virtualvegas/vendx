@@ -70,9 +70,11 @@ const ServiceTech = () => {
   const [statusFilter, setStatusFilter] = useState<string>("pending");
   const [showServiceDialog, setShowServiceDialog] = useState(false);
   const [showRestockDialog, setShowRestockDialog] = useState(false);
+  const [showCollectionDialog, setShowCollectionDialog] = useState(false);
   const [selectedStop, setSelectedStop] = useState<ServiceStop | null>(null);
   const [serviceForm, setServiceForm] = useState({ service_type: "routine", tech_notes: "" });
   const [restockQuantities, setRestockQuantities] = useState<Record<string, number>>({});
+  const [collectionForm, setCollectionForm] = useState({ cashAmount: "", coinsAmount: "", notes: "" });
   const [isOnline, setIsOnline] = useState(navigator.onLine);
 
   useEffect(() => {
@@ -280,6 +282,41 @@ const ServiceTech = () => {
       queryClient.invalidateQueries({ queryKey: ["service-tech-stops"] });
       toast({ title: "Note Added" });
     },
+  });
+
+  // Revenue collection mutation
+  const collectRevenueMutation = useMutation({
+    mutationFn: async ({ stop, cashAmount, coinsAmount, notes }: {
+      stop: ServiceStop; cashAmount: number; coinsAmount: number; notes: string;
+    }) => {
+      const totalAmount = cashAmount + coinsAmount;
+      const { error } = await supabase
+        .from("revenue_collections")
+        .insert({
+          machine_id: stop.machine_id,
+          location_id: stop.location_id,
+          route_stop_id: stop.id,
+          collected_by: currentUser?.id,
+          cash_amount: cashAmount,
+          coins_amount: coinsAmount,
+          total_amount: totalAmount,
+          notes: notes || null,
+        });
+      if (error) throw error;
+
+      logAuditEvent({
+        action: "Revenue Collected",
+        entity_type: "Revenue Collection",
+        entity_id: stop.machine_id || stop.id,
+        details: { cash: cashAmount, coins: coinsAmount, total: totalAmount, stop: stop.stop_name },
+      });
+    },
+    onSuccess: () => {
+      toast({ title: "Revenue Collected", description: `$${(parseFloat(collectionForm.cashAmount || "0") + parseFloat(collectionForm.coinsAmount || "0")).toFixed(2)} recorded` });
+      setShowCollectionDialog(false);
+      setCollectionForm({ cashAmount: "", coinsAmount: "", notes: "" });
+    },
+    onError: (e: any) => toast({ title: "Error", description: e.message, variant: "destructive" }),
   });
 
   const openServiceComplete = (stop: ServiceStop) => {
@@ -507,9 +544,18 @@ const ServiceTech = () => {
                           <CheckCircle className="w-3 h-3 mr-1" /> Complete
                         </Button>
                         {stop.machine_id && (
-                          <Button size="sm" variant="outline" onClick={() => openRestock(stop)}>
-                            <Package className="w-3 h-3 mr-1" /> Restock
-                          </Button>
+                          <>
+                            <Button size="sm" variant="outline" onClick={() => openRestock(stop)}>
+                              <Package className="w-3 h-3 mr-1" /> Restock
+                            </Button>
+                            <Button size="sm" variant="outline" className="text-green-600 border-green-600/30" onClick={() => {
+                              setSelectedStop(stop);
+                              setCollectionForm({ cashAmount: "", coinsAmount: "", notes: "" });
+                              setShowCollectionDialog(true);
+                            }}>
+                              <TrendingUp className="w-3 h-3 mr-1" /> Collect $
+                            </Button>
+                          </>
                         )}
                         <Button size="sm" variant="ghost" onClick={() => {
                           const note = prompt("Add a tech note:");
@@ -645,6 +691,57 @@ const ServiceTech = () => {
             <Button onClick={handleCompleteRestock} disabled={completeServiceMutation.isPending}>
               <Package className="w-4 h-4 mr-2" />
               Confirm Restock & Complete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Revenue Collection Dialog */}
+      <Dialog open={showCollectionDialog} onOpenChange={setShowCollectionDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <TrendingUp className="w-5 h-5 text-green-600" />
+              Collect Revenue — {selectedStop?.machine?.name || selectedStop?.stop_name}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>Cash ($)</Label>
+                <Input type="number" step="0.01" min="0" placeholder="0.00" value={collectionForm.cashAmount} onChange={e => setCollectionForm(f => ({ ...f, cashAmount: e.target.value }))} />
+              </div>
+              <div>
+                <Label>Coins ($)</Label>
+                <Input type="number" step="0.01" min="0" placeholder="0.00" value={collectionForm.coinsAmount} onChange={e => setCollectionForm(f => ({ ...f, coinsAmount: e.target.value }))} />
+              </div>
+            </div>
+            <div className="p-3 bg-green-500/10 rounded-lg border border-green-500/30">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium">Total</span>
+                <span className="text-xl font-bold text-green-600">
+                  ${(parseFloat(collectionForm.cashAmount || "0") + parseFloat(collectionForm.coinsAmount || "0")).toFixed(2)}
+                </span>
+              </div>
+            </div>
+            <div>
+              <Label>Notes (optional)</Label>
+              <Textarea value={collectionForm.notes} onChange={e => setCollectionForm(f => ({ ...f, notes: e.target.value }))} placeholder="Collection notes..." rows={2} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowCollectionDialog(false)}>Cancel</Button>
+            <Button
+              className="bg-green-600 hover:bg-green-700"
+              disabled={collectRevenueMutation.isPending || (parseFloat(collectionForm.cashAmount || "0") + parseFloat(collectionForm.coinsAmount || "0")) <= 0}
+              onClick={() => selectedStop && collectRevenueMutation.mutate({
+                stop: selectedStop,
+                cashAmount: parseFloat(collectionForm.cashAmount || "0"),
+                coinsAmount: parseFloat(collectionForm.coinsAmount || "0"),
+                notes: collectionForm.notes,
+              })}
+            >
+              <CheckCircle className="w-4 h-4 mr-2" /> Confirm Collection
             </Button>
           </DialogFooter>
         </DialogContent>

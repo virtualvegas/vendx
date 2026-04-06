@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { logAuditEvent } from "@/hooks/useAuditLog";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -9,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
@@ -91,6 +93,7 @@ const MyRoute = () => {
   const [showTaskDialog, setShowTaskDialog] = useState(false);
   const [selectedStop, setSelectedStop] = useState<RouteStop | null>(null);
   const [restockNotes, setRestockNotes] = useState("");
+  const [restockQuantities, setRestockQuantities] = useState<Record<string, number>>({});
   const [issueDescription, setIssueDescription] = useState("");
   const [revenueForm, setRevenueForm] = useState({ cashAmount: "", coinsAmount: "", notes: "" });
   const [taskForm, setTaskForm] = useState({ title: "", description: "", priority: "medium" });
@@ -291,56 +294,68 @@ const MyRoute = () => {
     },
   });
 
-  // Log restock mutation - now also deducts from warehouse
+  // Log restock mutation - per-item quantities, deducts from warehouse
   const logRestockMutation = useMutation({
-    mutationFn: async ({ machineId, notes }: { machineId: string; notes: string }) => {
+    mutationFn: async ({ machineId, notes, quantities }: { machineId: string; notes: string; quantities: Record<string, number> }) => {
       const { data: { user } } = await supabase.auth.getUser();
-      const restockedItems = machineInventory?.map(i => ({
-        product_name: i.product_name,
-        sku: i.sku,
-        quantity_added: i.max_capacity - i.quantity,
-        previous_quantity: i.quantity,
-        new_quantity: i.max_capacity,
-      })) || [];
+      if (!machineInventory || machineInventory.length === 0) return;
 
-      // Log the restock
-      const { error } = await supabase
-        .from("restock_logs")
-        .insert({
-          machine_id: machineId,
-          performed_by: user?.id,
-          notes,
-          items_restocked: restockedItems,
+      const restockedItems: any[] = [];
+
+      for (const item of machineInventory) {
+        const qtyToAdd = quantities[item.id] ?? (item.max_capacity - item.quantity);
+        if (qtyToAdd <= 0) continue;
+
+        const newQty = Math.min(item.max_capacity, item.quantity + qtyToAdd);
+        restockedItems.push({
+          inventory_id: item.id,
+          product_name: item.product_name,
+          sku: item.sku,
+          slot_number: item.slot_number,
+          previous_quantity: item.quantity,
+          quantity_added: qtyToAdd,
+          new_quantity: newQty,
         });
-      if (error) throw error;
 
-      // Update machine inventory to max capacity AND deduct from warehouse
-      if (machineInventory && machineInventory.length > 0) {
-        for (const item of machineInventory) {
-          const qtyToAdd = item.max_capacity - item.quantity;
-          if (qtyToAdd <= 0) continue;
+        // Update machine slot
+        await supabase
+          .from("machine_inventory")
+          .update({ quantity: newQty, last_restocked: new Date().toISOString() })
+          .eq("id", item.id);
 
-          // Update machine slot to full
+        // Deduct from warehouse by SKU
+        const { data: warehouseItem } = await supabase
+          .from("inventory_items")
+          .select("id, quantity")
+          .eq("sku", item.sku)
+          .single();
+
+        if (warehouseItem) {
+          const newWarehouseQty = Math.max(0, warehouseItem.quantity - qtyToAdd);
           await supabase
-            .from("machine_inventory")
-            .update({ quantity: item.max_capacity, last_restocked: new Date().toISOString() })
-            .eq("id", item.id);
-
-          // Deduct from warehouse by SKU
-          const { data: warehouseItem } = await supabase
             .from("inventory_items")
-            .select("id, quantity")
-            .eq("sku", item.sku)
-            .single();
-
-          if (warehouseItem) {
-            const newWarehouseQty = Math.max(0, warehouseItem.quantity - qtyToAdd);
-            await supabase
-              .from("inventory_items")
-              .update({ quantity: newWarehouseQty })
-              .eq("id", warehouseItem.id);
-          }
+            .update({ quantity: newWarehouseQty })
+            .eq("id", warehouseItem.id);
         }
+      }
+
+      if (restockedItems.length > 0) {
+        // Log the restock
+        await supabase
+          .from("restock_logs")
+          .insert({
+            machine_id: machineId,
+            performed_by: user?.id,
+            notes,
+            items_restocked: restockedItems,
+          });
+
+        logAuditEvent({
+          action: "Machine Restocked",
+          entity_type: "Machine Inventory",
+          entity_id: machineId,
+          details: { items: restockedItems.length, total_added: restockedItems.reduce((s, i) => s + i.quantity_added, 0) },
+        });
       }
     },
     onSuccess: () => {
@@ -349,6 +364,7 @@ const MyRoute = () => {
       toast({ title: "Restock Logged", description: "Inventory updated, warehouse stock deducted" });
       setShowRestockDialog(false);
       setRestockNotes("");
+      setRestockQuantities({});
     },
     onError: (error: any) => {
       toast({ title: "Error", description: error.message, variant: "destructive" });
@@ -414,6 +430,13 @@ const MyRoute = () => {
           notes: notes || null,
         });
       if (error) throw error;
+
+      logAuditEvent({
+        action: "Revenue Collected",
+        entity_type: "Revenue Collection",
+        entity_id: machineId,
+        details: { cash: cashAmount, coins: coinsAmount, total: totalAmount, stop_id: stopId },
+      });
     },
     onSuccess: () => {
       toast({ 
@@ -804,7 +827,7 @@ const MyRoute = () => {
                           variant="secondary"
                           size="sm"
                           className="h-10"
-                          onClick={() => { setSelectedStop(currentStop); setShowRestockDialog(true); }}
+                          onClick={() => { setSelectedStop(currentStop); setRestockQuantities({}); setShowRestockDialog(true); }}
                         >
                           <Package className="w-4 h-4 mr-1" />
                           Restock
@@ -1095,56 +1118,88 @@ const MyRoute = () => {
 
       {/* Restock Dialog */}
       <Dialog open={showRestockDialog} onOpenChange={setShowRestockDialog}>
-        <DialogContent className="max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-h-[90vh] overflow-y-auto max-w-lg">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Package className="w-5 h-5 text-primary" />
-              Log Restock
+              Restock Machine
             </DialogTitle>
             <DialogDescription>
-              {selectedStop?.machine?.name}
+              {selectedStop?.machine?.name} — adjust quantities per slot
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
-            {machineInventory && machineInventory.length > 0 && (
-              <div>
-                <Label className="text-sm font-medium">Items to Restock</Label>
-                <ScrollArea className="h-[200px] mt-2">
-                  <div className="space-y-2">
-                    {machineInventory.map(item => (
-                      <div key={item.id} className="flex items-center justify-between p-2 bg-muted/30 rounded text-sm">
-                        <span className="truncate flex-1">{item.product_name}</span>
-                        <div className="flex items-center gap-2">
-                          <span className={item.quantity <= 2 ? "text-destructive" : ""}>
-                            {item.quantity}/{item.max_capacity}
-                          </span>
-                          {item.quantity < item.max_capacity && (
-                            <Badge variant="outline" className="text-xs text-green-600">
-                              +{item.max_capacity - item.quantity}
-                            </Badge>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </ScrollArea>
-              </div>
+            {machineInventory && machineInventory.length > 0 ? (
+              <ScrollArea className="max-h-[350px]">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Slot</TableHead>
+                      <TableHead>Product</TableHead>
+                      <TableHead>Current</TableHead>
+                      <TableHead>Add</TableHead>
+                      <TableHead>New</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {machineInventory.map(item => {
+                      const toAdd = restockQuantities[item.id] ?? (item.max_capacity - item.quantity);
+                      const newQty = Math.min(item.max_capacity, item.quantity + Math.max(0, toAdd));
+                      return (
+                        <TableRow key={item.id} className={item.quantity === 0 ? "bg-destructive/5" : item.quantity <= 2 ? "bg-yellow-500/5" : ""}>
+                          <TableCell className="font-mono text-xs">{item.slot_number || "—"}</TableCell>
+                          <TableCell>
+                            <span className="font-medium text-sm">{item.product_name}</span>
+                            <span className="block text-xs text-muted-foreground">{item.sku}</span>
+                          </TableCell>
+                          <TableCell>
+                            <span className={item.quantity === 0 ? "text-destructive font-bold" : ""}>{item.quantity}/{item.max_capacity}</span>
+                          </TableCell>
+                          <TableCell>
+                            <Input
+                              type="number"
+                              min={0}
+                              max={item.max_capacity - item.quantity}
+                              value={toAdd}
+                              onChange={e => setRestockQuantities(prev => ({ ...prev, [item.id]: parseInt(e.target.value) || 0 }))}
+                              className="w-16 h-8"
+                            />
+                          </TableCell>
+                          <TableCell className="font-bold text-primary">{newQty}</TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </ScrollArea>
+            ) : (
+              <p className="text-center text-muted-foreground py-4">No inventory slots configured</p>
             )}
             <div>
-              <Label htmlFor="notes">Notes</Label>
+              <Label htmlFor="restock-notes">Notes</Label>
               <Textarea
-                id="notes"
+                id="restock-notes"
                 placeholder="Any issues or observations..."
                 value={restockNotes}
                 onChange={(e) => setRestockNotes(e.target.value)}
-                rows={3}
+                rows={2}
               />
+            </div>
+            <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-3">
+              <p className="text-sm text-yellow-700 dark:text-yellow-400 flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4" />
+                Warehouse stock will be auto-deducted on confirm
+              </p>
             </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowRestockDialog(false)}>Cancel</Button>
             <Button 
-              onClick={() => selectedStop?.machine && logRestockMutation.mutate({ machineId: selectedStop.machine.id, notes: restockNotes })}
+              onClick={() => selectedStop?.machine && logRestockMutation.mutate({ 
+                machineId: selectedStop.machine.id, 
+                notes: restockNotes,
+                quantities: restockQuantities,
+              })}
               disabled={logRestockMutation.isPending}
             >
               <CheckCircle className="w-4 h-4 mr-2" />
