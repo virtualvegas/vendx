@@ -284,6 +284,41 @@ const ServiceTech = () => {
     },
   });
 
+  // Revenue collection mutation
+  const collectRevenueMutation = useMutation({
+    mutationFn: async ({ stop, cashAmount, coinsAmount, notes }: {
+      stop: ServiceStop; cashAmount: number; coinsAmount: number; notes: string;
+    }) => {
+      const totalAmount = cashAmount + coinsAmount;
+      const { error } = await supabase
+        .from("revenue_collections")
+        .insert({
+          machine_id: stop.machine_id,
+          location_id: stop.location_id,
+          route_stop_id: stop.id,
+          collected_by: currentUser?.id,
+          cash_amount: cashAmount,
+          coins_amount: coinsAmount,
+          total_amount: totalAmount,
+          notes: notes || null,
+        });
+      if (error) throw error;
+
+      logAuditEvent({
+        action: "Revenue Collected",
+        entity_type: "Revenue Collection",
+        entity_id: stop.machine_id || stop.id,
+        details: { cash: cashAmount, coins: coinsAmount, total: totalAmount, stop: stop.stop_name },
+      });
+    },
+    onSuccess: () => {
+      toast({ title: "Revenue Collected", description: `$${(parseFloat(collectionForm.cashAmount || "0") + parseFloat(collectionForm.coinsAmount || "0")).toFixed(2)} recorded` });
+      setShowCollectionDialog(false);
+      setCollectionForm({ cashAmount: "", coinsAmount: "", notes: "" });
+    },
+    onError: (e: any) => toast({ title: "Error", description: e.message, variant: "destructive" }),
+  });
+
   const openServiceComplete = (stop: ServiceStop) => {
     setSelectedStop(stop);
     setServiceForm({ service_type: stop.service_type || "routine", tech_notes: "" });
