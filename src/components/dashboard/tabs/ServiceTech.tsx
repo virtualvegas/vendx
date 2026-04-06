@@ -544,9 +544,18 @@ const ServiceTech = () => {
                           <CheckCircle className="w-3 h-3 mr-1" /> Complete
                         </Button>
                         {stop.machine_id && (
-                          <Button size="sm" variant="outline" onClick={() => openRestock(stop)}>
-                            <Package className="w-3 h-3 mr-1" /> Restock
-                          </Button>
+                          <>
+                            <Button size="sm" variant="outline" onClick={() => openRestock(stop)}>
+                              <Package className="w-3 h-3 mr-1" /> Restock
+                            </Button>
+                            <Button size="sm" variant="outline" className="text-green-600 border-green-600/30" onClick={() => {
+                              setSelectedStop(stop);
+                              setCollectionForm({ cashAmount: "", coinsAmount: "", notes: "" });
+                              setShowCollectionDialog(true);
+                            }}>
+                              <TrendingUp className="w-3 h-3 mr-1" /> Collect $
+                            </Button>
+                          </>
                         )}
                         <Button size="sm" variant="ghost" onClick={() => {
                           const note = prompt("Add a tech note:");
