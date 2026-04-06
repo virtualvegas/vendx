@@ -86,24 +86,36 @@ const Finance = () => {
     },
   });
 
-  const { data: syncedTransactions, isLoading: syncedLoading } = useQuery({
-    queryKey: ["synced-transactions", providerFilter],
+  // Fetch ALL synced transactions for accurate totals (no row limit)
+  const { data: allSyncedTransactions, isLoading: syncedLoading } = useQuery({
+    queryKey: ["synced-transactions-all"],
     queryFn: async () => {
-      let query = supabase
-        .from("synced_transactions")
-        .select("*")
-        .order("transaction_date", { ascending: false })
-        .limit(100);
-      
-      if (providerFilter !== "all") {
-        query = query.eq("provider", providerFilter);
+      // Fetch in batches to avoid the 1000-row default limit
+      let allData: SyncedTransaction[] = [];
+      let from = 0;
+      const batchSize = 1000;
+      while (true) {
+        const { data, error } = await supabase
+          .from("synced_transactions")
+          .select("*")
+          .order("transaction_date", { ascending: false })
+          .range(from, from + batchSize - 1);
+        if (error) throw error;
+        if (!data || data.length === 0) break;
+        allData = allData.concat(data as SyncedTransaction[]);
+        if (data.length < batchSize) break;
+        from += batchSize;
       }
-      
-      const { data, error } = await query;
-      if (error) throw error;
-      return data as SyncedTransaction[];
+      return allData;
     },
   });
+
+  // Filter for display based on provider
+  const syncedTransactions = useMemo(() => {
+    if (!allSyncedTransactions) return [];
+    if (providerFilter === "all") return allSyncedTransactions;
+    return allSyncedTransactions.filter(t => t.provider === providerFilter);
+  }, [allSyncedTransactions, providerFilter]);
 
   const { data: syncStatus } = useQuery({
     queryKey: ["sync-status"],
@@ -279,12 +291,12 @@ const Finance = () => {
   const getStripeStatus = () => syncStatus?.find(s => s.provider === "stripe");
   const getPayPalStatus = () => syncStatus?.find(s => s.provider === "paypal");
 
-  // Combined totals: manual + synced for accurate global picture
+  // Combined totals: manual + synced for accurate global picture (uses ALL synced data, not filtered)
   const manualRevenue = transactions?.filter((t) => t.transaction_type === "revenue").reduce((sum, t) => sum + t.amount, 0) || 0;
   const manualExpenses = transactions?.filter((t) => t.transaction_type === "expense").reduce((sum, t) => sum + t.amount, 0) || 0;
-  const syncedRevenue = syncedTransactions?.filter(t => t.transaction_type === "revenue" && t.amount > 0).reduce((sum, t) => sum + t.amount, 0) || 0;
-  const syncedExpenses = syncedTransactions?.filter(t => t.transaction_type === "expense").reduce((sum, t) => sum + Math.abs(t.amount), 0) || 0;
-  const syncedWalletLoads = syncedTransactions?.filter(t => t.transaction_type === "wallet_load").reduce((sum, t) => sum + t.amount, 0) || 0;
+  const syncedRevenue = allSyncedTransactions?.filter(t => t.transaction_type === "revenue" && t.amount > 0).reduce((sum, t) => sum + t.amount, 0) || 0;
+  const syncedExpenses = allSyncedTransactions?.filter(t => t.transaction_type === "expense").reduce((sum, t) => sum + Math.abs(t.amount), 0) || 0;
+  const syncedWalletLoads = allSyncedTransactions?.filter(t => t.transaction_type === "wallet_load").reduce((sum, t) => sum + t.amount, 0) || 0;
   const totalRevenue = manualRevenue + syncedRevenue;
   const totalExpenses = manualExpenses + syncedExpenses;
   const netProfit = totalRevenue - totalExpenses;
@@ -331,18 +343,25 @@ const Finance = () => {
       });
   }, [transactions, syncedTransactions]);
 
-  // Chart: Category breakdown
+  // Chart: Category breakdown (manual + synced combined)
   const categoryBreakdown = useMemo(() => {
-    if (!transactions) return [];
     const catMap = new Map<string, number>();
-    transactions.forEach(t => {
+    // Manual transactions
+    transactions?.forEach(t => {
       catMap.set(t.category, (catMap.get(t.category) || 0) + t.amount);
     });
+    // Synced transactions by category
+    allSyncedTransactions?.forEach(t => {
+      if (t.amount > 0 && t.transaction_type !== "wallet_load") {
+        const cat = t.category || "Uncategorized";
+        catMap.set(cat, (catMap.get(cat) || 0) + t.amount);
+      }
+    });
     return Array.from(catMap.entries())
-      .map(([name, value]) => ({ name, value }))
+      .map(([name, value]) => ({ name, value: Math.round(value * 100) / 100 }))
       .sort((a, b) => b.value - a.value)
       .slice(0, 8);
-  }, [transactions]);
+  }, [transactions, allSyncedTransactions]);
 
   // Chart: Provider breakdown for synced transactions
   const providerBreakdown = useMemo(() => {
