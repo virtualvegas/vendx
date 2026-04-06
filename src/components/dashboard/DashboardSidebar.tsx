@@ -94,6 +94,7 @@ const tabGroups: TabGroup[] = [
     label: "Field Operations",
     tabs: [
       { id: "my-route", label: "My Route", icon: Navigation, requiredRoles: ["super_admin", "global_operations_manager", "regional_manager", "employee_operator"] },
+      { id: "service-tech", label: "Service Operations", icon: Wrench, requiredRoles: ["super_admin", "global_operations_manager", "employee_operator"] },
       { id: "daily-tasks", label: "Daily Tasks", icon: CheckSquare, requiredRoles: ["super_admin", "employee_operator"] },
     ],
   },
