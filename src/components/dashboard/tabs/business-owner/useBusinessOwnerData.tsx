@@ -1,6 +1,6 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useMemo } from "react";
+import { useMemo, useEffect } from "react";
 
 export interface SupportRequest {
   id: string;
@@ -34,6 +34,18 @@ export interface ScheduledServiceStop {
 }
 
 export const useBusinessOwnerData = () => {
+  const queryClient = useQueryClient();
+
+  // Realtime subscription for service stop updates
+  useEffect(() => {
+    const channel = supabase
+      .channel("bo-service-stops-realtime")
+      .on("postgres_changes", { event: "*", schema: "public", table: "route_stops" }, () => {
+        queryClient.invalidateQueries({ queryKey: ["business-owner-scheduled-stops"] });
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [queryClient]);
   // Fetch current user
   const { data: currentUser } = useQuery({
     queryKey: ["current-user"],

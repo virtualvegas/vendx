@@ -4090,6 +4090,7 @@ export type Database = {
           address: string | null
           auto_scheduled: boolean | null
           completed_at: string | null
+          completed_by: string | null
           created_at: string
           estimated_duration_minutes: number | null
           id: string
@@ -4097,18 +4098,22 @@ export type Database = {
           machine_id: string | null
           notes: string | null
           priority: string | null
+          restocked_items: Json | null
           route_id: string
           scheduled_date: string | null
+          service_type: string | null
           source_ticket_id: string | null
           status: string
           stop_name: string
           stop_order: number
+          tech_notes: string | null
           updated_at: string
         }
         Insert: {
           address?: string | null
           auto_scheduled?: boolean | null
           completed_at?: string | null
+          completed_by?: string | null
           created_at?: string
           estimated_duration_minutes?: number | null
           id?: string
@@ -4116,18 +4121,22 @@ export type Database = {
           machine_id?: string | null
           notes?: string | null
           priority?: string | null
+          restocked_items?: Json | null
           route_id: string
           scheduled_date?: string | null
+          service_type?: string | null
           source_ticket_id?: string | null
           status?: string
           stop_name: string
           stop_order?: number
+          tech_notes?: string | null
           updated_at?: string
         }
         Update: {
           address?: string | null
           auto_scheduled?: boolean | null
           completed_at?: string | null
+          completed_by?: string | null
           created_at?: string
           estimated_duration_minutes?: number | null
           id?: string
@@ -4135,12 +4144,15 @@ export type Database = {
           machine_id?: string | null
           notes?: string | null
           priority?: string | null
+          restocked_items?: Json | null
           route_id?: string
           scheduled_date?: string | null
+          service_type?: string | null
           source_ticket_id?: string | null
           status?: string
           stop_name?: string
           stop_order?: number
+          tech_notes?: string | null
           updated_at?: string
         }
         Relationships: [
