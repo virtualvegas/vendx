@@ -341,7 +341,7 @@ const Finance = () => {
           return { ...d, day: d.day.substring(0, 10) };
         }
       });
-  }, [transactions, syncedTransactions]);
+  }, [transactions, allSyncedTransactions]);
 
   // Chart: Category breakdown (manual + synced combined)
   const categoryBreakdown = useMemo(() => {
@@ -363,18 +363,18 @@ const Finance = () => {
       .slice(0, 8);
   }, [transactions, allSyncedTransactions]);
 
-  // Chart: Provider breakdown for synced transactions
+  // Chart: Provider breakdown for synced transactions (use ALL data)
   const providerBreakdown = useMemo(() => {
-    if (!syncedTransactions) return [];
+    if (!allSyncedTransactions) return [];
     const provMap = new Map<string, number>();
-    syncedTransactions.forEach(t => {
+    allSyncedTransactions.forEach(t => {
       if (t.amount > 0) {
         const label = t.provider === "vendx_pay" ? "VendX Pay" : t.provider.charAt(0).toUpperCase() + t.provider.slice(1);
         provMap.set(label, (provMap.get(label) || 0) + t.amount);
       }
     });
-    return Array.from(provMap.entries()).map(([name, value]) => ({ name, value }));
-  }, [syncedTransactions]);
+    return Array.from(provMap.entries()).map(([name, value]) => ({ name, value: Math.round(value * 100) / 100 }));
+  }, [allSyncedTransactions]);
 
   // CSV Export
   const exportCSV = (type: "manual" | "synced") => {
