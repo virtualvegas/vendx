@@ -70,9 +70,11 @@ const ServiceTech = () => {
   const [statusFilter, setStatusFilter] = useState<string>("pending");
   const [showServiceDialog, setShowServiceDialog] = useState(false);
   const [showRestockDialog, setShowRestockDialog] = useState(false);
+  const [showCollectionDialog, setShowCollectionDialog] = useState(false);
   const [selectedStop, setSelectedStop] = useState<ServiceStop | null>(null);
   const [serviceForm, setServiceForm] = useState({ service_type: "routine", tech_notes: "" });
   const [restockQuantities, setRestockQuantities] = useState<Record<string, number>>({});
+  const [collectionForm, setCollectionForm] = useState({ cashAmount: "", coinsAmount: "", notes: "" });
   const [isOnline, setIsOnline] = useState(navigator.onLine);
 
   useEffect(() => {
