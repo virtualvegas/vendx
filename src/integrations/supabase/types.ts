@@ -5984,6 +5984,17 @@ export type Database = {
         }[]
       }
       generate_totp_secret: { Args: never; Returns: string }
+      get_public_machine_info: {
+        Args: { p_machine_code: string }
+        Returns: {
+          id: string
+          location_id: string
+          machine_code: string
+          machine_type: string
+          name: string
+          status: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
