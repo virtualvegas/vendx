@@ -267,7 +267,7 @@ serve(async (req) => {
       }
 
       // Rate limiting
-      const rateLimitKey = apiKey;
+      const rateLimitKey = apiKey || machineRecord.id;
       const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
       
       const { data: recentAttempts, error: attemptError } = await supabase
@@ -311,7 +311,7 @@ serve(async (req) => {
       if (!matchedUserId) {
         // Always log failed attempt for rate limiting
         await supabase.from("machine_activity_log").insert({
-          machine_id: machine.id,
+          machine_id: machineRecord.id,
           activity_type: "totp_failed",
           item_name: rateLimitKey,
           metadata: { code_attempted: true },
@@ -337,7 +337,7 @@ serve(async (req) => {
       const { data: session } = await supabase
         .from("machine_sessions")
         .insert({
-          machine_id: machine.id,
+          machine_id: machineRecord.id,
           user_id: matchedUserId,
           session_code: sessionCode,
           session_type: "totp",
