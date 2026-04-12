@@ -232,21 +232,27 @@ serve(async (req) => {
     if (action === "verify_totp") {
       const apiKey = req.headers.get("x-machine-api-key");
       
-      if (!apiKey) {
-        return new Response(JSON.stringify({ error: "Machine API key required" }), {
-          status: 401,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+      // Support both api_key header (machine-to-machine) and machine_id in body (kiosk UI)
+      let machineRecord: { id: string } | null = null;
+
+      if (apiKey) {
+        const { data } = await supabase
+          .from("vendx_machines")
+          .select("id")
+          .eq("api_key", apiKey)
+          .maybeSingle();
+        machineRecord = data;
+      } else if (machine_id && typeof machine_id === "string") {
+        const { data } = await supabase
+          .from("vendx_machines")
+          .select("id")
+          .eq("id", machine_id)
+          .eq("status", "active")
+          .maybeSingle();
+        machineRecord = data;
       }
 
-      // Verify machine
-      const { data: machine } = await supabase
-        .from("vendx_machines")
-        .select("id")
-        .eq("api_key", apiKey)
-        .maybeSingle();
-
-      if (!machine) {
+      if (!machineRecord) {
         return new Response(JSON.stringify({ error: "Invalid machine" }), {
           status: 403,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
