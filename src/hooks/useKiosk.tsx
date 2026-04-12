@@ -142,10 +142,7 @@ export const useKiosk = (machineId: string) => {
         body: {
           action: "verify_totp",
           totp_code: code,
-          machine_id: machineInfo?.id || "demo"
-        },
-        headers: {
-          "x-machine-api-key": machineInfo?.api_key || ""
+          machine_id: machineInfo?.id || ""
         }
       });
 
@@ -189,10 +186,7 @@ export const useKiosk = (machineId: string) => {
           session_code: session.sessionId,
           amount,
           item_name: itemName,
-          machine_id: machineInfo?.id || "demo"
-        },
-        headers: {
-          "x-machine-api-key": machineInfo?.api_key || ""
+          machine_id: machineInfo?.id || ""
         }
       });
 
