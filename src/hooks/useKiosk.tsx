@@ -145,7 +145,7 @@ export const useKiosk = (machineId: string) => {
           machine_id: machineInfo?.id || "demo"
         },
         headers: {
-          "x-machine-api-key": machineId === "demo" ? "demo-api-key" : machineInfo?.id || ""
+          "x-machine-api-key": machineInfo?.api_key || ""
         }
       });
 
@@ -192,7 +192,7 @@ export const useKiosk = (machineId: string) => {
           machine_id: machineInfo?.id || "demo"
         },
         headers: {
-          "x-machine-api-key": machineId === "demo" ? "demo-api-key" : machineInfo?.id || ""
+          "x-machine-api-key": machineInfo?.api_key || ""
         }
       });
 
