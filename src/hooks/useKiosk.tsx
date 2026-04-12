@@ -55,21 +55,32 @@ export const useKiosk = (machineId: string) => {
   const [error, setError] = useState<string | null>(null);
   const [lastPurchase, setLastPurchase] = useState<PurchaseResult | null>(null);
 
-  // Fetch machine info
+  // Fetch machine info using RPC (safe public access without exposing api_key)
   const { data: machineInfo, isLoading: machineLoading } = useQuery({
     queryKey: ["kiosk-machine", machineId],
     queryFn: async () => {
       if (machineId === "demo") {
-        return {
-          id: "demo",
-          name: "Demo Machine",
-          machine_code: "DEMO",
-          machine_type: "snack" as MachineType,
-          status: "active",
-          location: null,
-        };
+        return null; // Demo mode no longer supported
       }
 
+      // Try RPC for public access first (no auth needed)
+      const { data: rpcData, error: rpcError } = await supabase.rpc("get_public_machine_info", {
+        p_machine_code: machineId,
+      });
+
+      if (!rpcError && rpcData && rpcData.length > 0) {
+        const m = rpcData[0];
+        return {
+          id: m.id,
+          name: m.name,
+          machine_code: m.machine_code,
+          machine_type: m.machine_type as MachineType,
+          status: m.status,
+          location: null,
+        } as KioskMachineInfo;
+      }
+
+      // Fallback: try direct query (works for authenticated staff)
       const { data, error } = await supabase
         .from("vendx_machines")
         .select(`
@@ -142,10 +153,7 @@ export const useKiosk = (machineId: string) => {
         body: {
           action: "verify_totp",
           totp_code: code,
-          machine_id: machineInfo?.id || "demo"
-        },
-        headers: {
-          "x-machine-api-key": machineId === "demo" ? "demo-api-key" : machineInfo?.id || ""
+          machine_id: machineInfo?.id || ""
         }
       });
 
@@ -189,10 +197,7 @@ export const useKiosk = (machineId: string) => {
           session_code: session.sessionId,
           amount,
           item_name: itemName,
-          machine_id: machineInfo?.id || "demo"
-        },
-        headers: {
-          "x-machine-api-key": machineId === "demo" ? "demo-api-key" : machineInfo?.id || ""
+          machine_id: machineInfo?.id || ""
         }
       });
 

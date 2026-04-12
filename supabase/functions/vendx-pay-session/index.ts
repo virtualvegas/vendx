@@ -69,9 +69,7 @@ async function generateTOTP(secret: string, timeStep: number = 60, offset: numbe
   return code.toString().padStart(6, '0');
 }
 
-// Verify TOTP code, allowing for time drift (current and previous window)
 async function verifyTOTP(secret: string, code: string, timeStep: number = 60): Promise<boolean> {
-  // Check current window and previous window to handle clock skew
   for (let offset = 0; offset >= -1; offset--) {
     const expectedCode = await generateTOTP(secret, timeStep, offset);
     if (expectedCode === code) {
@@ -93,6 +91,13 @@ serve(async (req) => {
     );
 
     const { action, session_code, user_id, machine_id, totp_code } = await req.json();
+
+    // Input validation for action
+    if (!action || typeof action !== "string" || !["create", "verify_qr", "verify_totp", "check"].includes(action)) {
+      return new Response(JSON.stringify({ error: "Invalid action" }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     // For machine-side operations (create session, verify)
     if (action === "create") {
@@ -121,7 +126,7 @@ serve(async (req) => {
 
       // Create QR session
       const sessionCode = generateSessionCode();
-      const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
+      const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
 
       const { data: session, error: sessionError } = await supabase
         .from("machine_sessions")
@@ -140,8 +145,6 @@ serve(async (req) => {
         throw sessionError;
       }
 
-      console.log("Created session:", sessionCode, "for machine:", machine.id);
-
       return new Response(
         JSON.stringify({
           session_code: session.session_code,
@@ -152,14 +155,19 @@ serve(async (req) => {
       );
     }
 
-    // User scans QR or machine verifies TOTP
+    // User scans QR
     if (action === "verify_qr") {
-      // User is scanning QR code to link their wallet
       const authHeader = req.headers.get("Authorization");
       if (!authHeader) {
         return new Response(JSON.stringify({ error: "Authorization required" }), {
           status: 401,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      if (!session_code || typeof session_code !== "string" || session_code.length > 50) {
+        return new Response(JSON.stringify({ error: "Valid session_code required" }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
 
@@ -177,8 +185,7 @@ serve(async (req) => {
         });
       }
 
-      // Find and verify session
-      const { data: session, error: sessionError } = await supabase
+      const { data: session } = await supabase
         .from("machine_sessions")
         .select("id, machine_id, status, expires_at")
         .eq("session_code", session_code)
@@ -193,7 +200,6 @@ serve(async (req) => {
         });
       }
 
-      // Update session with user
       const { error: updateError } = await supabase
         .from("machine_sessions")
         .update({
@@ -205,7 +211,6 @@ serve(async (req) => {
 
       if (updateError) throw updateError;
 
-      // Get user wallet balance (parent wallet)
       const { data: wallet } = await supabase
         .from("wallets")
         .select("balance")
@@ -213,8 +218,6 @@ serve(async (req) => {
         .in("wallet_type", ["standard", "guest"])
         .is("parent_wallet_id", null)
         .maybeSingle();
-
-      console.log("Session verified for user:", userData.user.id);
 
       return new Response(
         JSON.stringify({
@@ -225,50 +228,48 @@ serve(async (req) => {
       );
     }
 
-    // Verify TOTP code at machine (replaces verify_pin)
+    // Verify TOTP code at machine
     if (action === "verify_totp") {
       const apiKey = req.headers.get("x-machine-api-key");
       
-      // Demo mode for testing - skip machine validation
-      const isDemoMode = apiKey === "demo-api-key";
-      let machineDbId: string | null = null;
+      // Support both api_key header (machine-to-machine) and machine_id in body (kiosk UI)
+      let machineRecord: { id: string } | null = null;
 
-      if (!isDemoMode) {
-        if (!apiKey) {
-          return new Response(JSON.stringify({ error: "Machine API key required" }), {
-            status: 401,
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-          });
-        }
-
-        // Verify machine
-        const { data: machine } = await supabase
+      if (apiKey) {
+        const { data } = await supabase
           .from("vendx_machines")
           .select("id")
           .eq("api_key", apiKey)
           .maybeSingle();
-
-        if (!machine) {
-          return new Response(JSON.stringify({ error: "Invalid machine" }), {
-            status: 403,
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-          });
-        }
-        machineDbId = machine.id;
+        machineRecord = data;
+      } else if (machine_id && typeof machine_id === "string") {
+        const { data } = await supabase
+          .from("vendx_machines")
+          .select("id")
+          .eq("id", machine_id)
+          .eq("status", "active")
+          .maybeSingle();
+        machineRecord = data;
       }
 
-      if (!totp_code || totp_code.length !== 6 || !/^\d{6}$/.test(totp_code)) {
+      if (!machineRecord) {
+        return new Response(JSON.stringify({ error: "Invalid machine" }), {
+          status: 403,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      if (!totp_code || typeof totp_code !== "string" || totp_code.length !== 6 || !/^\d{6}$/.test(totp_code)) {
         return new Response(JSON.stringify({ error: "Invalid code format" }), {
           status: 400,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
 
-      // Rate limiting: track attempts by machine API key or IP
-      const rateLimitKey = apiKey || req.headers.get("x-forwarded-for") || "unknown";
+      // Rate limiting
+      const rateLimitKey = apiKey || machineRecord.id;
       const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
       
-      // Check recent failed attempts from machine_activity_log
       const { data: recentAttempts, error: attemptError } = await supabase
         .from("machine_activity_log")
         .select("id")
@@ -297,7 +298,6 @@ serve(async (req) => {
 
       let matchedUserId: string | null = null;
 
-      // Check the TOTP code against all users
       for (const profile of profiles || []) {
         if (profile.totp_secret) {
           const isValid = await verifyTOTP(profile.totp_secret, totp_code);
@@ -309,19 +309,13 @@ serve(async (req) => {
       }
 
       if (!matchedUserId) {
-        // Log failed attempt for rate limiting
-        if (machineDbId) {
-          await supabase.from("machine_activity_log").insert({
-            machine_id: machineDbId,
-            activity_type: "totp_failed",
-            item_name: rateLimitKey,
-            metadata: { code_attempted: true },
-          });
-        } else {
-          // For demo mode, use a placeholder machine_id logging approach
-          // We log to console only since we don't have a real machine_id
-          console.warn("Failed TOTP attempt from:", rateLimitKey);
-        }
+        // Always log failed attempt for rate limiting
+        await supabase.from("machine_activity_log").insert({
+          machine_id: machineRecord.id,
+          activity_type: "totp_failed",
+          item_name: rateLimitKey,
+          metadata: { code_attempted: true },
+        });
         
         return new Response(JSON.stringify({ error: "Invalid code" }), {
           status: 400,
@@ -336,47 +330,14 @@ serve(async (req) => {
         .eq("id", matchedUserId)
         .single();
 
-      // Get wallet balance
-      const { data: demoWallet } = await supabase
-        .from("wallets")
-        .select("balance")
-        .eq("user_id", matchedUserId)
-        .in("wallet_type", ["standard", "guest"])
-        .is("parent_wallet_id", null)
-        .maybeSingle();
-
-      // Get ticket balance
-      const { data: demoTickets } = await supabase
-        .from("user_tickets")
-        .select("balance")
-        .eq("user_id", matchedUserId)
-        .maybeSingle();
-
-      // In demo mode, skip session creation if no machine
-      if (isDemoMode && !machineDbId) {
-        console.log("Demo TOTP verified for user:", matchedUserId);
-
-        return new Response(
-          JSON.stringify({
-            success: true,
-            session_code: "DEMO",
-            user_id: matchedUserId,
-            user_name: userProfile?.full_name || "Customer",
-            balance: demoWallet?.balance || 0,
-            ticket_balance: demoTickets?.balance || 0,
-          }),
-          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-
-      // Create verified session for real machines
+      // Create verified session
       const sessionCode = generateSessionCode();
       const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
 
       const { data: session } = await supabase
         .from("machine_sessions")
         .insert({
-          machine_id: machineDbId!,
+          machine_id: machineRecord.id,
           user_id: matchedUserId,
           session_code: sessionCode,
           session_type: "totp",
@@ -387,7 +348,7 @@ serve(async (req) => {
         .select("id, session_code")
         .single();
 
-      // Get wallet balance for real machines
+      // Get wallet balance
       const { data: wallet } = await supabase
         .from("wallets")
         .select("balance")
@@ -426,6 +387,12 @@ serve(async (req) => {
         return new Response(JSON.stringify({ error: "Machine API key required" }), {
           status: 401,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      if (!session_code || typeof session_code !== "string" || session_code.length > 50) {
+        return new Response(JSON.stringify({ error: "Valid session_code required" }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
 
@@ -478,8 +445,7 @@ serve(async (req) => {
     });
   } catch (error: unknown) {
     console.error("Session error:", error);
-    const message = error instanceof Error ? error.message : "Unknown error";
-    return new Response(JSON.stringify({ error: message }), {
+    return new Response(JSON.stringify({ error: "Internal server error" }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

@@ -26,56 +26,47 @@ serve(async (req) => {
       });
     }
 
-    // Demo mode support
-    const isDemoMode = apiKey === "demo-api-key";
-    let machine: { id: string; machine_code: string; name: string; location_id: string | null } = {
-      id: "demo",
-      machine_code: "DEMO",
-      name: "Demo Arcade",
-      location_id: null,
-    };
+    // Verify machine is active and is an arcade type
+    const { data: machine } = await supabase
+      .from("vendx_machines")
+      .select("id, machine_code, name, location_id, machine_type")
+      .eq("api_key", apiKey)
+      .eq("status", "active")
+      .in("machine_type", ["arcade", "claw"])
+      .maybeSingle();
 
-    if (!isDemoMode) {
-      // Verify machine is active and is an arcade type
-      const { data: realMachine } = await supabase
-        .from("vendx_machines")
-        .select("id, machine_code, name, location_id, machine_type")
-        .eq("api_key", apiKey)
-        .eq("status", "active")
-        .in("machine_type", ["arcade", "claw"])
-        .maybeSingle();
-
-      if (!realMachine) {
-        return new Response(JSON.stringify({ error: "Invalid or inactive arcade machine" }), {
-          status: 403,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      machine = realMachine;
-    }
-
-    const body = await req.json();
-    const { 
-      user_id, 
-      session_id, 
-      tickets, 
-      game_name, 
-      score, 
-      idempotency_key 
-    } = body;
-
-    // Validate required fields
-    if (!user_id) {
-      return new Response(JSON.stringify({ error: "user_id is required" }), {
-        status: 400,
+    if (!machine) {
+      return new Response(JSON.stringify({ error: "Invalid or inactive arcade machine" }), {
+        status: 403,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    if (!tickets || tickets <= 0) {
-      return new Response(JSON.stringify({ error: "Valid ticket amount required" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+    const body = await req.json();
+    const { user_id, session_id, tickets, game_name, score, idempotency_key } = body;
+
+    // Input validation
+    if (!user_id || typeof user_id !== "string" || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(user_id)) {
+      return new Response(JSON.stringify({ error: "Valid user_id (UUID) is required" }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (!tickets || typeof tickets !== "number" || tickets <= 0 || tickets > 10000 || !Number.isInteger(tickets)) {
+      return new Response(JSON.stringify({ error: "Valid ticket amount required (1-10000, integer)" }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (game_name && (typeof game_name !== "string" || game_name.length > 200)) {
+      return new Response(JSON.stringify({ error: "game_name must be a string under 200 characters" }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (score !== undefined && score !== null && (typeof score !== "number" || score < 0 || score > 999999999)) {
+      return new Response(JSON.stringify({ error: "score must be a number 0-999999999" }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
@@ -94,7 +85,7 @@ serve(async (req) => {
     // Call the award_tickets function
     const { data: result, error: awardError } = await supabase.rpc("award_tickets", {
       p_user_id: user_id,
-      p_machine_id: isDemoMode ? null : machine.id,
+      p_machine_id: machine.id,
       p_session_id: session_id || null,
       p_amount: tickets,
       p_game_name: game_name || null,
@@ -109,7 +100,7 @@ serve(async (req) => {
 
     if (awardError) {
       console.error("Award tickets error:", awardError);
-      return new Response(JSON.stringify({ error: awardError.message }), {
+      return new Response(JSON.stringify({ error: "Failed to process ticket award" }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -127,30 +118,22 @@ serve(async (req) => {
       );
     }
 
-    console.log("Tickets awarded successfully:", {
-      transaction_id: awardResult.transaction_id,
-      new_balance: awardResult.new_balance,
-      message: awardResult.message,
+    // Log machine activity
+    await supabase.rpc("log_machine_activity", {
+      p_machine_id: machine.id,
+      p_activity_type: "play",
+      p_user_id: user_id,
+      p_session_id: session_id || null,
+      p_amount: 0,
+      p_credits_used: 1,
+      p_item_name: game_name || null,
+      p_metadata: JSON.stringify({
+        tickets_awarded: tickets,
+        score: score || null,
+        is_jackpot: awardResult.message === "JACKPOT!",
+        transaction_id: awardResult.transaction_id,
+      }),
     });
-
-    // Log machine activity for arcade play
-    if (!isDemoMode) {
-      await supabase.rpc("log_machine_activity", {
-        p_machine_id: machine.id,
-        p_activity_type: "play",
-        p_user_id: user_id,
-        p_session_id: session_id || null,
-        p_amount: 0, // Revenue tracked separately via VendX Pay
-        p_credits_used: 1,
-        p_item_name: game_name || null,
-        p_metadata: JSON.stringify({
-          tickets_awarded: tickets,
-          score: score || null,
-          is_jackpot: awardResult.message === "JACKPOT!",
-          transaction_id: awardResult.transaction_id,
-        }),
-      });
-    }
 
     return new Response(
       JSON.stringify({
@@ -165,8 +148,7 @@ serve(async (req) => {
     );
   } catch (error: unknown) {
     console.error("Award tickets error:", error);
-    const message = error instanceof Error ? error.message : "Unknown error";
-    return new Response(JSON.stringify({ error: message }), {
+    return new Response(JSON.stringify({ error: "Internal server error" }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
