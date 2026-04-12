@@ -34,81 +34,59 @@ serve(async (req) => {
       });
     }
 
-    // Demo mode support
-    const isDemoMode = apiKey === "demo-api-key";
-    let machine = { id: "demo", machine_code: "DEMO", name: "Demo Machine" };
+    // Verify machine
+    const { data: machine } = await supabase
+      .from("vendx_machines")
+      .select("id, machine_code, name")
+      .eq("api_key", apiKey)
+      .eq("status", "active")
+      .maybeSingle();
 
-    if (!isDemoMode) {
-      // Verify machine
-      const { data: realMachine } = await supabase
-        .from("vendx_machines")
-        .select("id, machine_code, name")
-        .eq("api_key", apiKey)
-        .eq("status", "active")
-        .maybeSingle();
-
-      if (!realMachine) {
-        return new Response(JSON.stringify({ error: "Invalid or inactive machine" }), {
-          status: 403,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      machine = realMachine;
+    if (!machine) {
+      return new Response(JSON.stringify({ error: "Invalid or inactive machine" }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     const { session_code, amount, item_name } = await req.json();
 
-    if (!session_code || !amount || amount <= 0) {
-      return new Response(JSON.stringify({ error: "Session code and valid amount required" }), {
+    // Input validation
+    if (!session_code || typeof session_code !== "string" || session_code.length > 50) {
+      return new Response(JSON.stringify({ error: "Valid session_code required" }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (!amount || typeof amount !== "number" || amount <= 0 || amount > 10000) {
+      return new Response(JSON.stringify({ error: "Valid amount required (0.01-10000)" }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (item_name && (typeof item_name !== "string" || item_name.length > 200)) {
+      return new Response(JSON.stringify({ error: "item_name must be under 200 characters" }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Verify session from database
+    const { data: session } = await supabase
+      .from("machine_sessions")
+      .select("id, user_id, status")
+      .eq("session_code", session_code)
+      .eq("status", "verified")
+      .maybeSingle();
+
+    if (!session || !session.user_id) {
+      return new Response(JSON.stringify({ error: "Invalid or unverified session" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    let userId: string;
-    let sessionId: string | null = null;
-
-    // Demo mode: get user from JWT token
-    if (isDemoMode && session_code === "DEMO") {
-      const authHeader = req.headers.get("authorization");
-      if (!authHeader) {
-        return new Response(JSON.stringify({ error: "Authorization required" }), {
-          status: 401,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-
-      const token = authHeader.replace("Bearer ", "");
-      const { data: { user }, error: userError } = await supabase.auth.getUser(token);
-
-      if (userError || !user) {
-        return new Response(JSON.stringify({ error: "Invalid authorization" }), {
-          status: 401,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-
-      userId = user.id;
-      console.log("Demo mode purchase for user:", userId);
-    } else {
-      // Production mode: verify session from database
-      const { data: session } = await supabase
-        .from("machine_sessions")
-        .select("id, user_id, status")
-        .eq("session_code", session_code)
-        .eq("status", "verified")
-        .maybeSingle();
-
-      if (!session || !session.user_id) {
-        return new Response(JSON.stringify({ error: "Invalid or unverified session" }), {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-
-      userId = session.user_id;
-      sessionId = session.id;
-    }
+    const userId = session.user_id;
+    const sessionId = session.id;
 
     // Get user's parent wallet
     const { data: wallet } = await supabase
@@ -157,39 +135,33 @@ serve(async (req) => {
 
     if (walletError) throw walletError;
 
-    // Create wallet transaction (skip machine_id for demo)
-    const walletTxData: Record<string, unknown> = {
-      wallet_id: wallet.id,
-      amount: -amount,
-      transaction_type: "purchase",
-      description: item_name ? `Purchase: ${item_name}` : "Machine purchase",
-    };
-    if (!isDemoMode) {
-      walletTxData.machine_id = machine.id;
-    }
-    
+    // Create wallet transaction
     const { data: walletTx, error: txError } = await supabase
       .from("wallet_transactions")
-      .insert(walletTxData)
+      .insert({
+        wallet_id: wallet.id,
+        amount: -amount,
+        transaction_type: "purchase",
+        description: item_name ? `Purchase: ${item_name}` : "Machine purchase",
+        machine_id: machine.id,
+      })
       .select("id")
       .single();
 
     if (txError) throw txError;
 
-    // Create machine transaction (skip for demo mode)
-    if (!isDemoMode && sessionId) {
-      await supabase
-        .from("machine_transactions")
-        .insert({
-          machine_id: machine.id,
-          user_id: userId,
-          wallet_transaction_id: walletTx.id,
-          amount: amount,
-          item_name: item_name,
-          points_earned: pointsEarned,
-          session_id: sessionId,
-        });
-    }
+    // Create machine transaction
+    await supabase
+      .from("machine_transactions")
+      .insert({
+        machine_id: machine.id,
+        user_id: userId,
+        wallet_transaction_id: walletTx.id,
+        amount: amount,
+        item_name: item_name,
+        points_earned: pointsEarned,
+        session_id: sessionId,
+      });
 
     // Award points
     if (rewardsRecord) {
@@ -204,7 +176,6 @@ serve(async (req) => {
         })
         .eq("id", rewardsRecord.id);
 
-      // Log point transaction
       await supabase
         .from("point_transactions")
         .insert({
@@ -217,20 +188,18 @@ serve(async (req) => {
     }
 
     // Log machine activity
-    if (!isDemoMode) {
-      await supabase.rpc("log_machine_activity", {
-        p_machine_id: machine.id,
-        p_activity_type: "vend",
-        p_user_id: userId,
-        p_session_id: sessionId,
-        p_amount: amount,
-        p_item_name: item_name || null,
-        p_metadata: JSON.stringify({
-          points_earned: pointsEarned,
-          wallet_tx_id: walletTx.id,
-        }),
-      });
-    }
+    await supabase.rpc("log_machine_activity", {
+      p_machine_id: machine.id,
+      p_activity_type: "vend",
+      p_user_id: userId,
+      p_session_id: sessionId,
+      p_amount: amount,
+      p_item_name: item_name || null,
+      p_metadata: JSON.stringify({
+        points_earned: pointsEarned,
+        wallet_tx_id: walletTx.id,
+      }),
+    });
 
     // Log to synced_transactions for unified finance view
     await supabase.from("synced_transactions").insert({
@@ -267,8 +236,7 @@ serve(async (req) => {
     );
   } catch (error: unknown) {
     console.error("Process error:", error);
-    const message = error instanceof Error ? error.message : "Unknown error";
-    return new Response(JSON.stringify({ error: message }), {
+    return new Response(JSON.stringify({ error: "Internal server error" }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
