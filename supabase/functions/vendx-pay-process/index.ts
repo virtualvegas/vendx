@@ -26,21 +26,28 @@ serve(async (req) => {
     );
 
     const apiKey = req.headers.get("x-machine-api-key");
+    const { session_code, amount, item_name, machine_id: bodyMachineId } = await req.json();
 
-    if (!apiKey) {
-      return new Response(JSON.stringify({ error: "Machine API key required" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    // Support both api_key header (machine-to-machine) and machine_id in body (kiosk UI)
+    let machine: { id: string; machine_code: string; name: string } | null = null;
+
+    if (apiKey) {
+      const { data } = await supabase
+        .from("vendx_machines")
+        .select("id, machine_code, name")
+        .eq("api_key", apiKey)
+        .eq("status", "active")
+        .maybeSingle();
+      machine = data;
+    } else if (bodyMachineId && typeof bodyMachineId === "string") {
+      const { data } = await supabase
+        .from("vendx_machines")
+        .select("id, machine_code, name")
+        .eq("id", bodyMachineId)
+        .eq("status", "active")
+        .maybeSingle();
+      machine = data;
     }
-
-    // Verify machine
-    const { data: machine } = await supabase
-      .from("vendx_machines")
-      .select("id, machine_code, name")
-      .eq("api_key", apiKey)
-      .eq("status", "active")
-      .maybeSingle();
 
     if (!machine) {
       return new Response(JSON.stringify({ error: "Invalid or inactive machine" }), {
@@ -48,8 +55,6 @@ serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-
-    const { session_code, amount, item_name } = await req.json();
 
     // Input validation
     if (!session_code || typeof session_code !== "string" || session_code.length > 50) {
