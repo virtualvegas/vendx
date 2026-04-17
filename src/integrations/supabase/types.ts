@@ -1199,6 +1199,491 @@ export type Database = {
         }
         Relationships: []
       }
+      finance_account_transactions: {
+        Row: {
+          account_id: string
+          amount: number
+          category: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          direction: string
+          id: string
+          metadata: Json | null
+          reference_id: string | null
+          reference_type: string | null
+          related_account_id: string | null
+          transaction_date: string
+        }
+        Insert: {
+          account_id: string
+          amount: number
+          category?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          direction: string
+          id?: string
+          metadata?: Json | null
+          reference_id?: string | null
+          reference_type?: string | null
+          related_account_id?: string | null
+          transaction_date?: string
+        }
+        Update: {
+          account_id?: string
+          amount?: number
+          category?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          direction?: string
+          id?: string
+          metadata?: Json | null
+          reference_id?: string | null
+          reference_type?: string | null
+          related_account_id?: string | null
+          transaction_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_account_transactions_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "finance_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "finance_account_transactions_related_account_id_fkey"
+            columns: ["related_account_id"]
+            isOneToOne: false
+            referencedRelation: "finance_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      finance_accounts: {
+        Row: {
+          account_number_last4: string | null
+          account_type: string
+          created_at: string
+          current_balance: number
+          description: string | null
+          id: string
+          institution: string | null
+          is_active: boolean
+          is_primary: boolean
+          name: string
+          opening_balance: number
+          updated_at: string
+        }
+        Insert: {
+          account_number_last4?: string | null
+          account_type: string
+          created_at?: string
+          current_balance?: number
+          description?: string | null
+          id?: string
+          institution?: string | null
+          is_active?: boolean
+          is_primary?: boolean
+          name: string
+          opening_balance?: number
+          updated_at?: string
+        }
+        Update: {
+          account_number_last4?: string | null
+          account_type?: string
+          created_at?: string
+          current_balance?: number
+          description?: string | null
+          id?: string
+          institution?: string | null
+          is_active?: boolean
+          is_primary?: boolean
+          name?: string
+          opening_balance?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      finance_expense_splits: {
+        Row: {
+          allocated_amount: number
+          allocation_type: string
+          allocation_value: number
+          category: string | null
+          created_at: string
+          expense_id: string
+          id: string
+          location_id: string | null
+          machine_id: string | null
+          notes: string | null
+        }
+        Insert: {
+          allocated_amount: number
+          allocation_type?: string
+          allocation_value: number
+          category?: string | null
+          created_at?: string
+          expense_id: string
+          id?: string
+          location_id?: string | null
+          machine_id?: string | null
+          notes?: string | null
+        }
+        Update: {
+          allocated_amount?: number
+          allocation_type?: string
+          allocation_value?: number
+          category?: string | null
+          created_at?: string
+          expense_id?: string
+          id?: string
+          location_id?: string | null
+          machine_id?: string | null
+          notes?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_expense_splits_expense_id_fkey"
+            columns: ["expense_id"]
+            isOneToOne: false
+            referencedRelation: "finance_expenses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "finance_expense_splits_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "finance_expense_splits_machine_id_fkey"
+            columns: ["machine_id"]
+            isOneToOne: false
+            referencedRelation: "vendx_machines"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      finance_expenses: {
+        Row: {
+          amount: number
+          approved_at: string | null
+          approved_by: string | null
+          category: string
+          created_at: string
+          created_by: string | null
+          description: string | null
+          expense_date: string
+          id: string
+          is_inventory_reinvestment: boolean
+          is_tax_deductible: boolean
+          notes: string | null
+          paid_from_account_id: string | null
+          payment_method: string | null
+          receipt_filename: string | null
+          receipt_url: string | null
+          status: string
+          subcategory: string | null
+          tax_amount: number | null
+          updated_at: string
+          vendor: string | null
+        }
+        Insert: {
+          amount: number
+          approved_at?: string | null
+          approved_by?: string | null
+          category: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          expense_date?: string
+          id?: string
+          is_inventory_reinvestment?: boolean
+          is_tax_deductible?: boolean
+          notes?: string | null
+          paid_from_account_id?: string | null
+          payment_method?: string | null
+          receipt_filename?: string | null
+          receipt_url?: string | null
+          status?: string
+          subcategory?: string | null
+          tax_amount?: number | null
+          updated_at?: string
+          vendor?: string | null
+        }
+        Update: {
+          amount?: number
+          approved_at?: string | null
+          approved_by?: string | null
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          expense_date?: string
+          id?: string
+          is_inventory_reinvestment?: boolean
+          is_tax_deductible?: boolean
+          notes?: string | null
+          paid_from_account_id?: string | null
+          payment_method?: string | null
+          receipt_filename?: string | null
+          receipt_url?: string | null
+          status?: string
+          subcategory?: string | null
+          tax_amount?: number | null
+          updated_at?: string
+          vendor?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_expenses_paid_from_account_id_fkey"
+            columns: ["paid_from_account_id"]
+            isOneToOne: false
+            referencedRelation: "finance_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      finance_inventory_reinvestments: {
+        Row: {
+          amount: number
+          created_at: string
+          created_by: string | null
+          description: string | null
+          expense_id: string | null
+          id: string
+          notes: string | null
+          reinvestment_date: string
+          source_account_id: string | null
+          units_purchased: number | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          expense_id?: string | null
+          id?: string
+          notes?: string | null
+          reinvestment_date?: string
+          source_account_id?: string | null
+          units_purchased?: number | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          expense_id?: string | null
+          id?: string
+          notes?: string | null
+          reinvestment_date?: string
+          source_account_id?: string | null
+          units_purchased?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_inventory_reinvestments_expense_id_fkey"
+            columns: ["expense_id"]
+            isOneToOne: false
+            referencedRelation: "finance_expenses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "finance_inventory_reinvestments_source_account_id_fkey"
+            columns: ["source_account_id"]
+            isOneToOne: false
+            referencedRelation: "finance_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      finance_subscription_payments: {
+        Row: {
+          amount: number
+          created_at: string
+          created_by: string | null
+          expense_id: string | null
+          id: string
+          notes: string | null
+          paid_from_account_id: string | null
+          payment_date: string
+          receipt_url: string | null
+          subscription_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          created_by?: string | null
+          expense_id?: string | null
+          id?: string
+          notes?: string | null
+          paid_from_account_id?: string | null
+          payment_date?: string
+          receipt_url?: string | null
+          subscription_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          created_by?: string | null
+          expense_id?: string | null
+          id?: string
+          notes?: string | null
+          paid_from_account_id?: string | null
+          payment_date?: string
+          receipt_url?: string | null
+          subscription_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_subscription_payments_expense_id_fkey"
+            columns: ["expense_id"]
+            isOneToOne: false
+            referencedRelation: "finance_expenses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "finance_subscription_payments_paid_from_account_id_fkey"
+            columns: ["paid_from_account_id"]
+            isOneToOne: false
+            referencedRelation: "finance_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "finance_subscription_payments_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "finance_subscriptions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      finance_subscriptions: {
+        Row: {
+          amount: number
+          auto_pay: boolean
+          billing_cycle: string
+          billing_day: number | null
+          cancellation_url: string | null
+          category: string | null
+          created_at: string
+          currency: string
+          custom_interval_days: number | null
+          id: string
+          is_tax_deductible: boolean
+          last_paid_date: string | null
+          next_due_date: string
+          notes: string | null
+          paid_from_account_id: string | null
+          reminder_days_before: number
+          service_name: string | null
+          status: string
+          updated_at: string
+          vendor_name: string
+        }
+        Insert: {
+          amount: number
+          auto_pay?: boolean
+          billing_cycle: string
+          billing_day?: number | null
+          cancellation_url?: string | null
+          category?: string | null
+          created_at?: string
+          currency?: string
+          custom_interval_days?: number | null
+          id?: string
+          is_tax_deductible?: boolean
+          last_paid_date?: string | null
+          next_due_date: string
+          notes?: string | null
+          paid_from_account_id?: string | null
+          reminder_days_before?: number
+          service_name?: string | null
+          status?: string
+          updated_at?: string
+          vendor_name: string
+        }
+        Update: {
+          amount?: number
+          auto_pay?: boolean
+          billing_cycle?: string
+          billing_day?: number | null
+          cancellation_url?: string | null
+          category?: string | null
+          created_at?: string
+          currency?: string
+          custom_interval_days?: number | null
+          id?: string
+          is_tax_deductible?: boolean
+          last_paid_date?: string | null
+          next_due_date?: string
+          notes?: string | null
+          paid_from_account_id?: string | null
+          reminder_days_before?: number
+          service_name?: string | null
+          status?: string
+          updated_at?: string
+          vendor_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_subscriptions_paid_from_account_id_fkey"
+            columns: ["paid_from_account_id"]
+            isOneToOne: false
+            referencedRelation: "finance_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      finance_tax_settings: {
+        Row: {
+          created_at: string
+          effective_from: string
+          fiscal_year_start_month: number
+          id: string
+          notes: string | null
+          sales_tax_percent: number
+          setaside_percent: number
+          tax_savings_account_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          effective_from?: string
+          fiscal_year_start_month?: number
+          id?: string
+          notes?: string | null
+          sales_tax_percent?: number
+          setaside_percent?: number
+          tax_savings_account_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          effective_from?: string
+          fiscal_year_start_month?: number
+          id?: string
+          notes?: string | null
+          sales_tax_percent?: number
+          setaside_percent?: number
+          tax_savings_account_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_tax_settings_tax_savings_account_id_fkey"
+            columns: ["tax_savings_account_id"]
+            isOneToOne: false
+            referencedRelation: "finance_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       financial_transactions: {
         Row: {
           amount: number

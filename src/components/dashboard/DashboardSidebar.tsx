@@ -156,6 +156,7 @@ const tabGroups: TabGroup[] = [
     label: "Finance & Payouts",
     tabs: [
       { id: "finance", label: "Finance Overview", icon: DollarSign, requiredRoles: ["super_admin", "finance_accounting"] },
+      { id: "finance-manager", label: "Finance Manager", icon: Wallet, requiredRoles: ["super_admin", "finance_accounting"] },
       { id: "vendx-pay", label: "VendX Pay", icon: Wallet, requiredRoles: ["super_admin", "finance_accounting"] },
       { id: "gift-cards", label: "Gift Cards", icon: Gift, requiredRoles: ["super_admin"] },
       { id: "payouts", label: "Partner Payouts", icon: DollarSign, requiredRoles: ["super_admin", "finance_accounting"] },
