@@ -9,6 +9,7 @@ import GlobalOperations from "@/components/dashboard/tabs/GlobalOperations";
 import EventsRentals from "@/components/dashboard/tabs/EventsRentals";
 import TechnicalSupport from "@/components/dashboard/tabs/TechnicalSupport";
 import Finance from "@/components/dashboard/tabs/Finance";
+import FinanceManager from "@/components/dashboard/tabs/FinanceManager";
 import Marketing from "@/components/dashboard/tabs/Marketing";
 import InventoryLogistics from "@/components/dashboard/tabs/InventoryLogistics";
 import RegionalReports from "@/components/dashboard/tabs/RegionalReports";
@@ -252,6 +253,8 @@ const DashboardPage = () => {
         content = <TechnicalSupport />; break;
       case "finance":
         content = <Finance />; break;
+      case "finance-manager":
+        content = <FinanceManager />; break;
       case "marketing":
         content = <Marketing />; break;
       case "inventory-logistics":
