@@ -1448,6 +1448,103 @@ export type Database = {
           },
         ]
       }
+      finance_income: {
+        Row: {
+          amount: number
+          category: string
+          created_at: string
+          created_by: string | null
+          deposited_to_account_id: string | null
+          description: string | null
+          id: string
+          income_date: string
+          is_taxable: boolean
+          location_id: string | null
+          machine_id: string | null
+          notes: string | null
+          payment_method: string | null
+          receipt_filename: string | null
+          receipt_url: string | null
+          reference_id: string | null
+          reference_type: string | null
+          source: string
+          status: string
+          subcategory: string | null
+          tax_collected: number | null
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          deposited_to_account_id?: string | null
+          description?: string | null
+          id?: string
+          income_date?: string
+          is_taxable?: boolean
+          location_id?: string | null
+          machine_id?: string | null
+          notes?: string | null
+          payment_method?: string | null
+          receipt_filename?: string | null
+          receipt_url?: string | null
+          reference_id?: string | null
+          reference_type?: string | null
+          source: string
+          status?: string
+          subcategory?: string | null
+          tax_collected?: number | null
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          deposited_to_account_id?: string | null
+          description?: string | null
+          id?: string
+          income_date?: string
+          is_taxable?: boolean
+          location_id?: string | null
+          machine_id?: string | null
+          notes?: string | null
+          payment_method?: string | null
+          receipt_filename?: string | null
+          receipt_url?: string | null
+          reference_id?: string | null
+          reference_type?: string | null
+          source?: string
+          status?: string
+          subcategory?: string | null
+          tax_collected?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_income_deposited_to_account_id_fkey"
+            columns: ["deposited_to_account_id"]
+            isOneToOne: false
+            referencedRelation: "finance_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "finance_income_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "finance_income_machine_id_fkey"
+            columns: ["machine_id"]
+            isOneToOne: false
+            referencedRelation: "vendx_machines"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       finance_inventory_reinvestments: {
         Row: {
           amount: number
@@ -6486,6 +6583,13 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      import_machine_revenue_to_income: {
+        Args: { p_account_id?: string; p_from_date: string; p_to_date: string }
+        Returns: {
+          imported_count: number
+          total_amount: number
+        }[]
       }
       increment_player_xp: {
         Args: { p_user_id: string; p_xp: number }

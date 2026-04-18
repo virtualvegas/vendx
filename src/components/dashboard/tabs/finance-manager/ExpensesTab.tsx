@@ -158,12 +158,12 @@ export const ExpensesTab = () => {
 
   return (
     <div className="space-y-4">
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card><CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">Total Expenses (filtered)</CardTitle></CardHeader>
+      <div className="grid gap-3 md:grid-cols-3">
+        <Card><CardHeader className="pb-2"><CardTitle className="text-xs text-muted-foreground">Total (filtered)</CardTitle></CardHeader>
           <CardContent><p className="text-2xl font-bold">${stats.total.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p></CardContent></Card>
-        <Card><CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">Tax Deductible</CardTitle></CardHeader>
+        <Card><CardHeader className="pb-2"><CardTitle className="text-xs text-muted-foreground">Tax Deductible</CardTitle></CardHeader>
           <CardContent><p className="text-2xl font-bold text-green-600">${stats.deductible.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p></CardContent></Card>
-        <Card><CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">Inventory Reinvestment</CardTitle></CardHeader>
+        <Card><CardHeader className="pb-2"><CardTitle className="text-xs text-muted-foreground">Inventory Reinvest</CardTitle></CardHeader>
           <CardContent><p className="text-2xl font-bold">${stats.reinvestment.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p></CardContent></Card>
       </div>
 
