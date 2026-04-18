@@ -184,6 +184,20 @@ serve(async (req) => {
 
       console.log("Processing store order for user:", userId);
 
+      // Idempotency check: PayPal order already used to create an order
+      const { data: existingOrder } = await supabaseClient
+        .from("store_orders")
+        .select("id")
+        .eq("paypal_order_id", orderId)
+        .maybeSingle();
+
+      if (existingOrder) {
+        console.log("Store order already created for PayPal order:", orderId);
+        return new Response(JSON.stringify({ success: true, type: "store_order", orderId: existingOrder.id, alreadyProcessed: true }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
       // Create store order
       const { data: order, error: orderError } = await supabaseClient
         .from("store_orders")
