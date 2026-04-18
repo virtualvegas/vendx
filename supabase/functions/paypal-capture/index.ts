@@ -91,6 +91,24 @@ serve(async (req) => {
 
       console.log("Processing wallet load for user:", userId, "amount:", amount);
 
+      // Idempotency check: if this PayPal order was already processed, return success
+      const { data: existingTxn } = await supabaseClient
+        .from("synced_transactions")
+        .select("id")
+        .eq("provider", "vendx_pay")
+        .eq("provider_transaction_id", `wallet_load_paypal_${orderId}`)
+        .maybeSingle();
+
+      if (existingTxn) {
+        console.log("Wallet load already processed for order:", orderId);
+        const { data: w } = await supabaseClient
+          .from("wallets").select("balance").eq("user_id", userId)
+          .in("wallet_type", ["standard", "guest"]).is("parent_wallet_id", null).maybeSingle();
+        return new Response(JSON.stringify({ success: true, type: "wallet_load", newBalance: w?.balance ?? 0, alreadyProcessed: true }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
       // Update wallet balance (parent wallet)
       const { data: wallet, error: walletError } = await supabaseClient
         .from("wallets")
@@ -165,6 +183,20 @@ serve(async (req) => {
       const shipping = purchaseUnit.shipping?.address;
 
       console.log("Processing store order for user:", userId);
+
+      // Idempotency check: PayPal order already used to create an order
+      const { data: existingOrder } = await supabaseClient
+        .from("store_orders")
+        .select("id")
+        .eq("paypal_order_id", orderId)
+        .maybeSingle();
+
+      if (existingOrder) {
+        console.log("Store order already created for PayPal order:", orderId);
+        return new Response(JSON.stringify({ success: true, type: "store_order", orderId: existingOrder.id, alreadyProcessed: true }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
 
       // Create store order
       const { data: order, error: orderError } = await supabaseClient
