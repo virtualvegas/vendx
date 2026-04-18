@@ -1378,6 +1378,7 @@ export type Database = {
           created_by: string | null
           description: string | null
           expense_date: string
+          external_reference: string | null
           id: string
           is_inventory_reinvestment: boolean
           is_tax_deductible: boolean
@@ -1401,6 +1402,7 @@ export type Database = {
           created_by?: string | null
           description?: string | null
           expense_date?: string
+          external_reference?: string | null
           id?: string
           is_inventory_reinvestment?: boolean
           is_tax_deductible?: boolean
@@ -1424,6 +1426,7 @@ export type Database = {
           created_by?: string | null
           description?: string | null
           expense_date?: string
+          external_reference?: string | null
           id?: string
           is_inventory_reinvestment?: boolean
           is_tax_deductible?: boolean
