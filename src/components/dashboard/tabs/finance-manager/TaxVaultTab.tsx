@@ -23,7 +23,7 @@ export const TaxVaultTab = () => {
 
   const { data: accounts } = useQuery({
     queryKey: ["finance-accounts"],
-    queryFn: async () => (await supabase.from("finance_accounts" as any).select("*")).data || [],
+    queryFn: async (): Promise<any[]> => ((await supabase.from("finance_accounts" as any).select("*")).data as any) || [],
   });
 
   const { data: taxSettings } = useQuery({
