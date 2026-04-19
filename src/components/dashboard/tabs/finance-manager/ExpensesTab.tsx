@@ -31,6 +31,7 @@ export const ExpensesTab = () => {
     expense_date: format(new Date(), "yyyy-MM-dd"), vendor: "", category: "inventory", subcategory: "", description: "",
     amount: 0, tax_amount: 0, is_tax_deductible: true, is_inventory_reinvestment: false,
     payment_method: "bank", paid_from_account_id: "", receipt_url: null, receipt_filename: null, status: "recorded", notes: "",
+    external_reference: "",
   });
   const [splits, setSplits] = useState<Split[]>([]);
   const [filter, setFilter] = useState({ category: "all", status: "all", search: "" });
@@ -82,7 +83,7 @@ export const ExpensesTab = () => {
   }, [filtered]);
 
   const resetForm = () => {
-    setForm({ expense_date: format(new Date(), "yyyy-MM-dd"), vendor: "", category: "inventory", subcategory: "", description: "", amount: 0, tax_amount: 0, is_tax_deductible: true, is_inventory_reinvestment: false, payment_method: "bank", paid_from_account_id: "", receipt_url: null, receipt_filename: null, status: "recorded", notes: "" });
+    setForm({ expense_date: format(new Date(), "yyyy-MM-dd"), vendor: "", category: "inventory", subcategory: "", description: "", amount: 0, tax_amount: 0, is_tax_deductible: true, is_inventory_reinvestment: false, payment_method: "bank", paid_from_account_id: "", receipt_url: null, receipt_filename: null, status: "recorded", notes: "", external_reference: "" });
     setSplits([]);
     setEditing(null);
   };
@@ -199,6 +200,9 @@ export const ExpensesTab = () => {
                     </Select>
                   </div>
                 </div>
+                <div><Label>Transaction # / Invoice / Receipt #</Label>
+                  <Input placeholder="Used to detect duplicates per vendor" value={form.external_reference} onChange={(e) => setForm({ ...form, external_reference: e.target.value })} />
+                </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div><Label>Payment Method</Label>
                     <Select value={form.payment_method} onValueChange={(v) => setForm({ ...form, payment_method: v })}>
@@ -279,12 +283,13 @@ export const ExpensesTab = () => {
             </Select>
           </div>
           <Table>
-            <TableHeader><TableRow><TableHead>Date</TableHead><TableHead>Vendor</TableHead><TableHead>Category</TableHead><TableHead>Amount</TableHead><TableHead>Status</TableHead><TableHead>Tags</TableHead><TableHead className="w-24"></TableHead></TableRow></TableHeader>
+            <TableHeader><TableRow><TableHead>Date</TableHead><TableHead>Vendor</TableHead><TableHead>Txn #</TableHead><TableHead>Category</TableHead><TableHead>Amount</TableHead><TableHead>Status</TableHead><TableHead>Tags</TableHead><TableHead className="w-24"></TableHead></TableRow></TableHeader>
             <TableBody>
               {filtered.map((e: any) => (
                 <TableRow key={e.id}>
                   <TableCell>{format(new Date(e.expense_date), "MMM d, yy")}</TableCell>
                   <TableCell>{e.vendor || "—"}</TableCell>
+                  <TableCell className="font-mono text-xs text-muted-foreground max-w-[120px] truncate" title={e.external_reference}>{e.external_reference || "—"}</TableCell>
                   <TableCell><Badge variant="outline">{e.category}</Badge></TableCell>
                   <TableCell className="font-mono">${Number(e.amount).toFixed(2)}</TableCell>
                   <TableCell><Badge variant={STATUS_COLORS[e.status] as any}>{e.status}</Badge></TableCell>
@@ -299,7 +304,7 @@ export const ExpensesTab = () => {
                   </TableCell>
                 </TableRow>
               ))}
-              {filtered.length === 0 && <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-8">No expenses</TableCell></TableRow>}
+              {filtered.length === 0 && <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-8">No expenses</TableCell></TableRow>}
             </TableBody>
           </Table>
         </CardContent>

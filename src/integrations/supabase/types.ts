@@ -1459,6 +1459,7 @@ export type Database = {
           created_by: string | null
           deposited_to_account_id: string | null
           description: string | null
+          external_reference: string | null
           id: string
           income_date: string
           is_taxable: boolean
@@ -1483,6 +1484,7 @@ export type Database = {
           created_by?: string | null
           deposited_to_account_id?: string | null
           description?: string | null
+          external_reference?: string | null
           id?: string
           income_date?: string
           is_taxable?: boolean
@@ -1507,6 +1509,7 @@ export type Database = {
           created_by?: string | null
           deposited_to_account_id?: string | null
           description?: string | null
+          external_reference?: string | null
           id?: string
           income_date?: string
           is_taxable?: boolean
@@ -6610,6 +6613,14 @@ export type Database = {
           p_session_id?: string
           p_user_id?: string
         }
+        Returns: string
+      }
+      merge_finance_expense: {
+        Args: { p_keep_id: string; p_merge_id: string }
+        Returns: string
+      }
+      merge_finance_income: {
+        Args: { p_keep_id: string; p_merge_id: string }
         Returns: string
       }
       process_ticket_redemption: {
