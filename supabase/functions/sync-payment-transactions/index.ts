@@ -93,7 +93,7 @@ async function syncStripeTransactions(supabase: any, startDate?: string): Promis
           amount: charge.amount / 100,
           currency: charge.currency,
           status: charge.status,
-          description: charge.description || `Stripe charge ${charge.id}`,
+          description: `${charge.description || "Stripe charge"} (Txn #${charge.id})`,
           customer_email: charge.billing_details?.email || customer?.email || null,
           customer_name: charge.billing_details?.name || customer?.name || null,
           transaction_date: new Date(charge.created * 1000).toISOString(),
