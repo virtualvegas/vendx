@@ -123,7 +123,7 @@ async function syncStripeTransactions(supabase: any, startDate?: string): Promis
           amount: -(refund.amount / 100),
           currency: refund.currency,
           status: refund.status || "succeeded",
-          description: refund.reason || `Refund for charge ${charge?.id}`,
+          description: `Refund ${refund.reason || ""} (Refund #${refund.id}, Charge #${charge?.id || "unknown"})`.trim(),
           customer_email: charge?.billing_details?.email || null,
           customer_name: charge?.billing_details?.name || null,
           transaction_date: new Date(refund.created * 1000).toISOString(),
