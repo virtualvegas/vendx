@@ -187,6 +187,9 @@ export const IncomeTab = () => {
                     <div><Label>Amount</Label><Input type="number" step="0.01" value={form.amount} onChange={(e) => setForm({ ...form, amount: Number(e.target.value) })} /></div>
                     <div><Label>Sales Tax Collected</Label><Input type="number" step="0.01" value={form.tax_collected} onChange={(e) => setForm({ ...form, tax_collected: Number(e.target.value) })} /></div>
                   </div>
+                  <div><Label>Transaction # / Reference</Label>
+                    <Input placeholder="Check #, confirmation, invoice — used to detect duplicates" value={form.external_reference} onChange={(e) => setForm({ ...form, external_reference: e.target.value })} />
+                  </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div><Label>Payment Method</Label>
                       <Select value={form.payment_method} onValueChange={(v) => setForm({ ...form, payment_method: v })}>
