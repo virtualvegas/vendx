@@ -31,6 +31,7 @@ export const ExpensesTab = () => {
     expense_date: format(new Date(), "yyyy-MM-dd"), vendor: "", category: "inventory", subcategory: "", description: "",
     amount: 0, tax_amount: 0, is_tax_deductible: true, is_inventory_reinvestment: false,
     payment_method: "bank", paid_from_account_id: "", receipt_url: null, receipt_filename: null, status: "recorded", notes: "",
+    external_reference: "",
   });
   const [splits, setSplits] = useState<Split[]>([]);
   const [filter, setFilter] = useState({ category: "all", status: "all", search: "" });
