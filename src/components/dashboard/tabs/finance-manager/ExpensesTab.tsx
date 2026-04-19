@@ -200,6 +200,9 @@ export const ExpensesTab = () => {
                     </Select>
                   </div>
                 </div>
+                <div><Label>Transaction # / Invoice / Receipt #</Label>
+                  <Input placeholder="Used to detect duplicates per vendor" value={form.external_reference} onChange={(e) => setForm({ ...form, external_reference: e.target.value })} />
+                </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div><Label>Payment Method</Label>
                     <Select value={form.payment_method} onValueChange={(v) => setForm({ ...form, payment_method: v })}>
