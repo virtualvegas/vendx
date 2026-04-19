@@ -225,12 +225,13 @@ export const IncomeTab = () => {
             </Select>
           </div>
           <Table>
-            <TableHeader><TableRow><TableHead>Date</TableHead><TableHead>Source</TableHead><TableHead>Category</TableHead><TableHead className="text-right">Amount</TableHead><TableHead className="text-right">Tax</TableHead><TableHead>Method</TableHead><TableHead className="w-12"></TableHead></TableRow></TableHeader>
+            <TableHeader><TableRow><TableHead>Date</TableHead><TableHead>Source</TableHead><TableHead>Txn #</TableHead><TableHead>Category</TableHead><TableHead className="text-right">Amount</TableHead><TableHead className="text-right">Tax</TableHead><TableHead>Method</TableHead><TableHead className="w-12"></TableHead></TableRow></TableHeader>
             <TableBody>
               {filtered.map((e: any) => (
                 <TableRow key={e.id}>
                   <TableCell className="whitespace-nowrap">{format(new Date(e.income_date), "MMM d, yy")}</TableCell>
-                  <TableCell className="max-w-[200px] truncate">{e.source}</TableCell>
+                  <TableCell className="max-w-[180px] truncate">{e.source}</TableCell>
+                  <TableCell className="font-mono text-xs text-muted-foreground max-w-[120px] truncate" title={e.external_reference}>{e.external_reference || "—"}</TableCell>
                   <TableCell><Badge variant="outline" className="text-xs">{e.category.replace(/_/g, " ")}</Badge></TableCell>
                   <TableCell className="font-mono text-right text-green-600">+${Number(e.amount).toFixed(2)}</TableCell>
                   <TableCell className="font-mono text-right text-muted-foreground">{Number(e.tax_collected || 0) > 0 ? `$${Number(e.tax_collected).toFixed(2)}` : "—"}</TableCell>
@@ -240,7 +241,7 @@ export const IncomeTab = () => {
                   </TableCell>
                 </TableRow>
               ))}
-              {filtered.length === 0 && <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-8">No income recorded</TableCell></TableRow>}
+              {filtered.length === 0 && <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-8">No income recorded</TableCell></TableRow>}
             </TableBody>
           </Table>
         </CardContent>
