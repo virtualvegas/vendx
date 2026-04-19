@@ -76,6 +76,7 @@ export const IncomeTab = () => {
     income_date: format(new Date(), "yyyy-MM-dd"), source: "", category: "deposit", subcategory: "",
     description: "", amount: 0, tax_collected: 0, is_taxable: true, payment_method: "bank",
     deposited_to_account_id: "", receipt_url: null, receipt_filename: null, status: "recorded", notes: "",
+    external_reference: "",
   });
 
   const saveMut = useMutation({
