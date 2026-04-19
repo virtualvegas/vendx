@@ -212,7 +212,7 @@ async function syncPayPalTransactions(supabase: any, startDate?: string): Promis
           amount: isRefund ? -Math.abs(amount) : Math.abs(amount),
           currency: info.transaction_amount?.currency_code || "USD",
           status: "completed",
-          description: info.transaction_subject || info.transaction_note || `PayPal transaction ${info.transaction_id}`,
+          description: `${info.transaction_subject || info.transaction_note || "PayPal transaction"} (Txn #${info.transaction_id})`,
           customer_email: payerInfo?.email_address || null,
           customer_name: payerInfo?.payer_name?.alternate_full_name || null,
           transaction_date: info.transaction_initiation_date || info.transaction_updated_date,
