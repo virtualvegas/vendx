@@ -283,12 +283,13 @@ export const ExpensesTab = () => {
             </Select>
           </div>
           <Table>
-            <TableHeader><TableRow><TableHead>Date</TableHead><TableHead>Vendor</TableHead><TableHead>Category</TableHead><TableHead>Amount</TableHead><TableHead>Status</TableHead><TableHead>Tags</TableHead><TableHead className="w-24"></TableHead></TableRow></TableHeader>
+            <TableHeader><TableRow><TableHead>Date</TableHead><TableHead>Vendor</TableHead><TableHead>Txn #</TableHead><TableHead>Category</TableHead><TableHead>Amount</TableHead><TableHead>Status</TableHead><TableHead>Tags</TableHead><TableHead className="w-24"></TableHead></TableRow></TableHeader>
             <TableBody>
               {filtered.map((e: any) => (
                 <TableRow key={e.id}>
                   <TableCell>{format(new Date(e.expense_date), "MMM d, yy")}</TableCell>
                   <TableCell>{e.vendor || "—"}</TableCell>
+                  <TableCell className="font-mono text-xs text-muted-foreground max-w-[120px] truncate" title={e.external_reference}>{e.external_reference || "—"}</TableCell>
                   <TableCell><Badge variant="outline">{e.category}</Badge></TableCell>
                   <TableCell className="font-mono">${Number(e.amount).toFixed(2)}</TableCell>
                   <TableCell><Badge variant={STATUS_COLORS[e.status] as any}>{e.status}</Badge></TableCell>
@@ -303,7 +304,7 @@ export const ExpensesTab = () => {
                   </TableCell>
                 </TableRow>
               ))}
-              {filtered.length === 0 && <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-8">No expenses</TableCell></TableRow>}
+              {filtered.length === 0 && <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-8">No expenses</TableCell></TableRow>}
             </TableBody>
           </Table>
         </CardContent>
