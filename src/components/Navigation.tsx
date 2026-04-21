@@ -55,6 +55,7 @@ const Navigation = () => {
       links: [
         { name: "Find Locations", path: "/locations", icon: MapPin },
         { name: "Events", path: "/locations/events", icon: Gamepad2 },
+        { name: "Event Rentals", path: "https://hostheroz.com", icon: Briefcase, external: true },
       ],
     },
     {
@@ -145,6 +146,17 @@ const Navigation = () => {
                   >
                     Locations
                   </Link>
+                </NavigationMenuItem>
+
+                <NavigationMenuItem>
+                  <a
+                    href="https://hostheroz.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="group inline-flex h-10 w-max items-center justify-center rounded-md bg-transparent px-4 py-2 text-sm font-medium transition-colors hover:bg-primary/5 hover:text-accent-foreground focus:bg-primary/5 focus:text-accent-foreground focus:outline-none"
+                  >
+                    Event Rentals
+                  </a>
                 </NavigationMenuItem>
 
                 {/* More VendX Dropdown */}
@@ -251,21 +263,34 @@ const Navigation = () => {
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 px-2">
                 {group.title}
               </p>
-              {group.links.map((link) => (
-                <Link
-                  key={link.path}
-                  to={link.path}
-                  className={cn(
-                    "flex items-center gap-3 py-3 px-3 text-base font-medium rounded-lg transition-colors",
-                    isActive(link.path)
-                      ? "text-primary bg-primary/10"
-                      : "text-foreground hover:text-primary hover:bg-primary/5"
-                  )}
-                >
-                  <link.icon className="w-5 h-5" />
-                  {link.name}
-                </Link>
-              ))}
+              {group.links.map((link) =>
+                "external" in link && link.external ? (
+                  <a
+                    key={link.path}
+                    href={link.path}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-3 py-3 px-3 text-base font-medium rounded-lg transition-colors text-foreground hover:text-primary hover:bg-primary/5"
+                  >
+                    <link.icon className="w-5 h-5" />
+                    {link.name}
+                  </a>
+                ) : (
+                  <Link
+                    key={link.path}
+                    to={link.path}
+                    className={cn(
+                      "flex items-center gap-3 py-3 px-3 text-base font-medium rounded-lg transition-colors",
+                      isActive(link.path)
+                        ? "text-primary bg-primary/10"
+                        : "text-foreground hover:text-primary hover:bg-primary/5"
+                    )}
+                  >
+                    <link.icon className="w-5 h-5" />
+                    {link.name}
+                  </Link>
+                )
+              )}
             </div>
           ))}
 
