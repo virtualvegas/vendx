@@ -99,11 +99,11 @@ const businessLinks = [
     external: true,
   },
   {
-    name: "Northeast Amusements",
-    url: "https://northeastamusements.com",
+    name: "Host Heroz",
+    url: "https://hostheroz.com",
     icon: Gamepad2,
     color: "from-purple-500 to-pink-500",
-    description: "Event amusement equipment for fairs & festivals",
+    description: "Party rentals, arcade attractions, and event entertainment",
     external: true,
   },
 ];
