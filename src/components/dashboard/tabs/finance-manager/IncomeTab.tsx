@@ -258,11 +258,19 @@ export const IncomeTab = () => {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-2 md:grid-cols-2 mb-3">
+          <div className="grid gap-2 md:grid-cols-3 mb-3">
             <Input placeholder="Search source or description..." value={filter.search} onChange={(e) => setFilter({ ...filter, search: e.target.value })} />
             <Select value={filter.category} onValueChange={(v) => setFilter({ ...filter, category: v })}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent><SelectItem value="all">All categories</SelectItem>{CATEGORIES.map(c => <SelectItem key={c} value={c}>{c.replace(/_/g, " ")}</SelectItem>)}</SelectContent>
+            </Select>
+            <Select value={filter.stream} onValueChange={(v) => setFilter({ ...filter, stream: v })}>
+              <SelectTrigger><SelectValue placeholder="All sources" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All sources</SelectItem>
+                <SelectItem value="internal">Internal only</SelectItem>
+                {streams.map(([id, name]) => <SelectItem key={id} value={id}>Ext: {name}</SelectItem>)}
+              </SelectContent>
             </Select>
           </div>
           <Table>
@@ -271,14 +279,32 @@ export const IncomeTab = () => {
               {filtered.map((e: any) => (
                 <TableRow key={e.id}>
                   <TableCell className="whitespace-nowrap">{format(new Date(e.income_date), "MMM d, yy")}</TableCell>
-                  <TableCell className="max-w-[180px] truncate">{e.source}</TableCell>
+                  <TableCell className="max-w-[220px]">
+                    <div className="flex items-center gap-1.5 truncate">
+                      {e.is_external && (
+                        <Badge
+                          variant="secondary"
+                          className="text-[10px] px-1.5 py-0 shrink-0"
+                          style={e.stream_color ? { backgroundColor: `${e.stream_color}20`, color: e.stream_color, borderColor: `${e.stream_color}40` } : undefined}
+                          title={`External stream: ${e.stream_name}`}
+                        >
+                          {e.stream_name || "External"}
+                        </Badge>
+                      )}
+                      <span className="truncate">{e.source}</span>
+                    </div>
+                  </TableCell>
                   <TableCell className="font-mono text-xs text-muted-foreground max-w-[120px] truncate" title={e.external_reference}>{e.external_reference || "—"}</TableCell>
                   <TableCell><Badge variant="outline" className="text-xs">{e.category.replace(/_/g, " ")}</Badge></TableCell>
                   <TableCell className="font-mono text-right text-green-600">+${Number(e.amount).toFixed(2)}</TableCell>
                   <TableCell className="font-mono text-right text-muted-foreground">{Number(e.tax_collected || 0) > 0 ? `$${Number(e.tax_collected).toFixed(2)}` : "—"}</TableCell>
                   <TableCell className="text-xs">{e.payment_method || "—"}</TableCell>
                   <TableCell>
-                    <Button variant="ghost" size="icon" onClick={() => { if (confirm("Delete?")) deleteMut.mutate(e.id); }}><Trash2 className="h-3 w-3" /></Button>
+                    {!e.is_external ? (
+                      <Button variant="ghost" size="icon" onClick={() => { if (confirm("Delete?")) deleteMut.mutate(e.id); }}><Trash2 className="h-3 w-3" /></Button>
+                    ) : (
+                      <span className="text-[10px] text-muted-foreground" title="External entries are read-only — manage at the source">—</span>
+                    )}
                   </TableCell>
                 </TableRow>
               ))}
