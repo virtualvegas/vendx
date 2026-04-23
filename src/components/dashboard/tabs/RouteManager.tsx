@@ -758,31 +758,12 @@ const RouteManager = () => {
                     rows={2}
                   />
                 </div>
-                <div>
-                  <Label htmlFor="assigned_to">Assign Operator</Label>
-                  <Select 
-                    value={zoneForm.assigned_to || "unassigned"} 
-                    onValueChange={(v) => setZoneForm({ ...zoneForm, assigned_to: v === "unassigned" ? "" : v })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select an operator" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="unassigned">Unassigned</SelectItem>
-                      {employees?.map((emp) => (
-                        <SelectItem key={emp.id} value={emp.id}>
-                          {emp.full_name || emp.email}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <Label htmlFor="office_id">Office (optional)</Label>
                     <Select
                       value={zoneForm.office_id || "none"}
-                      onValueChange={(v) => setZoneForm({ ...zoneForm, office_id: v === "none" ? "" : v })}
+                      onValueChange={(v) => setZoneForm({ ...zoneForm, office_id: v === "none" ? "" : v, assigned_to: "" })}
                     >
                       <SelectTrigger><SelectValue placeholder="Select office" /></SelectTrigger>
                       <SelectContent>
@@ -792,7 +773,7 @@ const RouteManager = () => {
                         ))}
                       </SelectContent>
                     </Select>
-                    <p className="text-xs text-muted-foreground mt-1">Operations center owning this route</p>
+                    <p className="text-xs text-muted-foreground mt-1">Operators are scoped to this office</p>
                   </div>
                   <div>
                     <Label htmlFor="warehouse_id">Warehouse (optional)</Label>
@@ -810,6 +791,68 @@ const RouteManager = () => {
                     </Select>
                     <p className="text-xs text-muted-foreground mt-1">Storage hub for restock supplies</p>
                   </div>
+                </div>
+                <div>
+                  <Label htmlFor="assigned_to">Assign Operator {zoneForm.office_id && <span className="text-xs text-muted-foreground">(filtered to selected office)</span>}</Label>
+                  <Select 
+                    value={zoneForm.assigned_to || "unassigned"} 
+                    onValueChange={(v) => setZoneForm({ ...zoneForm, assigned_to: v === "unassigned" ? "" : v })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select an operator" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="unassigned">Unassigned</SelectItem>
+                      {(employees || [])
+                        .filter(emp => !zoneForm.office_id || emp.office_id === zoneForm.office_id)
+                        .map((emp) => (
+                          <SelectItem key={emp.id} value={emp.id}>
+                            {emp.full_name || emp.email}
+                          </SelectItem>
+                        ))}
+                      {zoneForm.office_id && (employees || []).filter(e => e.office_id === zoneForm.office_id).length === 0 && (
+                        <div className="px-2 py-1.5 text-xs text-muted-foreground">No operators assigned to this office yet</div>
+                      )}
+                    </SelectContent>
+                  </Select>
+                  {editingZone?.assigned_to && editingZone.assigned_to !== zoneForm.assigned_to && (
+                    <p className="text-xs text-amber-600 mt-1 flex items-center gap-1">
+                      <AlertCircle className="w-3 h-3" /> Saving will reassign and log the change
+                    </p>
+                  )}
+                </div>
+                <div className="border rounded-md p-3 space-y-3 bg-muted/30">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label className="text-sm font-medium">Multi-day route</Label>
+                      <p className="text-xs text-muted-foreground">Enable for big routes spanning multiple days</p>
+                    </div>
+                    <input
+                      type="checkbox"
+                      checked={zoneForm.is_multi_day}
+                      onChange={(e) => setZoneForm({ ...zoneForm, is_multi_day: e.target.checked, total_days: e.target.checked ? Math.max(2, zoneForm.total_days) : 1 })}
+                      className="h-4 w-4"
+                    />
+                  </div>
+                  {zoneForm.is_multi_day && (
+                    <div className="grid grid-cols-3 gap-2">
+                      <div>
+                        <Label htmlFor="total_days" className="text-xs">Total Days</Label>
+                        <Input id="total_days" type="number" min={2} max={14} value={zoneForm.total_days}
+                          onChange={(e) => setZoneForm({ ...zoneForm, total_days: parseInt(e.target.value) || 2 })} />
+                      </div>
+                      <div>
+                        <Label htmlFor="start_date" className="text-xs">Start Date</Label>
+                        <Input id="start_date" type="date" value={zoneForm.start_date}
+                          onChange={(e) => setZoneForm({ ...zoneForm, start_date: e.target.value })} />
+                      </div>
+                      <div>
+                        <Label htmlFor="end_date" className="text-xs">End Date</Label>
+                        <Input id="end_date" type="date" value={zoneForm.end_date}
+                          onChange={(e) => setZoneForm({ ...zoneForm, end_date: e.target.value })} />
+                      </div>
+                    </div>
+                  )}
                 </div>
                 <div>
                   <Label htmlFor="status">Status</Label>
