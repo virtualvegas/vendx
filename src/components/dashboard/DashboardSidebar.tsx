@@ -38,6 +38,7 @@ import {
   FileText,
   Megaphone,
   Lightbulb,
+  Globe,
 } from "lucide-react";
 import { AppRole } from "@/pages/DashboardPage";
 import { cn } from "@/lib/utils";
