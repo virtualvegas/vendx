@@ -142,6 +142,17 @@ const GlobalAnalytics = () => {
     return { ecosnack, store, arcade, paypal, other };
   }, [syncedTransactions]);
 
+  // External income totals + per-stream breakdown
+  const externalTotals = useMemo(() => {
+    const total = (externalIncome || []).reduce((s, e: any) => s + Number(e.amount), 0);
+    const byStream = new Map<string, number>();
+    (externalIncome || []).forEach((e: any) => {
+      const name = e.external_income_streams?.name || "External";
+      byStream.set(name, (byStream.get(name) || 0) + Number(e.amount));
+    });
+    return { total, byStream };
+  }, [externalIncome]);
+
   // Totals
   const totals = useMemo(() => {
     const vendingRevenue = machineTransactions?.reduce((s, t) => s + Number(t.amount), 0) || 0;
@@ -149,34 +160,40 @@ const GlobalAnalytics = () => {
       ?.filter(t => t.transaction_type === "revenue" && Number(t.amount) > 0)
       .reduce((s, t) => s + Number(t.amount), 0) || 0;
     const walletLoadTotal = walletLoads?.reduce((s, w) => s + Number(w.amount), 0) || 0;
-    const totalRevenue = vendingRevenue + syncedRevenue;
+    const totalRevenue = vendingRevenue + syncedRevenue + externalTotals.total;
     const totalPlays = arcadeSessions?.reduce((s, a) => s + (a.plays_purchased || 0), 0) || 0;
     const totalPoints = machineTransactions?.reduce((s, t) => s + (t.points_earned || 0), 0) || 0;
-    const totalTransactions = (machineTransactions?.length || 0) + 
-      (syncedTransactions?.filter(t => t.transaction_type === "revenue").length || 0);
+    const totalTransactions = (machineTransactions?.length || 0) +
+      (syncedTransactions?.filter(t => t.transaction_type === "revenue").length || 0) +
+      (externalIncome?.length || 0);
 
     return {
       vendingRevenue,
       storeRevenue: revenueBySource.store,
       arcadeRevenue: revenueBySource.arcade,
       ecosnackRevenue: revenueBySource.ecosnack,
+      externalRevenue: externalTotals.total,
       walletLoadTotal,
       totalRevenue,
       totalTransactions,
       totalPlays,
       totalPoints,
     };
-  }, [syncedTransactions, machineTransactions, walletLoads, arcadeSessions, revenueBySource]);
+  }, [syncedTransactions, machineTransactions, walletLoads, arcadeSessions, revenueBySource, externalIncome, externalTotals]);
 
-  // Revenue breakdown for pie chart
-  const revenueBreakdown = useMemo(() => [
-    { name: "Store", value: totals.storeRevenue },
-    { name: "Vending", value: totals.vendingRevenue },
-    { name: "Arcade", value: totals.arcadeRevenue },
-    { name: "EcoVend", value: totals.ecosnackRevenue },
-    { name: "PayPal (Other)", value: revenueBySource.paypal },
-    { name: "Other", value: revenueBySource.other },
-  ].filter(d => d.value > 0), [totals, revenueBySource]);
+  // Revenue breakdown for pie chart (includes external streams individually)
+  const revenueBreakdown = useMemo(() => {
+    const base = [
+      { name: "Store", value: totals.storeRevenue },
+      { name: "Vending", value: totals.vendingRevenue },
+      { name: "Arcade", value: totals.arcadeRevenue },
+      { name: "EcoVend", value: totals.ecosnackRevenue },
+      { name: "PayPal (Other)", value: revenueBySource.paypal },
+      { name: "Other", value: revenueBySource.other },
+    ];
+    externalTotals.byStream.forEach((value, name) => base.push({ name: `Ext: ${name}`, value }));
+    return base.filter(d => d.value > 0);
+  }, [totals, revenueBySource, externalTotals]);
 
   // Daily revenue trend from synced + machine_transactions
   const dailyRevenue = useMemo(() => {
