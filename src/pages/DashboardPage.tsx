@@ -266,6 +266,8 @@ const DashboardPage = () => {
         content = <DailyTasks />; break;
       case "admin-settings":
         content = <AdminSettings />; break;
+      case "income-streams":
+        content = <IncomeStreamsManager />; break;
       case "careers":
         content = <CareersManager />; break;
       case "locations":
