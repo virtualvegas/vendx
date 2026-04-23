@@ -91,6 +91,21 @@ const GlobalAnalytics = () => {
     },
   });
 
+  // External income (pushed from other VendX-owned sites via webhook)
+  const { data: externalIncome } = useQuery({
+    queryKey: ["ga-external-income", dateRange],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("external_income_entries" as any)
+        .select("id, amount, entry_date, stream_id, external_income_streams!inner(name)")
+        .eq("status", "received")
+        .gte("entry_date", format(dateFilter.start, "yyyy-MM-dd"))
+        .lte("entry_date", format(dateFilter.end, "yyyy-MM-dd"));
+      if (error) { console.error(error); return []; }
+      return (data as any[]) || [];
+    },
+  });
+
   // Wallet loads
   const { data: walletLoads } = useQuery({
     queryKey: ["ga-wallet-loads", dateRange],
@@ -127,6 +142,17 @@ const GlobalAnalytics = () => {
     return { ecosnack, store, arcade, paypal, other };
   }, [syncedTransactions]);
 
+  // External income totals + per-stream breakdown
+  const externalTotals = useMemo(() => {
+    const total = (externalIncome || []).reduce((s, e: any) => s + Number(e.amount), 0);
+    const byStream = new Map<string, number>();
+    (externalIncome || []).forEach((e: any) => {
+      const name = e.external_income_streams?.name || "External";
+      byStream.set(name, (byStream.get(name) || 0) + Number(e.amount));
+    });
+    return { total, byStream };
+  }, [externalIncome]);
+
   // Totals
   const totals = useMemo(() => {
     const vendingRevenue = machineTransactions?.reduce((s, t) => s + Number(t.amount), 0) || 0;
@@ -134,41 +160,47 @@ const GlobalAnalytics = () => {
       ?.filter(t => t.transaction_type === "revenue" && Number(t.amount) > 0)
       .reduce((s, t) => s + Number(t.amount), 0) || 0;
     const walletLoadTotal = walletLoads?.reduce((s, w) => s + Number(w.amount), 0) || 0;
-    const totalRevenue = vendingRevenue + syncedRevenue;
+    const totalRevenue = vendingRevenue + syncedRevenue + externalTotals.total;
     const totalPlays = arcadeSessions?.reduce((s, a) => s + (a.plays_purchased || 0), 0) || 0;
     const totalPoints = machineTransactions?.reduce((s, t) => s + (t.points_earned || 0), 0) || 0;
-    const totalTransactions = (machineTransactions?.length || 0) + 
-      (syncedTransactions?.filter(t => t.transaction_type === "revenue").length || 0);
+    const totalTransactions = (machineTransactions?.length || 0) +
+      (syncedTransactions?.filter(t => t.transaction_type === "revenue").length || 0) +
+      (externalIncome?.length || 0);
 
     return {
       vendingRevenue,
       storeRevenue: revenueBySource.store,
       arcadeRevenue: revenueBySource.arcade,
       ecosnackRevenue: revenueBySource.ecosnack,
+      externalRevenue: externalTotals.total,
       walletLoadTotal,
       totalRevenue,
       totalTransactions,
       totalPlays,
       totalPoints,
     };
-  }, [syncedTransactions, machineTransactions, walletLoads, arcadeSessions, revenueBySource]);
+  }, [syncedTransactions, machineTransactions, walletLoads, arcadeSessions, revenueBySource, externalIncome, externalTotals]);
 
-  // Revenue breakdown for pie chart
-  const revenueBreakdown = useMemo(() => [
-    { name: "Store", value: totals.storeRevenue },
-    { name: "Vending", value: totals.vendingRevenue },
-    { name: "Arcade", value: totals.arcadeRevenue },
-    { name: "EcoVend", value: totals.ecosnackRevenue },
-    { name: "PayPal (Other)", value: revenueBySource.paypal },
-    { name: "Other", value: revenueBySource.other },
-  ].filter(d => d.value > 0), [totals, revenueBySource]);
+  // Revenue breakdown for pie chart (includes external streams individually)
+  const revenueBreakdown = useMemo(() => {
+    const base = [
+      { name: "Store", value: totals.storeRevenue },
+      { name: "Vending", value: totals.vendingRevenue },
+      { name: "Arcade", value: totals.arcadeRevenue },
+      { name: "EcoVend", value: totals.ecosnackRevenue },
+      { name: "PayPal (Other)", value: revenueBySource.paypal },
+      { name: "Other", value: revenueBySource.other },
+    ];
+    externalTotals.byStream.forEach((value, name) => base.push({ name: `Ext: ${name}`, value }));
+    return base.filter(d => d.value > 0);
+  }, [totals, revenueBySource, externalTotals]);
 
   // Daily revenue trend from synced + machine_transactions
   const dailyRevenue = useMemo(() => {
-    const dayMap = new Map<string, { store: number; vending: number; arcade: number; ecosnack: number; other: number }>();
+    const dayMap = new Map<string, { store: number; vending: number; arcade: number; ecosnack: number; external: number; other: number }>();
 
     const ensureDay = (day: string) => {
-      if (!dayMap.has(day)) dayMap.set(day, { store: 0, vending: 0, arcade: 0, ecosnack: 0, other: 0 });
+      if (!dayMap.has(day)) dayMap.set(day, { store: 0, vending: 0, arcade: 0, ecosnack: 0, external: 0, other: 0 });
       return dayMap.get(day)!;
     };
 
@@ -191,10 +223,16 @@ const GlobalAnalytics = () => {
       else entry.other += Number(t.amount);
     });
 
+    // External income from other VendX sites
+    externalIncome?.forEach((e: any) => {
+      const day = format(new Date(e.entry_date), "MM/dd");
+      ensureDay(day).external += Number(e.amount);
+    });
+
     return Array.from(dayMap.entries())
-      .map(([day, data]) => ({ day, ...data, total: data.store + data.vending + data.arcade + data.ecosnack + data.other }))
+      .map(([day, data]) => ({ day, ...data, total: data.store + data.vending + data.arcade + data.ecosnack + data.external + data.other }))
       .sort((a, b) => a.day.localeCompare(b.day));
-  }, [syncedTransactions, machineTransactions]);
+  }, [syncedTransactions, machineTransactions, externalIncome]);
 
   // Order status breakdown
   const orderStatusData = useMemo(() => {
