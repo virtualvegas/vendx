@@ -28,7 +28,7 @@ export const IncomeTab = () => {
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
-  const [filter, setFilter] = useState({ category: "all", search: "" });
+  const [filter, setFilter] = useState({ category: "all", search: "", stream: "all" });
   const [form, setForm] = useState<any>({
     income_date: format(new Date(), "yyyy-MM-dd"),
     source: "", category: "deposit", subcategory: "", description: "",
