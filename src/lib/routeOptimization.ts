@@ -13,6 +13,8 @@ interface LocationCoords {
 interface StopWithLocation {
   id: string;
   stop_order: number;
+  inventory_priority_score?: number | null;
+  low_inventory_flagged?: boolean | null;
   location?: {
     id: string;
     latitude: number | null;
