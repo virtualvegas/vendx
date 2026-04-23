@@ -294,6 +294,22 @@ const OfficeAssignmentsPanel = ({ officeId, office, onClose }: { officeId: strin
     },
   });
 
+  // Fetch roles for all users so we can show role badges next to assigned staff
+  const { data: rolesByUser } = useQuery({
+    queryKey: ["all-user-roles-for-office"],
+    queryFn: async (): Promise<Record<string, string[]>> => {
+      const { data } = await supabase.from("user_roles").select("user_id, role");
+      const map: Record<string, string[]> = {};
+      (data || []).forEach((r: any) => {
+        if (!map[r.user_id]) map[r.user_id] = [];
+        map[r.user_id].push(r.role);
+      });
+      return map;
+    },
+  });
+
+  const formatRole = (r: string) => r.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+
   const assignedLocations = useMemo(() => (locations || []).filter(l => l.office_id === officeId), [locations, officeId]);
   const assignedMachines = useMemo(() => (machines || []).filter(m => m.office_id === officeId), [machines, officeId]);
   const assignedStaff = useMemo(() => (profiles || []).filter(p => p.office_id === officeId), [profiles, officeId]);
