@@ -148,15 +148,34 @@ export function optimizeRouteOrder(
     return stops.map((s, idx) => ({ id: s.id, newOrder: idx }));
   }
 
-  // Build distance matrix
-  const distanceMatrix = buildDistanceMatrix(stops);
+  // Separate low-inventory / high-priority stops to be bubbled to the top
+  const priorityStops = stops.filter(
+    (s) => s.low_inventory_flagged || (s.inventory_priority_score || 0) >= 60
+  );
+  const normalStops = stops.filter(
+    (s) => !(s.low_inventory_flagged || (s.inventory_priority_score || 0) >= 60)
+  );
 
-  // Get optimized order using nearest neighbor
-  const optimizedIndices = nearestNeighborTSP(distanceMatrix);
+  // Sort priority group by score descending (most critical first)
+  priorityStops.sort(
+    (a, b) => (b.inventory_priority_score || 0) - (a.inventory_priority_score || 0)
+  );
 
-  // Map back to stop IDs with new order
-  return optimizedIndices.map((originalIdx, newIdx) => ({
-    id: stops[originalIdx].id,
+  // Optimize the normal group geographically (nearest neighbor)
+  let optimizedNormal: StopWithLocation[] = [];
+  if (normalStops.length >= 2) {
+    const matrix = buildDistanceMatrix(normalStops);
+    const order = nearestNeighborTSP(matrix);
+    optimizedNormal = order.map((idx) => normalStops[idx]);
+  } else {
+    optimizedNormal = normalStops;
+  }
+
+  // Combine: priority stops first, then geographically optimized normal stops
+  const finalOrder = [...priorityStops, ...optimizedNormal];
+
+  return finalOrder.map((stop, newIdx) => ({
+    id: stop.id,
     newOrder: newIdx,
   }));
 }
