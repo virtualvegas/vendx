@@ -522,6 +522,8 @@ const RouteManager = () => {
       status: zone.status,
       zone_area: zone.zone_area || "",
       service_frequency_days: zone.service_frequency_days || 15,
+      office_id: zone.office_id || "",
+      warehouse_id: zone.warehouse_id || "",
     });
     setZoneDialogOpen(true);
   };
