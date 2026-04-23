@@ -43,6 +43,12 @@ interface ServiceZone {
   next_service_due: string | null;
   office_id: string | null;
   warehouse_id: string | null;
+  is_multi_day: boolean | null;
+  total_days: number | null;
+  start_date: string | null;
+  end_date: string | null;
+  reassigned_at: string | null;
+  reassigned_by: string | null;
 }
 
 interface RouteStop {
@@ -60,6 +66,9 @@ interface RouteStop {
   priority: string | null;
   auto_scheduled: boolean | null;
   source_ticket_id: string | null;
+  day_number: number | null;
+  inventory_priority_score: number | null;
+  low_inventory_flagged: boolean | null;
   location?: {
     id: string;
     latitude: number | null;
@@ -74,6 +83,7 @@ interface UserProfile {
   id: string;
   email: string;
   full_name: string | null;
+  office_id?: string | null;
 }
 
 interface Location {
@@ -110,6 +120,10 @@ const RouteManager = () => {
     service_frequency_days: 15,
     office_id: "",
     warehouse_id: "",
+    is_multi_day: false,
+    total_days: 1,
+    start_date: "",
+    end_date: "",
   });
   const [stopForm, setStopForm] = useState({ 
     stop_name: "", 
@@ -119,7 +133,8 @@ const RouteManager = () => {
     location_id: "",
     machine_id: "",
     scheduled_date: "",
-    priority: "normal"
+    priority: "normal",
+    day_number: 1,
   });
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -141,7 +156,7 @@ const RouteManager = () => {
     },
   });
 
-  // Fetch employees
+  // Fetch employees (with office_id so we can scope by route's office)
   const { data: employees } = useQuery({
     queryKey: ["employee-operators"],
     queryFn: async () => {
@@ -156,7 +171,7 @@ const RouteManager = () => {
       const userIds = roleData.map(r => r.user_id);
       const { data: profiles, error: profileError } = await supabase
         .from("profiles")
-        .select("id, email, full_name")
+        .select("id, email, full_name, office_id")
         .in("id", userIds);
       if (profileError) throw profileError;
       
@@ -269,6 +284,10 @@ const RouteManager = () => {
         service_frequency_days: data.service_frequency_days,
         office_id: data.office_id || null,
         warehouse_id: data.warehouse_id || null,
+        is_multi_day: data.is_multi_day,
+        total_days: data.is_multi_day ? Math.max(1, data.total_days) : 1,
+        start_date: data.start_date || null,
+        end_date: data.end_date || null,
       } as any]);
       if (error) throw error;
     },
@@ -284,8 +303,9 @@ const RouteManager = () => {
   });
 
   const updateZoneMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: typeof zoneForm }) => {
-      const { error } = await supabase.from("service_routes").update({
+    mutationFn: async ({ id, data, isReassignment }: { id: string; data: typeof zoneForm; isReassignment?: boolean }) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      const payload: any = {
         name: data.name,
         description: data.description || null,
         assigned_to: data.assigned_to || null,
@@ -294,12 +314,21 @@ const RouteManager = () => {
         service_frequency_days: data.service_frequency_days,
         office_id: data.office_id || null,
         warehouse_id: data.warehouse_id || null,
-      } as any).eq("id", id);
+        is_multi_day: data.is_multi_day,
+        total_days: data.is_multi_day ? Math.max(1, data.total_days) : 1,
+        start_date: data.start_date || null,
+        end_date: data.end_date || null,
+      };
+      if (isReassignment) {
+        payload.reassigned_at = new Date().toISOString();
+        payload.reassigned_by = user?.id ?? null;
+      }
+      const { error } = await supabase.from("service_routes").update(payload).eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: (_data, vars: any) => {
       queryClient.invalidateQueries({ queryKey: ["admin-zones"] });
-      toast({ title: "Zone Updated" });
+      toast({ title: vars?.isReassignment ? "Operator Reassigned" : "Zone Updated" });
       setZoneDialogOpen(false);
       resetZoneForm();
     },
@@ -442,7 +471,8 @@ const RouteManager = () => {
         machine_id: data.machine_id || null,
         scheduled_date: data.scheduled_date || null,
         priority: data.priority,
-      }]);
+        day_number: Math.max(1, data.day_number || 1),
+      } as any]);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -468,7 +498,8 @@ const RouteManager = () => {
         machine_id: data.machine_id || null,
         scheduled_date: data.scheduled_date || null,
         priority: data.priority,
-      }).eq("id", id);
+        day_number: Math.max(1, data.day_number || 1),
+      } as any).eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -520,12 +551,12 @@ const RouteManager = () => {
   });
 
   const resetZoneForm = () => {
-    setZoneForm({ name: "", description: "", assigned_to: "", status: "active", zone_area: "", service_frequency_days: 15, office_id: "", warehouse_id: "" });
+    setZoneForm({ name: "", description: "", assigned_to: "", status: "active", zone_area: "", service_frequency_days: 15, office_id: "", warehouse_id: "", is_multi_day: false, total_days: 1, start_date: "", end_date: "" });
     setEditingZone(null);
   };
 
   const resetStopForm = () => {
-    setStopForm({ stop_name: "", address: "", notes: "", estimated_duration_minutes: 15, location_id: "", machine_id: "", scheduled_date: "", priority: "normal" });
+    setStopForm({ stop_name: "", address: "", notes: "", estimated_duration_minutes: 15, location_id: "", machine_id: "", scheduled_date: "", priority: "normal", day_number: 1 });
     setEditingStop(null);
   };
 
@@ -540,6 +571,10 @@ const RouteManager = () => {
       service_frequency_days: zone.service_frequency_days || 15,
       office_id: zone.office_id || "",
       warehouse_id: zone.warehouse_id || "",
+      is_multi_day: !!zone.is_multi_day,
+      total_days: zone.total_days || 1,
+      start_date: zone.start_date || "",
+      end_date: zone.end_date || "",
     });
     setZoneDialogOpen(true);
   };
@@ -555,6 +590,7 @@ const RouteManager = () => {
       machine_id: stop.machine_id || "",
       scheduled_date: stop.scheduled_date || "",
       priority: stop.priority || "normal",
+      day_number: stop.day_number || 1,
     });
     setStopDialogOpen(true);
   };
@@ -722,31 +758,12 @@ const RouteManager = () => {
                     rows={2}
                   />
                 </div>
-                <div>
-                  <Label htmlFor="assigned_to">Assign Operator</Label>
-                  <Select 
-                    value={zoneForm.assigned_to || "unassigned"} 
-                    onValueChange={(v) => setZoneForm({ ...zoneForm, assigned_to: v === "unassigned" ? "" : v })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select an operator" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="unassigned">Unassigned</SelectItem>
-                      {employees?.map((emp) => (
-                        <SelectItem key={emp.id} value={emp.id}>
-                          {emp.full_name || emp.email}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <Label htmlFor="office_id">Office (optional)</Label>
                     <Select
                       value={zoneForm.office_id || "none"}
-                      onValueChange={(v) => setZoneForm({ ...zoneForm, office_id: v === "none" ? "" : v })}
+                      onValueChange={(v) => setZoneForm({ ...zoneForm, office_id: v === "none" ? "" : v, assigned_to: "" })}
                     >
                       <SelectTrigger><SelectValue placeholder="Select office" /></SelectTrigger>
                       <SelectContent>
@@ -756,7 +773,7 @@ const RouteManager = () => {
                         ))}
                       </SelectContent>
                     </Select>
-                    <p className="text-xs text-muted-foreground mt-1">Operations center owning this route</p>
+                    <p className="text-xs text-muted-foreground mt-1">Operators are scoped to this office</p>
                   </div>
                   <div>
                     <Label htmlFor="warehouse_id">Warehouse (optional)</Label>
@@ -774,6 +791,68 @@ const RouteManager = () => {
                     </Select>
                     <p className="text-xs text-muted-foreground mt-1">Storage hub for restock supplies</p>
                   </div>
+                </div>
+                <div>
+                  <Label htmlFor="assigned_to">Assign Operator {zoneForm.office_id && <span className="text-xs text-muted-foreground">(filtered to selected office)</span>}</Label>
+                  <Select 
+                    value={zoneForm.assigned_to || "unassigned"} 
+                    onValueChange={(v) => setZoneForm({ ...zoneForm, assigned_to: v === "unassigned" ? "" : v })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select an operator" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="unassigned">Unassigned</SelectItem>
+                      {(employees || [])
+                        .filter(emp => !zoneForm.office_id || emp.office_id === zoneForm.office_id)
+                        .map((emp) => (
+                          <SelectItem key={emp.id} value={emp.id}>
+                            {emp.full_name || emp.email}
+                          </SelectItem>
+                        ))}
+                      {zoneForm.office_id && (employees || []).filter(e => e.office_id === zoneForm.office_id).length === 0 && (
+                        <div className="px-2 py-1.5 text-xs text-muted-foreground">No operators assigned to this office yet</div>
+                      )}
+                    </SelectContent>
+                  </Select>
+                  {editingZone?.assigned_to && editingZone.assigned_to !== zoneForm.assigned_to && (
+                    <p className="text-xs text-amber-600 mt-1 flex items-center gap-1">
+                      <AlertCircle className="w-3 h-3" /> Saving will reassign and log the change
+                    </p>
+                  )}
+                </div>
+                <div className="border rounded-md p-3 space-y-3 bg-muted/30">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label className="text-sm font-medium">Multi-day route</Label>
+                      <p className="text-xs text-muted-foreground">Enable for big routes spanning multiple days</p>
+                    </div>
+                    <input
+                      type="checkbox"
+                      checked={zoneForm.is_multi_day}
+                      onChange={(e) => setZoneForm({ ...zoneForm, is_multi_day: e.target.checked, total_days: e.target.checked ? Math.max(2, zoneForm.total_days) : 1 })}
+                      className="h-4 w-4"
+                    />
+                  </div>
+                  {zoneForm.is_multi_day && (
+                    <div className="grid grid-cols-3 gap-2">
+                      <div>
+                        <Label htmlFor="total_days" className="text-xs">Total Days</Label>
+                        <Input id="total_days" type="number" min={2} max={14} value={zoneForm.total_days}
+                          onChange={(e) => setZoneForm({ ...zoneForm, total_days: parseInt(e.target.value) || 2 })} />
+                      </div>
+                      <div>
+                        <Label htmlFor="start_date" className="text-xs">Start Date</Label>
+                        <Input id="start_date" type="date" value={zoneForm.start_date}
+                          onChange={(e) => setZoneForm({ ...zoneForm, start_date: e.target.value })} />
+                      </div>
+                      <div>
+                        <Label htmlFor="end_date" className="text-xs">End Date</Label>
+                        <Input id="end_date" type="date" value={zoneForm.end_date}
+                          onChange={(e) => setZoneForm({ ...zoneForm, end_date: e.target.value })} />
+                      </div>
+                    </div>
+                  )}
                 </div>
                 <div>
                   <Label htmlFor="status">Status</Label>
