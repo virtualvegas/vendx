@@ -4984,9 +4984,11 @@ export type Database = {
           last_serviced_at: string | null
           name: string
           next_service_due: string | null
+          office_id: string | null
           service_frequency_days: number | null
           status: string
           updated_at: string
+          warehouse_id: string | null
           zone_area: string | null
         }
         Insert: {
@@ -4998,9 +5000,11 @@ export type Database = {
           last_serviced_at?: string | null
           name: string
           next_service_due?: string | null
+          office_id?: string | null
           service_frequency_days?: number | null
           status?: string
           updated_at?: string
+          warehouse_id?: string | null
           zone_area?: string | null
         }
         Update: {
@@ -5012,12 +5016,29 @@ export type Database = {
           last_serviced_at?: string | null
           name?: string
           next_service_due?: string | null
+          office_id?: string | null
           service_frequency_days?: number | null
           status?: string
           updated_at?: string
+          warehouse_id?: string | null
           zone_area?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "service_routes_office_id_fkey"
+            columns: ["office_id"]
+            isOneToOne: false
+            referencedRelation: "vendx_offices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_routes_warehouse_id_fkey"
+            columns: ["warehouse_id"]
+            isOneToOne: false
+            referencedRelation: "vendx_warehouses"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       shipping_addresses: {
         Row: {
