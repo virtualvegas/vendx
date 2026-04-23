@@ -41,6 +41,8 @@ interface ServiceZone {
   service_frequency_days: number | null;
   last_serviced_at: string | null;
   next_service_due: string | null;
+  office_id: string | null;
+  warehouse_id: string | null;
 }
 
 interface RouteStop {
@@ -105,7 +107,9 @@ const RouteManager = () => {
     assigned_to: "", 
     status: "active",
     zone_area: "",
-    service_frequency_days: 15
+    service_frequency_days: 15,
+    office_id: "",
+    warehouse_id: "",
   });
   const [stopForm, setStopForm] = useState({ 
     stop_name: "", 
@@ -247,7 +251,9 @@ const RouteManager = () => {
         status: data.status,
         zone_area: data.zone_area || null,
         service_frequency_days: data.service_frequency_days,
-      }]);
+        office_id: data.office_id || null,
+        warehouse_id: data.warehouse_id || null,
+      } as any]);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -270,7 +276,9 @@ const RouteManager = () => {
         status: data.status,
         zone_area: data.zone_area || null,
         service_frequency_days: data.service_frequency_days,
-      }).eq("id", id);
+        office_id: data.office_id || null,
+        warehouse_id: data.warehouse_id || null,
+      } as any).eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -496,7 +504,7 @@ const RouteManager = () => {
   });
 
   const resetZoneForm = () => {
-    setZoneForm({ name: "", description: "", assigned_to: "", status: "active", zone_area: "", service_frequency_days: 15 });
+    setZoneForm({ name: "", description: "", assigned_to: "", status: "active", zone_area: "", service_frequency_days: 15, office_id: "", warehouse_id: "" });
     setEditingZone(null);
   };
 
