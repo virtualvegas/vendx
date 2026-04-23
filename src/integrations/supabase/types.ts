@@ -1199,6 +1199,163 @@ export type Database = {
         }
         Relationships: []
       }
+      external_income_entries: {
+        Row: {
+          amount: number
+          category: string | null
+          created_at: string
+          currency: string
+          customer_email: string | null
+          customer_name: string | null
+          description: string | null
+          entry_date: string
+          external_reference: string
+          id: string
+          is_taxable: boolean | null
+          notes: string | null
+          payment_method: string | null
+          raw_payload: Json | null
+          source: string
+          status: string
+          stream_id: string
+          subcategory: string | null
+          tax_collected: number | null
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          category?: string | null
+          created_at?: string
+          currency?: string
+          customer_email?: string | null
+          customer_name?: string | null
+          description?: string | null
+          entry_date?: string
+          external_reference: string
+          id?: string
+          is_taxable?: boolean | null
+          notes?: string | null
+          payment_method?: string | null
+          raw_payload?: Json | null
+          source: string
+          status?: string
+          stream_id: string
+          subcategory?: string | null
+          tax_collected?: number | null
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          category?: string | null
+          created_at?: string
+          currency?: string
+          customer_email?: string | null
+          customer_name?: string | null
+          description?: string | null
+          entry_date?: string
+          external_reference?: string
+          id?: string
+          is_taxable?: boolean | null
+          notes?: string | null
+          payment_method?: string | null
+          raw_payload?: Json | null
+          source?: string
+          status?: string
+          stream_id?: string
+          subcategory?: string | null
+          tax_collected?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "external_income_entries_stream_id_fkey"
+            columns: ["stream_id"]
+            isOneToOne: false
+            referencedRelation: "external_income_streams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      external_income_streams: {
+        Row: {
+          api_key_hash: string
+          api_key_prefix: string
+          color: string | null
+          created_at: string
+          created_by: string | null
+          default_account_id: string | null
+          default_category: string
+          default_payment_method: string | null
+          default_subcategory: string | null
+          description: string | null
+          icon: string | null
+          id: string
+          is_active: boolean
+          is_taxable: boolean
+          last_received_at: string | null
+          name: string
+          slug: string
+          source_url: string | null
+          total_amount: number
+          total_entries: number
+          updated_at: string
+        }
+        Insert: {
+          api_key_hash: string
+          api_key_prefix: string
+          color?: string | null
+          created_at?: string
+          created_by?: string | null
+          default_account_id?: string | null
+          default_category?: string
+          default_payment_method?: string | null
+          default_subcategory?: string | null
+          description?: string | null
+          icon?: string | null
+          id?: string
+          is_active?: boolean
+          is_taxable?: boolean
+          last_received_at?: string | null
+          name: string
+          slug: string
+          source_url?: string | null
+          total_amount?: number
+          total_entries?: number
+          updated_at?: string
+        }
+        Update: {
+          api_key_hash?: string
+          api_key_prefix?: string
+          color?: string | null
+          created_at?: string
+          created_by?: string | null
+          default_account_id?: string | null
+          default_category?: string
+          default_payment_method?: string | null
+          default_subcategory?: string | null
+          description?: string | null
+          icon?: string | null
+          id?: string
+          is_active?: boolean
+          is_taxable?: boolean
+          last_received_at?: string | null
+          name?: string
+          slug?: string
+          source_url?: string | null
+          total_amount?: number
+          total_entries?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "external_income_streams_default_account_id_fkey"
+            columns: ["default_account_id"]
+            isOneToOne: false
+            referencedRelation: "finance_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       finance_account_transactions: {
         Row: {
           account_id: string
@@ -6571,6 +6728,14 @@ export type Database = {
           success: boolean
         }[]
       }
+      generate_external_stream_api_key: {
+        Args: never
+        Returns: {
+          key_hash: string
+          key_prefix: string
+          plain_key: string
+        }[]
+      }
       generate_totp_secret: { Args: never; Returns: string }
       get_public_machine_info: {
         Args: { p_machine_code: string }
@@ -6583,6 +6748,25 @@ export type Database = {
           status: string
         }[]
       }
+      get_unified_income: {
+        Args: { p_from_date?: string; p_to_date?: string }
+        Returns: {
+          amount: number
+          category: string
+          description: string
+          external_reference: string
+          id: string
+          income_date: string
+          payment_method: string
+          source: string
+          source_type: string
+          stream_color: string
+          stream_id: string
+          stream_name: string
+          subcategory: string
+          tax_collected: number
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -6590,6 +6774,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      hash_api_key: { Args: { p_key: string }; Returns: string }
       import_machine_revenue_to_income: {
         Args: { p_account_id?: string; p_from_date: string; p_to_date: string }
         Returns: {
@@ -6600,6 +6785,30 @@ export type Database = {
       increment_player_xp: {
         Args: { p_user_id: string; p_xp: number }
         Returns: undefined
+      }
+      ingest_external_income: {
+        Args: {
+          p_amount: number
+          p_api_key: string
+          p_category?: string
+          p_currency?: string
+          p_customer_email?: string
+          p_customer_name?: string
+          p_description?: string
+          p_entry_date: string
+          p_external_reference: string
+          p_payment_method?: string
+          p_raw_payload?: Json
+          p_source: string
+          p_subcategory?: string
+          p_tax_collected?: number
+        }
+        Returns: {
+          duplicate: boolean
+          entry_id: string
+          message: string
+          success: boolean
+        }[]
       }
       is_super_admin: { Args: { _user_id: string }; Returns: boolean }
       log_machine_activity: {
@@ -6652,6 +6861,10 @@ export type Database = {
           success: boolean
           transaction_id: string
         }[]
+      }
+      rotate_external_stream_api_key: {
+        Args: { p_stream_id: string }
+        Returns: string
       }
     }
     Enums: {
