@@ -184,7 +184,7 @@ const OfficesManager = () => {
                 <Label>Office Manager</Label>
                 <SearchableSelect
                   value={form.manager_id}
-                  onChange={(v) => setForm({ ...form, manager_id: v })}
+                  onValueChange={(v) => setForm({ ...form, manager_id: v })}
                   options={(managers || []).map((m: any) => ({ value: m.id, label: `${m.full_name || "Unnamed"} (${m.email})` }))}
                   placeholder="Select office manager"
                 />
@@ -330,7 +330,7 @@ const OfficeAssignmentsPanel = ({ officeId, office, onClose }: { officeId: strin
               <Label>Add a location to this office</Label>
               <SearchableSelect
                 value=""
-                onChange={(id) => id && assignMut.mutate({ table: "locations", id, value: officeId })}
+                onValueChange={(id) => id && assignMut.mutate({ table: "locations", id, value: officeId })}
                 options={(locations || []).filter(l => l.office_id !== officeId).map(l => ({ value: l.id, label: `${l.name} — ${l.city}, ${l.country}` }))}
                 placeholder="Select a location to assign"
               />
@@ -355,7 +355,7 @@ const OfficeAssignmentsPanel = ({ officeId, office, onClose }: { officeId: strin
               <Label>Add a machine to this office</Label>
               <SearchableSelect
                 value=""
-                onChange={(id) => id && assignMut.mutate({ table: "vendx_machines", id, value: officeId })}
+                onValueChange={(id) => id && assignMut.mutate({ table: "vendx_machines", id, value: officeId })}
                 options={(machines || []).filter(m => m.office_id !== officeId).map(m => ({ value: m.id, label: `${m.machine_code} — ${m.name || "Unnamed"}` }))}
                 placeholder="Select a machine to assign"
               />
@@ -380,7 +380,7 @@ const OfficeAssignmentsPanel = ({ officeId, office, onClose }: { officeId: strin
               <Label>Assign an employee to this office</Label>
               <SearchableSelect
                 value=""
-                onChange={(id) => id && assignMut.mutate({ table: "profiles", id, value: officeId })}
+                onValueChange={(id) => id && assignMut.mutate({ table: "profiles", id, value: officeId })}
                 options={(profiles || []).filter(p => p.office_id !== officeId).map(p => ({ value: p.id, label: `${p.full_name || "Unnamed"} (${p.email})` }))}
                 placeholder="Select an employee to assign"
               />
