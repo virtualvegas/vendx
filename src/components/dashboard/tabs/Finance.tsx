@@ -54,6 +54,28 @@ const Finance = () => {
     },
   });
 
+  // Pull external income entries from external_income_entries (pushed via webhook from other VendX sites)
+  const { data: externalIncome } = useQuery({
+    queryKey: ["finance-overview-external-income"],
+    queryFn: async (): Promise<IncomeRow[]> => {
+      const { data, error } = await supabase
+        .from("external_income_entries" as any)
+        .select("id, amount, category, source, entry_date, status, external_income_streams!inner(default_category)")
+        .eq("status", "received")
+        .order("entry_date", { ascending: false })
+        .limit(5000);
+      if (error) { console.error(error); return []; }
+      return ((data as any[]) || []).map((e) => ({
+        id: e.id,
+        amount: Number(e.amount),
+        category: e.category || e.external_income_streams?.default_category || "external",
+        source: e.source,
+        income_date: e.entry_date,
+        status: "recorded",
+      }));
+    },
+  });
+
   // Pull expense data from finance_expenses
   const { data: expenses, isLoading: expensesLoading } = useQuery({
     queryKey: ["finance-overview-expenses"],
