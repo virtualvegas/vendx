@@ -229,6 +229,22 @@ const RouteManager = () => {
     },
   });
 
+  // Fetch offices & warehouses for assignment
+  const { data: offices } = useQuery({
+    queryKey: ["all-offices-for-routes"],
+    queryFn: async (): Promise<any[]> => {
+      const { data } = await supabase.from("vendx_offices" as any).select("id, name, code").eq("status", "active").order("name");
+      return (data as any[]) || [];
+    },
+  });
+  const { data: warehouses } = useQuery({
+    queryKey: ["all-warehouses-for-routes"],
+    queryFn: async (): Promise<any[]> => {
+      const { data } = await supabase.from("vendx_warehouses" as any).select("id, name, code").eq("status", "active").order("name");
+      return (data as any[]) || [];
+    },
+  });
+
   // Fetch all stops for analytics
   const { data: allStops } = useQuery({
     queryKey: ["all-zone-stops"],
