@@ -15,6 +15,7 @@ import InventoryLogistics from "@/components/dashboard/tabs/InventoryLogistics";
 import RegionalReports from "@/components/dashboard/tabs/RegionalReports";
 import DailyTasks from "@/components/dashboard/tabs/DailyTasks";
 import AdminSettings from "@/components/dashboard/tabs/AdminSettings";
+import IncomeStreamsManager from "@/components/dashboard/tabs/admin/IncomeStreamsManager";
 import CareersManager from "@/components/dashboard/tabs/CareersManager";
 import GlobalLocations from "@/components/dashboard/tabs/GlobalLocations";
 import VendXPayManager from "@/components/dashboard/tabs/VendXPayManager";
