@@ -471,7 +471,8 @@ const RouteManager = () => {
         machine_id: data.machine_id || null,
         scheduled_date: data.scheduled_date || null,
         priority: data.priority,
-      }]);
+        day_number: Math.max(1, data.day_number || 1),
+      } as any]);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -497,7 +498,8 @@ const RouteManager = () => {
         machine_id: data.machine_id || null,
         scheduled_date: data.scheduled_date || null,
         priority: data.priority,
-      }).eq("id", id);
+        day_number: Math.max(1, data.day_number || 1),
+      } as any).eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
