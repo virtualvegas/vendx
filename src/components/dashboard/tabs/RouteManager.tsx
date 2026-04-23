@@ -1394,12 +1394,16 @@ const RouteManager = () => {
                   <p className="text-center text-muted-foreground py-8 text-sm">No machines in this zone</p>
                 ) : (
                   <ScrollArea className="h-[400px]">
-                    <div className="space-y-1 pr-2">
-                      {stops?.map((stop, index) => (
+                    {(() => {
+                      const renderStop = (stop: RouteStop, index: number, total: number) => (
                         <div 
                           key={stop.id} 
                           className={`flex items-center gap-2 p-2 border rounded-lg hover:bg-muted/30 transition-colors ${
-                            stop.auto_scheduled ? "border-blue-500/30 bg-blue-500/5" : "border-border"
+                            stop.low_inventory_flagged
+                              ? "border-destructive/40 bg-destructive/5"
+                              : stop.auto_scheduled 
+                                ? "border-primary/30 bg-primary/5" 
+                                : "border-border"
                           }`}
                         >
                           <div className="flex flex-col gap-0.5">
@@ -1416,7 +1420,7 @@ const RouteManager = () => {
                               variant="ghost" 
                               size="icon" 
                               className="h-5 w-5"
-                              disabled={index === (stops?.length || 0) - 1}
+                              disabled={index === total - 1}
                               onClick={() => moveStopMutation.mutate({ stopId: stop.id, direction: "down" })}
                             >
                               <ArrowDown className="w-3 h-3" />
@@ -1431,10 +1435,21 @@ const RouteManager = () => {
                             <div className="flex items-center gap-1 flex-wrap">
                               <h4 className="font-medium text-sm truncate">{stop.stop_name}</h4>
                               {stop.machine_id && <Monitor className="w-3 h-3 text-muted-foreground flex-shrink-0" />}
-                              {stop.location?.latitude && <span title="Has coordinates"><MapPin className="w-3 h-3 text-green-500 flex-shrink-0" /></span>}
+                              {stop.location?.latitude && <span title="Has coordinates"><MapPin className="w-3 h-3 text-success flex-shrink-0" /></span>}
                               {stop.auto_scheduled && (
                                 <Badge variant="secondary" className="text-[10px] px-1">
                                   <Zap className="w-2.5 h-2.5" />
+                                </Badge>
+                              )}
+                              {stop.low_inventory_flagged && (
+                                <Badge variant="destructive" className="text-[10px] px-1 gap-0.5">
+                                  <AlertTriangle className="w-2.5 h-2.5" />
+                                  Low Stock
+                                </Badge>
+                              )}
+                              {!stop.low_inventory_flagged && (stop.inventory_priority_score || 0) >= 60 && (
+                                <Badge variant="outline" className="text-[10px] px-1 border-warning text-warning">
+                                  Priority {stop.inventory_priority_score}
                                 </Badge>
                               )}
                               {stop.priority === "urgent" && (
@@ -1448,7 +1463,7 @@ const RouteManager = () => {
                               <p className="text-xs text-muted-foreground truncate">{stop.address}</p>
                             )}
                             {stop.scheduled_date && (
-                              <p className="text-[10px] text-blue-600">
+                              <p className="text-[10px] text-primary">
                                 Scheduled: {format(parseLocalDate(stop.scheduled_date), "MMM d")}
                               </p>
                             )}
@@ -1486,8 +1501,53 @@ const RouteManager = () => {
                             </DropdownMenuContent>
                           </DropdownMenu>
                         </div>
-                      ))}
-                    </div>
+                      );
+
+                      const isMultiDay = !!selectedZone?.is_multi_day && (selectedZone?.total_days || 1) > 1;
+                      const allStopsList = stops || [];
+
+                      if (!isMultiDay) {
+                        return (
+                          <div className="space-y-1 pr-2">
+                            {allStopsList.map((stop, index) => renderStop(stop, index, allStopsList.length))}
+                          </div>
+                        );
+                      }
+
+                      // Group stops by day
+                      const totalDays = selectedZone?.total_days || 1;
+                      const groups: Record<number, RouteStop[]> = {};
+                      for (let d = 1; d <= totalDays; d++) groups[d] = [];
+                      allStopsList.forEach((s) => {
+                        const day = Math.min(Math.max(s.day_number || 1, 1), totalDays);
+                        groups[day].push(s);
+                      });
+
+                      return (
+                        <div className="space-y-3 pr-2">
+                          {Object.entries(groups).map(([day, dayStops]) => (
+                            <div key={day}>
+                              <div className="flex items-center gap-2 mb-1 sticky top-0 bg-background py-1 z-10">
+                                <Badge variant="outline" className="text-[10px]">
+                                  <Calendar className="w-3 h-3 mr-1" />
+                                  Day {day}
+                                </Badge>
+                                <span className="text-xs text-muted-foreground">
+                                  {dayStops.length} stop{dayStops.length === 1 ? "" : "s"}
+                                </span>
+                              </div>
+                              {dayStops.length === 0 ? (
+                                <p className="text-xs text-muted-foreground italic px-2 py-2">No stops assigned</p>
+                              ) : (
+                                <div className="space-y-1">
+                                  {dayStops.map((stop, index) => renderStop(stop, index, dayStops.length))}
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      );
+                    })()}
                   </ScrollArea>
                 )}
               </CardContent>
