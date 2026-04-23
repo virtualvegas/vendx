@@ -284,6 +284,10 @@ const RouteManager = () => {
         service_frequency_days: data.service_frequency_days,
         office_id: data.office_id || null,
         warehouse_id: data.warehouse_id || null,
+        is_multi_day: data.is_multi_day,
+        total_days: data.is_multi_day ? Math.max(1, data.total_days) : 1,
+        start_date: data.start_date || null,
+        end_date: data.end_date || null,
       } as any]);
       if (error) throw error;
     },
@@ -299,8 +303,9 @@ const RouteManager = () => {
   });
 
   const updateZoneMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: typeof zoneForm }) => {
-      const { error } = await supabase.from("service_routes").update({
+    mutationFn: async ({ id, data, isReassignment }: { id: string; data: typeof zoneForm; isReassignment?: boolean }) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      const payload: any = {
         name: data.name,
         description: data.description || null,
         assigned_to: data.assigned_to || null,
@@ -309,12 +314,21 @@ const RouteManager = () => {
         service_frequency_days: data.service_frequency_days,
         office_id: data.office_id || null,
         warehouse_id: data.warehouse_id || null,
-      } as any).eq("id", id);
+        is_multi_day: data.is_multi_day,
+        total_days: data.is_multi_day ? Math.max(1, data.total_days) : 1,
+        start_date: data.start_date || null,
+        end_date: data.end_date || null,
+      };
+      if (isReassignment) {
+        payload.reassigned_at = new Date().toISOString();
+        payload.reassigned_by = user?.id ?? null;
+      }
+      const { error } = await supabase.from("service_routes").update(payload).eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: (_data, vars: any) => {
       queryClient.invalidateQueries({ queryKey: ["admin-zones"] });
-      toast({ title: "Zone Updated" });
+      toast({ title: vars?.isReassignment ? "Operator Reassigned" : "Zone Updated" });
       setZoneDialogOpen(false);
       resetZoneForm();
     },
