@@ -41,6 +41,8 @@ interface ServiceZone {
   service_frequency_days: number | null;
   last_serviced_at: string | null;
   next_service_due: string | null;
+  office_id: string | null;
+  warehouse_id: string | null;
 }
 
 interface RouteStop {
@@ -105,7 +107,9 @@ const RouteManager = () => {
     assigned_to: "", 
     status: "active",
     zone_area: "",
-    service_frequency_days: 15
+    service_frequency_days: 15,
+    office_id: "",
+    warehouse_id: "",
   });
   const [stopForm, setStopForm] = useState({ 
     stop_name: "", 
@@ -225,6 +229,22 @@ const RouteManager = () => {
     },
   });
 
+  // Fetch offices & warehouses for assignment
+  const { data: offices } = useQuery({
+    queryKey: ["all-offices-for-routes"],
+    queryFn: async (): Promise<any[]> => {
+      const { data } = await supabase.from("vendx_offices" as any).select("id, name, code").eq("status", "active").order("name");
+      return (data as any[]) || [];
+    },
+  });
+  const { data: warehouses } = useQuery({
+    queryKey: ["all-warehouses-for-routes"],
+    queryFn: async (): Promise<any[]> => {
+      const { data } = await supabase.from("vendx_warehouses" as any).select("id, name, code").eq("status", "active").order("name");
+      return (data as any[]) || [];
+    },
+  });
+
   // Fetch all stops for analytics
   const { data: allStops } = useQuery({
     queryKey: ["all-zone-stops"],
@@ -247,7 +267,9 @@ const RouteManager = () => {
         status: data.status,
         zone_area: data.zone_area || null,
         service_frequency_days: data.service_frequency_days,
-      }]);
+        office_id: data.office_id || null,
+        warehouse_id: data.warehouse_id || null,
+      } as any]);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -270,7 +292,9 @@ const RouteManager = () => {
         status: data.status,
         zone_area: data.zone_area || null,
         service_frequency_days: data.service_frequency_days,
-      }).eq("id", id);
+        office_id: data.office_id || null,
+        warehouse_id: data.warehouse_id || null,
+      } as any).eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -496,7 +520,7 @@ const RouteManager = () => {
   });
 
   const resetZoneForm = () => {
-    setZoneForm({ name: "", description: "", assigned_to: "", status: "active", zone_area: "", service_frequency_days: 15 });
+    setZoneForm({ name: "", description: "", assigned_to: "", status: "active", zone_area: "", service_frequency_days: 15, office_id: "", warehouse_id: "" });
     setEditingZone(null);
   };
 
@@ -514,6 +538,8 @@ const RouteManager = () => {
       status: zone.status,
       zone_area: zone.zone_area || "",
       service_frequency_days: zone.service_frequency_days || 15,
+      office_id: zone.office_id || "",
+      warehouse_id: zone.warehouse_id || "",
     });
     setZoneDialogOpen(true);
   };
@@ -714,6 +740,40 @@ const RouteManager = () => {
                       ))}
                     </SelectContent>
                   </Select>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label htmlFor="office_id">Office (optional)</Label>
+                    <Select
+                      value={zoneForm.office_id || "none"}
+                      onValueChange={(v) => setZoneForm({ ...zoneForm, office_id: v === "none" ? "" : v })}
+                    >
+                      <SelectTrigger><SelectValue placeholder="Select office" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">— None —</SelectItem>
+                        {(offices || []).map((o: any) => (
+                          <SelectItem key={o.id} value={o.id}>{o.name} ({o.code})</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-muted-foreground mt-1">Operations center owning this route</p>
+                  </div>
+                  <div>
+                    <Label htmlFor="warehouse_id">Warehouse (optional)</Label>
+                    <Select
+                      value={zoneForm.warehouse_id || "none"}
+                      onValueChange={(v) => setZoneForm({ ...zoneForm, warehouse_id: v === "none" ? "" : v })}
+                    >
+                      <SelectTrigger><SelectValue placeholder="Select warehouse" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">— None —</SelectItem>
+                        {(warehouses || []).map((w: any) => (
+                          <SelectItem key={w.id} value={w.id}>{w.name} ({w.code})</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-muted-foreground mt-1">Storage hub for restock supplies</p>
+                  </div>
                 </div>
                 <div>
                   <Label htmlFor="status">Status</Label>
