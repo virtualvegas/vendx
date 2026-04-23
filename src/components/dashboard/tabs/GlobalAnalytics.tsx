@@ -197,10 +197,10 @@ const GlobalAnalytics = () => {
 
   // Daily revenue trend from synced + machine_transactions
   const dailyRevenue = useMemo(() => {
-    const dayMap = new Map<string, { store: number; vending: number; arcade: number; ecosnack: number; other: number }>();
+    const dayMap = new Map<string, { store: number; vending: number; arcade: number; ecosnack: number; external: number; other: number }>();
 
     const ensureDay = (day: string) => {
-      if (!dayMap.has(day)) dayMap.set(day, { store: 0, vending: 0, arcade: 0, ecosnack: 0, other: 0 });
+      if (!dayMap.has(day)) dayMap.set(day, { store: 0, vending: 0, arcade: 0, ecosnack: 0, external: 0, other: 0 });
       return dayMap.get(day)!;
     };
 
@@ -223,10 +223,16 @@ const GlobalAnalytics = () => {
       else entry.other += Number(t.amount);
     });
 
+    // External income from other VendX sites
+    externalIncome?.forEach((e: any) => {
+      const day = format(new Date(e.entry_date), "MM/dd");
+      ensureDay(day).external += Number(e.amount);
+    });
+
     return Array.from(dayMap.entries())
-      .map(([day, data]) => ({ day, ...data, total: data.store + data.vending + data.arcade + data.ecosnack + data.other }))
+      .map(([day, data]) => ({ day, ...data, total: data.store + data.vending + data.arcade + data.ecosnack + data.external + data.other }))
       .sort((a, b) => a.day.localeCompare(b.day));
-  }, [syncedTransactions, machineTransactions]);
+  }, [syncedTransactions, machineTransactions, externalIncome]);
 
   // Order status breakdown
   const orderStatusData = useMemo(() => {
