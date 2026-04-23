@@ -2335,6 +2335,7 @@ export type Database = {
           longitude: number | null
           machine_count: number
           name: string | null
+          office_id: string | null
           snack_machine_count: number | null
           specialty_machine_count: number | null
           status: string
@@ -2359,6 +2360,7 @@ export type Database = {
           longitude?: number | null
           machine_count?: number
           name?: string | null
+          office_id?: string | null
           snack_machine_count?: number | null
           specialty_machine_count?: number | null
           status?: string
@@ -2383,12 +2385,21 @@ export type Database = {
           longitude?: number | null
           machine_count?: number
           name?: string | null
+          office_id?: string | null
           snack_machine_count?: number | null
           specialty_machine_count?: number | null
           status?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "locations_office_id_fkey"
+            columns: ["office_id"]
+            isOneToOne: false
+            referencedRelation: "vendx_offices"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       machine_activity_log: {
         Row: {
@@ -3823,6 +3834,7 @@ export type Database = {
           email: string
           full_name: string | null
           id: string
+          office_id: string | null
           phone: string | null
           stripe_customer_id: string | null
           tier_level: string
@@ -3834,6 +3846,7 @@ export type Database = {
           email: string
           full_name?: string | null
           id: string
+          office_id?: string | null
           phone?: string | null
           stripe_customer_id?: string | null
           tier_level?: string
@@ -3845,13 +3858,22 @@ export type Database = {
           email?: string
           full_name?: string | null
           id?: string
+          office_id?: string | null
           phone?: string | null
           stripe_customer_id?: string | null
           tier_level?: string
           totp_secret?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_office_id_fkey"
+            columns: ["office_id"]
+            isOneToOne: false
+            referencedRelation: "vendx_offices"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       quest_badges: {
         Row: {
@@ -5943,6 +5965,7 @@ export type Database = {
           issue_type: string
           location: string
           machine_id: string
+          office_id: string | null
           priority: string
           resolution: string | null
           resolved_at: string | null
@@ -5958,6 +5981,7 @@ export type Database = {
           issue_type: string
           location: string
           machine_id: string
+          office_id?: string | null
           priority?: string
           resolution?: string | null
           resolved_at?: string | null
@@ -5973,6 +5997,7 @@ export type Database = {
           issue_type?: string
           location?: string
           machine_id?: string
+          office_id?: string | null
           priority?: string
           resolution?: string | null
           resolved_at?: string | null
@@ -5980,7 +6005,15 @@ export type Database = {
           ticket_number?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "support_tickets_office_id_fkey"
+            columns: ["office_id"]
+            isOneToOne: false
+            referencedRelation: "vendx_offices"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       synced_transactions: {
         Row: {
@@ -6350,6 +6383,7 @@ export type Database = {
           machine_type: string
           name: string
           notes: string | null
+          office_id: string | null
           plays_per_bundle: number | null
           price_per_play: number | null
           pricing_template_id: string | null
@@ -6379,6 +6413,7 @@ export type Database = {
           machine_type: string
           name: string
           notes?: string | null
+          office_id?: string | null
           plays_per_bundle?: number | null
           price_per_play?: number | null
           pricing_template_id?: string | null
@@ -6408,6 +6443,7 @@ export type Database = {
           machine_type?: string
           name?: string
           notes?: string | null
+          office_id?: string | null
           plays_per_bundle?: number | null
           price_per_play?: number | null
           pricing_template_id?: string | null
@@ -6430,6 +6466,90 @@ export type Database = {
             columns: ["location_id"]
             isOneToOne: false
             referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendx_machines_office_id_fkey"
+            columns: ["office_id"]
+            isOneToOne: false
+            referencedRelation: "vendx_offices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vendx_offices: {
+        Row: {
+          address: string | null
+          city: string | null
+          code: string
+          country: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          email: string | null
+          handles_customer_service: boolean
+          handles_machine_storage: boolean
+          handles_service_tech: boolean
+          id: string
+          manager_id: string | null
+          name: string
+          notes: string | null
+          phone: string | null
+          state: string | null
+          status: string
+          updated_at: string
+          zip: string | null
+        }
+        Insert: {
+          address?: string | null
+          city?: string | null
+          code: string
+          country?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          email?: string | null
+          handles_customer_service?: boolean
+          handles_machine_storage?: boolean
+          handles_service_tech?: boolean
+          id?: string
+          manager_id?: string | null
+          name: string
+          notes?: string | null
+          phone?: string | null
+          state?: string | null
+          status?: string
+          updated_at?: string
+          zip?: string | null
+        }
+        Update: {
+          address?: string | null
+          city?: string | null
+          code?: string
+          country?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          email?: string | null
+          handles_customer_service?: boolean
+          handles_machine_storage?: boolean
+          handles_service_tech?: boolean
+          id?: string
+          manager_id?: string | null
+          name?: string
+          notes?: string | null
+          phone?: string | null
+          state?: string | null
+          status?: string
+          updated_at?: string
+          zip?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendx_offices_manager_id_fkey"
+            columns: ["manager_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -6737,6 +6857,7 @@ export type Database = {
         }[]
       }
       generate_totp_secret: { Args: never; Returns: string }
+      get_my_office_id: { Args: never; Returns: string }
       get_public_machine_info: {
         Args: { p_machine_code: string }
         Returns: {

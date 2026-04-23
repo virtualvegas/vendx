@@ -211,6 +211,7 @@ const tabGroups: TabGroup[] = [
     label: "Locations & Sites",
     tabs: [
       { id: "locations", label: "Global Locations", icon: Map, requiredRoles: ["super_admin"] },
+      { id: "offices", label: "VendX Offices", icon: Building2, requiredRoles: ["super_admin"] },
       { id: "events-rentals", label: "Events & Rentals", icon: Calendar, requiredRoles: ["super_admin", "event_manager"] },
       { id: "stands-manager", label: "Stands", icon: Store, requiredRoles: ["super_admin"] },
       { id: "divisions-manager", label: "Divisions", icon: Layers, requiredRoles: ["super_admin"] },
