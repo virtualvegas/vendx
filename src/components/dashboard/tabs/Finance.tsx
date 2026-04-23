@@ -114,16 +114,19 @@ const Finance = () => {
 
   const isLoading = incomeLoading || expensesLoading;
 
+  // Combine internal + external income for all calculations
+  const allIncome = useMemo(() => [...(income || []), ...(externalIncome || [])], [income, externalIncome]);
+
   // Top-level KPIs
   const kpis = useMemo(() => {
-    const totalIncome = income?.reduce((sum, i) => sum + Number(i.amount), 0) || 0;
+    const totalIncome = allIncome.reduce((sum, i) => sum + Number(i.amount), 0);
     const totalExpenses = expenses?.filter(e => e.status !== "cancelled")
       .reduce((sum, e) => sum + Number(e.amount), 0) || 0;
     const netProfit = totalIncome - totalExpenses;
     const profitMargin = totalIncome > 0 ? ((netProfit / totalIncome) * 100).toFixed(1) : "0.0";
     const cashOnHand = accounts?.reduce((sum, a) => sum + Number(a.current_balance), 0) || 0;
     return { totalIncome, totalExpenses, netProfit, profitMargin, cashOnHand };
-  }, [income, expenses, accounts]);
+  }, [allIncome, expenses, accounts]);
 
   // Daily income vs expenses for the last 30 days
   const dailyData = useMemo(() => {
@@ -132,7 +135,7 @@ const Finance = () => {
       if (!map.has(d)) map.set(d, { day: d, income: 0, expenses: 0 });
       return map.get(d)!;
     };
-    income?.forEach(i => {
+    allIncome.forEach(i => {
       ensure(i.income_date).income += Number(i.amount);
     });
     expenses?.filter(e => e.status !== "cancelled").forEach(e => {
@@ -148,12 +151,12 @@ const Finance = () => {
           return { ...d, day: d.day.substring(5) };
         }
       });
-  }, [income, expenses]);
+  }, [allIncome, expenses]);
 
-  // Income by category
+  // Income by category (includes external streams)
   const incomeByCategory = useMemo(() => {
     const map = new Map<string, number>();
-    income?.forEach(i => {
+    allIncome.forEach(i => {
       const cat = i.category || "uncategorized";
       map.set(cat, (map.get(cat) || 0) + Number(i.amount));
     });
@@ -161,7 +164,7 @@ const Finance = () => {
       .map(([name, value]) => ({ name, value: Math.round(value * 100) / 100 }))
       .sort((a, b) => b.value - a.value)
       .slice(0, 8);
-  }, [income]);
+  }, [allIncome]);
 
   // Expenses by category
   const expensesByCategory = useMemo(() => {
