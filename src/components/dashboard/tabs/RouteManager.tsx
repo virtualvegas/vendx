@@ -120,6 +120,10 @@ const RouteManager = () => {
     service_frequency_days: 15,
     office_id: "",
     warehouse_id: "",
+    is_multi_day: false,
+    total_days: 1,
+    start_date: "",
+    end_date: "",
   });
   const [stopForm, setStopForm] = useState({ 
     stop_name: "", 
@@ -129,7 +133,8 @@ const RouteManager = () => {
     location_id: "",
     machine_id: "",
     scheduled_date: "",
-    priority: "normal"
+    priority: "normal",
+    day_number: 1,
   });
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
