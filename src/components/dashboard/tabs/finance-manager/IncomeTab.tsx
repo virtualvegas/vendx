@@ -57,6 +57,37 @@ export const IncomeTab = () => {
     },
   });
 
+  // External income entries pushed via webhook from other VendX sites — shown alongside internal income
+  const { data: externalIncome } = useQuery({
+    queryKey: ["finance-external-income"],
+    queryFn: async (): Promise<any[]> => {
+      const { data, error } = await supabase
+        .from("external_income_entries" as any)
+        .select("id, entry_date, source, description, amount, tax_collected, category, payment_method, external_reference, stream_id, external_income_streams!inner(name, color, default_category)")
+        .eq("status", "received")
+        .order("entry_date", { ascending: false })
+        .limit(500);
+      if (error) { console.error(error); return []; }
+      return ((data as any[]) || []).map((e) => ({
+        id: e.id,
+        income_date: e.entry_date,
+        source: `[${e.external_income_streams?.name}] ${e.source}`,
+        description: e.description,
+        amount: e.amount,
+        tax_collected: e.tax_collected,
+        category: e.category || e.external_income_streams?.default_category || "other",
+        payment_method: e.payment_method,
+        external_reference: e.external_reference,
+        is_external: true,
+        stream_color: e.external_income_streams?.color,
+      }));
+    },
+  });
+
+  const combinedIncome = useMemo(() => {
+    return [...(income || []), ...(externalIncome || [])].sort((a, b) => (b.income_date || "").localeCompare(a.income_date || ""));
+  }, [income, externalIncome]);
+
   const filtered = useMemo(() => {
     return (income || []).filter((e: any) => {
       if (filter.category !== "all" && e.category !== filter.category) return false;
