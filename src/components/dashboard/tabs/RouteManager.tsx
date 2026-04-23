@@ -1329,6 +1329,28 @@ const RouteManager = () => {
                               </div>
                             </div>
 
+                            {selectedZone?.is_multi_day && (selectedZone?.total_days || 1) > 1 && (
+                              <div>
+                                <Label htmlFor="day_number">Day Number</Label>
+                                <Select
+                                  value={String(stopForm.day_number)}
+                                  onValueChange={(v) => setStopForm({ ...stopForm, day_number: parseInt(v) })}
+                                >
+                                  <SelectTrigger>
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {Array.from({ length: selectedZone?.total_days || 1 }, (_, i) => i + 1).map((d) => (
+                                      <SelectItem key={d} value={String(d)}>Day {d}</SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                                <p className="text-xs text-muted-foreground mt-1">
+                                  Group this stop into a specific day of the multi-day route
+                                </p>
+                              </div>
+                            )}
+
                             <div>
                               <Label htmlFor="notes">Notes</Label>
                               <Textarea
