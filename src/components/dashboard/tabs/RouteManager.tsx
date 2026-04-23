@@ -741,6 +741,40 @@ const RouteManager = () => {
                     </SelectContent>
                   </Select>
                 </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label htmlFor="office_id">Office (optional)</Label>
+                    <Select
+                      value={zoneForm.office_id || "none"}
+                      onValueChange={(v) => setZoneForm({ ...zoneForm, office_id: v === "none" ? "" : v })}
+                    >
+                      <SelectTrigger><SelectValue placeholder="Select office" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">— None —</SelectItem>
+                        {(offices || []).map((o: any) => (
+                          <SelectItem key={o.id} value={o.id}>{o.name} ({o.code})</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-muted-foreground mt-1">Operations center owning this route</p>
+                  </div>
+                  <div>
+                    <Label htmlFor="warehouse_id">Warehouse (optional)</Label>
+                    <Select
+                      value={zoneForm.warehouse_id || "none"}
+                      onValueChange={(v) => setZoneForm({ ...zoneForm, warehouse_id: v === "none" ? "" : v })}
+                    >
+                      <SelectTrigger><SelectValue placeholder="Select warehouse" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">— None —</SelectItem>
+                        {(warehouses || []).map((w: any) => (
+                          <SelectItem key={w.id} value={w.id}>{w.name} ({w.code})</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-muted-foreground mt-1">Storage hub for restock supplies</p>
+                  </div>
+                </div>
                 <div>
                   <Label htmlFor="status">Status</Label>
                   <Select 
