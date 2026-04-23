@@ -156,7 +156,7 @@ const RouteManager = () => {
     },
   });
 
-  // Fetch employees
+  // Fetch employees (with office_id so we can scope by route's office)
   const { data: employees } = useQuery({
     queryKey: ["employee-operators"],
     queryFn: async () => {
@@ -171,7 +171,7 @@ const RouteManager = () => {
       const userIds = roleData.map(r => r.user_id);
       const { data: profiles, error: profileError } = await supabase
         .from("profiles")
-        .select("id, email, full_name")
+        .select("id, email, full_name, office_id")
         .in("id", userIds);
       if (profileError) throw profileError;
       
