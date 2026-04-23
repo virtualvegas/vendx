@@ -71,7 +71,7 @@ export const IncomeTab = () => {
       return ((data as any[]) || []).map((e) => ({
         id: e.id,
         income_date: e.entry_date,
-        source: `[${e.external_income_streams?.name}] ${e.source}`,
+        source: e.source,
         description: e.description,
         amount: e.amount,
         tax_collected: e.tax_collected,
@@ -79,6 +79,8 @@ export const IncomeTab = () => {
         payment_method: e.payment_method,
         external_reference: e.external_reference,
         is_external: true,
+        stream_id: e.stream_id,
+        stream_name: e.external_income_streams?.name,
         stream_color: e.external_income_streams?.color,
       }));
     },
@@ -88,13 +90,21 @@ export const IncomeTab = () => {
     return [...(income || []), ...(externalIncome || [])].sort((a, b) => (b.income_date || "").localeCompare(a.income_date || ""));
   }, [income, externalIncome]);
 
+  const streams = useMemo(() => {
+    const map = new Map<string, string>();
+    (externalIncome || []).forEach((e: any) => { if (e.stream_id) map.set(e.stream_id, e.stream_name || "External"); });
+    return Array.from(map.entries());
+  }, [externalIncome]);
+
   const filtered = useMemo(() => {
-    return (income || []).filter((e: any) => {
+    return combinedIncome.filter((e: any) => {
       if (filter.category !== "all" && e.category !== filter.category) return false;
+      if (filter.stream === "internal" && e.is_external) return false;
+      if (filter.stream !== "all" && filter.stream !== "internal" && (!e.is_external || e.stream_id !== filter.stream)) return false;
       if (filter.search && !`${e.source} ${e.description || ""}`.toLowerCase().includes(filter.search.toLowerCase())) return false;
       return true;
     });
-  }, [income, filter]);
+  }, [combinedIncome, filter]);
 
   const stats = useMemo(() => {
     const total = filtered.reduce((s: number, e: any) => s + Number(e.amount), 0);
