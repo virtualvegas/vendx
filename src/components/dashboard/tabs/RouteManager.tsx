@@ -551,12 +551,12 @@ const RouteManager = () => {
   });
 
   const resetZoneForm = () => {
-    setZoneForm({ name: "", description: "", assigned_to: "", status: "active", zone_area: "", service_frequency_days: 15, office_id: "", warehouse_id: "" });
+    setZoneForm({ name: "", description: "", assigned_to: "", status: "active", zone_area: "", service_frequency_days: 15, office_id: "", warehouse_id: "", is_multi_day: false, total_days: 1, start_date: "", end_date: "" });
     setEditingZone(null);
   };
 
   const resetStopForm = () => {
-    setStopForm({ stop_name: "", address: "", notes: "", estimated_duration_minutes: 15, location_id: "", machine_id: "", scheduled_date: "", priority: "normal" });
+    setStopForm({ stop_name: "", address: "", notes: "", estimated_duration_minutes: 15, location_id: "", machine_id: "", scheduled_date: "", priority: "normal", day_number: 1 });
     setEditingStop(null);
   };
 
@@ -571,6 +571,10 @@ const RouteManager = () => {
       service_frequency_days: zone.service_frequency_days || 15,
       office_id: zone.office_id || "",
       warehouse_id: zone.warehouse_id || "",
+      is_multi_day: !!zone.is_multi_day,
+      total_days: zone.total_days || 1,
+      start_date: zone.start_date || "",
+      end_date: zone.end_date || "",
     });
     setZoneDialogOpen(true);
   };
@@ -586,6 +590,7 @@ const RouteManager = () => {
       machine_id: stop.machine_id || "",
       scheduled_date: stop.scheduled_date || "",
       priority: stop.priority || "normal",
+      day_number: stop.day_number || 1,
     });
     setStopDialogOpen(true);
   };
