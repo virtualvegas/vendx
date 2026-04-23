@@ -392,26 +392,44 @@ const OfficeAssignmentsPanel = ({ officeId, office, onClose }: { officeId: strin
           </TabsContent>
 
           <TabsContent value="staff" className="space-y-3">
+            <div className="rounded-md border border-primary/20 bg-primary/5 p-2 text-xs text-muted-foreground">
+              Assigning staff to an office only scopes their workload — it does <strong>not</strong> change their roles. Operators remain operators, managers remain managers, etc.
+            </div>
             <div>
               <Label>Assign an employee to this office</Label>
               <SearchableSelect
                 value=""
                 onValueChange={(id) => id && assignMut.mutate({ table: "profiles", id, value: officeId })}
-                options={(profiles || []).filter(p => p.office_id !== officeId).map(p => ({ value: p.id, label: `${p.full_name || "Unnamed"} (${p.email})` }))}
+                options={(profiles || []).filter(p => p.office_id !== officeId).map(p => {
+                  const roles = rolesByUser?.[p.id] || [];
+                  const roleSuffix = roles.length ? ` — ${roles.map(formatRole).join(", ")}` : "";
+                  return { value: p.id, label: `${p.full_name || "Unnamed"} (${p.email})${roleSuffix}` };
+                })}
                 placeholder="Select an employee to assign"
               />
             </div>
             <Table>
-              <TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Email</TableHead><TableHead className="w-12"></TableHead></TableRow></TableHeader>
+              <TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Email</TableHead><TableHead>Roles</TableHead><TableHead className="w-12"></TableHead></TableRow></TableHeader>
               <TableBody>
-                {assignedStaff.map(p => (
-                  <TableRow key={p.id}>
-                    <TableCell>{p.full_name || "—"}</TableCell>
-                    <TableCell className="text-xs text-muted-foreground">{p.email}</TableCell>
-                    <TableCell><Button variant="ghost" size="icon" onClick={() => assignMut.mutate({ table: "profiles", id: p.id, value: null })}><Trash2 className="h-3 w-3" /></Button></TableCell>
-                  </TableRow>
-                ))}
-                {!assignedStaff.length && <TableRow><TableCell colSpan={3} className="text-center text-muted-foreground py-4">No staff assigned</TableCell></TableRow>}
+                {assignedStaff.map(p => {
+                  const roles = rolesByUser?.[p.id] || [];
+                  return (
+                    <TableRow key={p.id}>
+                      <TableCell>{p.full_name || "—"}</TableCell>
+                      <TableCell className="text-xs text-muted-foreground">{p.email}</TableCell>
+                      <TableCell>
+                        <div className="flex flex-wrap gap-1">
+                          {roles.length === 0 && <span className="text-xs text-muted-foreground italic">No roles</span>}
+                          {roles.map(r => (
+                            <Badge key={r} variant="outline" className="text-[10px]">{formatRole(r)}</Badge>
+                          ))}
+                        </div>
+                      </TableCell>
+                      <TableCell><Button variant="ghost" size="icon" onClick={() => assignMut.mutate({ table: "profiles", id: p.id, value: null })}><Trash2 className="h-3 w-3" /></Button></TableCell>
+                    </TableRow>
+                  );
+                })}
+                {!assignedStaff.length && <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-4">No staff assigned</TableCell></TableRow>}
               </TableBody>
             </Table>
           </TabsContent>
