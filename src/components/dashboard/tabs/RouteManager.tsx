@@ -43,6 +43,12 @@ interface ServiceZone {
   next_service_due: string | null;
   office_id: string | null;
   warehouse_id: string | null;
+  is_multi_day: boolean | null;
+  total_days: number | null;
+  start_date: string | null;
+  end_date: string | null;
+  reassigned_at: string | null;
+  reassigned_by: string | null;
 }
 
 interface RouteStop {
@@ -60,6 +66,9 @@ interface RouteStop {
   priority: string | null;
   auto_scheduled: boolean | null;
   source_ticket_id: string | null;
+  day_number: number | null;
+  inventory_priority_score: number | null;
+  low_inventory_flagged: boolean | null;
   location?: {
     id: string;
     latitude: number | null;
@@ -74,6 +83,7 @@ interface UserProfile {
   id: string;
   email: string;
   full_name: string | null;
+  office_id?: string | null;
 }
 
 interface Location {
