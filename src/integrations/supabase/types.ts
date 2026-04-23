@@ -4880,9 +4880,12 @@ export type Database = {
           completed_at: string | null
           completed_by: string | null
           created_at: string
+          day_number: number
           estimated_duration_minutes: number | null
           id: string
+          inventory_priority_score: number
           location_id: string | null
+          low_inventory_flagged: boolean
           machine_id: string | null
           notes: string | null
           priority: string | null
@@ -4903,9 +4906,12 @@ export type Database = {
           completed_at?: string | null
           completed_by?: string | null
           created_at?: string
+          day_number?: number
           estimated_duration_minutes?: number | null
           id?: string
+          inventory_priority_score?: number
           location_id?: string | null
+          low_inventory_flagged?: boolean
           machine_id?: string | null
           notes?: string | null
           priority?: string | null
@@ -4926,9 +4932,12 @@ export type Database = {
           completed_at?: string | null
           completed_by?: string | null
           created_at?: string
+          day_number?: number
           estimated_duration_minutes?: number | null
           id?: string
+          inventory_priority_score?: number
           location_id?: string | null
+          low_inventory_flagged?: boolean
           machine_id?: string | null
           notes?: string | null
           priority?: string | null
@@ -4980,13 +4989,19 @@ export type Database = {
           created_at: string
           created_by: string | null
           description: string | null
+          end_date: string | null
           id: string
+          is_multi_day: boolean
           last_serviced_at: string | null
           name: string
           next_service_due: string | null
           office_id: string | null
+          reassigned_at: string | null
+          reassigned_by: string | null
           service_frequency_days: number | null
+          start_date: string | null
           status: string
+          total_days: number
           updated_at: string
           warehouse_id: string | null
           zone_area: string | null
@@ -4996,13 +5011,19 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           description?: string | null
+          end_date?: string | null
           id?: string
+          is_multi_day?: boolean
           last_serviced_at?: string | null
           name: string
           next_service_due?: string | null
           office_id?: string | null
+          reassigned_at?: string | null
+          reassigned_by?: string | null
           service_frequency_days?: number | null
+          start_date?: string | null
           status?: string
+          total_days?: number
           updated_at?: string
           warehouse_id?: string | null
           zone_area?: string | null
@@ -5012,13 +5033,19 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           description?: string | null
+          end_date?: string | null
           id?: string
+          is_multi_day?: boolean
           last_serviced_at?: string | null
           name?: string
           next_service_due?: string | null
           office_id?: string | null
+          reassigned_at?: string | null
+          reassigned_by?: string | null
           service_frequency_days?: number | null
+          start_date?: string | null
           status?: string
+          total_days?: number
           updated_at?: string
           warehouse_id?: string | null
           zone_area?: string | null
@@ -6959,6 +6986,13 @@ export type Database = {
           new_balance: number
           success: boolean
           transaction_id: string
+        }[]
+      }
+      calculate_machine_inventory_priority: {
+        Args: { p_machine_id: string }
+        Returns: {
+          low_flag: boolean
+          score: number
         }[]
       }
       calculate_quest_level: { Args: { xp: number }; Returns: number }
