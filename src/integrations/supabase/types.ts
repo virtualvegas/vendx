@@ -2050,6 +2050,7 @@ export type Database = {
           supplier: string | null
           unit_cost: number
           updated_at: string
+          warehouse_id: string | null
         }
         Insert: {
           category: string
@@ -2067,6 +2068,7 @@ export type Database = {
           supplier?: string | null
           unit_cost: number
           updated_at?: string
+          warehouse_id?: string | null
         }
         Update: {
           category?: string
@@ -2084,8 +2086,17 @@ export type Database = {
           supplier?: string | null
           unit_cost?: number
           updated_at?: string
+          warehouse_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "inventory_items_warehouse_id_fkey"
+            columns: ["warehouse_id"]
+            isOneToOne: false
+            referencedRelation: "vendx_warehouses"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       job_applications: {
         Row: {
@@ -3840,6 +3851,7 @@ export type Database = {
           tier_level: string
           totp_secret: string | null
           updated_at: string
+          warehouse_id: string | null
         }
         Insert: {
           created_at?: string
@@ -3852,6 +3864,7 @@ export type Database = {
           tier_level?: string
           totp_secret?: string | null
           updated_at?: string
+          warehouse_id?: string | null
         }
         Update: {
           created_at?: string
@@ -3864,6 +3877,7 @@ export type Database = {
           tier_level?: string
           totp_secret?: string | null
           updated_at?: string
+          warehouse_id?: string | null
         }
         Relationships: [
           {
@@ -3871,6 +3885,13 @@ export type Database = {
             columns: ["office_id"]
             isOneToOne: false
             referencedRelation: "vendx_offices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profiles_warehouse_id_fkey"
+            columns: ["warehouse_id"]
+            isOneToOne: false
+            referencedRelation: "vendx_warehouses"
             referencedColumns: ["id"]
           },
         ]
@@ -6392,6 +6413,7 @@ export type Database = {
           total_vends: number | null
           updated_at: string
           vendx_pay_enabled: boolean
+          warehouse_id: string | null
         }
         Insert: {
           accepts_cards?: boolean | null
@@ -6422,6 +6444,7 @@ export type Database = {
           total_vends?: number | null
           updated_at?: string
           vendx_pay_enabled?: boolean
+          warehouse_id?: string | null
         }
         Update: {
           accepts_cards?: boolean | null
@@ -6452,6 +6475,7 @@ export type Database = {
           total_vends?: number | null
           updated_at?: string
           vendx_pay_enabled?: boolean
+          warehouse_id?: string | null
         }
         Relationships: [
           {
@@ -6473,6 +6497,13 @@ export type Database = {
             columns: ["office_id"]
             isOneToOne: false
             referencedRelation: "vendx_offices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendx_machines_warehouse_id_fkey"
+            columns: ["warehouse_id"]
+            isOneToOne: false
+            referencedRelation: "vendx_warehouses"
             referencedColumns: ["id"]
           },
         ]
@@ -6547,6 +6578,83 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "vendx_offices_manager_id_fkey"
+            columns: ["manager_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vendx_warehouses: {
+        Row: {
+          address: string | null
+          capacity_units: number | null
+          city: string | null
+          code: string
+          country: string | null
+          created_at: string
+          description: string | null
+          email: string | null
+          handles_inventory: boolean
+          handles_machine_storage: boolean
+          handles_shipping: boolean
+          id: string
+          manager_id: string | null
+          name: string
+          notes: string | null
+          phone: string | null
+          state: string | null
+          status: string
+          updated_at: string
+          zip: string | null
+        }
+        Insert: {
+          address?: string | null
+          capacity_units?: number | null
+          city?: string | null
+          code: string
+          country?: string | null
+          created_at?: string
+          description?: string | null
+          email?: string | null
+          handles_inventory?: boolean
+          handles_machine_storage?: boolean
+          handles_shipping?: boolean
+          id?: string
+          manager_id?: string | null
+          name: string
+          notes?: string | null
+          phone?: string | null
+          state?: string | null
+          status?: string
+          updated_at?: string
+          zip?: string | null
+        }
+        Update: {
+          address?: string | null
+          capacity_units?: number | null
+          city?: string | null
+          code?: string
+          country?: string | null
+          created_at?: string
+          description?: string | null
+          email?: string | null
+          handles_inventory?: boolean
+          handles_machine_storage?: boolean
+          handles_shipping?: boolean
+          id?: string
+          manager_id?: string | null
+          name?: string
+          notes?: string | null
+          phone?: string | null
+          state?: string | null
+          status?: string
+          updated_at?: string
+          zip?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendx_warehouses_manager_id_fkey"
             columns: ["manager_id"]
             isOneToOne: false
             referencedRelation: "profiles"
@@ -6858,6 +6966,7 @@ export type Database = {
       }
       generate_totp_secret: { Args: never; Returns: string }
       get_my_office_id: { Args: never; Returns: string }
+      get_my_warehouse_id: { Args: never; Returns: string }
       get_public_machine_info: {
         Args: { p_machine_code: string }
         Returns: {
