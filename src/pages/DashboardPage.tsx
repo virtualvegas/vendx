@@ -70,6 +70,7 @@ import AuditLogsViewer from "@/components/dashboard/tabs/AuditLogsViewer";
 import EcoVendSuggestionsManager from "@/components/dashboard/tabs/EcoVendSuggestionsManager";
 import ServiceTech from "@/components/dashboard/tabs/ServiceTech";
 import OfficesManager from "@/components/dashboard/tabs/OfficesManager";
+import WarehousesManager from "@/components/dashboard/tabs/WarehousesManager";
 import { useSEO } from "@/hooks/useSEO";
 export type AppRole =
   | "super_admin"
@@ -275,6 +276,8 @@ const DashboardPage = () => {
         content = <GlobalLocations />; break;
       case "offices":
         content = <OfficesManager />; break;
+      case "warehouses":
+        content = <WarehousesManager />; break;
       case "vendx-pay":
         content = <VendXPayManager />; break;
       case "gift-cards":
