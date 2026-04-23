@@ -816,7 +816,7 @@ const RouteManager = () => {
                     </SelectContent>
                   </Select>
                   {editingZone?.assigned_to && editingZone.assigned_to !== zoneForm.assigned_to && (
-                    <p className="text-xs text-amber-600 mt-1 flex items-center gap-1">
+                    <p className="text-xs text-warning mt-1 flex items-center gap-1">
                       <AlertCircle className="w-3 h-3" /> Saving will reassign and log the change
                     </p>
                   )}
