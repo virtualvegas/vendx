@@ -91,6 +91,21 @@ const GlobalAnalytics = () => {
     },
   });
 
+  // External income (pushed from other VendX-owned sites via webhook)
+  const { data: externalIncome } = useQuery({
+    queryKey: ["ga-external-income", dateRange],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("external_income_entries" as any)
+        .select("id, amount, entry_date, stream_id, external_income_streams!inner(name)")
+        .eq("status", "received")
+        .gte("entry_date", format(dateFilter.start, "yyyy-MM-dd"))
+        .lte("entry_date", format(dateFilter.end, "yyyy-MM-dd"));
+      if (error) { console.error(error); return []; }
+      return (data as any[]) || [];
+    },
+  });
+
   // Wallet loads
   const { data: walletLoads } = useQuery({
     queryKey: ["ga-wallet-loads", dateRange],
