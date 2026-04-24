@@ -1209,11 +1209,14 @@ export type Database = {
           customer_name: string | null
           description: string | null
           entry_date: string
+          expense_amount: number | null
+          expense_id: string | null
           external_reference: string
           id: string
           is_taxable: boolean | null
           notes: string | null
           payment_method: string | null
+          platform_fees_total: number | null
           raw_payload: Json | null
           source: string
           status: string
@@ -1231,11 +1234,14 @@ export type Database = {
           customer_name?: string | null
           description?: string | null
           entry_date?: string
+          expense_amount?: number | null
+          expense_id?: string | null
           external_reference: string
           id?: string
           is_taxable?: boolean | null
           notes?: string | null
           payment_method?: string | null
+          platform_fees_total?: number | null
           raw_payload?: Json | null
           source: string
           status?: string
@@ -1253,11 +1259,14 @@ export type Database = {
           customer_name?: string | null
           description?: string | null
           entry_date?: string
+          expense_amount?: number | null
+          expense_id?: string | null
           external_reference?: string
           id?: string
           is_taxable?: boolean | null
           notes?: string | null
           payment_method?: string | null
+          platform_fees_total?: number | null
           raw_payload?: Json | null
           source?: string
           status?: string
@@ -1267,6 +1276,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "external_income_entries_expense_id_fkey"
+            columns: ["expense_id"]
+            isOneToOne: false
+            referencedRelation: "finance_expenses"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "external_income_entries_stream_id_fkey"
             columns: ["stream_id"]
@@ -1285,6 +1301,8 @@ export type Database = {
           created_by: string | null
           default_account_id: string | null
           default_category: string
+          default_expense_account_id: string | null
+          default_expense_category: string | null
           default_payment_method: string | null
           default_subcategory: string | null
           description: string | null
@@ -1308,6 +1326,8 @@ export type Database = {
           created_by?: string | null
           default_account_id?: string | null
           default_category?: string
+          default_expense_account_id?: string | null
+          default_expense_category?: string | null
           default_payment_method?: string | null
           default_subcategory?: string | null
           description?: string | null
@@ -1331,6 +1351,8 @@ export type Database = {
           created_by?: string | null
           default_account_id?: string | null
           default_category?: string
+          default_expense_account_id?: string | null
+          default_expense_category?: string | null
           default_payment_method?: string | null
           default_subcategory?: string | null
           description?: string | null
@@ -1350,6 +1372,13 @@ export type Database = {
           {
             foreignKeyName: "external_income_streams_default_account_id_fkey"
             columns: ["default_account_id"]
+            isOneToOne: false
+            referencedRelation: "finance_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "external_income_streams_default_expense_account_id_fkey"
+            columns: ["default_expense_account_id"]
             isOneToOne: false
             referencedRelation: "finance_accounts"
             referencedColumns: ["id"]
@@ -7071,30 +7100,57 @@ export type Database = {
         Args: { p_user_id: string; p_xp: number }
         Returns: undefined
       }
-      ingest_external_income: {
-        Args: {
-          p_amount: number
-          p_api_key: string
-          p_category?: string
-          p_currency?: string
-          p_customer_email?: string
-          p_customer_name?: string
-          p_description?: string
-          p_entry_date: string
-          p_external_reference: string
-          p_payment_method?: string
-          p_raw_payload?: Json
-          p_source: string
-          p_subcategory?: string
-          p_tax_collected?: number
-        }
-        Returns: {
-          duplicate: boolean
-          entry_id: string
-          message: string
-          success: boolean
-        }[]
-      }
+      ingest_external_income:
+        | {
+            Args: {
+              p_amount: number
+              p_api_key: string
+              p_category?: string
+              p_currency?: string
+              p_customer_email?: string
+              p_customer_name?: string
+              p_description?: string
+              p_entry_date: string
+              p_external_reference: string
+              p_payment_method?: string
+              p_raw_payload?: Json
+              p_source: string
+              p_subcategory?: string
+              p_tax_collected?: number
+            }
+            Returns: {
+              duplicate: boolean
+              entry_id: string
+              message: string
+              success: boolean
+            }[]
+          }
+        | {
+            Args: {
+              p_amount: number
+              p_api_key: string
+              p_category?: string
+              p_currency?: string
+              p_customer_email?: string
+              p_customer_name?: string
+              p_description?: string
+              p_entry_date: string
+              p_expense_amount?: number
+              p_external_reference: string
+              p_payment_method?: string
+              p_platform_fees_total?: number
+              p_raw_payload?: Json
+              p_source: string
+              p_subcategory?: string
+              p_tax_collected?: number
+            }
+            Returns: {
+              duplicate: boolean
+              entry_id: string
+              message: string
+              success: boolean
+            }[]
+          }
       is_super_admin: { Args: { _user_id: string }; Returns: boolean }
       log_machine_activity: {
         Args: {
