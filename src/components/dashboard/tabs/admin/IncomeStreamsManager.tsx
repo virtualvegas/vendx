@@ -42,6 +42,7 @@ interface Stream {
   is_active: boolean;
   api_key_prefix: string;
   default_payment_method: string;
+  default_account_id: string | null;
   is_taxable: boolean;
   total_entries: number;
   total_amount: number;
@@ -61,6 +62,35 @@ export const IncomeStreamsManager = () => {
     name: "", slug: "", description: "", source_url: "",
     default_category: "other", default_subcategory: "",
     color: "#10b981", default_payment_method: "external", is_taxable: true,
+    default_account_id: "" as string,
+  });
+
+  const { data: accounts } = useQuery({
+    queryKey: ["finance-accounts-for-streams"],
+    queryFn: async (): Promise<any[]> => {
+      const { data } = await supabase.from("finance_accounts" as any).select("id, name, account_type").order("name");
+      return (data as any) || [];
+    },
+  });
+
+  const accountName = (id: string | null) => {
+    if (!id) return null;
+    return accounts?.find((a: any) => a.id === id)?.name || null;
+  };
+
+  const setAccountMut = useMutation({
+    mutationFn: async ({ id, account_id }: { id: string; account_id: string | null }) => {
+      const { error } = await supabase.from("external_income_streams" as any)
+        .update({ default_account_id: account_id }).eq("id", id);
+      if (error) throw error;
+      await logAuditEvent({ action: "update", entity_type: "external_income_stream", entity_id: id, details: { default_account_id: account_id } });
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["external-income-streams"] });
+      qc.invalidateQueries({ queryKey: ["finance-accounts"] });
+      toast({ title: "Deposit account updated", description: "Future entries will post to this account. Existing entries are not retroactively moved." });
+    },
+    onError: (e: any) => toast({ title: "Update failed", description: e.message, variant: "destructive" }),
   });
 
   const { data: streams, isLoading } = useQuery({
