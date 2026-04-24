@@ -15,13 +15,15 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { logAuditEvent } from "@/hooks/useAuditLog";
-import { Plus, Copy, RefreshCw, Trash2, Globe, Eye, EyeOff, Code, ExternalLink } from "lucide-react";
+import { Plus, Copy, RefreshCw, Trash2, Globe, Eye, EyeOff, Code, ExternalLink, ChevronDown, ChevronRight } from "lucide-react";
 import { format } from "date-fns";
 
 const CATEGORIES = [
   "machine_revenue", "store_sales", "event_rental", "ad_revenue",
   "subscription", "deposit", "refund_received", "transfer_in",
-  "interest", "affiliate", "service_fee", "other",
+  "interest", "affiliate", "service_fee",
+  "vendor_booking", "venue_booking", "event_tickets",
+  "other",
 ];
 
 const slugify = (s: string) =>
