@@ -126,10 +126,11 @@ Deno.serve(async (req) => {
     return jsonResponse({ success: false, error: msg }, status);
   }
 
+  const isDuplicate = row.duplicate === true;
   return jsonResponse({
     success: true,
-    duplicate: row.duplicate === true,
+    duplicate: isDuplicate,
     entry_id: row.entry_id,
-    message: row.message,
+    message: isDuplicate ? "Income already exists" : (row.message || "Income recorded"),
   });
 });
