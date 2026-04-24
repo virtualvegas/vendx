@@ -10,6 +10,7 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
@@ -395,7 +396,11 @@ X-API-Key: vxk_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx`}</pre>
 };
 
 const EntriesDialog = ({ streamId, onClose, streams }: { streamId: string | null; onClose: () => void; streams: Stream[] }) => {
+  const qc = useQueryClient();
+  const { toast } = useToast();
   const stream = streams.find(s => s.id === streamId);
+  const [confirmDelete, setConfirmDelete] = useState<{ id: string; amount: number; reference: string } | null>(null);
+
   const { data: entries } = useQuery({
     queryKey: ["external-income-entries", streamId],
     queryFn: async (): Promise<any[]> => {
@@ -408,38 +413,110 @@ const EntriesDialog = ({ streamId, onClose, streams }: { streamId: string | null
     enabled: !!streamId,
   });
 
+  const deleteMutation = useMutation({
+    mutationFn: async ({ id, amount }: { id: string; amount: number; reference: string }) => {
+      // Delete the entry
+      const { error: delErr } = await supabase.from("external_income_entries" as any).delete().eq("id", id);
+      if (delErr) throw delErr;
+
+      // Decrement stream rollups (best-effort; ignore if blocked by RLS)
+      if (streamId && stream) {
+        await supabase.from("external_income_streams" as any)
+          .update({
+            total_entries: Math.max(0, (stream.total_entries || 0) - 1),
+            total_amount: Math.max(0, Number(stream.total_amount || 0) - Number(amount || 0)),
+          } as any)
+          .eq("id", streamId);
+      }
+
+      await logAuditEvent({
+        action: "delete",
+        entity_type: "external_income_entry",
+        entity_id: id,
+        details: { stream_id: streamId, stream_name: stream?.name, amount },
+      });
+    },
+    onSuccess: () => {
+      toast({ title: "Entry deleted", description: "Stream totals updated." });
+      qc.invalidateQueries({ queryKey: ["external-income-entries", streamId] });
+      qc.invalidateQueries({ queryKey: ["external-income-streams"] });
+      qc.invalidateQueries({ queryKey: ["finance-overview-external-income"] });
+      qc.invalidateQueries({ queryKey: ["unified-income"] });
+      setConfirmDelete(null);
+    },
+    onError: (err: any) => {
+      toast({ title: "Failed to delete", description: err.message, variant: "destructive" });
+    },
+  });
+
   return (
-    <Dialog open={!!streamId} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Entries — {stream?.name}</DialogTitle>
-          <DialogDescription>Last 200 entries received from this stream.</DialogDescription>
-        </DialogHeader>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Date</TableHead>
-              <TableHead>Reference</TableHead>
-              <TableHead>Source</TableHead>
-              <TableHead>Category</TableHead>
-              <TableHead className="text-right">Amount</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {(entries || []).map((e: any) => (
-              <TableRow key={e.id}>
-                <TableCell className="text-xs whitespace-nowrap">{format(new Date(e.entry_date), "MMM d, yy")}</TableCell>
-                <TableCell className="font-mono text-xs max-w-[160px] truncate" title={e.external_reference}>{e.external_reference}</TableCell>
-                <TableCell className="max-w-[200px] truncate">{e.source}</TableCell>
-                <TableCell><Badge variant="outline" className="text-xs">{(e.category || "—").replace(/_/g, " ")}</Badge></TableCell>
-                <TableCell className="font-mono text-right text-green-600">+${Number(e.amount).toFixed(2)}</TableCell>
+    <>
+      <Dialog open={!!streamId} onOpenChange={(v) => !v && onClose()}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Entries — {stream?.name}</DialogTitle>
+            <DialogDescription>Last 200 entries received from this stream. Deleting an entry removes it permanently and adjusts the stream totals.</DialogDescription>
+          </DialogHeader>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Date</TableHead>
+                <TableHead>Reference</TableHead>
+                <TableHead>Source</TableHead>
+                <TableHead>Category</TableHead>
+                <TableHead className="text-right">Amount</TableHead>
+                <TableHead className="w-[60px]"></TableHead>
               </TableRow>
-            ))}
-            {(entries || []).length === 0 && <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-8">No entries received yet</TableCell></TableRow>}
-          </TableBody>
-        </Table>
-      </DialogContent>
-    </Dialog>
+            </TableHeader>
+            <TableBody>
+              {(entries || []).map((e: any) => (
+                <TableRow key={e.id}>
+                  <TableCell className="text-xs whitespace-nowrap">{format(new Date(e.entry_date), "MMM d, yy")}</TableCell>
+                  <TableCell className="font-mono text-xs max-w-[160px] truncate" title={e.external_reference}>{e.external_reference}</TableCell>
+                  <TableCell className="max-w-[200px] truncate">{e.source}</TableCell>
+                  <TableCell><Badge variant="outline" className="text-xs">{(e.category || "—").replace(/_/g, " ")}</Badge></TableCell>
+                  <TableCell className="font-mono text-right text-green-600">+${Number(e.amount).toFixed(2)}</TableCell>
+                  <TableCell>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                      onClick={() => setConfirmDelete({ id: e.id, amount: Number(e.amount), reference: e.external_reference })}
+                      title="Delete entry"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+              {(entries || []).length === 0 && <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">No entries received yet</TableCell></TableRow>}
+            </TableBody>
+          </Table>
+        </DialogContent>
+      </Dialog>
+
+      <AlertDialog open={!!confirmDelete} onOpenChange={(v) => !v && setConfirmDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this income entry?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently remove the entry{confirmDelete ? ` (${confirmDelete.reference}, $${confirmDelete.amount.toFixed(2)})` : ""} and decrement the stream totals.
+              It will also disappear from the Finance overview. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => confirmDelete && deleteMutation.mutate(confirmDelete)}
+              disabled={deleteMutation.isPending}
+            >
+              {deleteMutation.isPending ? "Deleting..." : "Delete entry"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 };
 
