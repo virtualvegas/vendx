@@ -42,6 +42,7 @@ interface Stream {
   is_active: boolean;
   api_key_prefix: string;
   default_payment_method: string;
+  default_account_id: string | null;
   is_taxable: boolean;
   total_entries: number;
   total_amount: number;
@@ -61,6 +62,35 @@ export const IncomeStreamsManager = () => {
     name: "", slug: "", description: "", source_url: "",
     default_category: "other", default_subcategory: "",
     color: "#10b981", default_payment_method: "external", is_taxable: true,
+    default_account_id: "" as string,
+  });
+
+  const { data: accounts } = useQuery({
+    queryKey: ["finance-accounts-for-streams"],
+    queryFn: async (): Promise<any[]> => {
+      const { data } = await supabase.from("finance_accounts" as any).select("id, name, account_type").order("name");
+      return (data as any) || [];
+    },
+  });
+
+  const accountName = (id: string | null) => {
+    if (!id) return null;
+    return accounts?.find((a: any) => a.id === id)?.name || null;
+  };
+
+  const setAccountMut = useMutation({
+    mutationFn: async ({ id, account_id }: { id: string; account_id: string | null }) => {
+      const { error } = await supabase.from("external_income_streams" as any)
+        .update({ default_account_id: account_id }).eq("id", id);
+      if (error) throw error;
+      await logAuditEvent({ action: "update", entity_type: "external_income_stream", entity_id: id, details: { default_account_id: account_id } });
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["external-income-streams"] });
+      qc.invalidateQueries({ queryKey: ["finance-accounts"] });
+      toast({ title: "Deposit account updated", description: "Future entries will post to this account. Existing entries are not retroactively moved." });
+    },
+    onError: (e: any) => toast({ title: "Update failed", description: e.message, variant: "destructive" }),
   });
 
   const { data: streams, isLoading } = useQuery({
@@ -94,6 +124,7 @@ export const IncomeStreamsManager = () => {
         default_subcategory: form.default_subcategory || null,
         color: form.color,
         default_payment_method: form.default_payment_method,
+        default_account_id: form.default_account_id || null,
         is_taxable: form.is_taxable,
         api_key_hash: k.key_hash,
         api_key_prefix: k.key_prefix,
@@ -108,7 +139,7 @@ export const IncomeStreamsManager = () => {
       qc.invalidateQueries({ queryKey: ["external-income-streams"] });
       toast({ title: "Stream created" });
       setOpen(false);
-      setForm({ name: "", slug: "", description: "", source_url: "", default_category: "other", default_subcategory: "", color: "#10b981", default_payment_method: "external", is_taxable: true });
+      setForm({ name: "", slug: "", description: "", source_url: "", default_category: "other", default_subcategory: "", color: "#10b981", default_payment_method: "external", is_taxable: true, default_account_id: "" });
       setKeyDialog({ open: true, key: plainKey, name: (stream as any).name });
     },
     onError: (e: any) => toast({ title: "Error", description: e.message, variant: "destructive" }),
@@ -238,6 +269,22 @@ export const IncomeStreamsManager = () => {
                       </Select>
                     </div>
                   </div>
+                  <div>
+                    <Label>Deposit To Account</Label>
+                    <Select
+                      value={form.default_account_id || "none"}
+                      onValueChange={(v) => setForm({ ...form, default_account_id: v === "none" ? "" : v })}
+                    >
+                      <SelectTrigger><SelectValue placeholder="None — entries won't update an account balance" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">None — track only, don't deposit</SelectItem>
+                        {(accounts || []).map((a: any) => (
+                          <SelectItem key={a.id} value={a.id}>{a.name} <span className="text-xs text-muted-foreground">({a.account_type})</span></SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-muted-foreground mt-1">Each incoming entry will automatically post a deposit to this account and update its balance.</p>
+                  </div>
                   <div className="flex items-center gap-2">
                     <Switch checked={form.is_taxable} onCheckedChange={(v) => setForm({ ...form, is_taxable: v })} />
                     <Label>Income from this stream is taxable</Label>
@@ -260,6 +307,7 @@ export const IncomeStreamsManager = () => {
                 <TableRow>
                   <TableHead>Stream</TableHead>
                   <TableHead>Category</TableHead>
+                  <TableHead>Deposit Account</TableHead>
                   <TableHead>API Key</TableHead>
                   <TableHead className="text-right">Entries</TableHead>
                   <TableHead className="text-right">Total</TableHead>
@@ -281,6 +329,24 @@ export const IncomeStreamsManager = () => {
                       </div>
                     </TableCell>
                     <TableCell><Badge variant="outline" className="text-xs">{s.default_category.replace(/_/g, " ")}</Badge></TableCell>
+                    <TableCell className="min-w-[180px]">
+                      <Select
+                        value={s.default_account_id || "none"}
+                        onValueChange={(v) => setAccountMut.mutate({ id: s.id, account_id: v === "none" ? null : v })}
+                      >
+                        <SelectTrigger className="h-8 text-xs">
+                          <SelectValue placeholder="None">
+                            {s.default_account_id ? (accountName(s.default_account_id) || "Unknown account") : <span className="text-muted-foreground italic">None</span>}
+                          </SelectValue>
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none"><span className="italic text-muted-foreground">None — don't deposit</span></SelectItem>
+                          {(accounts || []).map((a: any) => (
+                            <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </TableCell>
                     <TableCell><code className="text-xs bg-muted px-2 py-0.5 rounded">{s.api_key_prefix}…</code></TableCell>
                     <TableCell className="text-right font-mono">{s.total_entries}</TableCell>
                     <TableCell className="text-right font-mono text-green-600">${Number(s.total_amount).toFixed(2)}</TableCell>
