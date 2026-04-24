@@ -12,7 +12,9 @@ const corsHeaders = {
 
 interface IncomePayload {
   external_reference: string;
-  amount: number;
+  amount: number;                 // Gross total customer paid
+  expense_amount?: number;        // Net payout to vendor/venue/organizer
+  platform_fees_total?: number;   // Commission + booking fees + platform tips
   source: string;
   entry_date?: string;
   description?: string;
@@ -81,6 +83,21 @@ Deno.serve(async (req) => {
     }
   }
 
+  // Validate optional expense_amount and platform_fees_total
+  for (const f of ["expense_amount", "platform_fees_total"] as const) {
+    const v = (payload as any)[f];
+    if (v !== undefined && v !== null) {
+      if (typeof v !== "number" || !isFinite(v) || v < 0) {
+        return jsonResponse({ success: false, error: `${f} must be a non-negative number` }, 400);
+      }
+    }
+  }
+
+  // expense_amount cannot exceed amount (gross)
+  if (payload.expense_amount && payload.expense_amount > payload.amount) {
+    return jsonResponse({ success: false, error: "expense_amount cannot exceed amount" }, 400);
+  }
+
   // Date validation (optional)
   let entryDate: string | null = null;
   if (payload.entry_date) {
@@ -112,6 +129,8 @@ Deno.serve(async (req) => {
     p_customer_email: payload.customer_email ?? null,
     p_customer_name: payload.customer_name ?? null,
     p_raw_payload: (payload.metadata ?? payload) as any,
+    p_expense_amount: payload.expense_amount ?? 0,
+    p_platform_fees_total: payload.platform_fees_total ?? 0,
   });
 
   if (error) {
