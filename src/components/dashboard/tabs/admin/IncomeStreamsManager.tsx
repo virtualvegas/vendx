@@ -402,6 +402,7 @@ const EntriesDialog = ({ streamId, onClose, streams }: { streamId: string | null
   const { toast } = useToast();
   const stream = streams.find(s => s.id === streamId);
   const [confirmDelete, setConfirmDelete] = useState<{ id: string; amount: number; reference: string } | null>(null);
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
 
   const { data: entries } = useQuery({
     queryKey: ["external-income-entries", streamId],
