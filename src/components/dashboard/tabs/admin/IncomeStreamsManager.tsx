@@ -636,7 +636,7 @@ const EntriesDialog = ({ streamId, onClose, streams }: { streamId: string | null
                   </>
                 );
               })}
-              {(entries || []).length === 0 && <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-8">No entries received yet</TableCell></TableRow>}
+              {(entries || []).length === 0 && <TableRow><TableCell colSpan={9} className="text-center text-muted-foreground py-8">No entries received yet</TableCell></TableRow>}
             </TableBody>
           </Table>
         </DialogContent>
