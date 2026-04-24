@@ -420,19 +420,26 @@ X-API-Key: vxk_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx`}</pre>
               <p className="font-semibold mb-1">Request body (JSON)</p>
               <pre className="bg-muted p-3 rounded text-xs overflow-x-auto">{`{
   "external_reference": "order-12345",   // required, unique per stream
-  "amount": 49.99,                        // required, positive number
+  "amount": 49.99,                        // required, full customer-paid total → recorded as income
   "source": "Customer: John Doe",         // required, descriptive string
   "entry_date": "2026-04-23",             // optional, ISO date (defaults today)
   "description": "Album purchase",        // optional
   "tax_collected": 4.50,                  // optional
+  "expense_amount": 30.00,                // optional, vendor/venue payout → auto-recorded as expense
+  "platform_fees_total": 5.00,            // optional, your platform's gross fees (info only)
   "currency": "USD",                      // optional, default USD
   "category": "store_sales",              // optional, overrides stream default
   "subcategory": "digital",               // optional
   "payment_method": "stripe",             // optional, overrides stream default
   "customer_email": "buyer@example.com",  // optional
   "customer_name": "John Doe",            // optional
-  "metadata": { "anything": "you want" }  // optional, stored as raw payload
+  "metadata": { "vendor_name": "DJ Prime", "breakdown": { ... } }
 }`}</pre>
+              <p className="text-xs text-muted-foreground mt-1">
+                <strong>Income vs expense:</strong> <code>amount</code> is the full transaction total recorded as income.
+                If you also send <code>expense_amount</code> (e.g. vendor payout for a marketplace booking),
+                a matching expense is automatically created and linked to this entry — so your net income reflects only your platform's actual revenue.
+              </p>
             </div>
             <div>
               <p className="font-semibold mb-1">Response</p>
