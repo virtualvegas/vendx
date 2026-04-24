@@ -463,6 +463,7 @@ const EntriesDialog = ({ streamId, onClose, streams }: { streamId: string | null
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-[30px]"></TableHead>
                 <TableHead>Date</TableHead>
                 <TableHead>Reference</TableHead>
                 <TableHead>Source</TableHead>
@@ -472,27 +473,85 @@ const EntriesDialog = ({ streamId, onClose, streams }: { streamId: string | null
               </TableRow>
             </TableHeader>
             <TableBody>
-              {(entries || []).map((e: any) => (
-                <TableRow key={e.id}>
-                  <TableCell className="text-xs whitespace-nowrap">{format(new Date(e.entry_date), "MMM d, yy")}</TableCell>
-                  <TableCell className="font-mono text-xs max-w-[160px] truncate" title={e.external_reference}>{e.external_reference}</TableCell>
-                  <TableCell className="max-w-[200px] truncate">{e.source}</TableCell>
-                  <TableCell><Badge variant="outline" className="text-xs">{(e.category || "—").replace(/_/g, " ")}</Badge></TableCell>
-                  <TableCell className="font-mono text-right text-green-600">+${Number(e.amount).toFixed(2)}</TableCell>
-                  <TableCell>
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
-                      onClick={() => setConfirmDelete({ id: e.id, amount: Number(e.amount), reference: e.external_reference })}
-                      title="Delete entry"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-              {(entries || []).length === 0 && <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">No entries received yet</TableCell></TableRow>}
+              {(entries || []).map((e: any) => {
+                const isOpen = !!expanded[e.id];
+                const meta = (e.raw_payload && typeof e.raw_payload === "object") ? e.raw_payload : {};
+                const breakdown = meta.breakdown && typeof meta.breakdown === "object" ? meta.breakdown : null;
+                const platformRev = breakdown?.platform_total_revenue;
+                return (
+                  <>
+                    <TableRow key={e.id} className="cursor-pointer" onClick={() => setExpanded(prev => ({ ...prev, [e.id]: !prev[e.id] }))}>
+                      <TableCell>
+                        {isOpen ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
+                      </TableCell>
+                      <TableCell className="text-xs whitespace-nowrap">{format(new Date(e.entry_date), "MMM d, yy")}</TableCell>
+                      <TableCell className="font-mono text-xs max-w-[160px] truncate" title={e.external_reference}>{e.external_reference}</TableCell>
+                      <TableCell className="max-w-[200px] truncate">{e.source}</TableCell>
+                      <TableCell>
+                        <div className="flex flex-col gap-1">
+                          <Badge variant="outline" className="text-xs w-fit">{(e.category || "—").replace(/_/g, " ")}</Badge>
+                          {e.subcategory && <span className="text-[10px] text-muted-foreground">{e.subcategory}</span>}
+                        </div>
+                      </TableCell>
+                      <TableCell className="font-mono text-right">
+                        <div className="text-success">+${Number(e.amount).toFixed(2)}</div>
+                        {platformRev !== undefined && (
+                          <div className="text-[10px] text-muted-foreground">platform ${Number(platformRev).toFixed(2)}</div>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                          onClick={(ev) => { ev.stopPropagation(); setConfirmDelete({ id: e.id, amount: Number(e.amount), reference: e.external_reference }); }}
+                          title="Delete entry"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                    {isOpen && (
+                      <TableRow key={e.id + "-detail"} className="bg-muted/30">
+                        <TableCell></TableCell>
+                        <TableCell colSpan={6} className="py-3">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+                            {e.description && (
+                              <div className="md:col-span-2"><span className="text-muted-foreground">Description: </span>{e.description}</div>
+                            )}
+                            {(e.customer_name || e.customer_email) && (
+                              <div><span className="text-muted-foreground">Customer: </span>{e.customer_name}{e.customer_email ? ` <${e.customer_email}>` : ""}</div>
+                            )}
+                            {e.payment_method && <div><span className="text-muted-foreground">Payment: </span>{e.payment_method}</div>}
+                            {Number(e.tax_collected) > 0 && <div><span className="text-muted-foreground">Tax collected: </span>${Number(e.tax_collected).toFixed(2)}</div>}
+                            {e.currency && e.currency !== "USD" && <div><span className="text-muted-foreground">Currency: </span>{e.currency}</div>}
+                            {breakdown && (
+                              <div className="md:col-span-2 mt-2">
+                                <div className="text-muted-foreground mb-1 font-medium">Money breakdown</div>
+                                <div className="grid grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-1 font-mono">
+                                  {Object.entries(breakdown).map(([k, v]) => (
+                                    <div key={k} className="flex justify-between border-b border-border/40 py-0.5">
+                                      <span className="text-muted-foreground">{k.replace(/_/g, " ")}</span>
+                                      <span>{typeof v === "number" ? `$${Number(v).toFixed(2)}` : String(v)}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                            {Object.keys(meta).filter(k => k !== "breakdown").length > 0 && (
+                              <div className="md:col-span-2 mt-2">
+                                <div className="text-muted-foreground mb-1 font-medium">Metadata</div>
+                                <pre className="text-[10px] bg-background border rounded p-2 overflow-x-auto max-h-40">{JSON.stringify(Object.fromEntries(Object.entries(meta).filter(([k]) => k !== "breakdown")), null, 2)}</pre>
+                              </div>
+                            )}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </>
+                );
+              })}
+              {(entries || []).length === 0 && <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-8">No entries received yet</TableCell></TableRow>}
             </TableBody>
           </Table>
         </DialogContent>
