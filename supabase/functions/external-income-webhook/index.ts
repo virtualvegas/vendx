@@ -114,6 +114,8 @@ Deno.serve(async (req) => {
     p_customer_email: payload.customer_email ?? null,
     p_customer_name: payload.customer_name ?? null,
     p_raw_payload: (payload.metadata ?? payload) as any,
+    p_expense_amount: payload.expense_amount ?? 0,
+    p_platform_fees_total: payload.platform_fees_total ?? 0,
   });
 
   if (error) {
