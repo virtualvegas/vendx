@@ -534,7 +534,9 @@ const EntriesDialog = ({ streamId, onClose, streams }: { streamId: string | null
                 <TableHead>Reference</TableHead>
                 <TableHead>Source</TableHead>
                 <TableHead>Category</TableHead>
-                <TableHead className="text-right">Amount</TableHead>
+                <TableHead className="text-right">Gross</TableHead>
+                <TableHead className="text-right">Expense</TableHead>
+                <TableHead className="text-right">Net</TableHead>
                 <TableHead className="w-[60px]"></TableHead>
               </TableRow>
             </TableHeader>
@@ -565,6 +567,14 @@ const EntriesDialog = ({ streamId, onClose, streams }: { streamId: string | null
                           <div className="text-[10px] text-muted-foreground">platform ${Number(platformRev).toFixed(2)}</div>
                         )}
                       </TableCell>
+                      <TableCell className="font-mono text-right">
+                        {Number(e.expense_amount || 0) > 0 ? (
+                          <div className="text-destructive">-${Number(e.expense_amount).toFixed(2)}</div>
+                        ) : <span className="text-muted-foreground">—</span>}
+                      </TableCell>
+                      <TableCell className="font-mono text-right font-medium">
+                        ${(Number(e.amount) - Number(e.expense_amount || 0)).toFixed(2)}
+                      </TableCell>
                       <TableCell>
                         <Button
                           size="icon"
@@ -580,10 +590,19 @@ const EntriesDialog = ({ streamId, onClose, streams }: { streamId: string | null
                     {isOpen && (
                       <TableRow key={e.id + "-detail"} className="bg-muted/30">
                         <TableCell></TableCell>
-                        <TableCell colSpan={6} className="py-3">
+                        <TableCell colSpan={8} className="py-3">
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
                             {e.description && (
                               <div className="md:col-span-2"><span className="text-muted-foreground">Description: </span>{e.description}</div>
+                            )}
+                            {Number(e.expense_amount || 0) > 0 && (
+                              <div className="md:col-span-2 text-xs flex items-center gap-2 bg-amber-500/10 border border-amber-500/30 rounded px-2 py-1">
+                                <Receipt className="h-3 w-3 text-amber-500" />
+                                <span>An expense of <strong>${Number(e.expense_amount).toFixed(2)}</strong> was auto-recorded for the vendor/venue payout. The net contribution is <strong>${(Number(e.amount) - Number(e.expense_amount || 0)).toFixed(2)}</strong>.</span>
+                              </div>
+                            )}
+                            {Number(e.platform_fees_total || 0) > 0 && (
+                              <div><span className="text-muted-foreground">Platform fees: </span>${Number(e.platform_fees_total).toFixed(2)}</div>
                             )}
                             {(e.customer_name || e.customer_email) && (
                               <div><span className="text-muted-foreground">Customer: </span>{e.customer_name}{e.customer_email ? ` <${e.customer_email}>` : ""}</div>
