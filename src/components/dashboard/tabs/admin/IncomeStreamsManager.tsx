@@ -124,6 +124,7 @@ export const IncomeStreamsManager = () => {
         default_subcategory: form.default_subcategory || null,
         color: form.color,
         default_payment_method: form.default_payment_method,
+        default_account_id: form.default_account_id || null,
         is_taxable: form.is_taxable,
         api_key_hash: k.key_hash,
         api_key_prefix: k.key_prefix,
@@ -138,7 +139,7 @@ export const IncomeStreamsManager = () => {
       qc.invalidateQueries({ queryKey: ["external-income-streams"] });
       toast({ title: "Stream created" });
       setOpen(false);
-      setForm({ name: "", slug: "", description: "", source_url: "", default_category: "other", default_subcategory: "", color: "#10b981", default_payment_method: "external", is_taxable: true });
+      setForm({ name: "", slug: "", description: "", source_url: "", default_category: "other", default_subcategory: "", color: "#10b981", default_payment_method: "external", is_taxable: true, default_account_id: "" });
       setKeyDialog({ open: true, key: plainKey, name: (stream as any).name });
     },
     onError: (e: any) => toast({ title: "Error", description: e.message, variant: "destructive" }),
@@ -267,6 +268,22 @@ export const IncomeStreamsManager = () => {
                           <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent>
                       </Select>
                     </div>
+                  </div>
+                  <div>
+                    <Label>Deposit To Account</Label>
+                    <Select
+                      value={form.default_account_id || "none"}
+                      onValueChange={(v) => setForm({ ...form, default_account_id: v === "none" ? "" : v })}
+                    >
+                      <SelectTrigger><SelectValue placeholder="None — entries won't update an account balance" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">None — track only, don't deposit</SelectItem>
+                        {(accounts || []).map((a: any) => (
+                          <SelectItem key={a.id} value={a.id}>{a.name} <span className="text-xs text-muted-foreground">({a.account_type})</span></SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-muted-foreground mt-1">Each incoming entry will automatically post a deposit to this account and update its balance.</p>
                   </div>
                   <div className="flex items-center gap-2">
                     <Switch checked={form.is_taxable} onCheckedChange={(v) => setForm({ ...form, is_taxable: v })} />
