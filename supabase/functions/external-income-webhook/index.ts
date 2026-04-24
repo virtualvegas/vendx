@@ -17,6 +17,8 @@ interface IncomePayload {
   entry_date?: string;
   description?: string;
   tax_collected?: number;
+  expense_amount?: number;
+  platform_fees_total?: number;
   currency?: string;
   category?: string;
   subcategory?: string;
