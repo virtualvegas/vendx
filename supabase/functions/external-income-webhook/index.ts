@@ -12,7 +12,9 @@ const corsHeaders = {
 
 interface IncomePayload {
   external_reference: string;
-  amount: number;
+  amount: number;                 // Gross total customer paid
+  expense_amount?: number;        // Net payout to vendor/venue/organizer
+  platform_fees_total?: number;   // Commission + booking fees + platform tips
   source: string;
   entry_date?: string;
   description?: string;
