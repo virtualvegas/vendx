@@ -15,7 +15,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { logAuditEvent } from "@/hooks/useAuditLog";
-import { Plus, Copy, RefreshCw, Trash2, Globe, Eye, EyeOff, Code, ExternalLink, ChevronDown, ChevronRight } from "lucide-react";
+import { Plus, Copy, RefreshCw, Trash2, Globe, Eye, EyeOff, Code, ExternalLink, ChevronDown, ChevronRight, Receipt } from "lucide-react";
 import { format } from "date-fns";
 
 const CATEGORIES = [
