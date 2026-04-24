@@ -307,6 +307,7 @@ export const IncomeStreamsManager = () => {
                 <TableRow>
                   <TableHead>Stream</TableHead>
                   <TableHead>Category</TableHead>
+                  <TableHead>Deposit Account</TableHead>
                   <TableHead>API Key</TableHead>
                   <TableHead className="text-right">Entries</TableHead>
                   <TableHead className="text-right">Total</TableHead>
@@ -328,6 +329,24 @@ export const IncomeStreamsManager = () => {
                       </div>
                     </TableCell>
                     <TableCell><Badge variant="outline" className="text-xs">{s.default_category.replace(/_/g, " ")}</Badge></TableCell>
+                    <TableCell className="min-w-[180px]">
+                      <Select
+                        value={s.default_account_id || "none"}
+                        onValueChange={(v) => setAccountMut.mutate({ id: s.id, account_id: v === "none" ? null : v })}
+                      >
+                        <SelectTrigger className="h-8 text-xs">
+                          <SelectValue placeholder="None">
+                            {s.default_account_id ? (accountName(s.default_account_id) || "Unknown account") : <span className="text-muted-foreground italic">None</span>}
+                          </SelectValue>
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none"><span className="italic text-muted-foreground">None — don't deposit</span></SelectItem>
+                          {(accounts || []).map((a: any) => (
+                            <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </TableCell>
                     <TableCell><code className="text-xs bg-muted px-2 py-0.5 rounded">{s.api_key_prefix}…</code></TableCell>
                     <TableCell className="text-right font-mono">{s.total_entries}</TableCell>
                     <TableCell className="text-right font-mono text-green-600">${Number(s.total_amount).toFixed(2)}</TableCell>
