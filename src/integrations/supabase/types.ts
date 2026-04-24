@@ -7100,57 +7100,32 @@ export type Database = {
         Args: { p_user_id: string; p_xp: number }
         Returns: undefined
       }
-      ingest_external_income:
-        | {
-            Args: {
-              p_amount: number
-              p_api_key: string
-              p_category?: string
-              p_currency?: string
-              p_customer_email?: string
-              p_customer_name?: string
-              p_description?: string
-              p_entry_date: string
-              p_external_reference: string
-              p_payment_method?: string
-              p_raw_payload?: Json
-              p_source: string
-              p_subcategory?: string
-              p_tax_collected?: number
-            }
-            Returns: {
-              duplicate: boolean
-              entry_id: string
-              message: string
-              success: boolean
-            }[]
-          }
-        | {
-            Args: {
-              p_amount: number
-              p_api_key: string
-              p_category?: string
-              p_currency?: string
-              p_customer_email?: string
-              p_customer_name?: string
-              p_description?: string
-              p_entry_date: string
-              p_expense_amount?: number
-              p_external_reference: string
-              p_payment_method?: string
-              p_platform_fees_total?: number
-              p_raw_payload?: Json
-              p_source: string
-              p_subcategory?: string
-              p_tax_collected?: number
-            }
-            Returns: {
-              duplicate: boolean
-              entry_id: string
-              message: string
-              success: boolean
-            }[]
-          }
+      ingest_external_income: {
+        Args: {
+          p_amount: number
+          p_api_key: string
+          p_category?: string
+          p_currency?: string
+          p_customer_email?: string
+          p_customer_name?: string
+          p_description?: string
+          p_entry_date: string
+          p_expense_amount?: number
+          p_external_reference: string
+          p_payment_method?: string
+          p_platform_fees_total?: number
+          p_raw_payload?: Json
+          p_source: string
+          p_subcategory?: string
+          p_tax_collected?: number
+        }
+        Returns: {
+          duplicate: boolean
+          entry_id: string
+          message: string
+          success: boolean
+        }[]
+      }
       is_super_admin: { Args: { _user_id: string }; Returns: boolean }
       log_machine_activity: {
         Args: {

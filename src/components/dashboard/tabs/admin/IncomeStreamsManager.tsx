@@ -15,7 +15,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { logAuditEvent } from "@/hooks/useAuditLog";
-import { Plus, Copy, RefreshCw, Trash2, Globe, Eye, EyeOff, Code, ExternalLink, ChevronDown, ChevronRight, Receipt } from "lucide-react";
+import { Plus, Copy, RefreshCw, Trash2, Globe, Eye, EyeOff, Code, ExternalLink, ChevronDown, ChevronRight } from "lucide-react";
 import { format } from "date-fns";
 
 const CATEGORIES = [
@@ -420,26 +420,19 @@ X-API-Key: vxk_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx`}</pre>
               <p className="font-semibold mb-1">Request body (JSON)</p>
               <pre className="bg-muted p-3 rounded text-xs overflow-x-auto">{`{
   "external_reference": "order-12345",   // required, unique per stream
-  "amount": 49.99,                        // required, full customer-paid total → recorded as income
+  "amount": 49.99,                        // required, positive number
   "source": "Customer: John Doe",         // required, descriptive string
   "entry_date": "2026-04-23",             // optional, ISO date (defaults today)
   "description": "Album purchase",        // optional
   "tax_collected": 4.50,                  // optional
-  "expense_amount": 30.00,                // optional, vendor/venue payout → auto-recorded as expense
-  "platform_fees_total": 5.00,            // optional, your platform's gross fees (info only)
   "currency": "USD",                      // optional, default USD
   "category": "store_sales",              // optional, overrides stream default
   "subcategory": "digital",               // optional
   "payment_method": "stripe",             // optional, overrides stream default
   "customer_email": "buyer@example.com",  // optional
   "customer_name": "John Doe",            // optional
-  "metadata": { "vendor_name": "DJ Prime", "breakdown": { ... } }
+  "metadata": { "anything": "you want" }  // optional, stored as raw payload
 }`}</pre>
-              <p className="text-xs text-muted-foreground mt-1">
-                <strong>Income vs expense:</strong> <code>amount</code> is the full transaction total recorded as income.
-                If you also send <code>expense_amount</code> (e.g. vendor payout for a marketplace booking),
-                a matching expense is automatically created and linked to this entry — so your net income reflects only your platform's actual revenue.
-              </p>
             </div>
             <div>
               <p className="font-semibold mb-1">Response</p>
@@ -541,9 +534,7 @@ const EntriesDialog = ({ streamId, onClose, streams }: { streamId: string | null
                 <TableHead>Reference</TableHead>
                 <TableHead>Source</TableHead>
                 <TableHead>Category</TableHead>
-                <TableHead className="text-right">Gross</TableHead>
-                <TableHead className="text-right">Expense</TableHead>
-                <TableHead className="text-right">Net</TableHead>
+                <TableHead className="text-right">Amount</TableHead>
                 <TableHead className="w-[60px]"></TableHead>
               </TableRow>
             </TableHeader>
@@ -574,14 +565,6 @@ const EntriesDialog = ({ streamId, onClose, streams }: { streamId: string | null
                           <div className="text-[10px] text-muted-foreground">platform ${Number(platformRev).toFixed(2)}</div>
                         )}
                       </TableCell>
-                      <TableCell className="font-mono text-right">
-                        {Number(e.expense_amount || 0) > 0 ? (
-                          <div className="text-destructive">-${Number(e.expense_amount).toFixed(2)}</div>
-                        ) : <span className="text-muted-foreground">—</span>}
-                      </TableCell>
-                      <TableCell className="font-mono text-right font-medium">
-                        ${(Number(e.amount) - Number(e.expense_amount || 0)).toFixed(2)}
-                      </TableCell>
                       <TableCell>
                         <Button
                           size="icon"
@@ -597,19 +580,10 @@ const EntriesDialog = ({ streamId, onClose, streams }: { streamId: string | null
                     {isOpen && (
                       <TableRow key={e.id + "-detail"} className="bg-muted/30">
                         <TableCell></TableCell>
-                        <TableCell colSpan={8} className="py-3">
+                        <TableCell colSpan={6} className="py-3">
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
                             {e.description && (
                               <div className="md:col-span-2"><span className="text-muted-foreground">Description: </span>{e.description}</div>
-                            )}
-                            {Number(e.expense_amount || 0) > 0 && (
-                              <div className="md:col-span-2 text-xs flex items-center gap-2 bg-amber-500/10 border border-amber-500/30 rounded px-2 py-1">
-                                <Receipt className="h-3 w-3 text-amber-500" />
-                                <span>An expense of <strong>${Number(e.expense_amount).toFixed(2)}</strong> was auto-recorded for the vendor/venue payout. The net contribution is <strong>${(Number(e.amount) - Number(e.expense_amount || 0)).toFixed(2)}</strong>.</span>
-                              </div>
-                            )}
-                            {Number(e.platform_fees_total || 0) > 0 && (
-                              <div><span className="text-muted-foreground">Platform fees: </span>${Number(e.platform_fees_total).toFixed(2)}</div>
                             )}
                             {(e.customer_name || e.customer_email) && (
                               <div><span className="text-muted-foreground">Customer: </span>{e.customer_name}{e.customer_email ? ` <${e.customer_email}>` : ""}</div>
@@ -643,7 +617,7 @@ const EntriesDialog = ({ streamId, onClose, streams }: { streamId: string | null
                   </>
                 );
               })}
-              {(entries || []).length === 0 && <TableRow><TableCell colSpan={9} className="text-center text-muted-foreground py-8">No entries received yet</TableCell></TableRow>}
+              {(entries || []).length === 0 && <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-8">No entries received yet</TableCell></TableRow>}
             </TableBody>
           </Table>
         </DialogContent>
