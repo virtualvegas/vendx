@@ -74,6 +74,13 @@ Deno.serve(async (req) => {
     return jsonResponse({ success: false, error: "source too long (max 255)" }, 400);
   }
 
+  // Tax must be non-negative if provided
+  if (payload.tax_collected !== undefined && payload.tax_collected !== null) {
+    if (typeof payload.tax_collected !== "number" || !isFinite(payload.tax_collected) || payload.tax_collected < 0) {
+      return jsonResponse({ success: false, error: "tax_collected must be a non-negative number" }, 400);
+    }
+  }
+
   // Date validation (optional)
   let entryDate: string | null = null;
   if (payload.entry_date) {
@@ -119,10 +126,11 @@ Deno.serve(async (req) => {
     return jsonResponse({ success: false, error: msg }, status);
   }
 
+  const isDuplicate = row.duplicate === true;
   return jsonResponse({
     success: true,
-    duplicate: row.duplicate === true,
+    duplicate: isDuplicate,
     entry_id: row.entry_id,
-    message: row.message,
+    message: isDuplicate ? "Income already exists" : (row.message || "Income recorded"),
   });
 });
