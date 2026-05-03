@@ -103,7 +103,7 @@ const Footer = () => {
                 <SiX className="w-5 h-5 text-primary" />
               </a>
               <a
-                href="https://www.linkedin.com/company/vendxglobal"
+                href="https://www.linkedin.com/company/vendx-global-corporation"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-10 h-10 rounded-full bg-primary/10 border border-primary/30 flex items-center justify-center hover:border-primary hover:shadow-[0_0_20px_rgba(26,124,255,0.5)] transition-smooth"
@@ -111,7 +111,7 @@ const Footer = () => {
                 <Linkedin className="w-5 h-5 text-primary" />
               </a>
               <a
-                href="https://www.youtube.com/@VendXGlobal"
+                href="https://www.youtube.com/@vendxglobal"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-10 h-10 rounded-full bg-primary/10 border border-primary/30 flex items-center justify-center hover:border-primary hover:shadow-[0_0_20px_rgba(26,124,255,0.5)] transition-smooth"
