@@ -1,6 +1,6 @@
 import { Linkedin, Youtube, Mail, Facebook, Instagram } from "lucide-react";
 import { Link } from "react-router-dom";
-import { SiTiktok, SiX } from "react-icons/si";
+import { SiTiktok, SiX, SiSnapchat } from "react-icons/si";
 
 const Footer = () => {
   return (
@@ -109,6 +109,14 @@ const Footer = () => {
                 className="w-10 h-10 rounded-full bg-primary/10 border border-primary/30 flex items-center justify-center hover:border-primary hover:shadow-[0_0_20px_rgba(26,124,255,0.5)] transition-smooth"
               >
                 <Linkedin className="w-5 h-5 text-primary" />
+              </a>
+              <a
+                href="https://www.snapchat.com/@vendxglobal"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-10 h-10 rounded-full bg-primary/10 border border-primary/30 flex items-center justify-center hover:border-primary hover:shadow-[0_0_20px_rgba(26,124,255,0.5)] transition-smooth"
+              >
+                <SiSnapchat className="w-5 h-5 text-primary" />
               </a>
               <a
                 href="https://www.youtube.com/@vendxglobal"
