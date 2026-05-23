@@ -72,6 +72,7 @@ import ServiceTech from "@/components/dashboard/tabs/ServiceTech";
 import OfficesManager from "@/components/dashboard/tabs/OfficesManager";
 import WarehousesManager from "@/components/dashboard/tabs/WarehousesManager";
 import MerchantApiManager from "@/components/dashboard/tabs/MerchantApiManager";
+import BrandLinksManager from "@/components/dashboard/tabs/BrandLinksManager";
 import { useSEO } from "@/hooks/useSEO";
 export type AppRole =
   | "super_admin"
