@@ -90,20 +90,28 @@ const POSReceiptsPanel = () => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Receipt className="w-5 h-5" /> POS Receipts (Loyverse)
-        </CardTitle>
-        <p className="text-sm text-muted-foreground">
-          Webhook endpoint: <code className="text-xs bg-muted px-1 py-0.5 rounded">/functions/v1/loyverse-webhook</code>
-        </p>
-        <div className="flex items-center gap-2 mt-2">
+        <div className="flex items-start justify-between gap-3 flex-wrap">
+          <div>
+            <CardTitle className="flex items-center gap-2">
+              <Receipt className="w-5 h-5" /> POS Receipts (Loyverse)
+            </CardTitle>
+            <p className="text-sm text-muted-foreground mt-1">
+              Auto-syncs every 5 minutes via Loyverse API. Customers earn points based on matched email or phone.
+            </p>
+          </div>
+          <Button onClick={handleSyncNow} disabled={syncing} size="sm">
+            <RefreshCw className={`w-4 h-4 mr-2 ${syncing ? "animate-spin" : ""}`} />
+            {syncing ? "Syncing..." : "Sync Now"}
+          </Button>
+        </div>
+        <div className="flex items-center gap-2 mt-3">
           <Search className="w-4 h-4 text-muted-foreground" />
           <Input placeholder="Search by receipt #, customer, email, store..." value={search} onChange={(e) => setSearch(e.target.value)} className="max-w-md" />
         </div>
       </CardHeader>
       <CardContent className="overflow-x-auto">
         {loading ? <p className="text-muted-foreground">Loading...</p> : filtered.length === 0 ? (
-          <p className="text-center py-8 text-muted-foreground">No POS receipts yet. Configure your Loyverse webhook to start syncing.</p>
+          <p className="text-center py-8 text-muted-foreground">No POS receipts yet. Click "Sync Now" to pull from Loyverse.</p>
         ) : (
           <Table>
             <TableHeader>
