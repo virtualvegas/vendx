@@ -284,6 +284,8 @@ const DashboardPage = () => {
         content = <VendXPayManager />; break;
       case "merchant-api":
         content = <MerchantApiManager />; break;
+      case "brand-links":
+        content = <BrandLinksManager />; break;
       case "gift-cards":
         content = <GiftCardManager />; break;
       case "rewards-manager":
