@@ -45,3 +45,6 @@ project_id = "xbbnodpvfvxtbffziuvr"
     verify_jwt = false
   [functions.vendx-pay-webhook]
     verify_jwt = false
+
+[functions.loyverse-webhook]
+verify_jwt = false
