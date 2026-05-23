@@ -6460,6 +6460,24 @@ export type Database = {
         }
         Relationships: []
       }
+      vendx_integration_state: {
+        Row: {
+          key: string
+          updated_at: string
+          value: string | null
+        }
+        Insert: {
+          key: string
+          updated_at?: string
+          value?: string | null
+        }
+        Update: {
+          key?: string
+          updated_at?: string
+          value?: string | null
+        }
+        Relationships: []
+      }
       vendx_machines: {
         Row: {
           accepts_cards: boolean | null
