@@ -48,3 +48,6 @@ project_id = "xbbnodpvfvxtbffziuvr"
 
 [functions.loyverse-webhook]
 verify_jwt = false
+
+[functions.loyverse-sync]
+verify_jwt = false
