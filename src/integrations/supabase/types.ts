@@ -6662,6 +6662,167 @@ export type Database = {
           },
         ]
       }
+      vendx_pos_receipt_items: {
+        Row: {
+          created_at: string
+          id: string
+          item_name: string
+          line_total: number
+          quantity: number
+          receipt_id: string
+          sku: string | null
+          unit_price: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          item_name: string
+          line_total?: number
+          quantity?: number
+          receipt_id: string
+          sku?: string | null
+          unit_price?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          item_name?: string
+          line_total?: number
+          quantity?: number
+          receipt_id?: string
+          sku?: string | null
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendx_pos_receipt_items_receipt_id_fkey"
+            columns: ["receipt_id"]
+            isOneToOne: false
+            referencedRelation: "vendx_pos_receipts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vendx_pos_receipts: {
+        Row: {
+          created_at: string
+          currency: string
+          discount_total: number
+          external_id: string
+          id: string
+          matched_by: string | null
+          payment_method: string | null
+          points_earned: number
+          pos_customer_email: string | null
+          pos_customer_id: string | null
+          pos_customer_name: string | null
+          pos_customer_phone: string | null
+          raw_payload: Json
+          receipt_date: string
+          receipt_number: string | null
+          source: string
+          store_name: string | null
+          subtotal: number
+          tax_total: number
+          tip_total: number
+          total_amount: number
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          currency?: string
+          discount_total?: number
+          external_id: string
+          id?: string
+          matched_by?: string | null
+          payment_method?: string | null
+          points_earned?: number
+          pos_customer_email?: string | null
+          pos_customer_id?: string | null
+          pos_customer_name?: string | null
+          pos_customer_phone?: string | null
+          raw_payload?: Json
+          receipt_date?: string
+          receipt_number?: string | null
+          source?: string
+          store_name?: string | null
+          subtotal?: number
+          tax_total?: number
+          tip_total?: number
+          total_amount: number
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          currency?: string
+          discount_total?: number
+          external_id?: string
+          id?: string
+          matched_by?: string | null
+          payment_method?: string | null
+          points_earned?: number
+          pos_customer_email?: string | null
+          pos_customer_id?: string | null
+          pos_customer_name?: string | null
+          pos_customer_phone?: string | null
+          raw_payload?: Json
+          receipt_date?: string
+          receipt_number?: string | null
+          source?: string
+          store_name?: string | null
+          subtotal?: number
+          tax_total?: number
+          tip_total?: number
+          total_amount?: number
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      vendx_rewards_config: {
+        Row: {
+          bronze_multiplier: number
+          created_at: string
+          display_name: string
+          gold_multiplier: number
+          id: string
+          is_active: boolean
+          notes: string | null
+          platinum_multiplier: number
+          points_per_dollar: number
+          silver_multiplier: number
+          source: string
+          updated_at: string
+        }
+        Insert: {
+          bronze_multiplier?: number
+          created_at?: string
+          display_name: string
+          gold_multiplier?: number
+          id?: string
+          is_active?: boolean
+          notes?: string | null
+          platinum_multiplier?: number
+          points_per_dollar?: number
+          silver_multiplier?: number
+          source: string
+          updated_at?: string
+        }
+        Update: {
+          bronze_multiplier?: number
+          created_at?: string
+          display_name?: string
+          gold_multiplier?: number
+          id?: string
+          is_active?: boolean
+          notes?: string | null
+          platinum_multiplier?: number
+          points_per_dollar?: number
+          silver_multiplier?: number
+          source?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       vendx_warehouses: {
         Row: {
           address: string | null
@@ -6999,6 +7160,16 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      award_pos_points: {
+        Args: {
+          p_amount: number
+          p_description?: string
+          p_receipt_id: string
+          p_source: string
+          p_user_id: string
+        }
+        Returns: number
+      }
       award_tickets: {
         Args: {
           p_amount: number
