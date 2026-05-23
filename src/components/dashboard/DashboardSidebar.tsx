@@ -176,6 +176,7 @@ const tabGroups: TabGroup[] = [
       { id: "adreach-manager", label: "AdReach", icon: Megaphone, requiredRoles: ["super_admin"] },
       { id: "rewards-manager", label: "Rewards Catalog", icon: Gift, requiredRoles: ["super_admin", "marketing_sales"] },
       { id: "partner-offers", label: "Partner Offers", icon: Percent, requiredRoles: ["super_admin", "marketing_sales"] },
+      { id: "brand-links", label: "Brand Links", icon: Globe, requiredRoles: ["super_admin", "marketing_sales"] },
     ],
   },
 

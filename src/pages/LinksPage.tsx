@@ -1,4 +1,6 @@
-import { ExternalLink, Zap, PartyPopper, Gamepad2, ShoppingBag, MapPin, Wallet, Ticket, Users, Briefcase, Newspaper, Phone, Info, Award, Megaphone, Shirt, Sparkles, Rocket } from "lucide-react";
+import { useEffect, useState } from "react";
+import * as LucideIcons from "lucide-react";
+import { ExternalLink, Sparkles, Loader2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { useSEO } from "@/hooks/useSEO";
+import { supabase } from "@/integrations/supabase/client";
 
 type LinkItem = {
   name: string;
@@ -19,80 +22,59 @@ type LinkItem = {
   badge?: string;
 };
 
-const customerLinks: LinkItem[] = [
-  { name: "Online Store", url: "/store", icon: ShoppingBag, color: "from-primary to-blue-400", description: "Shop vending machines, snack boxes & equipment", external: false },
-  { name: "VendX Interactive", url: "/games", icon: Gamepad2, color: "from-purple-500 to-pink-500", description: "Gaming, entertainment & digital experiences", external: false },
-  { name: "VendX Pay", url: "/wallet", icon: Wallet, color: "from-accent to-emerald-400", description: "Digital wallet for machines and arcade", external: false },
-  { name: "Prize Shop", url: "/tickets/redeem", icon: Ticket, color: "from-yellow-500 to-orange-500", description: "Redeem your tickets for awesome prizes", external: false },
-  { name: "Rewards Program", url: "/rewards", icon: Award, color: "from-amber-500 to-yellow-400", description: "Earn points and unlock exclusive perks", external: false },
-  { name: "Find Locations", url: "/locations", icon: MapPin, color: "from-cyan-500 to-blue-500", description: "Find VendX machines near you", external: false },
-  { name: "Events", url: "/locations/events", icon: Gamepad2, color: "from-rose-500 to-pink-400", description: "Find VendX at local events and festivals", external: false },
-  { name: "Quests & Challenges", url: "/quests", icon: Zap, color: "from-indigo-500 to-purple-500", description: "Complete quests and earn rewards", external: false },
-];
+type BrandRow = {
+  id: string;
+  name: string;
+  url: string;
+  description: string;
+  icon: string;
+  color: string;
+  badge: string | null;
+  section: string;
+  sort_order: number;
+  is_external: boolean;
+  is_featured: boolean;
+};
 
-const brandLinks: LinkItem[] = [
-  {
-    name: "Emos R Us",
-    url: "https://emosrus.com",
-    icon: Shirt,
-    color: "from-fuchsia-600 to-purple-900",
-    description: "Alternative fashion & lifestyle — emo, goth, punk, and subculture clothing, accessories, collectibles & décor.",
-    external: true,
-    featured: true,
-    badge: "Alt Fashion",
-  },
-  {
-    name: "Host Heroz",
-    url: "https://hostheroz.com",
-    icon: PartyPopper,
-    color: "from-orange-500 to-pink-500",
-    description: "Party rentals, event ticket platform & online party store for every celebration.",
-    external: true,
-    featured: true,
-    badge: "Events & Parties",
-  },
-  {
-    name: "VendX Interactive",
-    url: "/games",
-    icon: Gamepad2,
-    color: "from-purple-500 to-pink-500",
-    description: "Our gaming & entertainment division — original games, arcade, and digital experiences.",
-    external: false,
-    badge: "Gaming",
-  },
-  {
-    name: "VendX Media",
-    url: "/divisions",
-    icon: Sparkles,
-    color: "from-violet-500 to-indigo-500",
-    description: "Music, film, and artist commerce powered by the VendX ecosystem.",
-    external: false,
-    badge: "Media",
-  },
-  {
-    name: "VendX Mars",
-    url: "/about",
-    icon: Rocket,
-    color: "from-red-600 to-orange-500",
-    description: "Pioneering automated retail beyond Earth — the future of off-world vending.",
-    external: false,
-    badge: "Future",
-  },
+const customerLinks: LinkItem[] = [
+  { name: "Online Store", url: "/store", icon: LucideIcons.ShoppingBag, color: "from-primary to-blue-400", description: "Shop vending machines, snack boxes & equipment", external: false },
+  { name: "VendX Interactive", url: "/games", icon: LucideIcons.Gamepad2, color: "from-purple-500 to-pink-500", description: "Gaming, entertainment & digital experiences", external: false },
+  { name: "VendX Pay", url: "/wallet", icon: LucideIcons.Wallet, color: "from-accent to-emerald-400", description: "Digital wallet for machines and arcade", external: false },
+  { name: "Prize Shop", url: "/tickets/redeem", icon: LucideIcons.Ticket, color: "from-yellow-500 to-orange-500", description: "Redeem your tickets for awesome prizes", external: false },
+  { name: "Rewards Program", url: "/rewards", icon: LucideIcons.Award, color: "from-amber-500 to-yellow-400", description: "Earn points and unlock exclusive perks", external: false },
+  { name: "Find Locations", url: "/locations", icon: LucideIcons.MapPin, color: "from-cyan-500 to-blue-500", description: "Find VendX machines near you", external: false },
+  { name: "Events", url: "/locations/events", icon: LucideIcons.Gamepad2, color: "from-rose-500 to-pink-400", description: "Find VendX at local events and festivals", external: false },
+  { name: "Quests & Challenges", url: "/quests", icon: LucideIcons.Zap, color: "from-indigo-500 to-purple-500", description: "Complete quests and earn rewards", external: false },
 ];
 
 const businessLinks: LinkItem[] = [
-  { name: "Partner With Us", url: "/business", icon: Briefcase, color: "from-primary to-blue-400", description: "Host VendX machines at your business location", external: false },
-  { name: "AdReach Advertising", url: "/adreach", icon: Megaphone, color: "from-orange-500 to-red-500", description: "Advertise on VendX screens and games", external: false },
-  { name: "Private Event Rentals", url: "/events", icon: PartyPopper, color: "from-orange-500 to-yellow-500", description: "Rent VendX machines for parties and events", external: false },
+  { name: "Partner With Us", url: "/business", icon: LucideIcons.Briefcase, color: "from-primary to-blue-400", description: "Host VendX machines at your business location", external: false },
+  { name: "AdReach Advertising", url: "/adreach", icon: LucideIcons.Megaphone, color: "from-orange-500 to-red-500", description: "Advertise on VendX screens and games", external: false },
+  { name: "Private Event Rentals", url: "/events", icon: LucideIcons.PartyPopper, color: "from-orange-500 to-yellow-500", description: "Rent VendX machines for parties and events", external: false },
 ];
 
 const companyLinks: LinkItem[] = [
-  { name: "About VendX", url: "/about", icon: Info, color: "from-slate-500 to-gray-400", description: "Our mission to revolutionize vending", external: false },
-  { name: "Our Divisions", url: "/divisions", icon: Briefcase, color: "from-teal-500 to-cyan-500", description: "Explore VendX Mini, Max, Fresh, Digital & more", external: false },
-  { name: "News & Updates", url: "/news", icon: Newspaper, color: "from-blue-500 to-indigo-500", description: "Latest announcements and articles", external: false },
-  { name: "Careers", url: "/careers", icon: Users, color: "from-green-500 to-emerald-500", description: "Join the VendX team", external: false },
-  { name: "Contact Us", url: "/contact", icon: Phone, color: "from-primary to-accent", description: "Get in touch with our team", external: false },
+  { name: "About VendX", url: "/about", icon: LucideIcons.Info, color: "from-slate-500 to-gray-400", description: "Our mission to revolutionize vending", external: false },
+  { name: "Our Divisions", url: "/divisions", icon: LucideIcons.Briefcase, color: "from-teal-500 to-cyan-500", description: "Explore VendX Mini, Max, Fresh, Digital & more", external: false },
+  { name: "News & Updates", url: "/news", icon: LucideIcons.Newspaper, color: "from-blue-500 to-indigo-500", description: "Latest announcements and articles", external: false },
+  { name: "Careers", url: "/careers", icon: LucideIcons.Users, color: "from-green-500 to-emerald-500", description: "Join the VendX team", external: false },
+  { name: "Contact Us", url: "/contact", icon: LucideIcons.Phone, color: "from-primary to-accent", description: "Get in touch with our team", external: false },
 ];
+
+const resolveIcon = (name: string): React.ElementType => {
+  return (LucideIcons as any)[name] || LucideIcons.Sparkles;
+};
+
+const rowToLink = (r: BrandRow): LinkItem => ({
+  name: r.name,
+  url: r.url,
+  icon: resolveIcon(r.icon),
+  color: r.color,
+  description: r.description,
+  external: r.is_external,
+  featured: r.is_featured,
+  badge: r.badge ?? undefined,
+});
 
 const LinkCard = ({ link }: { link: LinkItem }) => {
   const content = (
@@ -105,13 +87,9 @@ const LinkCard = ({ link }: { link: LinkItem }) => {
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <h3 className="text-base font-semibold text-foreground group-hover:text-primary transition-colors">
-                {link.name}
-              </h3>
+              <h3 className="text-base font-semibold text-foreground group-hover:text-primary transition-colors">{link.name}</h3>
               {link.badge && (
-                <Badge variant="outline" className="text-[10px] py-0 h-4 border-primary/40 text-primary/80">
-                  {link.badge}
-                </Badge>
+                <Badge variant="outline" className="text-[10px] py-0 h-4 border-primary/40 text-primary/80">{link.badge}</Badge>
               )}
               {link.external && <ExternalLink className="w-3.5 h-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />}
             </div>
@@ -122,19 +100,10 @@ const LinkCard = ({ link }: { link: LinkItem }) => {
       </CardContent>
     </Card>
   );
-
   if (link.external) {
-    return (
-      <a href={link.url} target="_blank" rel="noopener noreferrer" className="block group">
-        {content}
-      </a>
-    );
+    return <a href={link.url} target="_blank" rel="noopener noreferrer" className="block group">{content}</a>;
   }
-  return (
-    <Link to={link.url} className="block group">
-      {content}
-    </Link>
-  );
+  return <Link to={link.url} className="block group">{content}</Link>;
 };
 
 const FeaturedBrandCard = ({ link }: { link: LinkItem }) => {
@@ -147,11 +116,7 @@ const FeaturedBrandCard = ({ link }: { link: LinkItem }) => {
           <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${link.color} flex items-center justify-center shadow-xl group-hover:scale-110 group-hover:rotate-6 transition-transform duration-500`}>
             <link.icon className="w-7 h-7 text-white" />
           </div>
-          {link.badge && (
-            <Badge className={`bg-gradient-to-r ${link.color} text-white border-0 shadow-md`}>
-              {link.badge}
-            </Badge>
-          )}
+          {link.badge && <Badge className={`bg-gradient-to-r ${link.color} text-white border-0 shadow-md`}>{link.badge}</Badge>}
         </div>
         <div className="flex-1">
           <h3 className="text-2xl font-bold text-foreground group-hover:text-primary transition-colors flex items-center gap-2">
@@ -166,11 +131,10 @@ const FeaturedBrandCard = ({ link }: { link: LinkItem }) => {
       </CardContent>
     </Card>
   );
-  return (
-    <a href={link.url} target="_blank" rel="noopener noreferrer" className="block group">
-      {inner}
-    </a>
-  );
+  if (link.external) {
+    return <a href={link.url} target="_blank" rel="noopener noreferrer" className="block group">{inner}</a>;
+  }
+  return <Link to={link.url} className="block group">{inner}</Link>;
 };
 
 const LinksPage = () => {
@@ -178,6 +142,22 @@ const LinksPage = () => {
     title: "VendX Links — Explore Our Ecosystem & Brands",
     description: "Quick access to all VendX products, services, partner brands like Emos R Us and Host Heroz, and resources for customers and businesses.",
   });
+
+  const [brandLinks, setBrandLinks] = useState<LinkItem[]>([]);
+  const [loadingBrands, setLoadingBrands] = useState(true);
+
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase
+        .from("vendx_brand_links" as any)
+        .select("*")
+        .eq("is_active", true)
+        .order("section")
+        .order("sort_order");
+      setBrandLinks(((data as any as BrandRow[]) || []).map(rowToLink));
+      setLoadingBrands(false);
+    })();
+  }, []);
 
   const featuredBrands = brandLinks.filter((b) => b.featured);
   const otherBrands = brandLinks.filter((b) => !b.featured);
@@ -189,7 +169,6 @@ const LinksPage = () => {
       <div className="fixed inset-0 bg-[radial-gradient(ellipse_at_top,_var(--primary)/10%,_transparent_50%)] pointer-events-none" />
 
       <div className="relative z-10 container mx-auto px-4 pt-24 pb-16">
-        {/* Header */}
         <div className="text-center mb-10">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/30 text-primary text-xs font-medium mb-4">
             <Sparkles className="w-3.5 h-3.5" />
@@ -206,18 +185,10 @@ const LinksPage = () => {
         <div className="max-w-4xl mx-auto">
           <Tabs defaultValue="customers" className="w-full">
             <TabsList className="grid grid-cols-2 sm:grid-cols-4 w-full mb-8 bg-card/40 backdrop-blur-sm h-auto p-1">
-              <TabsTrigger value="customers" className="data-[state=active]:bg-primary/15 data-[state=active]:text-primary py-2.5">
-                Customers
-              </TabsTrigger>
-              <TabsTrigger value="brands" className="data-[state=active]:bg-primary/15 data-[state=active]:text-primary py-2.5">
-                Brands
-              </TabsTrigger>
-              <TabsTrigger value="business" className="data-[state=active]:bg-primary/15 data-[state=active]:text-primary py-2.5">
-                Business
-              </TabsTrigger>
-              <TabsTrigger value="company" className="data-[state=active]:bg-primary/15 data-[state=active]:text-primary py-2.5">
-                Company
-              </TabsTrigger>
+              <TabsTrigger value="customers" className="data-[state=active]:bg-primary/15 data-[state=active]:text-primary py-2.5">Customers</TabsTrigger>
+              <TabsTrigger value="brands" className="data-[state=active]:bg-primary/15 data-[state=active]:text-primary py-2.5">Brands</TabsTrigger>
+              <TabsTrigger value="business" className="data-[state=active]:bg-primary/15 data-[state=active]:text-primary py-2.5">Business</TabsTrigger>
+              <TabsTrigger value="company" className="data-[state=active]:bg-primary/15 data-[state=active]:text-primary py-2.5">Company</TabsTrigger>
             </TabsList>
 
             <TabsContent value="customers" className="mt-0">
@@ -227,24 +198,37 @@ const LinksPage = () => {
             </TabsContent>
 
             <TabsContent value="brands" className="mt-0 space-y-8">
-              <div>
-                <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-4 flex items-center gap-2">
-                  <div className="w-1 h-4 bg-gradient-to-b from-primary to-accent rounded-full" />
-                  Featured Partner Brands
-                </h2>
-                <div className="grid md:grid-cols-2 gap-4">
-                  {featuredBrands.map((link) => <FeaturedBrandCard key={link.name} link={link} />)}
-                </div>
-              </div>
-              <div>
-                <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-4 flex items-center gap-2">
-                  <div className="w-1 h-4 bg-gradient-to-b from-primary to-accent rounded-full" />
-                  VendX Divisions
-                </h2>
-                <div className="grid sm:grid-cols-2 gap-3">
-                  {otherBrands.map((link) => <LinkCard key={link.name} link={link} />)}
-                </div>
-              </div>
+              {loadingBrands ? (
+                <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>
+              ) : (
+                <>
+                  {featuredBrands.length > 0 && (
+                    <div>
+                      <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-4 flex items-center gap-2">
+                        <div className="w-1 h-4 bg-gradient-to-b from-primary to-accent rounded-full" />
+                        Featured Partner Brands
+                      </h2>
+                      <div className="grid md:grid-cols-2 gap-4">
+                        {featuredBrands.map((link) => <FeaturedBrandCard key={link.name} link={link} />)}
+                      </div>
+                    </div>
+                  )}
+                  {otherBrands.length > 0 && (
+                    <div>
+                      <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-4 flex items-center gap-2">
+                        <div className="w-1 h-4 bg-gradient-to-b from-primary to-accent rounded-full" />
+                        VendX Divisions
+                      </h2>
+                      <div className="grid sm:grid-cols-2 gap-3">
+                        {otherBrands.map((link) => <LinkCard key={link.name} link={link} />)}
+                      </div>
+                    </div>
+                  )}
+                  {brandLinks.length === 0 && (
+                    <p className="text-center text-muted-foreground py-8">No brand links available.</p>
+                  )}
+                </>
+              )}
             </TabsContent>
 
             <TabsContent value="business" className="mt-0">
@@ -260,17 +244,12 @@ const LinksPage = () => {
             </TabsContent>
           </Tabs>
 
-          {/* Footer CTA */}
           <div className="text-center mt-14 p-8 rounded-2xl bg-gradient-to-br from-primary/5 via-card/40 to-accent/5 border border-border/50 backdrop-blur-sm">
             <h3 className="text-xl font-semibold mb-2">Ready to get started?</h3>
             <p className="text-muted-foreground mb-5 text-sm">Join the VendX ecosystem or reach out to our team.</p>
             <div className="flex items-center justify-center gap-3 flex-wrap">
-              <Link to="/auth">
-                <Button className="bg-accent hover:bg-accent/90 text-accent-foreground">Sign Up</Button>
-              </Link>
-              <Link to="/contact">
-                <Button variant="outline">Contact Us</Button>
-              </Link>
+              <Link to="/auth"><Button className="bg-accent hover:bg-accent/90 text-accent-foreground">Sign Up</Button></Link>
+              <Link to="/contact"><Button variant="outline">Contact Us</Button></Link>
             </div>
           </div>
         </div>
