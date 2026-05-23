@@ -77,6 +77,28 @@ const POSReceiptsPanel = () => {
     }
   };
 
+  const handleFinanceSync = async () => {
+    setFinanceSyncing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("loyverse-daily-finance-sync", {
+        body: { date: financeDate },
+      });
+      if (error) throw error;
+      const r = data?.results?.[0];
+      if (r) {
+        toast.success(
+          `${financeDate}: ${r.receipts} receipts · Revenue $${r.net_revenue.toFixed(2)} · COGS $${r.cogs.toFixed(2)} · Profit $${r.profit.toFixed(2)}`
+        );
+      } else {
+        toast.success("Finance sync completed");
+      }
+    } catch (e: any) {
+      toast.error(e?.message || "Finance sync failed");
+    } finally {
+      setFinanceSyncing(false);
+    }
+  };
+
   const openReceipt = async (r: POSReceipt) => {
     setSelected(r);
     const { data } = await supabase
