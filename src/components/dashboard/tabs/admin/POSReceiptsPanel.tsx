@@ -124,7 +124,7 @@ const POSReceiptsPanel = () => {
               <Receipt className="w-5 h-5" /> POS Receipts (Loyverse)
             </CardTitle>
             <p className="text-sm text-muted-foreground mt-1">
-              Auto-syncs every 5 minutes via Loyverse API. Customers earn points based on matched email or phone.
+              Auto-syncs every 5 min. Daily revenue + COGS posts to Finance at 2am UTC (or trigger manually for any date).
             </p>
           </div>
           <div className="flex flex-col gap-2 items-end">
