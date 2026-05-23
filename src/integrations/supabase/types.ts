@@ -6603,6 +6603,178 @@ export type Database = {
           },
         ]
       }
+      vendx_merchant_payment_sessions: {
+        Row: {
+          amount: number
+          cancel_url: string | null
+          created_at: string
+          currency: string
+          customer_email: string | null
+          description: string | null
+          expires_at: string
+          id: string
+          merchant_id: string
+          metadata: Json
+          order_reference: string | null
+          paid_at: string | null
+          return_url: string
+          session_token: string
+          status: string
+          updated_at: string
+          user_id: string | null
+          wallet_transaction_id: string | null
+          webhook_url: string | null
+        }
+        Insert: {
+          amount: number
+          cancel_url?: string | null
+          created_at?: string
+          currency?: string
+          customer_email?: string | null
+          description?: string | null
+          expires_at: string
+          id?: string
+          merchant_id: string
+          metadata?: Json
+          order_reference?: string | null
+          paid_at?: string | null
+          return_url: string
+          session_token: string
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+          wallet_transaction_id?: string | null
+          webhook_url?: string | null
+        }
+        Update: {
+          amount?: number
+          cancel_url?: string | null
+          created_at?: string
+          currency?: string
+          customer_email?: string | null
+          description?: string | null
+          expires_at?: string
+          id?: string
+          merchant_id?: string
+          metadata?: Json
+          order_reference?: string | null
+          paid_at?: string | null
+          return_url?: string
+          session_token?: string
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+          wallet_transaction_id?: string | null
+          webhook_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendx_merchant_payment_sessions_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: false
+            referencedRelation: "vendx_merchants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vendx_merchant_webhook_deliveries: {
+        Row: {
+          attempt: number
+          created_at: string
+          delivered_at: string | null
+          error: string | null
+          id: string
+          next_retry_at: string | null
+          response_body: string | null
+          session_id: string
+          status_code: number | null
+          succeeded: boolean
+        }
+        Insert: {
+          attempt?: number
+          created_at?: string
+          delivered_at?: string | null
+          error?: string | null
+          id?: string
+          next_retry_at?: string | null
+          response_body?: string | null
+          session_id: string
+          status_code?: number | null
+          succeeded?: boolean
+        }
+        Update: {
+          attempt?: number
+          created_at?: string
+          delivered_at?: string | null
+          error?: string | null
+          id?: string
+          next_retry_at?: string | null
+          response_body?: string | null
+          session_id?: string
+          status_code?: number | null
+          succeeded?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendx_merchant_webhook_deliveries_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "vendx_merchant_payment_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vendx_merchants: {
+        Row: {
+          allowed_return_domains: string[]
+          api_key_hash: string
+          api_key_prefix: string
+          contact_email: string | null
+          created_at: string
+          fee_percent: number
+          id: string
+          is_active: boolean
+          logo_url: string | null
+          name: string
+          notes: string | null
+          slug: string
+          updated_at: string
+          webhook_secret: string
+        }
+        Insert: {
+          allowed_return_domains?: string[]
+          api_key_hash: string
+          api_key_prefix: string
+          contact_email?: string | null
+          created_at?: string
+          fee_percent?: number
+          id?: string
+          is_active?: boolean
+          logo_url?: string | null
+          name: string
+          notes?: string | null
+          slug: string
+          updated_at?: string
+          webhook_secret: string
+        }
+        Update: {
+          allowed_return_domains?: string[]
+          api_key_hash?: string
+          api_key_prefix?: string
+          contact_email?: string | null
+          created_at?: string
+          fee_percent?: number
+          id?: string
+          is_active?: boolean
+          logo_url?: string | null
+          name?: string
+          notes?: string | null
+          slug?: string
+          updated_at?: string
+          webhook_secret?: string
+        }
+        Relationships: []
+      }
       vendx_offices: {
         Row: {
           address: string | null
@@ -7229,6 +7401,20 @@ export type Database = {
           success: boolean
         }[]
       }
+      create_vendx_merchant: {
+        Args: {
+          p_allowed_return_domains?: string[]
+          p_contact_email?: string
+          p_logo_url?: string
+          p_name: string
+          p_slug: string
+        }
+        Returns: {
+          api_key: string
+          merchant_id: string
+          webhook_secret: string
+        }[]
+      }
       generate_external_stream_api_key: {
         Args: never
         Returns: {
@@ -7329,6 +7515,16 @@ export type Database = {
         }
         Returns: string
       }
+      merchant_pay_with_wallet: {
+        Args: { p_session_token: string; p_user_id: string }
+        Returns: {
+          message: string
+          new_balance: number
+          return_url: string
+          session_id: string
+          success: boolean
+        }[]
+      }
       merge_finance_expense: {
         Args: { p_keep_id: string; p_merge_id: string }
         Returns: string
@@ -7369,6 +7565,14 @@ export type Database = {
       }
       rotate_external_stream_api_key: {
         Args: { p_stream_id: string }
+        Returns: string
+      }
+      rotate_vendx_merchant_api_key: {
+        Args: { p_merchant_id: string }
+        Returns: string
+      }
+      rotate_vendx_merchant_webhook_secret: {
+        Args: { p_merchant_id: string }
         Returns: string
       }
     }
