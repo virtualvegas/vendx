@@ -6460,6 +6460,60 @@ export type Database = {
         }
         Relationships: []
       }
+      vendx_brand_links: {
+        Row: {
+          badge: string | null
+          color: string
+          created_at: string
+          description: string
+          icon: string
+          id: string
+          is_active: boolean
+          is_external: boolean
+          is_featured: boolean
+          name: string
+          section: string
+          slug: string
+          sort_order: number
+          updated_at: string
+          url: string
+        }
+        Insert: {
+          badge?: string | null
+          color?: string
+          created_at?: string
+          description?: string
+          icon?: string
+          id?: string
+          is_active?: boolean
+          is_external?: boolean
+          is_featured?: boolean
+          name: string
+          section?: string
+          slug: string
+          sort_order?: number
+          updated_at?: string
+          url: string
+        }
+        Update: {
+          badge?: string | null
+          color?: string
+          created_at?: string
+          description?: string
+          icon?: string
+          id?: string
+          is_active?: boolean
+          is_external?: boolean
+          is_featured?: boolean
+          name?: string
+          section?: string
+          slug?: string
+          sort_order?: number
+          updated_at?: string
+          url?: string
+        }
+        Relationships: []
+      }
       vendx_integration_state: {
         Row: {
           key: string
