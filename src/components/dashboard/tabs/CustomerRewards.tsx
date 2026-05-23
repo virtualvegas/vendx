@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Gift, Star, Trophy, TrendingUp, ShoppingBag, Gamepad2, Wallet, Swords, ArrowRight } from "lucide-react";
+import { Gift, Star, Trophy, TrendingUp, ShoppingBag, Gamepad2, Wallet, Swords, ArrowRight, Receipt } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { formatDisplayDate } from "@/lib/dateUtils";
 import { Link } from "react-router-dom";
