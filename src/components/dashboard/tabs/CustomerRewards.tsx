@@ -318,6 +318,45 @@ const CustomerRewards = () => {
         </CardContent>
       </Card>
 
+      {/* In-Store POS Receipts */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Receipt className="w-5 h-5" />
+            In-Store Purchases
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {posReceipts && posReceipts.length > 0 ? (
+            <div className="space-y-3">
+              {posReceipts.map((r: any) => (
+                <div key={r.id} className="flex items-center justify-between p-3 border border-border rounded-lg">
+                  <div>
+                    <p className="font-medium text-sm text-foreground">
+                      {r.store_name || "VendX Store"} {r.receipt_number ? `#${r.receipt_number}` : ""}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {formatDisplayDate(r.receipt_date)} · {r.payment_method || "Card"}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-bold text-foreground">${Number(r.total_amount).toFixed(2)}</p>
+                    {r.points_earned > 0 && (
+                      <p className="text-xs text-green-500">+{r.points_earned} pts</p>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-center text-muted-foreground py-6">
+              No in-store purchases yet. Use the email or phone on your account at checkout to earn points.
+            </p>
+          )}
+        </CardContent>
+      </Card>
+
+
       {/* Available Rewards */}
       <Card>
         <CardHeader>
