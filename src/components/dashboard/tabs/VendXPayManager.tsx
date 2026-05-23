@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Wallet, Search, RefreshCw, DollarSign, Users, TrendingUp, Shield, Baby, UserCheck, CreditCard, ArrowUpDown } from "lucide-react";
+import { Wallet, Search, RefreshCw, DollarSign, Users, TrendingUp, Shield, Baby, UserCheck, CreditCard, ArrowUpDown, Star } from "lucide-react";
 import { formatDisplayDate } from "@/lib/dateUtils";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -68,6 +68,10 @@ const VendXPayManager = () => {
   const [showAdjustDialog, setShowAdjustDialog] = useState(false);
   const [showWalletDetail, setShowWalletDetail] = useState(false);
   const [walletTransactions, setWalletTransactions] = useState<WalletTransaction[]>([]);
+  const [showPointsDialog, setShowPointsDialog] = useState(false);
+  const [pointsAmount, setPointsAmount] = useState("");
+  const [pointsReason, setPointsReason] = useState("");
+  const [pointsTier, setPointsTier] = useState<string>("");
   const { toast } = useToast();
 
   const fetchData = async () => {
@@ -242,6 +246,63 @@ const VendXPayManager = () => {
     } catch (error) {
       console.error("Error adjusting balance:", error);
       toast({ title: "Error", description: "Failed to adjust balance", variant: "destructive" });
+    }
+  };
+
+  const openPointsDialog = (wallet: WalletWithProfile) => {
+    setSelectedWallet(wallet);
+    const r = getUserRewards(wallet.user_id);
+    setPointsTier(r?.tier || "bronze");
+    setPointsAmount("");
+    setPointsReason("");
+    setShowPointsDialog(true);
+  };
+
+  const handleAdjustPoints = async () => {
+    if (!selectedWallet) return;
+    const delta = pointsAmount ? parseInt(pointsAmount, 10) : 0;
+    if (pointsAmount && isNaN(delta)) {
+      toast({ title: "Invalid points", description: "Enter a whole number", variant: "destructive" });
+      return;
+    }
+    try {
+      const existing = getUserRewards(selectedWallet.user_id);
+      const currentBal = existing?.balance || 0;
+      const currentLifetime = existing?.lifetime_points || 0;
+      const newBalance = Math.max(0, currentBal + delta);
+      const newLifetime = delta > 0 ? currentLifetime + delta : currentLifetime;
+
+      if (existing) {
+        const { error } = await supabase
+          .from("rewards_points")
+          .update({ balance: newBalance, lifetime_points: newLifetime, tier: pointsTier })
+          .eq("user_id", selectedWallet.user_id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from("rewards_points")
+          .insert({ user_id: selectedWallet.user_id, balance: newBalance, lifetime_points: newLifetime, tier: pointsTier });
+        if (error) throw error;
+      }
+
+      if (delta !== 0) {
+        await supabase.from("point_transactions").insert({
+          user_id: selectedWallet.user_id,
+          points: delta,
+          transaction_type: delta > 0 ? "admin_credit" : "admin_debit",
+          description: pointsReason || "Admin manual adjustment",
+        });
+      }
+
+      // Sync tier on profile if applicable
+      await supabase.from("profiles").update({ tier_level: pointsTier }).eq("id", selectedWallet.user_id);
+
+      toast({ title: "Rewards updated", description: `Points: ${newBalance.toLocaleString()} · Tier: ${pointsTier}` });
+      setShowPointsDialog(false);
+      fetchData();
+    } catch (error: any) {
+      console.error("Error adjusting points:", error);
+      toast({ title: "Error", description: error.message || "Failed to adjust rewards", variant: "destructive" });
     }
   };
 
@@ -460,6 +521,11 @@ const VendXPayManager = () => {
                       <div className="flex gap-1">
                         <Button size="sm" variant="ghost" onClick={() => viewWalletDetail(wallet)}>View</Button>
                         <Button size="sm" variant="outline" onClick={() => { setSelectedWallet(wallet); setShowAdjustDialog(true); }}>Adjust</Button>
+                        {!wallet.parent_wallet_id && (
+                          <Button size="sm" variant="outline" onClick={() => openPointsDialog(wallet)}>
+                            <Star className="w-3 h-3 mr-1" />Points
+                          </Button>
+                        )}
                         <Button size="sm" variant={wallet.status === "active" ? "destructive" : "default"} onClick={() => toggleWalletStatus(wallet)}>
                           {wallet.status === "active" ? "Freeze" : "Unfreeze"}
                         </Button>
@@ -590,6 +656,17 @@ const VendXPayManager = () => {
                 })()}
               </div>
 
+              {!selectedWallet.parent_wallet_id && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => { setShowWalletDetail(false); openPointsDialog(selectedWallet); }}
+                >
+                  <Star className="w-3 h-3 mr-1" />Adjust Rewards & Tier
+                </Button>
+              )}
+
+
               <div>
                 <p className="font-semibold mb-2">Transaction History</p>
                 <div className="max-h-[300px] overflow-y-auto">
@@ -622,6 +699,67 @@ const VendXPayManager = () => {
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Adjust Rewards Points Dialog */}
+      <Dialog open={showPointsDialog} onOpenChange={setShowPointsDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2"><Star className="w-5 h-5 text-primary" />Adjust Rewards</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <p className="text-sm text-muted-foreground">User</p>
+              <p className="font-medium">{selectedWallet?.profiles?.full_name || selectedWallet?.profiles?.email}</p>
+            </div>
+            {(() => {
+              const r = selectedWallet ? getUserRewards(selectedWallet.user_id) : null;
+              return (
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-xs text-muted-foreground">Current Points</p>
+                    <p className="font-bold text-xl">{(r?.balance || 0).toLocaleString()}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Lifetime</p>
+                    <p className="font-bold text-xl">{(r?.lifetime_points || 0).toLocaleString()}</p>
+                  </div>
+                </div>
+              );
+            })()}
+            <div className="space-y-2">
+              <Label>Points Adjustment</Label>
+              <Input
+                type="number"
+                step="1"
+                placeholder="Positive to add, negative to remove (e.g. 500 or -250)"
+                value={pointsAmount}
+                onChange={(e) => setPointsAmount(e.target.value)}
+              />
+              <p className="text-xs text-muted-foreground">Leave blank to only change tier. Lifetime points only increase on positive adjustments.</p>
+            </div>
+            <div className="space-y-2">
+              <Label>Reward Tier</Label>
+              <Select value={pointsTier} onValueChange={setPointsTier}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="bronze">Bronze</SelectItem>
+                  <SelectItem value="silver">Silver</SelectItem>
+                  <SelectItem value="gold">Gold</SelectItem>
+                  <SelectItem value="platinum">Platinum</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Reason</Label>
+              <Input placeholder="Reason for adjustment" value={pointsReason} onChange={(e) => setPointsReason(e.target.value)} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowPointsDialog(false)}>Cancel</Button>
+            <Button onClick={handleAdjustPoints}>Apply</Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
