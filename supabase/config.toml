@@ -51,3 +51,6 @@ verify_jwt = false
 
 [functions.loyverse-sync]
 verify_jwt = false
+
+[functions.loyverse-daily-finance-sync]
+verify_jwt = false
