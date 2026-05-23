@@ -100,9 +100,9 @@ serve(async (req) => {
       redirect_url: ret.toString(),
       new_balance: Number(row.new_balance),
     }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
-  } catch (e) {
-    const msg = e instanceof Error ? e.message : "Unknown";
-    console.error("pay-session error:", msg);
+  } catch (e: any) {
+    const msg = e?.message || e?.error_description || e?.hint || (typeof e === "string" ? e : JSON.stringify(e));
+    console.error("pay-session error:", msg, e);
     return new Response(JSON.stringify({ error: msg }), {
       status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
