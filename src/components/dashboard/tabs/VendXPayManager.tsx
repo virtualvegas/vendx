@@ -656,6 +656,17 @@ const VendXPayManager = () => {
                 })()}
               </div>
 
+              {!selectedWallet.parent_wallet_id && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => { setShowWalletDetail(false); openPointsDialog(selectedWallet); }}
+                >
+                  <Star className="w-3 h-3 mr-1" />Adjust Rewards & Tier
+                </Button>
+              )}
+
+
               <div>
                 <p className="font-semibold mb-2">Transaction History</p>
                 <div className="max-h-[300px] overflow-y-auto">
