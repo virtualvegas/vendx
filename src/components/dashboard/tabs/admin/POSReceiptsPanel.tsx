@@ -44,6 +44,12 @@ const POSReceiptsPanel = () => {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
+  const [financeSyncing, setFinanceSyncing] = useState(false);
+  const [financeDate, setFinanceDate] = useState<string>(() => {
+    const y = new Date();
+    y.setDate(y.getDate() - 1);
+    return y.toISOString().slice(0, 10);
+  });
 
   const loadReceipts = async () => {
     const { data } = await supabase
