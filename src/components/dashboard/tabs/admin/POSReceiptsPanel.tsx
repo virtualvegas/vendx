@@ -70,16 +70,6 @@ const POSReceiptsPanel = () => {
       setSyncing(false);
     }
   };
-    (async () => {
-      const { data } = await supabase
-        .from("vendx_pos_receipts")
-        .select("*")
-        .order("receipt_date", { ascending: false })
-        .limit(200);
-      setReceipts((data as POSReceipt[]) || []);
-      setLoading(false);
-    })();
-  }, []);
 
   const openReceipt = async (r: POSReceipt) => {
     setSelected(r);
