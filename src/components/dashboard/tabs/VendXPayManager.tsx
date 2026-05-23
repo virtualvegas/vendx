@@ -690,6 +690,67 @@ const VendXPayManager = () => {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Adjust Rewards Points Dialog */}
+      <Dialog open={showPointsDialog} onOpenChange={setShowPointsDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2"><Star className="w-5 h-5 text-primary" />Adjust Rewards</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <p className="text-sm text-muted-foreground">User</p>
+              <p className="font-medium">{selectedWallet?.profiles?.full_name || selectedWallet?.profiles?.email}</p>
+            </div>
+            {(() => {
+              const r = selectedWallet ? getUserRewards(selectedWallet.user_id) : null;
+              return (
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-xs text-muted-foreground">Current Points</p>
+                    <p className="font-bold text-xl">{(r?.balance || 0).toLocaleString()}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Lifetime</p>
+                    <p className="font-bold text-xl">{(r?.lifetime_points || 0).toLocaleString()}</p>
+                  </div>
+                </div>
+              );
+            })()}
+            <div className="space-y-2">
+              <Label>Points Adjustment</Label>
+              <Input
+                type="number"
+                step="1"
+                placeholder="Positive to add, negative to remove (e.g. 500 or -250)"
+                value={pointsAmount}
+                onChange={(e) => setPointsAmount(e.target.value)}
+              />
+              <p className="text-xs text-muted-foreground">Leave blank to only change tier. Lifetime points only increase on positive adjustments.</p>
+            </div>
+            <div className="space-y-2">
+              <Label>Reward Tier</Label>
+              <Select value={pointsTier} onValueChange={setPointsTier}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="bronze">Bronze</SelectItem>
+                  <SelectItem value="silver">Silver</SelectItem>
+                  <SelectItem value="gold">Gold</SelectItem>
+                  <SelectItem value="platinum">Platinum</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Reason</Label>
+              <Input placeholder="Reason for adjustment" value={pointsReason} onChange={(e) => setPointsReason(e.target.value)} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowPointsDialog(false)}>Cancel</Button>
+            <Button onClick={handleAdjustPoints}>Apply</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
