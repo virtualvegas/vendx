@@ -521,6 +521,11 @@ const VendXPayManager = () => {
                       <div className="flex gap-1">
                         <Button size="sm" variant="ghost" onClick={() => viewWalletDetail(wallet)}>View</Button>
                         <Button size="sm" variant="outline" onClick={() => { setSelectedWallet(wallet); setShowAdjustDialog(true); }}>Adjust</Button>
+                        {!wallet.parent_wallet_id && (
+                          <Button size="sm" variant="outline" onClick={() => openPointsDialog(wallet)}>
+                            <Star className="w-3 h-3 mr-1" />Points
+                          </Button>
+                        )}
                         <Button size="sm" variant={wallet.status === "active" ? "destructive" : "default"} onClick={() => toggleWalletStatus(wallet)}>
                           {wallet.status === "active" ? "Freeze" : "Unfreeze"}
                         </Button>
