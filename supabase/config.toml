@@ -54,3 +54,21 @@ verify_jwt = false
 
 [functions.loyverse-daily-finance-sync]
 verify_jwt = false
+
+[functions.merchant-create-session]
+verify_jwt = false
+
+[functions.merchant-get-session]
+verify_jwt = false
+
+[functions.merchant-pay-session]
+verify_jwt = false
+
+[functions.merchant-cancel-session]
+verify_jwt = false
+
+[functions.merchant-webhook-retry]
+verify_jwt = false
+
+[functions.merchant-webhook-redeliver]
+verify_jwt = false
