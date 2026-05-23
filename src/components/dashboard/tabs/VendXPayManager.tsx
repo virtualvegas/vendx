@@ -68,6 +68,10 @@ const VendXPayManager = () => {
   const [showAdjustDialog, setShowAdjustDialog] = useState(false);
   const [showWalletDetail, setShowWalletDetail] = useState(false);
   const [walletTransactions, setWalletTransactions] = useState<WalletTransaction[]>([]);
+  const [showPointsDialog, setShowPointsDialog] = useState(false);
+  const [pointsAmount, setPointsAmount] = useState("");
+  const [pointsReason, setPointsReason] = useState("");
+  const [pointsTier, setPointsTier] = useState<string>("");
   const { toast } = useToast();
 
   const fetchData = async () => {
