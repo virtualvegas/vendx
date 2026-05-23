@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Wallet, Search, RefreshCw, DollarSign, Users, TrendingUp, Shield, Baby, UserCheck, CreditCard, ArrowUpDown } from "lucide-react";
+import { Wallet, Search, RefreshCw, DollarSign, Users, TrendingUp, Shield, Baby, UserCheck, CreditCard, ArrowUpDown, Star } from "lucide-react";
 import { formatDisplayDate } from "@/lib/dateUtils";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
