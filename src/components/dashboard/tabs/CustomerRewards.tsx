@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Gift, Star, Trophy, TrendingUp, ShoppingBag, Gamepad2, Wallet, Swords, ArrowRight } from "lucide-react";
+import { Gift, Star, Trophy, TrendingUp, ShoppingBag, Gamepad2, Wallet, Swords, ArrowRight, Receipt } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { formatDisplayDate } from "@/lib/dateUtils";
 import { Link } from "react-router-dom";
@@ -85,6 +85,24 @@ const CustomerRewards = () => {
       return data;
     },
   });
+
+  // POS receipts (Loyverse)
+  const { data: posReceipts } = useQuery({
+    queryKey: ["customer-pos-receipts"],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return [];
+      const { data, error } = await supabase
+        .from("vendx_pos_receipts")
+        .select("id, receipt_number, store_name, total_amount, points_earned, receipt_date, payment_method")
+        .eq("user_id", user.id)
+        .order("receipt_date", { ascending: false })
+        .limit(10);
+      if (error) throw error;
+      return data;
+    },
+  });
+
 
   // Quest progress
   const { data: questProgress } = useQuery({
@@ -299,6 +317,45 @@ const CustomerRewards = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* In-Store POS Receipts */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Receipt className="w-5 h-5" />
+            In-Store Purchases
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {posReceipts && posReceipts.length > 0 ? (
+            <div className="space-y-3">
+              {posReceipts.map((r: any) => (
+                <div key={r.id} className="flex items-center justify-between p-3 border border-border rounded-lg">
+                  <div>
+                    <p className="font-medium text-sm text-foreground">
+                      {r.store_name || "VendX Store"} {r.receipt_number ? `#${r.receipt_number}` : ""}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {formatDisplayDate(r.receipt_date)} · {r.payment_method || "Card"}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-bold text-foreground">${Number(r.total_amount).toFixed(2)}</p>
+                    {r.points_earned > 0 && (
+                      <p className="text-xs text-green-500">+{r.points_earned} pts</p>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-center text-muted-foreground py-6">
+              No in-store purchases yet. Use the email or phone on your account at checkout to earn points.
+            </p>
+          )}
+        </CardContent>
+      </Card>
+
 
       {/* Available Rewards */}
       <Card>
