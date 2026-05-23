@@ -43,8 +43,33 @@ const POSReceiptsPanel = () => {
   const [selected, setSelected] = useState<POSReceipt | null>(null);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
+  const [syncing, setSyncing] = useState(false);
 
-  useEffect(() => {
+  const loadReceipts = async () => {
+    const { data } = await supabase
+      .from("vendx_pos_receipts")
+      .select("*")
+      .order("receipt_date", { ascending: false })
+      .limit(200);
+    setReceipts((data as POSReceipt[]) || []);
+    setLoading(false);
+  };
+
+  useEffect(() => { loadReceipts(); }, []);
+
+  const handleSyncNow = async () => {
+    setSyncing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("loyverse-sync", { body: {} });
+      if (error) throw error;
+      toast.success(`Synced ${data?.processed ?? 0} receipt(s)`);
+      await loadReceipts();
+    } catch (e: any) {
+      toast.error(e?.message || "Sync failed");
+    } finally {
+      setSyncing(false);
+    }
+  };
     (async () => {
       const { data } = await supabase
         .from("vendx_pos_receipts")
