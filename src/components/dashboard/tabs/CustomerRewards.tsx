@@ -86,6 +86,24 @@ const CustomerRewards = () => {
     },
   });
 
+  // POS receipts (Loyverse)
+  const { data: posReceipts } = useQuery({
+    queryKey: ["customer-pos-receipts"],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return [];
+      const { data, error } = await supabase
+        .from("vendx_pos_receipts")
+        .select("id, receipt_number, store_name, total_amount, points_earned, receipt_date, payment_method")
+        .eq("user_id", user.id)
+        .order("receipt_date", { ascending: false })
+        .limit(10);
+      if (error) throw error;
+      return data;
+    },
+  });
+
+
   // Quest progress
   const { data: questProgress } = useQuery({
     queryKey: ["customer-quest-progress"],
