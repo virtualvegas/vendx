@@ -71,6 +71,7 @@ import EcoVendSuggestionsManager from "@/components/dashboard/tabs/EcoVendSugges
 import ServiceTech from "@/components/dashboard/tabs/ServiceTech";
 import OfficesManager from "@/components/dashboard/tabs/OfficesManager";
 import WarehousesManager from "@/components/dashboard/tabs/WarehousesManager";
+import MerchantApiManager from "@/components/dashboard/tabs/MerchantApiManager";
 import { useSEO } from "@/hooks/useSEO";
 export type AppRole =
   | "super_admin"
@@ -280,6 +281,8 @@ const DashboardPage = () => {
         content = <WarehousesManager />; break;
       case "vendx-pay":
         content = <VendXPayManager />; break;
+      case "merchant-api":
+        content = <MerchantApiManager />; break;
       case "gift-cards":
         content = <GiftCardManager />; break;
       case "rewards-manager":

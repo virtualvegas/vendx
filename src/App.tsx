@@ -53,6 +53,8 @@ import AdReachPage from "./pages/AdReachPage";
 import ArtistsListPage from "./pages/ArtistsListPage";
 import ArtistPage from "./pages/ArtistPage";
 import ArtistShopPage from "./pages/ArtistShopPage";
+import MerchantCheckoutPage from "./pages/MerchantCheckoutPage";
+import WalletPayDocsPage from "./pages/WalletPayDocsPage";
 
 const queryClient = new QueryClient();
 
@@ -130,6 +132,8 @@ const App = () => (
               <Route path="/ecosnack/success" element={<EcoSnackSuccessPage />} />
               <Route path="/policy/:slug" element={<PolicyPage />} />
               <Route path="/adreach" element={<AdReachPage />} />
+              <Route path="/pay/checkout/:token" element={<MerchantCheckoutPage />} />
+              <Route path="/docs/wallet-pay" element={<WalletPayDocsPage />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
