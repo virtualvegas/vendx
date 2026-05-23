@@ -24,15 +24,15 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_ANON_KEY")!,
       { global: { headers: { Authorization: authHeader } } },
     );
-    const { data: claims, error: authErr } = await authedClient.auth.getClaims(
+    const { data: userData, error: authErr } = await authedClient.auth.getUser(
       authHeader.replace("Bearer ", ""),
     );
-    if (authErr || !claims?.claims) {
+    if (authErr || !userData?.user) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    const userId = claims.claims.sub as string;
+    const userId = userData.user.id;
 
     const { token } = await req.json();
     if (!token) {
