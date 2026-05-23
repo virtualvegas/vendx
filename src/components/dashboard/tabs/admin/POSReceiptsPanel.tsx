@@ -5,7 +5,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Receipt, Search, RefreshCw } from "lucide-react";
+import { Receipt, Search, RefreshCw, DollarSign } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { formatDisplayDate } from "@/lib/dateUtils";
@@ -44,6 +44,12 @@ const POSReceiptsPanel = () => {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
+  const [financeSyncing, setFinanceSyncing] = useState(false);
+  const [financeDate, setFinanceDate] = useState<string>(() => {
+    const y = new Date();
+    y.setDate(y.getDate() - 1);
+    return y.toISOString().slice(0, 10);
+  });
 
   const loadReceipts = async () => {
     const { data } = await supabase
@@ -68,6 +74,28 @@ const POSReceiptsPanel = () => {
       toast.error(e?.message || "Sync failed");
     } finally {
       setSyncing(false);
+    }
+  };
+
+  const handleFinanceSync = async () => {
+    setFinanceSyncing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("loyverse-daily-finance-sync", {
+        body: { date: financeDate },
+      });
+      if (error) throw error;
+      const r = data?.results?.[0];
+      if (r) {
+        toast.success(
+          `${financeDate}: ${r.receipts} receipts · Revenue $${r.net_revenue.toFixed(2)} · COGS $${r.cogs.toFixed(2)} · Profit $${r.profit.toFixed(2)}`
+        );
+      } else {
+        toast.success("Finance sync completed");
+      }
+    } catch (e: any) {
+      toast.error(e?.message || "Finance sync failed");
+    } finally {
+      setFinanceSyncing(false);
     }
   };
 
@@ -96,13 +124,27 @@ const POSReceiptsPanel = () => {
               <Receipt className="w-5 h-5" /> POS Receipts (Loyverse)
             </CardTitle>
             <p className="text-sm text-muted-foreground mt-1">
-              Auto-syncs every 5 minutes via Loyverse API. Customers earn points based on matched email or phone.
+              Auto-syncs every 5 min. Daily revenue + COGS posts to Finance at 2am UTC (or trigger manually for any date).
             </p>
           </div>
-          <Button onClick={handleSyncNow} disabled={syncing} size="sm">
-            <RefreshCw className={`w-4 h-4 mr-2 ${syncing ? "animate-spin" : ""}`} />
-            {syncing ? "Syncing..." : "Sync Now"}
-          </Button>
+          <div className="flex flex-col gap-2 items-end">
+            <Button onClick={handleSyncNow} disabled={syncing} size="sm">
+              <RefreshCw className={`w-4 h-4 mr-2 ${syncing ? "animate-spin" : ""}`} />
+              {syncing ? "Syncing..." : "Sync Now"}
+            </Button>
+            <div className="flex items-center gap-2">
+              <Input
+                type="date"
+                value={financeDate}
+                onChange={(e) => setFinanceDate(e.target.value)}
+                className="w-[150px] h-9"
+              />
+              <Button onClick={handleFinanceSync} disabled={financeSyncing} size="sm" variant="secondary">
+                <DollarSign className={`w-4 h-4 mr-2 ${financeSyncing ? "animate-pulse" : ""}`} />
+                {financeSyncing ? "Posting..." : "Post Day to Finance"}
+              </Button>
+            </div>
+          </div>
         </div>
         <div className="flex items-center gap-2 mt-3">
           <Search className="w-4 h-4 text-muted-foreground" />
