@@ -249,6 +249,63 @@ const VendXPayManager = () => {
     }
   };
 
+  const openPointsDialog = (wallet: WalletWithProfile) => {
+    setSelectedWallet(wallet);
+    const r = getUserRewards(wallet.user_id);
+    setPointsTier(r?.tier || "bronze");
+    setPointsAmount("");
+    setPointsReason("");
+    setShowPointsDialog(true);
+  };
+
+  const handleAdjustPoints = async () => {
+    if (!selectedWallet) return;
+    const delta = pointsAmount ? parseInt(pointsAmount, 10) : 0;
+    if (pointsAmount && isNaN(delta)) {
+      toast({ title: "Invalid points", description: "Enter a whole number", variant: "destructive" });
+      return;
+    }
+    try {
+      const existing = getUserRewards(selectedWallet.user_id);
+      const currentBal = existing?.balance || 0;
+      const currentLifetime = existing?.lifetime_points || 0;
+      const newBalance = Math.max(0, currentBal + delta);
+      const newLifetime = delta > 0 ? currentLifetime + delta : currentLifetime;
+
+      if (existing) {
+        const { error } = await supabase
+          .from("rewards_points")
+          .update({ balance: newBalance, lifetime_points: newLifetime, tier: pointsTier })
+          .eq("user_id", selectedWallet.user_id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from("rewards_points")
+          .insert({ user_id: selectedWallet.user_id, balance: newBalance, lifetime_points: newLifetime, tier: pointsTier });
+        if (error) throw error;
+      }
+
+      if (delta !== 0) {
+        await supabase.from("point_transactions").insert({
+          user_id: selectedWallet.user_id,
+          points: delta,
+          transaction_type: delta > 0 ? "admin_credit" : "admin_debit",
+          description: pointsReason || "Admin manual adjustment",
+        });
+      }
+
+      // Sync tier on profile if applicable
+      await supabase.from("profiles").update({ tier_level: pointsTier }).eq("id", selectedWallet.user_id);
+
+      toast({ title: "Rewards updated", description: `Points: ${newBalance.toLocaleString()} · Tier: ${pointsTier}` });
+      setShowPointsDialog(false);
+      fetchData();
+    } catch (error: any) {
+      console.error("Error adjusting points:", error);
+      toast({ title: "Error", description: error.message || "Failed to adjust rewards", variant: "destructive" });
+    }
+  };
+
   const toggleWalletStatus = async (wallet: WalletWithProfile) => {
     const newStatus = wallet.status === "active" ? "frozen" : "active";
     try {
