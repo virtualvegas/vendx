@@ -174,7 +174,7 @@ serve(async (req) => {
             subcategory: expenseSubcategory,
             description: `Cost of goods sold — Loyverse POS daily`,
             amount: cogs,
-            payment_method: "internal",
+            payment_method: cogsPaymentMethod,
             paid_from_account_id: expenseAccountId,
             status: "recorded",
             external_reference: expenseRef,
