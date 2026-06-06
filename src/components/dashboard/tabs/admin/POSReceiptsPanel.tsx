@@ -172,10 +172,15 @@ const POSReceiptsPanel = () => {
             </p>
           </div>
           <div className="flex flex-col gap-2 items-end">
-            <Button onClick={handleSyncNow} disabled={syncing} size="sm">
-              <RefreshCw className={`w-4 h-4 mr-2 ${syncing ? "animate-spin" : ""}`} />
-              {syncing ? "Syncing..." : "Sync Now"}
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button onClick={() => setConfigOpen(true)} size="sm" variant="outline">
+                <Settings className="w-4 h-4 mr-2" /> Configure
+              </Button>
+              <Button onClick={handleSyncNow} disabled={syncing} size="sm">
+                <RefreshCw className={`w-4 h-4 mr-2 ${syncing ? "animate-spin" : ""}`} />
+                {syncing ? "Syncing..." : "Sync Now"}
+              </Button>
+            </div>
             <div className="flex items-center gap-2">
               <Input
                 type="date"
