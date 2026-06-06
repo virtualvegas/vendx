@@ -42,6 +42,21 @@ serve(async (req) => {
       dates = [ymd(y)];
     }
 
+    // Load POS revenue config (deposit account, expense account, categories) for loyverse
+    const { data: cfg } = await supabase
+      .from("vendx_pos_revenue_config")
+      .select("*")
+      .eq("source", "loyverse")
+      .maybeSingle();
+
+    const depositAccountId: string | null = cfg?.deposit_account_id ?? null;
+    const expenseAccountId: string | null = cfg?.expense_account_id ?? null;
+    const revenueCategory: string = cfg?.revenue_category ?? "pos_revenue";
+    const revenueSubcategory: string = cfg?.revenue_subcategory ?? "loyverse";
+    const expenseCategory: string = cfg?.expense_category ?? "cogs";
+    const expenseSubcategory: string = cfg?.expense_subcategory ?? "loyverse";
+    const paymentMethod: string = cfg?.payment_method ?? "pos";
+
     const results: any[] = [];
 
     for (const date of dates) {
@@ -112,12 +127,13 @@ serve(async (req) => {
           .insert({
             income_date: date,
             source: "Loyverse POS",
-            category: "pos_revenue",
-            subcategory: "loyverse",
+            category: revenueCategory,
+            subcategory: revenueSubcategory,
             description: `Loyverse POS daily sales — ${count} receipt(s)`,
             amount: netRevenue,
             tax_collected: tax,
-            payment_method: "pos",
+            payment_method: paymentMethod,
+            deposited_to_account_id: depositAccountId,
             external_reference: incomeRef,
             reference_type: "loyverse_daily_revenue",
             reference_id: null,
@@ -153,11 +169,12 @@ serve(async (req) => {
           .insert({
             expense_date: date,
             vendor: "Loyverse POS (COGS)",
-            category: "cogs",
-            subcategory: "loyverse",
+            category: expenseCategory,
+            subcategory: expenseSubcategory,
             description: `Cost of goods sold — Loyverse POS daily`,
             amount: cogs,
             payment_method: "internal",
+            paid_from_account_id: expenseAccountId,
             status: "recorded",
             external_reference: expenseRef,
             notes: `Auto-generated from ${count} Loyverse receipt(s).`,

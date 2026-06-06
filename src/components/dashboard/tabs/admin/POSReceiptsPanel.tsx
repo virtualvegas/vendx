@@ -4,8 +4,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Receipt, Search, RefreshCw, DollarSign } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Receipt, Search, RefreshCw, DollarSign, Settings } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { formatDisplayDate } from "@/lib/dateUtils";
@@ -51,6 +53,11 @@ const POSReceiptsPanel = () => {
     return y.toISOString().slice(0, 10);
   });
 
+  const [configOpen, setConfigOpen] = useState(false);
+  const [accounts, setAccounts] = useState<Array<{ id: string; name: string }>>([]);
+  const [config, setConfig] = useState<any>(null);
+  const [savingConfig, setSavingConfig] = useState(false);
+
   const loadReceipts = async () => {
     const { data } = await supabase
       .from("vendx_pos_receipts")
@@ -61,7 +68,44 @@ const POSReceiptsPanel = () => {
     setLoading(false);
   };
 
-  useEffect(() => { loadReceipts(); }, []);
+  const loadConfig = async () => {
+    const [{ data: accs }, { data: cfg }] = await Promise.all([
+      supabase.from("finance_accounts").select("id,name").eq("is_active", true).order("name"),
+      supabase.from("vendx_pos_revenue_config").select("*").eq("source", "loyverse").maybeSingle(),
+    ]);
+    setAccounts((accs as any) || []);
+    setConfig(cfg || { source: "loyverse", display_name: "Loyverse POS", revenue_category: "pos_revenue", expense_category: "cogs", payment_method: "pos" });
+  };
+
+  const saveConfig = async () => {
+    setSavingConfig(true);
+    try {
+      const payload = {
+        source: "loyverse",
+        display_name: config.display_name || "Loyverse POS",
+        deposit_account_id: config.deposit_account_id || null,
+        expense_account_id: config.expense_account_id || null,
+        revenue_category: config.revenue_category || "pos_revenue",
+        revenue_subcategory: config.revenue_subcategory || null,
+        expense_category: config.expense_category || "cogs",
+        expense_subcategory: config.expense_subcategory || null,
+        payment_method: config.payment_method || "pos",
+        is_active: true,
+      };
+      const { error } = await supabase
+        .from("vendx_pos_revenue_config")
+        .upsert(payload, { onConflict: "source" });
+      if (error) throw error;
+      toast.success("POS revenue config saved");
+      setConfigOpen(false);
+    } catch (e: any) {
+      toast.error(e?.message || "Failed to save config");
+    } finally {
+      setSavingConfig(false);
+    }
+  };
+
+  useEffect(() => { loadReceipts(); loadConfig(); }, []);
 
   const handleSyncNow = async () => {
     setSyncing(true);
@@ -128,10 +172,15 @@ const POSReceiptsPanel = () => {
             </p>
           </div>
           <div className="flex flex-col gap-2 items-end">
-            <Button onClick={handleSyncNow} disabled={syncing} size="sm">
-              <RefreshCw className={`w-4 h-4 mr-2 ${syncing ? "animate-spin" : ""}`} />
-              {syncing ? "Syncing..." : "Sync Now"}
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button onClick={() => setConfigOpen(true)} size="sm" variant="outline">
+                <Settings className="w-4 h-4 mr-2" /> Configure
+              </Button>
+              <Button onClick={handleSyncNow} disabled={syncing} size="sm">
+                <RefreshCw className={`w-4 h-4 mr-2 ${syncing ? "animate-spin" : ""}`} />
+                {syncing ? "Syncing..." : "Sync Now"}
+              </Button>
+            </div>
             <div className="flex items-center gap-2">
               <Input
                 type="date"
@@ -228,6 +277,73 @@ const POSReceiptsPanel = () => {
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={configOpen} onOpenChange={setConfigOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>POS Revenue Configuration</DialogTitle>
+          </DialogHeader>
+          {config && (
+            <div className="space-y-3">
+              <p className="text-xs text-muted-foreground">
+                Controls where Loyverse daily revenue is deposited and where COGS is paid from when posted to Finance.
+              </p>
+              <div className="space-y-1.5">
+                <Label>Deposit Account (revenue)</Label>
+                <Select
+                  value={config.deposit_account_id || "__none"}
+                  onValueChange={(v) => setConfig({ ...config, deposit_account_id: v === "__none" ? null : v })}
+                >
+                  <SelectTrigger><SelectValue placeholder="Select account" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__none">— None (don't post to account) —</SelectItem>
+                    {accounts.map((a) => (<SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label>Expense Account (COGS paid from)</Label>
+                <Select
+                  value={config.expense_account_id || "__none"}
+                  onValueChange={(v) => setConfig({ ...config, expense_account_id: v === "__none" ? null : v })}
+                >
+                  <SelectTrigger><SelectValue placeholder="Select account" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__none">— None —</SelectItem>
+                    {accounts.map((a) => (<SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label>Revenue Category</Label>
+                  <Input value={config.revenue_category || ""} onChange={(e) => setConfig({ ...config, revenue_category: e.target.value })} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Revenue Subcategory</Label>
+                  <Input value={config.revenue_subcategory || ""} onChange={(e) => setConfig({ ...config, revenue_subcategory: e.target.value })} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Expense Category</Label>
+                  <Input value={config.expense_category || ""} onChange={(e) => setConfig({ ...config, expense_category: e.target.value })} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Expense Subcategory</Label>
+                  <Input value={config.expense_subcategory || ""} onChange={(e) => setConfig({ ...config, expense_subcategory: e.target.value })} />
+                </div>
+                <div className="space-y-1.5 col-span-2">
+                  <Label>Payment Method</Label>
+                  <Input value={config.payment_method || ""} onChange={(e) => setConfig({ ...config, payment_method: e.target.value })} />
+                </div>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setConfigOpen(false)}>Cancel</Button>
+            <Button onClick={saveConfig} disabled={savingConfig}>{savingConfig ? "Saving..." : "Save"}</Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </Card>

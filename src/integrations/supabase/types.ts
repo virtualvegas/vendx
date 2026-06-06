@@ -7022,6 +7022,72 @@ export type Database = {
         }
         Relationships: []
       }
+      vendx_pos_revenue_config: {
+        Row: {
+          created_at: string
+          deposit_account_id: string | null
+          display_name: string
+          expense_account_id: string | null
+          expense_category: string
+          expense_subcategory: string | null
+          id: string
+          is_active: boolean
+          notes: string | null
+          payment_method: string | null
+          revenue_category: string
+          revenue_subcategory: string | null
+          source: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          deposit_account_id?: string | null
+          display_name: string
+          expense_account_id?: string | null
+          expense_category?: string
+          expense_subcategory?: string | null
+          id?: string
+          is_active?: boolean
+          notes?: string | null
+          payment_method?: string | null
+          revenue_category?: string
+          revenue_subcategory?: string | null
+          source: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          deposit_account_id?: string | null
+          display_name?: string
+          expense_account_id?: string | null
+          expense_category?: string
+          expense_subcategory?: string | null
+          id?: string
+          is_active?: boolean
+          notes?: string | null
+          payment_method?: string | null
+          revenue_category?: string
+          revenue_subcategory?: string | null
+          source?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendx_pos_revenue_config_deposit_account_id_fkey"
+            columns: ["deposit_account_id"]
+            isOneToOne: false
+            referencedRelation: "finance_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendx_pos_revenue_config_expense_account_id_fkey"
+            columns: ["expense_account_id"]
+            isOneToOne: false
+            referencedRelation: "finance_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vendx_rewards_config: {
         Row: {
           bronze_multiplier: number
