@@ -334,9 +334,13 @@ const POSReceiptsPanel = () => {
                   <Label>Expense Subcategory</Label>
                   <Input value={config.expense_subcategory || ""} onChange={(e) => setConfig({ ...config, expense_subcategory: e.target.value })} />
                 </div>
-                <div className="space-y-1.5 col-span-2">
-                  <Label>Payment Method</Label>
+                <div className="space-y-1.5">
+                  <Label>Revenue Payment Method</Label>
                   <Input value={config.payment_method || ""} onChange={(e) => setConfig({ ...config, payment_method: e.target.value })} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>COGS Payment Method</Label>
+                  <Input value={config.cogs_payment_method || ""} onChange={(e) => setConfig({ ...config, cogs_payment_method: e.target.value })} />
                 </div>
               </div>
             </div>
