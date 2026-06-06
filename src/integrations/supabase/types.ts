@@ -7024,6 +7024,7 @@ export type Database = {
       }
       vendx_pos_revenue_config: {
         Row: {
+          cogs_payment_method: string | null
           created_at: string
           deposit_account_id: string | null
           display_name: string
@@ -7040,6 +7041,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          cogs_payment_method?: string | null
           created_at?: string
           deposit_account_id?: string | null
           display_name: string
@@ -7056,6 +7058,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          cogs_payment_method?: string | null
           created_at?: string
           deposit_account_id?: string | null
           display_name?: string
