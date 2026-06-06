@@ -42,6 +42,21 @@ serve(async (req) => {
       dates = [ymd(y)];
     }
 
+    // Load POS revenue config (deposit account, expense account, categories) for loyverse
+    const { data: cfg } = await supabase
+      .from("vendx_pos_revenue_config")
+      .select("*")
+      .eq("source", "loyverse")
+      .maybeSingle();
+
+    const depositAccountId: string | null = cfg?.deposit_account_id ?? null;
+    const expenseAccountId: string | null = cfg?.expense_account_id ?? null;
+    const revenueCategory: string = cfg?.revenue_category ?? "pos_revenue";
+    const revenueSubcategory: string = cfg?.revenue_subcategory ?? "loyverse";
+    const expenseCategory: string = cfg?.expense_category ?? "cogs";
+    const expenseSubcategory: string = cfg?.expense_subcategory ?? "loyverse";
+    const paymentMethod: string = cfg?.payment_method ?? "pos";
+
     const results: any[] = [];
 
     for (const date of dates) {
