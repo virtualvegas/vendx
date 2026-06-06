@@ -279,6 +279,73 @@ const POSReceiptsPanel = () => {
           )}
         </DialogContent>
       </Dialog>
+
+      <Dialog open={configOpen} onOpenChange={setConfigOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>POS Revenue Configuration</DialogTitle>
+          </DialogHeader>
+          {config && (
+            <div className="space-y-3">
+              <p className="text-xs text-muted-foreground">
+                Controls where Loyverse daily revenue is deposited and where COGS is paid from when posted to Finance.
+              </p>
+              <div className="space-y-1.5">
+                <Label>Deposit Account (revenue)</Label>
+                <Select
+                  value={config.deposit_account_id || "__none"}
+                  onValueChange={(v) => setConfig({ ...config, deposit_account_id: v === "__none" ? null : v })}
+                >
+                  <SelectTrigger><SelectValue placeholder="Select account" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__none">— None (don't post to account) —</SelectItem>
+                    {accounts.map((a) => (<SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label>Expense Account (COGS paid from)</Label>
+                <Select
+                  value={config.expense_account_id || "__none"}
+                  onValueChange={(v) => setConfig({ ...config, expense_account_id: v === "__none" ? null : v })}
+                >
+                  <SelectTrigger><SelectValue placeholder="Select account" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__none">— None —</SelectItem>
+                    {accounts.map((a) => (<SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label>Revenue Category</Label>
+                  <Input value={config.revenue_category || ""} onChange={(e) => setConfig({ ...config, revenue_category: e.target.value })} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Revenue Subcategory</Label>
+                  <Input value={config.revenue_subcategory || ""} onChange={(e) => setConfig({ ...config, revenue_subcategory: e.target.value })} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Expense Category</Label>
+                  <Input value={config.expense_category || ""} onChange={(e) => setConfig({ ...config, expense_category: e.target.value })} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Expense Subcategory</Label>
+                  <Input value={config.expense_subcategory || ""} onChange={(e) => setConfig({ ...config, expense_subcategory: e.target.value })} />
+                </div>
+                <div className="space-y-1.5 col-span-2">
+                  <Label>Payment Method</Label>
+                  <Input value={config.payment_method || ""} onChange={(e) => setConfig({ ...config, payment_method: e.target.value })} />
+                </div>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setConfigOpen(false)}>Cancel</Button>
+            <Button onClick={saveConfig} disabled={savingConfig}>{savingConfig ? "Saving..." : "Save"}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 };
