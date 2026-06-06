@@ -56,6 +56,7 @@ serve(async (req) => {
     const expenseCategory: string = cfg?.expense_category ?? "cogs";
     const expenseSubcategory: string = cfg?.expense_subcategory ?? "loyverse";
     const paymentMethod: string = cfg?.payment_method ?? "pos";
+    const cogsPaymentMethod: string = cfg?.cogs_payment_method ?? "internal";
 
     const results: any[] = [];
 
