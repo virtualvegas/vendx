@@ -90,6 +90,7 @@ const POSReceiptsPanel = () => {
         expense_category: config.expense_category || "cogs",
         expense_subcategory: config.expense_subcategory || null,
         payment_method: config.payment_method || "pos",
+        cogs_payment_method: config.cogs_payment_method || "internal",
         is_active: true,
       };
       const { error } = await supabase
