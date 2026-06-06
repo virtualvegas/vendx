@@ -74,7 +74,7 @@ const POSReceiptsPanel = () => {
       supabase.from("vendx_pos_revenue_config").select("*").eq("source", "loyverse").maybeSingle(),
     ]);
     setAccounts((accs as any) || []);
-    setConfig(cfg || { source: "loyverse", display_name: "Loyverse POS", revenue_category: "pos_revenue", expense_category: "cogs", payment_method: "pos" });
+    setConfig(cfg || { source: "loyverse", display_name: "Loyverse POS", revenue_category: "pos_revenue", expense_category: "cogs", payment_method: "pos", cogs_payment_method: "internal" });
   };
 
   const saveConfig = async () => {
@@ -90,6 +90,7 @@ const POSReceiptsPanel = () => {
         expense_category: config.expense_category || "cogs",
         expense_subcategory: config.expense_subcategory || null,
         payment_method: config.payment_method || "pos",
+        cogs_payment_method: config.cogs_payment_method || "internal",
         is_active: true,
       };
       const { error } = await supabase
@@ -333,9 +334,13 @@ const POSReceiptsPanel = () => {
                   <Label>Expense Subcategory</Label>
                   <Input value={config.expense_subcategory || ""} onChange={(e) => setConfig({ ...config, expense_subcategory: e.target.value })} />
                 </div>
-                <div className="space-y-1.5 col-span-2">
-                  <Label>Payment Method</Label>
+                <div className="space-y-1.5">
+                  <Label>Revenue Payment Method</Label>
                   <Input value={config.payment_method || ""} onChange={(e) => setConfig({ ...config, payment_method: e.target.value })} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>COGS Payment Method</Label>
+                  <Input value={config.cogs_payment_method || ""} onChange={(e) => setConfig({ ...config, cogs_payment_method: e.target.value })} />
                 </div>
               </div>
             </div>

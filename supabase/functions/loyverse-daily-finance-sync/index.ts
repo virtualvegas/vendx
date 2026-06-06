@@ -56,6 +56,7 @@ serve(async (req) => {
     const expenseCategory: string = cfg?.expense_category ?? "cogs";
     const expenseSubcategory: string = cfg?.expense_subcategory ?? "loyverse";
     const paymentMethod: string = cfg?.payment_method ?? "pos";
+    const cogsPaymentMethod: string = cfg?.cogs_payment_method ?? "internal";
 
     const results: any[] = [];
 
@@ -173,7 +174,7 @@ serve(async (req) => {
             subcategory: expenseSubcategory,
             description: `Cost of goods sold — Loyverse POS daily`,
             amount: cogs,
-            payment_method: "internal",
+            payment_method: cogsPaymentMethod,
             paid_from_account_id: expenseAccountId,
             status: "recorded",
             external_reference: expenseRef,
