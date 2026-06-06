@@ -53,6 +53,11 @@ const POSReceiptsPanel = () => {
     return y.toISOString().slice(0, 10);
   });
 
+  const [configOpen, setConfigOpen] = useState(false);
+  const [accounts, setAccounts] = useState<Array<{ id: string; name: string }>>([]);
+  const [config, setConfig] = useState<any>(null);
+  const [savingConfig, setSavingConfig] = useState(false);
+
   const loadReceipts = async () => {
     const { data } = await supabase
       .from("vendx_pos_receipts")
@@ -63,7 +68,44 @@ const POSReceiptsPanel = () => {
     setLoading(false);
   };
 
-  useEffect(() => { loadReceipts(); }, []);
+  const loadConfig = async () => {
+    const [{ data: accs }, { data: cfg }] = await Promise.all([
+      supabase.from("finance_accounts").select("id,name").eq("is_active", true).order("name"),
+      supabase.from("vendx_pos_revenue_config").select("*").eq("source", "loyverse").maybeSingle(),
+    ]);
+    setAccounts((accs as any) || []);
+    setConfig(cfg || { source: "loyverse", display_name: "Loyverse POS", revenue_category: "pos_revenue", expense_category: "cogs", payment_method: "pos" });
+  };
+
+  const saveConfig = async () => {
+    setSavingConfig(true);
+    try {
+      const payload = {
+        source: "loyverse",
+        display_name: config.display_name || "Loyverse POS",
+        deposit_account_id: config.deposit_account_id || null,
+        expense_account_id: config.expense_account_id || null,
+        revenue_category: config.revenue_category || "pos_revenue",
+        revenue_subcategory: config.revenue_subcategory || null,
+        expense_category: config.expense_category || "cogs",
+        expense_subcategory: config.expense_subcategory || null,
+        payment_method: config.payment_method || "pos",
+        is_active: true,
+      };
+      const { error } = await supabase
+        .from("vendx_pos_revenue_config")
+        .upsert(payload, { onConflict: "source" });
+      if (error) throw error;
+      toast.success("POS revenue config saved");
+      setConfigOpen(false);
+    } catch (e: any) {
+      toast.error(e?.message || "Failed to save config");
+    } finally {
+      setSavingConfig(false);
+    }
+  };
+
+  useEffect(() => { loadReceipts(); loadConfig(); }, []);
 
   const handleSyncNow = async () => {
     setSyncing(true);
