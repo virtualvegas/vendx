@@ -74,7 +74,7 @@ const POSReceiptsPanel = () => {
       supabase.from("vendx_pos_revenue_config").select("*").eq("source", "loyverse").maybeSingle(),
     ]);
     setAccounts((accs as any) || []);
-    setConfig(cfg || { source: "loyverse", display_name: "Loyverse POS", revenue_category: "pos_revenue", expense_category: "cogs", payment_method: "pos" });
+    setConfig(cfg || { source: "loyverse", display_name: "Loyverse POS", revenue_category: "pos_revenue", expense_category: "cogs", payment_method: "pos", cogs_payment_method: "internal" });
   };
 
   const saveConfig = async () => {
