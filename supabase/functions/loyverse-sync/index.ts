@@ -132,6 +132,21 @@ serve(async (req) => {
           const paymentMethod = Array.isArray(r.payments) && r.payments[0]
             ? (r.payments[0].name || r.payments[0].type || null) : null;
 
+          // Resolve POS store mapping → location / stand
+          const posStoreId: string | null = r.store_id || null;
+          let locationId: string | null = null;
+          let standId: string | null = null;
+          if (posStoreId) {
+            const { data: storeMap } = await supabase
+              .from("vendx_pos_stores")
+              .select("location_id, stand_id")
+              .eq("source", "loyverse")
+              .eq("pos_store_id", posStoreId)
+              .maybeSingle();
+            locationId = storeMap?.location_id || null;
+            standId = storeMap?.stand_id || null;
+          }
+
           const { data: receipt, error: insErr } = await supabase
             .from("vendx_pos_receipts").insert({
               user_id: userId,
@@ -139,6 +154,9 @@ serve(async (req) => {
               receipt_number: r.receipt_number || null,
               source: "loyverse",
               store_name: r.store_id || null,
+              pos_store_id: posStoreId,
+              location_id: locationId,
+              stand_id: standId,
               pos_customer_id: r.customer_id || null,
               pos_customer_email: email,
               pos_customer_phone: phoneRaw,
