@@ -82,7 +82,7 @@ const ExtInvoicesPanel = () => {
   const setStatus = async (id: string, status: string) => {
     const patch: any = { status };
     if (status === "sent") patch.sent_at = new Date().toISOString();
-    if (status === "paid") { patch.paid_at = new Date().toISOString(); patch.amount_paid = currentInvoice?.total; }
+    if (status === "paid") { patch.paid_at = new Date().toISOString(); patch.amount_paid = (currentInvoice as any)?.total; }
     const { error } = await supabase.from("vendx_external_service_invoices" as any).update(patch).eq("id", id);
     if (error) toast.error(error.message); else { toast.success("Updated"); qc.invalidateQueries({ queryKey: ["ext-invoices"] }); }
   };
@@ -145,16 +145,16 @@ const ExtInvoicesPanel = () => {
       {/* Invoice details */}
       <Dialog open={!!open} onOpenChange={v => !v && setOpen(null)}>
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-          {currentInvoice && (
+          {currentInvoice && (() => { const ci = currentInvoice as any; return (
             <>
               <DialogHeader>
-                <DialogTitle>{currentInvoice.invoice_number} — {currentInvoice.client?.company_name}</DialogTitle>
+                <DialogTitle>{ci.invoice_number} — {ci.client?.company_name}</DialogTitle>
               </DialogHeader>
               <div className="flex gap-2 flex-wrap mb-3">
-                <Badge>{currentInvoice.status}</Badge>
-                {currentInvoice.status === "draft" && <Button size="sm" variant="outline" onClick={() => setStatus(currentInvoice.id, "sent")}><Send className="w-4 h-4 mr-1" /> Mark Sent</Button>}
-                {currentInvoice.status === "sent" && <Button size="sm" variant="outline" onClick={() => setStatus(currentInvoice.id, "paid")}><CheckCircle className="w-4 h-4 mr-1" /> Mark Paid</Button>}
-                {currentInvoice.status !== "void" && <Button size="sm" variant="outline" onClick={() => setStatus(currentInvoice.id, "void")}>Void</Button>}
+                <Badge>{ci.status}</Badge>
+                {ci.status === "draft" && <Button size="sm" variant="outline" onClick={() => setStatus(ci.id, "sent")}><Send className="w-4 h-4 mr-1" /> Mark Sent</Button>}
+                {ci.status === "sent" && <Button size="sm" variant="outline" onClick={() => setStatus(ci.id, "paid")}><CheckCircle className="w-4 h-4 mr-1" /> Mark Paid</Button>}
+                {ci.status !== "void" && <Button size="sm" variant="outline" onClick={() => setStatus(ci.id, "void")}>Void</Button>}
               </div>
 
               <div className="space-y-2 mb-4">
@@ -169,7 +169,7 @@ const ExtInvoicesPanel = () => {
                           <span className="text-muted-foreground"> · {it.quantity} × ${Number(it.unit_price).toFixed(2)}</span>
                         </div>
                         <div className="font-semibold">${Number(it.line_total).toFixed(2)}</div>
-                        {currentInvoice.status === "draft" && (
+                        {ci.status === "draft" && (
                           <Button size="icon" variant="ghost" onClick={() => delItem(it.id)}><Trash2 className="w-4 h-4" /></Button>
                         )}
                       </div>
@@ -177,11 +177,11 @@ const ExtInvoicesPanel = () => {
                   </div>
                 }
                 <div className="flex justify-between font-bold pt-2 border-t">
-                  <span>Total</span><span>${Number(currentInvoice.total).toFixed(2)}</span>
+                  <span>Total</span><span>${Number(ci.total).toFixed(2)}</span>
                 </div>
               </div>
 
-              {currentInvoice.status === "draft" && (
+              {ci.status === "draft" && (
                 <div className="border rounded p-3 grid gap-2 md:grid-cols-5">
                   <div className="md:col-span-1">
                     <Label>Type</Label>
