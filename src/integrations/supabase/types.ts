@@ -6524,6 +6524,479 @@ export type Database = {
         }
         Relationships: []
       }
+      vendx_external_clients: {
+        Row: {
+          billing_address: string | null
+          billing_city: string | null
+          billing_country: string | null
+          billing_postal_code: string | null
+          billing_state: string | null
+          company_name: string
+          contact_email: string | null
+          contact_name: string | null
+          contact_phone: string | null
+          created_at: string
+          created_by: string | null
+          default_hourly_rate: number | null
+          default_payment_terms_days: number | null
+          id: string
+          linked_user_id: string | null
+          notes: string | null
+          status: string
+          tax_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          billing_address?: string | null
+          billing_city?: string | null
+          billing_country?: string | null
+          billing_postal_code?: string | null
+          billing_state?: string | null
+          company_name: string
+          contact_email?: string | null
+          contact_name?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          created_by?: string | null
+          default_hourly_rate?: number | null
+          default_payment_terms_days?: number | null
+          id?: string
+          linked_user_id?: string | null
+          notes?: string | null
+          status?: string
+          tax_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          billing_address?: string | null
+          billing_city?: string | null
+          billing_country?: string | null
+          billing_postal_code?: string | null
+          billing_state?: string | null
+          company_name?: string
+          contact_email?: string | null
+          contact_name?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          created_by?: string | null
+          default_hourly_rate?: number | null
+          default_payment_terms_days?: number | null
+          id?: string
+          linked_user_id?: string | null
+          notes?: string | null
+          status?: string
+          tax_id?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      vendx_external_locations: {
+        Row: {
+          access_notes: string | null
+          address: string | null
+          city: string | null
+          client_id: string
+          contact_name: string | null
+          contact_phone: string | null
+          country: string | null
+          created_at: string
+          hours: string | null
+          id: string
+          name: string
+          notes: string | null
+          postal_code: string | null
+          state: string | null
+          updated_at: string
+        }
+        Insert: {
+          access_notes?: string | null
+          address?: string | null
+          city?: string | null
+          client_id: string
+          contact_name?: string | null
+          contact_phone?: string | null
+          country?: string | null
+          created_at?: string
+          hours?: string | null
+          id?: string
+          name: string
+          notes?: string | null
+          postal_code?: string | null
+          state?: string | null
+          updated_at?: string
+        }
+        Update: {
+          access_notes?: string | null
+          address?: string | null
+          city?: string | null
+          client_id?: string
+          contact_name?: string | null
+          contact_phone?: string | null
+          country?: string | null
+          created_at?: string
+          hours?: string | null
+          id?: string
+          name?: string
+          notes?: string | null
+          postal_code?: string | null
+          state?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendx_external_locations_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "vendx_external_clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vendx_external_machines: {
+        Row: {
+          asset_label: string
+          client_id: string
+          contract_terms: string | null
+          created_at: string
+          hourly_rate_override: number | null
+          id: string
+          install_date: string | null
+          location_id: string | null
+          machine_type: string | null
+          make: string | null
+          model: string | null
+          notes: string | null
+          photo_url: string | null
+          serial_number: string | null
+          status: string
+          updated_at: string
+          warranty_expires_on: string | null
+        }
+        Insert: {
+          asset_label: string
+          client_id: string
+          contract_terms?: string | null
+          created_at?: string
+          hourly_rate_override?: number | null
+          id?: string
+          install_date?: string | null
+          location_id?: string | null
+          machine_type?: string | null
+          make?: string | null
+          model?: string | null
+          notes?: string | null
+          photo_url?: string | null
+          serial_number?: string | null
+          status?: string
+          updated_at?: string
+          warranty_expires_on?: string | null
+        }
+        Update: {
+          asset_label?: string
+          client_id?: string
+          contract_terms?: string | null
+          created_at?: string
+          hourly_rate_override?: number | null
+          id?: string
+          install_date?: string | null
+          location_id?: string | null
+          machine_type?: string | null
+          make?: string | null
+          model?: string | null
+          notes?: string | null
+          photo_url?: string | null
+          serial_number?: string | null
+          status?: string
+          updated_at?: string
+          warranty_expires_on?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendx_external_machines_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "vendx_external_clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendx_external_machines_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "vendx_external_locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vendx_external_service_invoice_items: {
+        Row: {
+          description: string
+          id: string
+          invoice_id: string
+          item_type: string
+          line_total: number
+          logged_at: string
+          logged_by: string | null
+          quantity: number
+          unit_price: number
+        }
+        Insert: {
+          description: string
+          id?: string
+          invoice_id: string
+          item_type?: string
+          line_total?: number
+          logged_at?: string
+          logged_by?: string | null
+          quantity?: number
+          unit_price?: number
+        }
+        Update: {
+          description?: string
+          id?: string
+          invoice_id?: string
+          item_type?: string
+          line_total?: number
+          logged_at?: string
+          logged_by?: string | null
+          quantity?: number
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendx_external_service_invoice_items_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "vendx_external_service_invoices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vendx_external_service_invoices: {
+        Row: {
+          amount_paid: number
+          client_id: string
+          created_at: string
+          created_by: string | null
+          due_date: string | null
+          id: string
+          invoice_number: string | null
+          issue_date: string
+          notes: string | null
+          paid_at: string | null
+          sent_at: string | null
+          status: string
+          subtotal: number
+          tax_amount: number
+          ticket_id: string | null
+          total: number
+          updated_at: string
+        }
+        Insert: {
+          amount_paid?: number
+          client_id: string
+          created_at?: string
+          created_by?: string | null
+          due_date?: string | null
+          id?: string
+          invoice_number?: string | null
+          issue_date?: string
+          notes?: string | null
+          paid_at?: string | null
+          sent_at?: string | null
+          status?: string
+          subtotal?: number
+          tax_amount?: number
+          ticket_id?: string | null
+          total?: number
+          updated_at?: string
+        }
+        Update: {
+          amount_paid?: number
+          client_id?: string
+          created_at?: string
+          created_by?: string | null
+          due_date?: string | null
+          id?: string
+          invoice_number?: string | null
+          issue_date?: string
+          notes?: string | null
+          paid_at?: string | null
+          sent_at?: string | null
+          status?: string
+          subtotal?: number
+          tax_amount?: number
+          ticket_id?: string | null
+          total?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendx_external_service_invoices_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "vendx_external_clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendx_external_service_invoices_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "vendx_external_service_tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vendx_external_service_ticket_updates: {
+        Row: {
+          author_id: string | null
+          author_name: string | null
+          created_at: string
+          id: string
+          is_internal: boolean
+          message: string
+          status_change: string | null
+          ticket_id: string
+        }
+        Insert: {
+          author_id?: string | null
+          author_name?: string | null
+          created_at?: string
+          id?: string
+          is_internal?: boolean
+          message: string
+          status_change?: string | null
+          ticket_id: string
+        }
+        Update: {
+          author_id?: string | null
+          author_name?: string | null
+          created_at?: string
+          id?: string
+          is_internal?: boolean
+          message?: string
+          status_change?: string | null
+          ticket_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendx_external_service_ticket_updates_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "vendx_external_service_tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vendx_external_service_tickets: {
+        Row: {
+          assigned_technician_id: string | null
+          client_id: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          intake_address: string | null
+          intake_company_name: string | null
+          intake_contact_email: string | null
+          intake_contact_name: string | null
+          intake_contact_phone: string | null
+          intake_machine_description: string | null
+          location_id: string | null
+          machine_id: string | null
+          priority: string
+          resolution: string | null
+          resolved_at: string | null
+          route_stop_id: string | null
+          scheduled_date: string | null
+          source: string
+          status: string
+          subject: string
+          ticket_number: string | null
+          updated_at: string
+        }
+        Insert: {
+          assigned_technician_id?: string | null
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          intake_address?: string | null
+          intake_company_name?: string | null
+          intake_contact_email?: string | null
+          intake_contact_name?: string | null
+          intake_contact_phone?: string | null
+          intake_machine_description?: string | null
+          location_id?: string | null
+          machine_id?: string | null
+          priority?: string
+          resolution?: string | null
+          resolved_at?: string | null
+          route_stop_id?: string | null
+          scheduled_date?: string | null
+          source?: string
+          status?: string
+          subject: string
+          ticket_number?: string | null
+          updated_at?: string
+        }
+        Update: {
+          assigned_technician_id?: string | null
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          intake_address?: string | null
+          intake_company_name?: string | null
+          intake_contact_email?: string | null
+          intake_contact_name?: string | null
+          intake_contact_phone?: string | null
+          intake_machine_description?: string | null
+          location_id?: string | null
+          machine_id?: string | null
+          priority?: string
+          resolution?: string | null
+          resolved_at?: string | null
+          route_stop_id?: string | null
+          scheduled_date?: string | null
+          source?: string
+          status?: string
+          subject?: string
+          ticket_number?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendx_external_service_tickets_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "vendx_external_clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendx_external_service_tickets_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "vendx_external_locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendx_external_service_tickets_machine_id_fkey"
+            columns: ["machine_id"]
+            isOneToOne: false
+            referencedRelation: "vendx_external_machines"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendx_external_service_tickets_route_stop_id_fkey"
+            columns: ["route_stop_id"]
+            isOneToOne: false
+            referencedRelation: "route_stops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vendx_integration_state: {
         Row: {
           key: string
@@ -7744,6 +8217,7 @@ export type Database = {
           success: boolean
         }[]
       }
+      is_ext_service_staff: { Args: { _user_id: string }; Returns: boolean }
       is_super_admin: { Args: { _user_id: string }; Returns: boolean }
       log_machine_activity: {
         Args: {

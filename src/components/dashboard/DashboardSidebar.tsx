@@ -86,6 +86,7 @@ const tabGroups: TabGroup[] = [
       { id: "business-payouts", label: "Payouts", icon: DollarSign, requiredRoles: ["business_owner", "super_admin"] },
       { id: "business-adreach", label: "AdReach", icon: Megaphone, requiredRoles: ["business_owner", "super_admin"] },
       { id: "business-support", label: "Support", icon: Wrench, requiredRoles: ["business_owner", "super_admin"] },
+      { id: "business-external-service", label: "Machine Service", icon: Wrench, requiredRoles: ["business_owner", "super_admin"] },
     ],
   },
 
@@ -136,6 +137,7 @@ const tabGroups: TabGroup[] = [
       { id: "ticket-config", label: "Ticket Payouts", icon: Ticket, requiredRoles: ["super_admin"] },
       { id: "kiosk-categories", label: "Kiosk Setup", icon: Layers, requiredRoles: ["super_admin", "tech_support_lead"] },
       { id: "technical-support", label: "Tech Support", icon: Wrench, requiredRoles: ["super_admin", "tech_support_lead", "support"] },
+      { id: "external-service", label: "External Service (Client Machines)", icon: Wrench, requiredRoles: ["super_admin", "tech_support_lead", "support", "finance_accounting", "global_operations_manager", "regional_manager", "employee_operator"] },
     ],
   },
 

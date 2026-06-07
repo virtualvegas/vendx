@@ -55,6 +55,7 @@ import ArtistPage from "./pages/ArtistPage";
 import ArtistShopPage from "./pages/ArtistShopPage";
 import MerchantCheckoutPage from "./pages/MerchantCheckoutPage";
 import WalletPayDocsPage from "./pages/WalletPayDocsPage";
+import ServiceRequestPage from "./pages/ServiceRequestPage";
 
 const queryClient = new QueryClient();
 
@@ -134,6 +135,7 @@ const App = () => (
               <Route path="/adreach" element={<AdReachPage />} />
               <Route path="/pay/checkout/:token" element={<MerchantCheckoutPage />} />
               <Route path="/docs/wallet-pay" element={<WalletPayDocsPage />} />
+              <Route path="/service-request" element={<ServiceRequestPage />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
