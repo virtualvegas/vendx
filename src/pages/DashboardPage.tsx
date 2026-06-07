@@ -73,6 +73,8 @@ import OfficesManager from "@/components/dashboard/tabs/OfficesManager";
 import WarehousesManager from "@/components/dashboard/tabs/WarehousesManager";
 import MerchantApiManager from "@/components/dashboard/tabs/MerchantApiManager";
 import BrandLinksManager from "@/components/dashboard/tabs/BrandLinksManager";
+import ExternalServiceManager from "@/components/dashboard/tabs/ExternalServiceManager";
+import BusinessExternalService from "@/components/dashboard/tabs/business-owner/BusinessExternalService";
 import { useSEO } from "@/hooks/useSEO";
 export type AppRole =
   | "super_admin"
@@ -222,7 +224,7 @@ const DashboardPage = () => {
 
   const NON_ADMIN_TABS = [
     "my-orders", "my-wallet", "my-tickets", "my-rewards",
-    "business-overview", "business-locations", "business-machines", "business-payouts", "business-support", "business-adreach",
+    "business-overview", "business-locations", "business-machines", "business-payouts", "business-support", "business-adreach", "business-external-service",
   ];
 
   const renderTabContent = () => {
@@ -242,6 +244,10 @@ const DashboardPage = () => {
         content = <BusinessAdReach />; break;
       case "business-support":
         content = <BusinessSupport />; break;
+      case "business-external-service":
+        content = <BusinessExternalService />; break;
+      case "external-service":
+        content = <ExternalServiceManager />; break;
       case "my-orders":
         content = <CustomerOrders />; break;
       case "my-wallet":
