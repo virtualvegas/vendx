@@ -1658,6 +1658,7 @@ export type Database = {
           reference_id: string | null
           reference_type: string | null
           source: string
+          stand_id: string | null
           status: string
           subcategory: string | null
           tax_collected: number | null
@@ -1683,6 +1684,7 @@ export type Database = {
           reference_id?: string | null
           reference_type?: string | null
           source: string
+          stand_id?: string | null
           status?: string
           subcategory?: string | null
           tax_collected?: number | null
@@ -1708,6 +1710,7 @@ export type Database = {
           reference_id?: string | null
           reference_type?: string | null
           source?: string
+          stand_id?: string | null
           status?: string
           subcategory?: string | null
           tax_collected?: number | null
@@ -1733,6 +1736,13 @@ export type Database = {
             columns: ["machine_id"]
             isOneToOne: false
             referencedRelation: "vendx_machines"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "finance_income_stand_id_fkey"
+            columns: ["stand_id"]
+            isOneToOne: false
+            referencedRelation: "stands"
             referencedColumns: ["id"]
           },
         ]
@@ -6954,6 +6964,7 @@ export type Database = {
           discount_total: number
           external_id: string
           id: string
+          location_id: string | null
           matched_by: string | null
           payment_method: string | null
           points_earned: number
@@ -6961,10 +6972,12 @@ export type Database = {
           pos_customer_id: string | null
           pos_customer_name: string | null
           pos_customer_phone: string | null
+          pos_store_id: string | null
           raw_payload: Json
           receipt_date: string
           receipt_number: string | null
           source: string
+          stand_id: string | null
           store_name: string | null
           subtotal: number
           tax_total: number
@@ -6978,6 +6991,7 @@ export type Database = {
           discount_total?: number
           external_id: string
           id?: string
+          location_id?: string | null
           matched_by?: string | null
           payment_method?: string | null
           points_earned?: number
@@ -6985,10 +6999,12 @@ export type Database = {
           pos_customer_id?: string | null
           pos_customer_name?: string | null
           pos_customer_phone?: string | null
+          pos_store_id?: string | null
           raw_payload?: Json
           receipt_date?: string
           receipt_number?: string | null
           source?: string
+          stand_id?: string | null
           store_name?: string | null
           subtotal?: number
           tax_total?: number
@@ -7002,6 +7018,7 @@ export type Database = {
           discount_total?: number
           external_id?: string
           id?: string
+          location_id?: string | null
           matched_by?: string | null
           payment_method?: string | null
           points_earned?: number
@@ -7009,10 +7026,12 @@ export type Database = {
           pos_customer_id?: string | null
           pos_customer_name?: string | null
           pos_customer_phone?: string | null
+          pos_store_id?: string | null
           raw_payload?: Json
           receipt_date?: string
           receipt_number?: string | null
           source?: string
+          stand_id?: string | null
           store_name?: string | null
           subtotal?: number
           tax_total?: number
@@ -7020,7 +7039,22 @@ export type Database = {
           total_amount?: number
           user_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "vendx_pos_receipts_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendx_pos_receipts_stand_id_fkey"
+            columns: ["stand_id"]
+            isOneToOne: false
+            referencedRelation: "stands"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       vendx_pos_revenue_config: {
         Row: {
@@ -7087,6 +7121,92 @@ export type Database = {
             columns: ["expense_account_id"]
             isOneToOne: false
             referencedRelation: "finance_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vendx_pos_stores: {
+        Row: {
+          cogs_payment_method: string | null
+          created_at: string
+          deposit_account_id: string | null
+          display_name: string
+          expense_account_id: string | null
+          expense_subcategory: string | null
+          id: string
+          is_active: boolean
+          location_id: string | null
+          notes: string | null
+          payment_method: string | null
+          pos_store_id: string
+          revenue_subcategory: string | null
+          source: string
+          stand_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          cogs_payment_method?: string | null
+          created_at?: string
+          deposit_account_id?: string | null
+          display_name: string
+          expense_account_id?: string | null
+          expense_subcategory?: string | null
+          id?: string
+          is_active?: boolean
+          location_id?: string | null
+          notes?: string | null
+          payment_method?: string | null
+          pos_store_id: string
+          revenue_subcategory?: string | null
+          source?: string
+          stand_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          cogs_payment_method?: string | null
+          created_at?: string
+          deposit_account_id?: string | null
+          display_name?: string
+          expense_account_id?: string | null
+          expense_subcategory?: string | null
+          id?: string
+          is_active?: boolean
+          location_id?: string | null
+          notes?: string | null
+          payment_method?: string | null
+          pos_store_id?: string
+          revenue_subcategory?: string | null
+          source?: string
+          stand_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendx_pos_stores_deposit_account_id_fkey"
+            columns: ["deposit_account_id"]
+            isOneToOne: false
+            referencedRelation: "finance_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendx_pos_stores_expense_account_id_fkey"
+            columns: ["expense_account_id"]
+            isOneToOne: false
+            referencedRelation: "finance_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendx_pos_stores_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendx_pos_stores_stand_id_fkey"
+            columns: ["stand_id"]
+            isOneToOne: false
+            referencedRelation: "stands"
             referencedColumns: ["id"]
           },
         ]
