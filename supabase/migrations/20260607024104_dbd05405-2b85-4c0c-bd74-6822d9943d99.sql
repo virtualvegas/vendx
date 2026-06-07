@@ -1,0 +1,1 @@
+ALTER TABLE public.vendx_external_service_tickets ADD COLUMN IF NOT EXISTS intake_machine_type text;
