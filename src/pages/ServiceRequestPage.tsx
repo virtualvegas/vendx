@@ -13,12 +13,32 @@ import { useSEO } from "@/hooks/useSEO";
 import { toast } from "sonner";
 import { CheckCircle, Wrench } from "lucide-react";
 
+const MACHINE_TYPES = [
+  { value: "vending_snack", label: "Vending – Snack" },
+  { value: "vending_beverage", label: "Vending – Beverage" },
+  { value: "vending_combo", label: "Vending – Combo" },
+  { value: "vending_fresh", label: "Vending – Fresh / Cold Food" },
+  { value: "coin_operated", label: "Coin-Operated Machine" },
+  { value: "arcade_commercial", label: "Arcade – Commercial" },
+  { value: "arcade_home", label: "Arcade – In-Home" },
+  { value: "pinball", label: "Pinball Machine" },
+  { value: "bowling_pinsetter", label: "Bowling Lane Pinsetter" },
+  { value: "redemption", label: "Redemption / Ticket Game" },
+  { value: "claw_crane", label: "Claw / Crane" },
+  { value: "jukebox", label: "Jukebox" },
+  { value: "pool_table", label: "Pool / Billiards Table" },
+  { value: "atm", label: "ATM" },
+  { value: "kiosk", label: "Self-Service Kiosk" },
+  { value: "other", label: "Other" },
+];
+
 const schema = z.object({
   intake_company_name: z.string().trim().min(1, "Company required").max(200),
   intake_contact_name: z.string().trim().min(1, "Your name required").max(120),
   intake_contact_email: z.string().trim().email("Valid email required").max(255),
   intake_contact_phone: z.string().trim().min(5, "Phone required").max(40),
   intake_address: z.string().trim().max(300).optional(),
+  intake_machine_type: z.string().trim().min(1, "Machine type required"),
   intake_machine_description: z.string().trim().max(500).optional(),
   subject: z.string().trim().min(3, "Subject required").max(200),
   description: z.string().trim().min(10, "Please describe the issue").max(4000),
@@ -28,12 +48,13 @@ const schema = z.object({
 const ServiceRequestPage = () => {
   useSEO({
     title: "Request Machine Service — VendX",
-    description: "Need a technician for a vending or arcade machine your company owns? Submit a service request and our team will respond.",
+    description: "Technician service for vending, coin-op, arcade, pinball, bowling pinsetters, in-home arcades and more. Submit a request and our team will respond.",
   });
 
   const [form, setForm] = useState({
     intake_company_name: "", intake_contact_name: "", intake_contact_email: "",
-    intake_contact_phone: "", intake_address: "", intake_machine_description: "",
+    intake_contact_phone: "", intake_address: "",
+    intake_machine_type: "", intake_machine_description: "",
     subject: "", description: "", priority: "normal",
   });
   const [submitted, setSubmitted] = useState<string | null>(null);
