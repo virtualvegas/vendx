@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Menu, X, Facebook, Instagram, ChevronDown, ShoppingBag, Gamepad2, MapPin, Briefcase, Info, Phone, Newspaper, Users, Link2, Ticket, Wallet } from "lucide-react";
+import { Menu, X, Facebook, Instagram, ChevronDown, ShoppingBag, Gamepad2, MapPin, Briefcase, Info, Phone, Newspaper, Users, Link2, Ticket, Wallet, Wrench } from "lucide-react";
 import vendxLogo from "@/assets/vendx-logo.png";
 import { SiTiktok, SiX } from "react-icons/si";
 import {
@@ -168,6 +168,9 @@ const Navigation = () => {
                     <ul className="grid gap-3 p-4 w-[400px] md:w-[500px] md:grid-cols-2 bg-popover">
                       <NavListItem to="/business" title="Partner With Us" icon={Briefcase}>
                         Host VendX machines at your location
+                      </NavListItem>
+                      <NavListItem to="/external-service" title="Machine Service" icon={Wrench}>
+                        Repair service for vending, arcade & coin-op machines
                       </NavListItem>
                       <NavListItem to="/divisions" title="Our Divisions" icon={Briefcase}>
                         Explore VendX Mini, Max, Fresh, Digital & more
