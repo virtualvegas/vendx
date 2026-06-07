@@ -287,10 +287,12 @@ const RewardsManager = () => {
           <TabsTrigger value="shipments">Pending Shipments</TabsTrigger>
           <TabsTrigger value="earn-rates"><Settings className="w-4 h-4 mr-1" />Earn Rates</TabsTrigger>
           <TabsTrigger value="pos-receipts"><Receipt className="w-4 h-4 mr-1" />POS Receipts</TabsTrigger>
+          <TabsTrigger value="pos-settings"><Store className="w-4 h-4 mr-1" />POS Settings</TabsTrigger>
         </TabsList>
 
         <TabsContent value="earn-rates" className="mt-6"><RewardsConfigPanel /></TabsContent>
         <TabsContent value="pos-receipts" className="mt-6"><POSReceiptsPanel /></TabsContent>
+        <TabsContent value="pos-settings" className="mt-6"><POSStoresPanel /></TabsContent>
 
         <TabsContent value="catalog" className="mt-6">
 
