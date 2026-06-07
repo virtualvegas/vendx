@@ -196,7 +196,7 @@ const ExtInvoicesPanel = () => {
                 </div>
               )}
             </>
-          )}
+          ); })()}
         </DialogContent>
       </Dialog>
     </div>
