@@ -82,7 +82,7 @@ const ServiceRequestPage = () => {
           </div>
           <h1 className="text-3xl font-bold">Machine Service Request</h1>
           <p className="text-muted-foreground mt-2">
-            Got a vending, kiosk, or arcade machine that needs servicing? Our technicians can help. Tell us what's going on and we'll be in touch.
+            We service vending, coin-op, arcade, pinball, bowling pinsetters, in-home arcade machines and more. Tell us what's going on and we'll be in touch.
           </p>
         </div>
 
@@ -105,13 +105,18 @@ const ServiceRequestPage = () => {
               <div><Label>Phone *</Label><Input value={form.intake_contact_phone} onChange={e => setForm({ ...form, intake_contact_phone: e.target.value })} /></div>
               <div className="md:col-span-2"><Label>Email *</Label><Input type="email" value={form.intake_contact_email} onChange={e => setForm({ ...form, intake_contact_email: e.target.value })} /></div>
               <div className="md:col-span-2"><Label>Machine Location / Address</Label><Input value={form.intake_address} onChange={e => setForm({ ...form, intake_address: e.target.value })} /></div>
-              <div className="md:col-span-2"><Label>Machine (make, model, etc.)</Label><Input value={form.intake_machine_description} onChange={e => setForm({ ...form, intake_machine_description: e.target.value })} /></div>
+              <div>
+                <Label>Machine Type *</Label>
+                <SearchableSelect value={form.intake_machine_type} onValueChange={v => setForm({ ...form, intake_machine_type: v })}
+                  options={MACHINE_TYPES} placeholder="Select machine type" searchPlaceholder="Search types..." />
+              </div>
               <div>
                 <Label>Priority</Label>
                 <SearchableSelect value={form.priority} onValueChange={v => setForm({ ...form, priority: v })}
                   options={[{ value: "low", label: "Low" }, { value: "normal", label: "Normal" }, { value: "high", label: "High" }, { value: "critical", label: "Critical / Down" }]}
                   placeholder="Priority" searchPlaceholder="Search..." />
               </div>
+              <div className="md:col-span-2"><Label>Machine (make, model, etc.)</Label><Input value={form.intake_machine_description} onChange={e => setForm({ ...form, intake_machine_description: e.target.value })} /></div>
               <div className="md:col-span-2"><Label>Subject *</Label><Input value={form.subject} onChange={e => setForm({ ...form, subject: e.target.value })} placeholder="Coin mech jammed, screen black, etc." /></div>
               <div className="md:col-span-2"><Label>Describe the issue *</Label><Textarea rows={5} value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} /></div>
             </div>
