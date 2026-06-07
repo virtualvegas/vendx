@@ -169,6 +169,9 @@ const Navigation = () => {
                       <NavListItem to="/business" title="Partner With Us" icon={Briefcase}>
                         Host VendX machines at your location
                       </NavListItem>
+                      <NavListItem to="/external-service" title="Machine Service" icon={Wrench}>
+                        Repair service for vending, arcade & coin-op machines
+                      </NavListItem>
                       <NavListItem to="/divisions" title="Our Divisions" icon={Briefcase}>
                         Explore VendX Mini, Max, Fresh, Digital & more
                       </NavListItem>
