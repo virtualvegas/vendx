@@ -114,7 +114,27 @@ const ExtMachinesPanel = () => {
                 options={[{ value: "", label: "—" }, ...locations.map((l: any) => ({ value: l.id, label: l.name }))]} placeholder="Optional site" searchPlaceholder="Search..." />
             </div>
             <div className="md:col-span-2"><Label>Asset Label *</Label><Input value={form.asset_label} onChange={e => setForm({...form, asset_label: e.target.value})} /></div>
-            <div><Label>Machine Type</Label><Input value={form.machine_type || ""} onChange={e => setForm({...form, machine_type: e.target.value})} placeholder="snack, beverage, arcade…" /></div>
+            <div><Label>Machine Type</Label>
+              <SearchableSelect value={form.machine_type || ""} onValueChange={v => setForm({...form, machine_type: v})}
+                options={[
+                  { value: "vending_snack", label: "Vending – Snack" },
+                  { value: "vending_beverage", label: "Vending – Beverage" },
+                  { value: "vending_combo", label: "Vending – Combo" },
+                  { value: "vending_fresh", label: "Vending – Fresh / Cold Food" },
+                  { value: "coin_operated", label: "Coin-Operated Machine" },
+                  { value: "arcade_commercial", label: "Arcade – Commercial" },
+                  { value: "arcade_home", label: "Arcade – In-Home" },
+                  { value: "pinball", label: "Pinball Machine" },
+                  { value: "bowling_pinsetter", label: "Bowling Lane Pinsetter" },
+                  { value: "redemption", label: "Redemption / Ticket Game" },
+                  { value: "claw_crane", label: "Claw / Crane" },
+                  { value: "jukebox", label: "Jukebox" },
+                  { value: "pool_table", label: "Pool / Billiards Table" },
+                  { value: "atm", label: "ATM" },
+                  { value: "kiosk", label: "Self-Service Kiosk" },
+                  { value: "other", label: "Other" },
+                ]} placeholder="Select machine type" searchPlaceholder="Search types..." />
+            </div>
             <div><Label>Status</Label>
               <SearchableSelect value={form.status} onValueChange={v => setForm({ ...form, status: v })}
                 options={["active","inactive","retired"].map(s => ({ value: s, label: s }))} placeholder="Status" searchPlaceholder="Search..." />

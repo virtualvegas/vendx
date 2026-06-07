@@ -6901,6 +6901,7 @@ export type Database = {
           intake_contact_name: string | null
           intake_contact_phone: string | null
           intake_machine_description: string | null
+          intake_machine_type: string | null
           location_id: string | null
           machine_id: string | null
           priority: string
@@ -6927,6 +6928,7 @@ export type Database = {
           intake_contact_name?: string | null
           intake_contact_phone?: string | null
           intake_machine_description?: string | null
+          intake_machine_type?: string | null
           location_id?: string | null
           machine_id?: string | null
           priority?: string
@@ -6953,6 +6955,7 @@ export type Database = {
           intake_contact_name?: string | null
           intake_contact_phone?: string | null
           intake_machine_description?: string | null
+          intake_machine_type?: string | null
           location_id?: string | null
           machine_id?: string | null
           priority?: string
