@@ -251,12 +251,6 @@ const ProductPage = () => {
               {product.is_subscription && (
                 <Badge className="bg-accent text-accent-foreground">Subscription</Badge>
               )}
-              {isShopifyLinked && (
-                <Badge className="bg-primary/20 text-primary border border-primary/30">
-                  <ShoppingCart className="h-3 w-3 mr-1" />
-                  Shopify
-                </Badge>
-              )}
               {product.compare_at_price && product.compare_at_price > product.price && (
                 <Badge className="bg-destructive">Sale</Badge>
               )}
