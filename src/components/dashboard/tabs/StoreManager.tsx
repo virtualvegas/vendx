@@ -502,6 +502,15 @@ const StoreManager = () => {
                       </div>
                     </div>
                     <div>
+                      <Label>Low-Stock Threshold</Label>
+                      <Input
+                        type="number"
+                        value={productForm.low_stock_threshold}
+                        onChange={(e) => setProductForm({...productForm, low_stock_threshold: parseInt(e.target.value) || 0})}
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">Show a "Low Stock" badge when stock falls at or below this number.</p>
+                    </div>
+                    <div>
                       <div className="flex justify-between items-center mb-2">
                         <Label>Product Images</Label>
                         <Button type="button" variant="outline" size="sm" onClick={() => setProductForm({...productForm, images: [...productForm.images, ""]})}>
