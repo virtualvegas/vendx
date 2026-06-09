@@ -349,7 +349,18 @@ const StoreManager = () => {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <AlertTriangle className="h-8 w-8 text-amber-400" />
+              <div>
+                <p className="text-sm text-muted-foreground">Low Stock</p>
+                <p className="text-2xl font-bold text-amber-400">{stats.lowStock}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
