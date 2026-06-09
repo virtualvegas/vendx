@@ -6,7 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { 
   DollarSign, MapPin, Monitor, AlertTriangle, 
-  TrendingUp, Package, ShoppingCart, Gamepad2, Leaf
+  TrendingUp, Package, ShoppingCart, Gamepad2, Leaf,
+  Receipt, Wrench, Banknote, Ticket
 } from "lucide-react";
 import { MachineStatsCards, BaseMachine } from "@/components/machines";
 import {
@@ -80,6 +81,60 @@ const DashboardOverview = () => {
     },
   });
 
+  // POS receipts (30 days)
+  const { data: posReceipts } = useQuery({
+    queryKey: ["dashboard-pos-receipts"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("vendx_pos_receipts")
+        .select("total_amount, receipt_date, location_id, stand_id, store_name")
+        .gte("receipt_date", new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString());
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  // External service invoices (30 days) - paid only
+  const { data: extInvoices } = useQuery({
+    queryKey: ["dashboard-ext-invoices"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("vendx_external_service_invoices")
+        .select("total, amount_paid, status, paid_at, issue_date, created_at")
+        .gte("created_at", new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString());
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  // External service ticket counts
+  const { data: extTickets } = useQuery({
+    queryKey: ["dashboard-ext-tickets"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("vendx_external_service_tickets")
+        .select("id, status, priority, created_at");
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  // External income entries (30 days) - other income streams
+  const { data: extIncome } = useQuery({
+    queryKey: ["dashboard-ext-income"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("external_income_entries")
+        .select("amount, entry_date, source, category, status")
+        .eq("status", "completed")
+        .gte("entry_date", new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString());
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+
+
   // Calculate combined revenue from all sources (no double counting)
   // machine_transactions = VendX Pay wallet-based purchases at machines (NOT in synced_transactions)
   // synced_transactions = Stripe/PayPal charges (EcoVend, Store, Arcade direct purchases)
@@ -101,13 +156,24 @@ const DashboardOverview = () => {
         const meta = t.metadata as any;
         const source = (meta?.source || "").toLowerCase();
         const desc = (t.description || "").toLowerCase();
-        // Skip wallet loads - that money is already counted when spent at machines
         const isWalletLoad = source === "wallet" || desc.includes("wallet") || desc.includes("vendx pay load");
         if (!isWalletLoad) {
           allRevenue.push({ amount: amt, created_at: t.created_at });
         }
       }
     });
+
+    // POS receipts
+    posReceipts?.forEach(r => allRevenue.push({ amount: Number(r.total_amount || 0), created_at: r.receipt_date }));
+
+    // External service invoices - paid amount
+    extInvoices?.forEach(i => {
+      const paid = Number(i.amount_paid || 0);
+      if (paid > 0) allRevenue.push({ amount: paid, created_at: i.paid_at || i.created_at });
+    });
+
+    // External income entries
+    extIncome?.forEach(e => allRevenue.push({ amount: Number(e.amount || 0), created_at: e.entry_date }));
 
     return {
       today: allRevenue
@@ -120,7 +186,7 @@ const DashboardOverview = () => {
         .filter(t => new Date(t.created_at) >= monthStart)
         .reduce((sum, t) => sum + t.amount, 0),
     };
-  }, [transactions, syncedTransactions]);
+  }, [transactions, syncedTransactions, posReceipts, extInvoices, extIncome]);
 
   // Revenue by source for the summary cards
   const revenueBySource = useMemo(() => {
@@ -144,24 +210,22 @@ const DashboardOverview = () => {
 
   // Daily revenue trend chart data - all 30 days, broken down by source
   const dailyRevenueTrend = useMemo(() => {
-    const dayMap = new Map<string, { date: string; vending: number; arcade: number; ecosnack: number; store: number; wallet: number; other: number }>();
+    type Row = { date: string; vending: number; arcade: number; ecosnack: number; store: number; wallet: number; pos: number; service: number; income: number; other: number };
+    const dayMap = new Map<string, Row>();
     
-    // Pre-fill all 30 days so there are no gaps
     for (let i = 29; i >= 0; i--) {
       const d = new Date();
       d.setDate(d.getDate() - i);
       const key = format(d, "yyyy-MM-dd");
-      dayMap.set(key, { date: key, vending: 0, arcade: 0, ecosnack: 0, store: 0, wallet: 0, other: 0 });
+      dayMap.set(key, { date: key, vending: 0, arcade: 0, ecosnack: 0, store: 0, wallet: 0, pos: 0, service: 0, income: 0, other: 0 });
     }
     
-    // Machine transactions → vending
     transactions?.forEach(t => {
       const key = format(new Date(t.created_at), "yyyy-MM-dd");
       const entry = dayMap.get(key);
       if (entry) entry.vending += Number(t.amount);
     });
     
-    // Synced transactions → categorized by source
     syncedTransactions?.forEach(t => {
       const amt = Number(t.amount);
       if (amt <= 0) return;
@@ -178,6 +242,26 @@ const DashboardOverview = () => {
       else entry.other += amt;
     });
 
+    posReceipts?.forEach(r => {
+      const key = format(new Date(r.receipt_date), "yyyy-MM-dd");
+      const entry = dayMap.get(key);
+      if (entry) entry.pos += Number(r.total_amount || 0);
+    });
+
+    extInvoices?.forEach(i => {
+      const paid = Number(i.amount_paid || 0);
+      if (paid <= 0) return;
+      const key = format(new Date(i.paid_at || i.created_at), "yyyy-MM-dd");
+      const entry = dayMap.get(key);
+      if (entry) entry.service += paid;
+    });
+
+    extIncome?.forEach(e => {
+      const key = format(new Date(e.entry_date), "yyyy-MM-dd");
+      const entry = dayMap.get(key);
+      if (entry) entry.income += Number(e.amount || 0);
+    });
+
     return Array.from(dayMap.values())
       .sort((a, b) => a.date.localeCompare(b.date))
       .map(d => ({
@@ -187,10 +271,13 @@ const DashboardOverview = () => {
         ecosnack: Math.round(d.ecosnack * 100) / 100,
         store: Math.round(d.store * 100) / 100,
         wallet: Math.round(d.wallet * 100) / 100,
+        pos: Math.round(d.pos * 100) / 100,
+        service: Math.round(d.service * 100) / 100,
+        income: Math.round(d.income * 100) / 100,
         other: Math.round(d.other * 100) / 100,
-        total: Math.round((d.vending + d.arcade + d.ecosnack + d.store + d.wallet + d.other) * 100) / 100,
+        total: Math.round((d.vending + d.arcade + d.ecosnack + d.store + d.wallet + d.pos + d.service + d.income + d.other) * 100) / 100,
       }));
-  }, [transactions, syncedTransactions]);
+  }, [transactions, syncedTransactions, posReceipts, extInvoices, extIncome]);
 
   // Compute actual machine counts per location from machine data
   const locationsWithActualCounts = useMemo(() => {
@@ -335,7 +422,7 @@ const DashboardOverview = () => {
       </div>
 
       {/* Revenue by Source */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
@@ -373,10 +460,60 @@ const DashboardOverview = () => {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Store</p>
+                <p className="text-sm text-muted-foreground">Online Store</p>
                 <p className="text-xl font-bold">${revenueBySource.store.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
               </div>
               <ShoppingCart className="w-6 h-6 text-primary opacity-50" />
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="border-amber-500/30 bg-amber-500/5">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">POS Receipts</p>
+                <p className="text-xl font-bold">${(posReceipts?.reduce((s, r) => s + Number(r.total_amount || 0), 0) || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
+                <p className="text-[10px] text-muted-foreground mt-0.5">{posReceipts?.length || 0} receipts</p>
+              </div>
+              <Receipt className="w-6 h-6 text-amber-500 opacity-70" />
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="border-purple-500/30 bg-purple-500/5">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">External Service</p>
+                <p className="text-xl font-bold">${(extInvoices?.reduce((s, i) => s + Number(i.amount_paid || 0), 0) || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
+                <p className="text-[10px] text-muted-foreground mt-0.5">
+                  {extTickets?.filter(t => !["resolved","closed","cancelled"].includes(t.status)).length || 0} open tickets
+                </p>
+              </div>
+              <Wrench className="w-6 h-6 text-purple-500 opacity-70" />
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="border-emerald-500/30 bg-emerald-500/5">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">External Income</p>
+                <p className="text-xl font-bold">${(extIncome?.reduce((s, e) => s + Number(e.amount || 0), 0) || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
+                <p className="text-[10px] text-muted-foreground mt-0.5">{extIncome?.length || 0} entries</p>
+              </div>
+              <Banknote className="w-6 h-6 text-emerald-500 opacity-70" />
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">VendX Pay</p>
+                <p className="text-xl font-bold">${revenueBySource.wallet.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
+                <p className="text-[10px] text-muted-foreground mt-0.5">wallet loads</p>
+              </div>
+              <Ticket className="w-6 h-6 text-primary opacity-50" />
             </div>
           </CardContent>
         </Card>
@@ -392,6 +529,7 @@ const DashboardOverview = () => {
           </CardContent>
         </Card>
       </div>
+
 
       {/* Revenue Trend Chart */}
       <Card>
@@ -418,6 +556,9 @@ const DashboardOverview = () => {
                   <Area type="monotone" dataKey="ecosnack" stackId="1" fill="#10b981" stroke="#10b981" fillOpacity={0.5} name="EcoVend" />
                   <Area type="monotone" dataKey="store" stackId="1" fill="#f59e0b" stroke="#f59e0b" fillOpacity={0.5} name="Store" />
                   <Area type="monotone" dataKey="wallet" stackId="1" fill="#06b6d4" stroke="#06b6d4" fillOpacity={0.5} name="Wallet Loads" />
+                  <Area type="monotone" dataKey="pos" stackId="1" fill="#eab308" stroke="#eab308" fillOpacity={0.5} name="POS" />
+                  <Area type="monotone" dataKey="service" stackId="1" fill="#a855f7" stroke="#a855f7" fillOpacity={0.5} name="Ext Service" />
+                  <Area type="monotone" dataKey="income" stackId="1" fill="#22c55e" stroke="#22c55e" fillOpacity={0.5} name="Ext Income" />
                   <Area type="monotone" dataKey="other" stackId="1" fill="#6b7280" stroke="#6b7280" fillOpacity={0.3} name="Other" />
                   <Legend />
                 </AreaChart>
@@ -435,6 +576,90 @@ const DashboardOverview = () => {
         showVendxPay={true}
         compact
       />
+
+      {/* External Service + POS quick stats */}
+      <div className="grid md:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Wrench className="w-5 h-5 text-purple-500" />
+              External Service Tickets
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-4 gap-3">
+              {(["new","in_progress","scheduled","resolved"] as const).map(s => {
+                const count = extTickets?.filter(t => t.status === s).length || 0;
+                return (
+                  <div key={s} className="text-center p-3 rounded-lg bg-muted/40">
+                    <p className="text-2xl font-bold">{count}</p>
+                    <p className="text-[11px] text-muted-foreground capitalize">{s.replace("_"," ")}</p>
+                  </div>
+                );
+              })}
+            </div>
+            <div className="mt-4 flex justify-between text-sm">
+              <span className="text-muted-foreground">High priority open:</span>
+              <span className="font-semibold">
+                {extTickets?.filter(t => ["high","urgent","critical"].includes((t.priority || "").toLowerCase()) && !["resolved","closed","cancelled"].includes(t.status)).length || 0}
+              </span>
+            </div>
+            <div className="mt-1 flex justify-between text-sm">
+              <span className="text-muted-foreground">Invoices outstanding:</span>
+              <span className="font-semibold">
+                ${(extInvoices?.filter(i => i.status !== "paid").reduce((s, i) => s + (Number(i.total || 0) - Number(i.amount_paid || 0)), 0) || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+              </span>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Receipt className="w-5 h-5 text-amber-500" />
+              POS Activity (30 days)
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-3 gap-3">
+              <div className="text-center p-3 rounded-lg bg-muted/40">
+                <p className="text-2xl font-bold">{posReceipts?.length || 0}</p>
+                <p className="text-[11px] text-muted-foreground">Receipts</p>
+              </div>
+              <div className="text-center p-3 rounded-lg bg-muted/40">
+                <p className="text-2xl font-bold">
+                  ${posReceipts && posReceipts.length > 0 
+                    ? (posReceipts.reduce((s, r) => s + Number(r.total_amount || 0), 0) / posReceipts.length).toFixed(2)
+                    : "0.00"}
+                </p>
+                <p className="text-[11px] text-muted-foreground">Avg Ticket</p>
+              </div>
+              <div className="text-center p-3 rounded-lg bg-muted/40">
+                <p className="text-2xl font-bold">{new Set(posReceipts?.map(r => r.store_name).filter(Boolean)).size || 0}</p>
+                <p className="text-[11px] text-muted-foreground">Stores</p>
+              </div>
+            </div>
+            <div className="mt-4 space-y-1.5">
+              {Object.entries((posReceipts || []).reduce((acc: Record<string, number>, r) => {
+                const k = r.store_name || "Unknown";
+                acc[k] = (acc[k] || 0) + Number(r.total_amount || 0);
+                return acc;
+              }, {}))
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 4)
+                .map(([store, amt]) => (
+                  <div key={store} className="flex justify-between text-sm">
+                    <span className="text-muted-foreground truncate">{store}</span>
+                    <span className="font-medium">${amt.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                  </div>
+                ))}
+              {(!posReceipts || posReceipts.length === 0) && (
+                <p className="text-sm text-muted-foreground text-center py-2">No POS receipts yet</p>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
       {/* Bottom Grids */}
       <div className="grid md:grid-cols-3 gap-6">
