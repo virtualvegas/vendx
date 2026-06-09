@@ -6,10 +6,17 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
-  Mail, Phone, Globe, Linkedin, Download, Share2, Radio, QrCode, Building2,
+  Mail, Phone, Globe, Linkedin, Download, Share2, Radio, QrCode, Building2, X, Smartphone,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useSEO } from "@/hooks/useSEO";
+
+const isIOS = () =>
+  typeof navigator !== "undefined" &&
+  (/iPad|iPhone|iPod/.test(navigator.userAgent) ||
+    (navigator.platform === "MacIntel" && (navigator as any).maxTouchPoints > 1));
+
+const hasWebNFC = () => typeof window !== "undefined" && "NDEFReader" in window;
 
 interface CardData {
   id: string;
