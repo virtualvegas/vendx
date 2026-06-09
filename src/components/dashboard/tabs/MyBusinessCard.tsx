@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { Link } from "react-router-dom";
-import { ExternalLink, Save, Copy, IdCard, Smartphone } from "lucide-react";
+import { ExternalLink, Save, Copy, IdCard, Smartphone, Radio } from "lucide-react";
 
 const MyBusinessCard = () => {
   const [loading, setLoading] = useState(true);
