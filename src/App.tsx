@@ -59,22 +59,20 @@ import ExternalServicePage from "./pages/ExternalServicePage";
 
 const queryClient = new QueryClient();
 
-// Component to initialize Shopify cart sync and global error handling
-const ShopifyCartSyncInitializer = ({ children }: { children: React.ReactNode }) => {
-  useShopifyCartSync();
-  
+// Component for global error handling
+const GlobalErrorHandler = ({ children }: { children: React.ReactNode }) => {
   // Global unhandled rejection handler to prevent blank pages from async errors
   useEffect(() => {
     const handleRejection = (event: PromiseRejectionEvent) => {
       console.error("Unhandled promise rejection:", event.reason);
       toast.error("An unexpected error occurred. Please try again.");
-      event.preventDefault(); // Prevent default console error logging
+      event.preventDefault();
     };
 
     window.addEventListener("unhandledrejection", handleRejection);
     return () => window.removeEventListener("unhandledrejection", handleRejection);
   }, []);
-  
+
   return <>{children}</>;
 };
 
