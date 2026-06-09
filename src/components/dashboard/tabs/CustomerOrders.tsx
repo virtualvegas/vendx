@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ShoppingBag, Calendar, DollarSign, Package, Eye, Truck, Star, Gamepad2, Leaf, Zap, ExternalLink, MapPin } from "lucide-react";
 import { format } from "date-fns";
+import { CustomerOrderTimeline } from "./store/CustomerOrderTimeline";
 
 interface OrderItem {
   id: string;
