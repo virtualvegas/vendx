@@ -293,6 +293,9 @@ const BusinessCardPage = () => {
               <Button onClick={() => setShowQR((v) => !v)} variant="outline" className="gap-2">
                 <QrCode className="h-4 w-4" />
                 {showQR ? "Hide QR" : "Show QR"}
+              <Button onClick={nfcScan} variant="outline" className="gap-2 col-span-2" style={{ borderColor: accent, color: accent }}>
+                <Radio className="h-4 w-4" />
+                Tap Phones to Share
               </Button>
             </div>
 
