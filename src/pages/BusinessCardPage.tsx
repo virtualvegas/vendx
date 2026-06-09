@@ -109,10 +109,27 @@ const BusinessCardPage = () => {
     }
   };
 
-  const tapToShare = async () => {
-    const shared = await openNativeShare();
-    if (!shared) {
-      setTapMode(true);
+  const tapToShare = () => {
+    // Skip the share sheet entirely — go straight to a fullscreen QR the other phone can scan.
+    setTapMode(true);
+  };
+
+  const hasWebNFC = () => typeof window !== "undefined" && "NDEFReader" in window;
+
+  const writeNfcTag = async () => {
+    if (!hasWebNFC()) {
+      toast.error("NFC writing requires Chrome on Android. iPhones can't program tags from the browser — use the free 'NFC Tools' app.");
+      return;
+    }
+    try {
+      // @ts-ignore - Web NFC types not in lib.dom
+      const ndef = new NDEFReader();
+      toast.info("Hold a blank NFC tag against the back of your phone…");
+      // @ts-ignore
+      await ndef.write({ records: [{ recordType: "url", data: shareUrl }] });
+      toast.success("NFC tag programmed! Anyone tapping it will open your card.");
+    } catch (e: any) {
+      toast.error(e?.message || "Could not write to NFC tag");
     }
   };
 
