@@ -5659,6 +5659,91 @@ export type Database = {
         }
         Relationships: []
       }
+      store_inventory_adjustments: {
+        Row: {
+          actor_id: string | null
+          adjustment_type: string
+          created_at: string
+          delta: number
+          id: string
+          new_stock: number
+          product_id: string
+          reason: string | null
+        }
+        Insert: {
+          actor_id?: string | null
+          adjustment_type?: string
+          created_at?: string
+          delta: number
+          id?: string
+          new_stock: number
+          product_id: string
+          reason?: string | null
+        }
+        Update: {
+          actor_id?: string | null
+          adjustment_type?: string
+          created_at?: string
+          delta?: number
+          id?: string
+          new_stock?: number
+          product_id?: string
+          reason?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "store_inventory_adjustments_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "store_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      store_order_events: {
+        Row: {
+          actor_id: string | null
+          created_at: string
+          customer_visible: boolean
+          event_type: string
+          id: string
+          metadata: Json
+          note: string | null
+          order_id: string
+          status: string | null
+        }
+        Insert: {
+          actor_id?: string | null
+          created_at?: string
+          customer_visible?: boolean
+          event_type: string
+          id?: string
+          metadata?: Json
+          note?: string | null
+          order_id: string
+          status?: string | null
+        }
+        Update: {
+          actor_id?: string | null
+          created_at?: string
+          customer_visible?: boolean
+          event_type?: string
+          id?: string
+          metadata?: Json
+          note?: string | null
+          order_id?: string
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "store_order_events_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "store_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       store_order_items: {
         Row: {
           addon_details: Json | null
@@ -5713,11 +5798,15 @@ export type Database = {
       store_orders: {
         Row: {
           admin_notes: string | null
+          carrier: string | null
           created_at: string | null
           customer_email: string | null
           customer_name: string | null
+          customer_notified_at: string | null
+          customer_visible_note: string | null
           delivered_at: string | null
           estimated_delivery: string | null
+          fulfillment_status: string
           id: string
           notes: string | null
           order_number: string
@@ -5743,11 +5832,15 @@ export type Database = {
         }
         Insert: {
           admin_notes?: string | null
+          carrier?: string | null
           created_at?: string | null
           customer_email?: string | null
           customer_name?: string | null
+          customer_notified_at?: string | null
+          customer_visible_note?: string | null
           delivered_at?: string | null
           estimated_delivery?: string | null
+          fulfillment_status?: string
           id?: string
           notes?: string | null
           order_number: string
@@ -5773,11 +5866,15 @@ export type Database = {
         }
         Update: {
           admin_notes?: string | null
+          carrier?: string | null
           created_at?: string | null
           customer_email?: string | null
           customer_name?: string | null
+          customer_notified_at?: string | null
+          customer_visible_note?: string | null
           delivered_at?: string | null
           estimated_delivery?: string | null
+          fulfillment_status?: string
           id?: string
           notes?: string | null
           order_number?: string
@@ -5864,6 +5961,7 @@ export type Database = {
           is_active: boolean | null
           is_featured: boolean | null
           is_subscription: boolean | null
+          low_stock_threshold: number
           metadata: Json | null
           name: string
           price: number
@@ -5893,6 +5991,7 @@ export type Database = {
           is_active?: boolean | null
           is_featured?: boolean | null
           is_subscription?: boolean | null
+          low_stock_threshold?: number
           metadata?: Json | null
           name: string
           price?: number
@@ -5922,6 +6021,7 @@ export type Database = {
           is_active?: boolean | null
           is_featured?: boolean | null
           is_subscription?: boolean | null
+          low_stock_threshold?: number
           metadata?: Json | null
           name?: string
           price?: number
