@@ -257,6 +257,8 @@ const DashboardPage = () => {
         content = <CustomerTickets />; break;
       case "my-rewards":
         content = <CustomerRewards />; break;
+      case "my-business-card":
+        content = <MyBusinessCard />; break;
       case "global-operations":
         content = <GlobalOperations />; break;
       case "events-rentals":
