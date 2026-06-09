@@ -156,13 +156,24 @@ const DashboardOverview = () => {
         const meta = t.metadata as any;
         const source = (meta?.source || "").toLowerCase();
         const desc = (t.description || "").toLowerCase();
-        // Skip wallet loads - that money is already counted when spent at machines
         const isWalletLoad = source === "wallet" || desc.includes("wallet") || desc.includes("vendx pay load");
         if (!isWalletLoad) {
           allRevenue.push({ amount: amt, created_at: t.created_at });
         }
       }
     });
+
+    // POS receipts
+    posReceipts?.forEach(r => allRevenue.push({ amount: Number(r.total_amount || 0), created_at: r.receipt_date }));
+
+    // External service invoices - paid amount
+    extInvoices?.forEach(i => {
+      const paid = Number(i.amount_paid || 0);
+      if (paid > 0) allRevenue.push({ amount: paid, created_at: i.paid_at || i.created_at });
+    });
+
+    // External income entries
+    extIncome?.forEach(e => allRevenue.push({ amount: Number(e.amount || 0), created_at: e.entry_date }));
 
     return {
       today: allRevenue
@@ -175,7 +186,7 @@ const DashboardOverview = () => {
         .filter(t => new Date(t.created_at) >= monthStart)
         .reduce((sum, t) => sum + t.amount, 0),
     };
-  }, [transactions, syncedTransactions]);
+  }, [transactions, syncedTransactions, posReceipts, extInvoices, extIncome]);
 
   // Revenue by source for the summary cards
   const revenueBySource = useMemo(() => {
