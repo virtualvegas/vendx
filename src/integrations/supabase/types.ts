@@ -3880,10 +3880,18 @@ export type Database = {
       }
       profiles: {
         Row: {
+          avatar_url: string | null
+          bio: string | null
+          card_accent_color: string | null
+          card_public: boolean
+          card_slug: string | null
           created_at: string
+          department: string | null
           email: string
           full_name: string | null
           id: string
+          job_title: string | null
+          linkedin_url: string | null
           office_id: string | null
           phone: string | null
           stripe_customer_id: string | null
@@ -3891,12 +3899,21 @@ export type Database = {
           totp_secret: string | null
           updated_at: string
           warehouse_id: string | null
+          website_url: string | null
         }
         Insert: {
+          avatar_url?: string | null
+          bio?: string | null
+          card_accent_color?: string | null
+          card_public?: boolean
+          card_slug?: string | null
           created_at?: string
+          department?: string | null
           email: string
           full_name?: string | null
           id: string
+          job_title?: string | null
+          linkedin_url?: string | null
           office_id?: string | null
           phone?: string | null
           stripe_customer_id?: string | null
@@ -3904,12 +3921,21 @@ export type Database = {
           totp_secret?: string | null
           updated_at?: string
           warehouse_id?: string | null
+          website_url?: string | null
         }
         Update: {
+          avatar_url?: string | null
+          bio?: string | null
+          card_accent_color?: string | null
+          card_public?: boolean
+          card_slug?: string | null
           created_at?: string
+          department?: string | null
           email?: string
           full_name?: string | null
           id?: string
+          job_title?: string | null
+          linkedin_url?: string | null
           office_id?: string | null
           phone?: string | null
           stripe_customer_id?: string | null
@@ -3917,6 +3943,7 @@ export type Database = {
           totp_secret?: string | null
           updated_at?: string
           warehouse_id?: string | null
+          website_url?: string | null
         }
         Relationships: [
           {
@@ -8243,6 +8270,7 @@ export type Database = {
         }[]
       }
       generate_totp_secret: { Args: never; Returns: string }
+      get_business_card: { Args: { _slug: string }; Returns: Json }
       get_my_office_id: { Args: never; Returns: string }
       get_my_warehouse_id: { Args: never; Returns: string }
       get_public_machine_info: {
@@ -8322,6 +8350,19 @@ export type Database = {
       }
       is_ext_service_staff: { Args: { _user_id: string }; Returns: boolean }
       is_super_admin: { Args: { _user_id: string }; Returns: boolean }
+      list_business_cards: {
+        Args: never
+        Returns: {
+          avatar_url: string
+          card_accent_color: string
+          card_slug: string
+          department: string
+          full_name: string
+          id: string
+          job_title: string
+          roles: string[]
+        }[]
+      }
       log_machine_activity: {
         Args: {
           p_activity_type: string

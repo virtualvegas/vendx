@@ -75,6 +75,7 @@ import MerchantApiManager from "@/components/dashboard/tabs/MerchantApiManager";
 import BrandLinksManager from "@/components/dashboard/tabs/BrandLinksManager";
 import ExternalServiceManager from "@/components/dashboard/tabs/ExternalServiceManager";
 import BusinessExternalService from "@/components/dashboard/tabs/business-owner/BusinessExternalService";
+import MyBusinessCard from "@/components/dashboard/tabs/MyBusinessCard";
 import { useSEO } from "@/hooks/useSEO";
 export type AppRole =
   | "super_admin"
@@ -256,6 +257,8 @@ const DashboardPage = () => {
         content = <CustomerTickets />; break;
       case "my-rewards":
         content = <CustomerRewards />; break;
+      case "my-business-card":
+        content = <MyBusinessCard />; break;
       case "global-operations":
         content = <GlobalOperations />; break;
       case "events-rentals":

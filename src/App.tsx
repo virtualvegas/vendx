@@ -55,6 +55,8 @@ import MerchantCheckoutPage from "./pages/MerchantCheckoutPage";
 import WalletPayDocsPage from "./pages/WalletPayDocsPage";
 import ServiceRequestPage from "./pages/ServiceRequestPage";
 import ExternalServicePage from "./pages/ExternalServicePage";
+import BusinessCardPage from "./pages/BusinessCardPage";
+import StaffDirectoryPage from "./pages/StaffDirectoryPage";
 
 const queryClient = new QueryClient();
 
@@ -133,6 +135,8 @@ const App = () => (
               <Route path="/docs/wallet-pay" element={<WalletPayDocsPage />} />
               <Route path="/service-request" element={<ServiceRequestPage />} />
               <Route path="/external-service" element={<ExternalServicePage />} />
+              <Route path="/team" element={<StaffDirectoryPage />} />
+              <Route path="/card/:slug" element={<BusinessCardPage />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
