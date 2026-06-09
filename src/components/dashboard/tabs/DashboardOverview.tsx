@@ -422,7 +422,7 @@ const DashboardOverview = () => {
       </div>
 
       {/* Revenue by Source */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
@@ -460,10 +460,60 @@ const DashboardOverview = () => {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Store</p>
+                <p className="text-sm text-muted-foreground">Online Store</p>
                 <p className="text-xl font-bold">${revenueBySource.store.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
               </div>
               <ShoppingCart className="w-6 h-6 text-primary opacity-50" />
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="border-amber-500/30 bg-amber-500/5">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">POS Receipts</p>
+                <p className="text-xl font-bold">${(posReceipts?.reduce((s, r) => s + Number(r.total_amount || 0), 0) || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
+                <p className="text-[10px] text-muted-foreground mt-0.5">{posReceipts?.length || 0} receipts</p>
+              </div>
+              <Receipt className="w-6 h-6 text-amber-500 opacity-70" />
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="border-purple-500/30 bg-purple-500/5">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">External Service</p>
+                <p className="text-xl font-bold">${(extInvoices?.reduce((s, i) => s + Number(i.amount_paid || 0), 0) || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
+                <p className="text-[10px] text-muted-foreground mt-0.5">
+                  {extTickets?.filter(t => !["resolved","closed","cancelled"].includes(t.status)).length || 0} open tickets
+                </p>
+              </div>
+              <Wrench className="w-6 h-6 text-purple-500 opacity-70" />
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="border-emerald-500/30 bg-emerald-500/5">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">External Income</p>
+                <p className="text-xl font-bold">${(extIncome?.reduce((s, e) => s + Number(e.amount || 0), 0) || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
+                <p className="text-[10px] text-muted-foreground mt-0.5">{extIncome?.length || 0} entries</p>
+              </div>
+              <Banknote className="w-6 h-6 text-emerald-500 opacity-70" />
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">VendX Pay</p>
+                <p className="text-xl font-bold">${revenueBySource.wallet.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
+                <p className="text-[10px] text-muted-foreground mt-0.5">wallet loads</p>
+              </div>
+              <Ticket className="w-6 h-6 text-primary opacity-50" />
             </div>
           </CardContent>
         </Card>
@@ -479,6 +529,7 @@ const DashboardOverview = () => {
           </CardContent>
         </Card>
       </div>
+
 
       {/* Revenue Trend Chart */}
       <Card>
