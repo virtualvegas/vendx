@@ -55,6 +55,8 @@ import MerchantCheckoutPage from "./pages/MerchantCheckoutPage";
 import WalletPayDocsPage from "./pages/WalletPayDocsPage";
 import ServiceRequestPage from "./pages/ServiceRequestPage";
 import ExternalServicePage from "./pages/ExternalServicePage";
+import BusinessCardPage from "./pages/BusinessCardPage";
+import StaffDirectoryPage from "./pages/StaffDirectoryPage";
 
 const queryClient = new QueryClient();
 
