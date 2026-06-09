@@ -21,10 +21,9 @@ interface Addon {
   description: string | null;
   price: number;
   is_active: boolean;
-  is_required: boolean;
 }
 
-const defaultForm = { product_id: "", name: "", description: "", price: "0", is_active: true, is_required: false };
+const defaultForm = { product_id: "", name: "", description: "", price: "0", is_active: true };
 
 export const StoreAddonsPanel = () => {
   const qc = useQueryClient();
@@ -63,7 +62,6 @@ export const StoreAddonsPanel = () => {
         description: form.description || null,
         price: parseFloat(form.price) || 0,
         is_active: form.is_active,
-        is_required: form.is_required,
       };
       if (editing) {
         const { error } = await supabase.from("store_product_addons").update(payload).eq("id", editing.id);
@@ -102,7 +100,6 @@ export const StoreAddonsPanel = () => {
       description: a.description || "",
       price: String(a.price),
       is_active: a.is_active,
-      is_required: a.is_required,
     });
     setOpen(true);
   };
@@ -130,7 +127,6 @@ export const StoreAddonsPanel = () => {
               <div><Label>Price ($)</Label><Input type="number" step="0.01" value={form.price} onChange={e => setForm({ ...form, price: e.target.value })} /></div>
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2"><Switch checked={form.is_active} onCheckedChange={(c) => setForm({ ...form, is_active: c })} /><Label>Active</Label></div>
-                <div className="flex items-center gap-2"><Switch checked={form.is_required} onCheckedChange={(c) => setForm({ ...form, is_required: c })} /><Label>Required</Label></div>
               </div>
               <Button className="w-full" onClick={() => saveMutation.mutate()} disabled={!form.product_id || !form.name || saveMutation.isPending}>
                 {saveMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : (editing ? "Update" : "Create")}
@@ -149,7 +145,6 @@ export const StoreAddonsPanel = () => {
                   <TableCell className="text-sm">{productName(a.product_id)}</TableCell>
                   <TableCell><div className="font-medium">{a.name}</div><div className="text-xs text-muted-foreground">{a.description}</div></TableCell>
                   <TableCell>${Number(a.price).toFixed(2)}</TableCell>
-                  <TableCell><div className="flex gap-1">{a.is_active ? <Badge>Active</Badge> : <Badge variant="secondary">Inactive</Badge>}{a.is_required && <Badge variant="outline">Required</Badge>}</div></TableCell>
                   <TableCell><div className="flex gap-1"><Button size="icon" variant="ghost" onClick={() => openEdit(a)}><Pencil className="w-4 h-4" /></Button><Button size="icon" variant="ghost" onClick={() => { if (confirm("Delete?")) deleteMutation.mutate(a.id); }}><Trash2 className="w-4 h-4 text-destructive" /></Button></div></TableCell>
                 </TableRow>
               )) : <TableRow><TableCell colSpan={5} className="text-center py-8 text-muted-foreground">No add-ons yet</TableCell></TableRow>}
