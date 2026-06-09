@@ -223,19 +223,12 @@ const BusinessCardPage = () => {
                 <p className="text-muted-foreground mt-1">{card.job_title}</p>
               )}
               <div className="flex flex-wrap gap-1.5 justify-center mt-3">
-                {card.department && (
+              {card.department && (
                   <Badge variant="outline" className="gap-1">
                     <Building2 className="h-3 w-3" />
                     {card.department}
                   </Badge>
                 )}
-                {card.roles
-                  .filter((r) => r !== "customer")
-                  .map((r) => (
-                    <Badge key={r} style={{ background: accent }} className="text-white">
-                      {formatRole(r)}
-                    </Badge>
-                  ))}
               </div>
             </div>
 
