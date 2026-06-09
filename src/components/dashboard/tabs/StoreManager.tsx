@@ -398,8 +398,14 @@ const StoreManager = () => {
         <TabsList>
           <TabsTrigger value="products">Products</TabsTrigger>
           <TabsTrigger value="orders">Orders</TabsTrigger>
+          <TabsTrigger value="inventory">Inventory</TabsTrigger>
+          <TabsTrigger value="addons">Add-ons</TabsTrigger>
           <TabsTrigger value="subscriptions">Subscriptions</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="inventory" className="mt-4"><StoreInventoryPanel /></TabsContent>
+        <TabsContent value="addons" className="mt-4"><StoreAddonsPanel /></TabsContent>
+
 
         <TabsContent value="products" className="mt-4">
           <Card>
