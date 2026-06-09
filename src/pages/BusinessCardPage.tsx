@@ -282,7 +282,8 @@ const BusinessCardPage = () => {
             <p className="text-[11px] text-muted-foreground text-center mt-1 mb-1">
               Hold a blank NFC sticker/card to your Android — then anyone (iPhone or Android) who taps it opens your card. No app needed.
             </p>
-            </div>
+
+
 
             {showQR && (
               <div className="mt-4 flex flex-col items-center gap-2 p-4 rounded-lg bg-white">
