@@ -268,12 +268,20 @@ const BusinessCardPage = () => {
               </Button>
               <Button onClick={tapToShare} variant="outline" className="gap-2">
                 <Smartphone className="h-4 w-4" />
-                Tap Phones to Share
+                Tap to Share
               </Button>
               <Button onClick={() => setShowQR((v) => !v)} variant="outline" className="gap-2">
                 <QrCode className="h-4 w-4" />
                 {showQR ? "Hide QR" : "Show QR"}
               </Button>
+              <Button onClick={writeNfcTag} variant="outline" className="gap-2 col-span-2">
+                <Radio className="h-4 w-4" />
+                Program NFC Tag (Android)
+              </Button>
+            </div>
+            <p className="text-[11px] text-muted-foreground text-center mt-1 mb-1">
+              Hold a blank NFC sticker/card to your Android — then anyone (iPhone or Android) who taps it opens your card. No app needed.
+            </p>
             </div>
 
             {showQR && (
