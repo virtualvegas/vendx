@@ -6,10 +6,17 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
-  Mail, Phone, Globe, Linkedin, Download, Share2, Radio, QrCode, Building2,
+  Mail, Phone, Globe, Linkedin, Download, Share2, Radio, QrCode, Building2, X, Smartphone,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useSEO } from "@/hooks/useSEO";
+
+const isIOS = () =>
+  typeof navigator !== "undefined" &&
+  (/iPad|iPhone|iPod/.test(navigator.userAgent) ||
+    (navigator.platform === "MacIntel" && (navigator as any).maxTouchPoints > 1));
+
+const hasWebNFC = () => typeof window !== "undefined" && "NDEFReader" in window;
 
 interface CardData {
   id: string;
@@ -52,6 +59,7 @@ const BusinessCardPage = () => {
   const [card, setCard] = useState<CardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [showQR, setShowQR] = useState(false);
+  const [tapMode, setTapMode] = useState(false);
 
   useSEO({
     title: card?.full_name
@@ -102,9 +110,12 @@ const BusinessCardPage = () => {
   };
 
   const nfcShare = async () => {
-    // @ts-ignore - NDEFReader is experimental
-    if (typeof window === "undefined" || !("NDEFReader" in window)) {
-      toast.error("NFC not supported on this device. Use Share instead.");
+    if (!hasWebNFC()) {
+      if (isIOS()) {
+        toast.info("iPhone can't write NFC tags from the web. Use the 'NFC Tools' app or an Android device to program a tag with your card URL.");
+      } else {
+        toast.error("NFC writing isn't supported on this device. Try Chrome on Android.");
+      }
       return;
     }
     try {
@@ -119,31 +130,33 @@ const BusinessCardPage = () => {
     }
   };
 
-  const nfcScan = async () => {
-    // @ts-ignore
-    if (typeof window === "undefined" || !("NDEFReader" in window)) {
-      toast.error("NFC scanning isn't supported on this device. Try Chrome on Android.");
-      return;
-    }
-    try {
-      // @ts-ignore
-      const ndef = new window.NDEFReader();
-      await ndef.scan();
-      toast.success("Hold your phone against another NFC tag or phone…");
-      ndef.onreading = (event: any) => {
-        for (const record of event.message.records) {
-          if (record.recordType === "url" || record.recordType === "absolute-url") {
-            const url = new TextDecoder().decode(record.data);
-            toast.success("Card detected — opening…");
-            window.location.href = url;
-            return;
+  // Universal "tap to share" — uses Web NFC where available,
+  // otherwise shows a fullscreen QR that iPhone cameras scan natively.
+  const tapToShare = async () => {
+    if (hasWebNFC()) {
+      try {
+        // @ts-ignore
+        const ndef = new window.NDEFReader();
+        await ndef.scan();
+        toast.success("Hold this phone near an NFC tag or another phone…");
+        ndef.onreading = (event: any) => {
+          for (const record of event.message.records) {
+            if (record.recordType === "url" || record.recordType === "absolute-url") {
+              const url = new TextDecoder().decode(record.data);
+              toast.success("Card detected — opening…");
+              window.location.href = url;
+              return;
+            }
           }
-        }
-        toast.error("No card URL found on that tag.");
-      };
-    } catch (e: any) {
-      toast.error(e?.message || "NFC scan failed");
+          toast.error("No card URL found on that tag.");
+        };
+        return;
+      } catch {
+        // fall through to QR mode
+      }
     }
+    // iOS / unsupported → fullscreen QR for the other phone's camera
+    setTapMode(true);
   };
 
   if (loading) {
@@ -294,8 +307,8 @@ const BusinessCardPage = () => {
                 <QrCode className="h-4 w-4" />
                 {showQR ? "Hide QR" : "Show QR"}
               </Button>
-              <Button onClick={nfcScan} variant="outline" className="gap-2 col-span-2" style={{ borderColor: accent, color: accent }}>
-                <Radio className="h-4 w-4" />
+              <Button onClick={tapToShare} className="gap-2 col-span-2 text-white" style={{ background: accent }}>
+                <Smartphone className="h-4 w-4" />
                 Tap Phones to Share
               </Button>
             </div>
@@ -318,6 +331,45 @@ const BusinessCardPage = () => {
           Powered by <span className="font-semibold">VendX</span> · Digital Business Cards
         </p>
       </div>
+
+      {tapMode && (
+        <div
+          className="fixed inset-0 z-50 flex flex-col items-center justify-center p-6 bg-black/95 backdrop-blur-sm"
+          onClick={() => setTapMode(false)}
+        >
+          <button
+            className="absolute top-5 right-5 p-2 rounded-full bg-white/10 text-white"
+            onClick={(e) => { e.stopPropagation(); setTapMode(false); }}
+            aria-label="Close"
+          >
+            <X className="h-5 w-5" />
+          </button>
+          <p className="text-white/90 text-center text-lg font-medium mb-2">
+            Point the other phone's camera here
+          </p>
+          <p className="text-white/60 text-center text-sm mb-6 max-w-xs">
+            Works on iPhone &amp; Android — no app needed. The camera app will recognize the code and open your card.
+          </p>
+          <div className="p-5 rounded-2xl bg-white shadow-2xl">
+            <img
+              src={`https://api.qrserver.com/v1/create-qr-code/?size=420x420&margin=0&data=${encodeURIComponent(shareUrl)}`}
+              alt="Scan to view card"
+              width={320}
+              height={320}
+              className="block"
+            />
+          </div>
+          <p className="text-white/70 text-xs mt-5 break-all text-center max-w-xs">{shareUrl}</p>
+          <Button
+            variant="secondary"
+            className="mt-5 gap-2"
+            onClick={(e) => { e.stopPropagation(); share(); }}
+          >
+            <Share2 className="h-4 w-4" />
+            Or send via Share / AirDrop
+          </Button>
+        </div>
+      )}
     </div>
   );
 };
