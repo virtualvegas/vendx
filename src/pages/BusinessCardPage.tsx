@@ -34,8 +34,6 @@ interface CardData {
   roles: string[];
 }
 
-const formatRole = (r: string) =>
-  r.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 
 function buildVCard(c: CardData): string {
   const lines = [
