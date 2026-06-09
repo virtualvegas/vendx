@@ -80,7 +80,7 @@ const StoreManager = () => {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [trackingForm, setTrackingForm] = useState({ tracking_number: "", tracking_url: "", estimated_delivery: "", admin_notes: "" });
-  const [stats, setStats] = useState({ totalProducts: 0, totalOrders: 0, revenue: 0, subscribers: 0 });
+  const [stats, setStats] = useState({ totalProducts: 0, totalOrders: 0, revenue: 0, subscribers: 0, lowStock: 0 });
   
   const [productForm, setProductForm] = useState({
     name: "",
