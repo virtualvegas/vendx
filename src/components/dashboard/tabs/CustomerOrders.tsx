@@ -587,6 +587,7 @@ const CustomerOrders = () => {
               <p className="text-xs text-muted-foreground text-center">
                 Ordered on {format(new Date(selectedOrder.created_at), "MMMM d, yyyy 'at' h:mm a")}
               </p>
+              <CustomerOrderTimeline orderId={selectedOrder.id} />
             </div>
           )}
         </DialogContent>
