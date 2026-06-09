@@ -72,10 +72,7 @@ const BusinessCardPage = () => {
     })();
   }, [slug]);
 
-  const shareUrl =
-    typeof window !== "undefined"
-      ? `${window.location.origin}/card/${card?.card_slug || card?.id || slug}`
-      : "";
+  const shareUrl = `https://vendxglobal.net/card/${card?.card_slug || card?.id || slug}`;
 
   const downloadVCard = () => {
     if (!card) return;
@@ -119,6 +116,33 @@ const BusinessCardPage = () => {
       toast.success("Tap an NFC tag now to write your card");
     } catch (e: any) {
       toast.error(e?.message || "NFC write failed");
+    }
+  };
+
+  const nfcScan = async () => {
+    // @ts-ignore
+    if (typeof window === "undefined" || !("NDEFReader" in window)) {
+      toast.error("NFC scanning isn't supported on this device. Try Chrome on Android.");
+      return;
+    }
+    try {
+      // @ts-ignore
+      const ndef = new window.NDEFReader();
+      await ndef.scan();
+      toast.success("Hold your phone against another NFC tag or phone…");
+      ndef.onreading = (event: any) => {
+        for (const record of event.message.records) {
+          if (record.recordType === "url" || record.recordType === "absolute-url") {
+            const url = new TextDecoder().decode(record.data);
+            toast.success("Card detected — opening…");
+            window.location.href = url;
+            return;
+          }
+        }
+        toast.error("No card URL found on that tag.");
+      };
+    } catch (e: any) {
+      toast.error(e?.message || "NFC scan failed");
     }
   };
 
@@ -269,6 +293,10 @@ const BusinessCardPage = () => {
               <Button onClick={() => setShowQR((v) => !v)} variant="outline" className="gap-2">
                 <QrCode className="h-4 w-4" />
                 {showQR ? "Hide QR" : "Show QR"}
+              </Button>
+              <Button onClick={nfcScan} variant="outline" className="gap-2 col-span-2" style={{ borderColor: accent, color: accent }}>
+                <Radio className="h-4 w-4" />
+                Tap Phones to Share
               </Button>
             </div>
 
