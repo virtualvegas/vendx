@@ -357,12 +357,10 @@ const ProductPage = () => {
               >
                 {adding ? (
                   <Loader2 className="h-5 w-5 mr-2 animate-spin" />
-                ) : isShopifyLinked ? (
-                  <ExternalLink className="h-5 w-5 mr-2" />
                 ) : (
                   <ShoppingCart className="h-5 w-5 mr-2" />
                 )}
-                {product.is_subscription ? "Subscribe Now" : isShopifyLinked ? "Add to Cart (Shopify)" : "Add to Cart"}
+                {product.is_subscription ? "Subscribe Now" : "Add to Cart"}
               </Button>
 
               {/* Features */}
