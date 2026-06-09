@@ -6,7 +6,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
-  Mail, Phone, Globe, Linkedin, Download, Share2, QrCode, Building2, X, Smartphone,
+  Mail, Phone, Globe, Linkedin, Download, Share2, QrCode, Building2, X, Smartphone, Radio,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useSEO } from "@/hooks/useSEO";
