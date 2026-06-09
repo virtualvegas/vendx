@@ -45,11 +45,12 @@ const retailStatusColor: Record<string, string> = {
   online_only: "bg-blue-500/20 text-blue-400 border-blue-500/30",
 };
 
-export const StoreProductCard = ({ product, viewMode = "grid", shopifyImages }: StoreProductCardProps) => {
-  const displayImage = (shopifyImages?.length ? shopifyImages[0] : null) || product.images?.[0] || "/placeholder.svg";
+export const StoreProductCard = ({ product, viewMode = "grid" }: StoreProductCardProps) => {
+  const displayImage = product.images?.[0] || "/placeholder.svg";
   const price = product.is_subscription ? (product.subscription_price || product.price) : product.price;
   const isOnSale = product.compare_at_price !== null && product.compare_at_price > product.price;
   const outOfStock = product.stock !== null && product.stock < 1;
+  const lowStock = !outOfStock && product.stock !== null && product.low_stock_threshold != null && product.stock <= product.low_stock_threshold;
   const retailLinks = (product.retail_links && Array.isArray(product.retail_links) ? product.retail_links : []) as unknown as RetailLink[];
   const retailCount = retailLinks.filter(l => l.url && l.store).length;
 
