@@ -114,10 +114,10 @@ export const StoreProductCard = ({ product, viewMode = "grid" }: StoreProductCar
           />
           {isOnSale && <Badge className="absolute bottom-2 left-2 bg-destructive">Sale</Badge>}
           {outOfStock && <Badge className="absolute top-2 right-2 bg-muted text-muted-foreground">Out of Stock</Badge>}
-          {product.shopify_handle && (
-            <Badge className="absolute top-2 left-2 bg-primary/80 text-primary-foreground text-[10px]">
-              <ShoppingCart className="w-3 h-3 mr-1" />
-              Buy Online
+          {lowStock && (
+            <Badge className="absolute top-2 right-2 bg-amber-500/20 text-amber-400 border border-amber-500/40 text-[10px]">
+              <AlertTriangle className="w-3 h-3 mr-1" />
+              Only {product.stock} left
             </Badge>
           )}
         </div>
