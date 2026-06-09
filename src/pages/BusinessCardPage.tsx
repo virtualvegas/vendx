@@ -331,6 +331,45 @@ const BusinessCardPage = () => {
           Powered by <span className="font-semibold">VendX</span> · Digital Business Cards
         </p>
       </div>
+
+      {tapMode && (
+        <div
+          className="fixed inset-0 z-50 flex flex-col items-center justify-center p-6 bg-black/95 backdrop-blur-sm"
+          onClick={() => setTapMode(false)}
+        >
+          <button
+            className="absolute top-5 right-5 p-2 rounded-full bg-white/10 text-white"
+            onClick={(e) => { e.stopPropagation(); setTapMode(false); }}
+            aria-label="Close"
+          >
+            <X className="h-5 w-5" />
+          </button>
+          <p className="text-white/90 text-center text-lg font-medium mb-2">
+            Point the other phone's camera here
+          </p>
+          <p className="text-white/60 text-center text-sm mb-6 max-w-xs">
+            Works on iPhone &amp; Android — no app needed. The camera app will recognize the code and open your card.
+          </p>
+          <div className="p-5 rounded-2xl bg-white shadow-2xl">
+            <img
+              src={`https://api.qrserver.com/v1/create-qr-code/?size=420x420&margin=0&data=${encodeURIComponent(shareUrl)}`}
+              alt="Scan to view card"
+              width={320}
+              height={320}
+              className="block"
+            />
+          </div>
+          <p className="text-white/70 text-xs mt-5 break-all text-center max-w-xs">{shareUrl}</p>
+          <Button
+            variant="secondary"
+            className="mt-5 gap-2"
+            onClick={(e) => { e.stopPropagation(); share(); }}
+          >
+            <Share2 className="h-4 w-4" />
+            Or send via Share / AirDrop
+          </Button>
+        </div>
+      )}
     </div>
   );
 };
