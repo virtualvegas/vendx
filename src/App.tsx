@@ -135,6 +135,8 @@ const App = () => (
               <Route path="/docs/wallet-pay" element={<WalletPayDocsPage />} />
               <Route path="/service-request" element={<ServiceRequestPage />} />
               <Route path="/external-service" element={<ExternalServicePage />} />
+              <Route path="/team" element={<StaffDirectoryPage />} />
+              <Route path="/card/:slug" element={<BusinessCardPage />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
