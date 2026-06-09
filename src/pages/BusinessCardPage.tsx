@@ -119,6 +119,33 @@ const BusinessCardPage = () => {
     }
   };
 
+  const nfcScan = async () => {
+    // @ts-ignore
+    if (typeof window === "undefined" || !("NDEFReader" in window)) {
+      toast.error("NFC scanning isn't supported on this device. Try Chrome on Android.");
+      return;
+    }
+    try {
+      // @ts-ignore
+      const ndef = new window.NDEFReader();
+      await ndef.scan();
+      toast.success("Hold your phone against another NFC tag or phone…");
+      ndef.onreading = (event: any) => {
+        for (const record of event.message.records) {
+          if (record.recordType === "url" || record.recordType === "absolute-url") {
+            const url = new TextDecoder().decode(record.data);
+            toast.success("Card detected — opening…");
+            window.location.href = url;
+            return;
+          }
+        }
+        toast.error("No card URL found on that tag.");
+      };
+    } catch (e: any) {
+      toast.error(e?.message || "NFC scan failed");
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
