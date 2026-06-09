@@ -294,13 +294,13 @@ const StorePage = () => {
             ) : viewMode === "grid" ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 {filteredAndSortedProducts.map((product) => (
-                  <StoreProductCard key={product.id} product={product} viewMode="grid" shopifyImages={product.shopify_handle ? shopifyImageMap[product.shopify_handle] : undefined} />
+                  <StoreProductCard key={product.id} product={product} viewMode="grid" />
                 ))}
               </div>
             ) : (
               <div className="flex flex-col gap-4">
                 {filteredAndSortedProducts.map((product) => (
-                  <StoreProductCard key={product.id} product={product} viewMode="list" shopifyImages={product.shopify_handle ? shopifyImageMap[product.shopify_handle] : undefined} />
+                  <StoreProductCard key={product.id} product={product} viewMode="list" />
                 ))}
               </div>
             )}
