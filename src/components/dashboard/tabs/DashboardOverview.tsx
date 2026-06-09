@@ -556,6 +556,9 @@ const DashboardOverview = () => {
                   <Area type="monotone" dataKey="ecosnack" stackId="1" fill="#10b981" stroke="#10b981" fillOpacity={0.5} name="EcoVend" />
                   <Area type="monotone" dataKey="store" stackId="1" fill="#f59e0b" stroke="#f59e0b" fillOpacity={0.5} name="Store" />
                   <Area type="monotone" dataKey="wallet" stackId="1" fill="#06b6d4" stroke="#06b6d4" fillOpacity={0.5} name="Wallet Loads" />
+                  <Area type="monotone" dataKey="pos" stackId="1" fill="#eab308" stroke="#eab308" fillOpacity={0.5} name="POS" />
+                  <Area type="monotone" dataKey="service" stackId="1" fill="#a855f7" stroke="#a855f7" fillOpacity={0.5} name="Ext Service" />
+                  <Area type="monotone" dataKey="income" stackId="1" fill="#22c55e" stroke="#22c55e" fillOpacity={0.5} name="Ext Income" />
                   <Area type="monotone" dataKey="other" stackId="1" fill="#6b7280" stroke="#6b7280" fillOpacity={0.3} name="Other" />
                   <Legend />
                 </AreaChart>
