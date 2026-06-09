@@ -290,17 +290,13 @@ const BusinessCardPage = () => {
                 <Share2 className="h-4 w-4" />
                 Share
               </Button>
-              <Button onClick={nfcShare} variant="outline" className="gap-2">
-                <Radio className="h-4 w-4" />
-                NFC Write
+              <Button onClick={tapToShare} variant="outline" className="gap-2">
+                <Smartphone className="h-4 w-4" />
+                Tap Phones to Share
               </Button>
               <Button onClick={() => setShowQR((v) => !v)} variant="outline" className="gap-2">
                 <QrCode className="h-4 w-4" />
                 {showQR ? "Hide QR" : "Show QR"}
-              </Button>
-              <Button onClick={tapToShare} className="gap-2 col-span-2 text-white" style={{ background: accent }}>
-                <Smartphone className="h-4 w-4" />
-                Tap Phones to Share
               </Button>
             </div>
 
