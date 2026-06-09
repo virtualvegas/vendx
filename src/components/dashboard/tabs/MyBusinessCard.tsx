@@ -6,19 +6,15 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Link } from "react-router-dom";
-import { ExternalLink, Save, Copy, IdCard, Radio } from "lucide-react";
-
-const formatRole = (r: string) =>
-  r.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+import { ExternalLink, Save, Copy, IdCard, Smartphone } from "lucide-react";
 
 const MyBusinessCard = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [userId, setUserId] = useState<string>("");
-  const [roles, setRoles] = useState<string[]>([]);
+  const [showShareQR, setShowShareQR] = useState(false);
   const [form, setForm] = useState({
     full_name: "",
     email: "",
@@ -40,10 +36,7 @@ const MyBusinessCard = () => {
       if (!user) return;
       setUserId(user.id);
 
-      const [{ data: profile }, { data: roleRows }] = await Promise.all([
-        supabase.from("profiles").select("*").eq("id", user.id).maybeSingle(),
-        supabase.from("user_roles").select("role").eq("user_id", user.id),
-      ]);
+      const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle();
 
       if (profile) {
         setForm({
@@ -61,7 +54,6 @@ const MyBusinessCard = () => {
           card_accent_color: profile.card_accent_color || "#3B82F6",
         });
       }
-      setRoles((roleRows || []).map((r: any) => r.role));
       setLoading(false);
     })();
   }, []);
@@ -89,19 +81,19 @@ const MyBusinessCard = () => {
     toast.success("Link copied");
   };
 
-  const writeNFC = async () => {
-    // @ts-ignore
-    if (!("NDEFReader" in window)) {
-      toast.error("NFC not supported on this device.");
-      return;
-    }
+  const tapToShare = async () => {
     try {
-      // @ts-ignore
-      const ndef = new window.NDEFReader();
-      await ndef.write({ records: [{ recordType: "url", data: cardUrl }] });
-      toast.success("Hold an NFC tag against your phone now");
-    } catch (e: any) {
-      toast.error(e?.message || "NFC write failed");
+      if (navigator.share) {
+        await navigator.share({
+          title: `${form.full_name || "VendX"} Business Card`,
+          text: form.job_title ? `${form.full_name}, ${form.job_title}` : form.full_name || "VendX business card",
+          url: cardUrl,
+        });
+        return;
+      }
+      setShowShareQR(true);
+    } catch {
+      setShowShareQR(true);
     }
   };
 
