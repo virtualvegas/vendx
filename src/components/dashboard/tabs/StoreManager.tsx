@@ -861,42 +861,9 @@ const StoreManager = () => {
                 <div className="flex justify-between font-bold text-base border-t border-border pt-2"><span>Total</span><span className="text-primary">${Number(selectedOrder.total).toFixed(2)}</span></div>
               </div>
 
-              {/* Tracking & Fulfillment */}
-              <div className="border-t border-border pt-4 space-y-3">
-                <h4 className="font-semibold">Tracking & Fulfillment</h4>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <Label>Tracking Number</Label>
-                    <Input value={trackingForm.tracking_number} onChange={(e) => setTrackingForm({ ...trackingForm, tracking_number: e.target.value })} placeholder="e.g. 1Z999..." />
-                  </div>
-                  <div>
-                    <Label>Tracking URL</Label>
-                    <Input value={trackingForm.tracking_url} onChange={(e) => setTrackingForm({ ...trackingForm, tracking_url: e.target.value })} placeholder="https://..." />
-                  </div>
-                  <div>
-                    <Label>Estimated Delivery</Label>
-                    <Input type="date" value={trackingForm.estimated_delivery} onChange={(e) => setTrackingForm({ ...trackingForm, estimated_delivery: e.target.value })} />
-                  </div>
-                </div>
-                <div>
-                  <Label>Admin Notes</Label>
-                  <Textarea value={trackingForm.admin_notes} onChange={(e) => setTrackingForm({ ...trackingForm, admin_notes: e.target.value })} rows={2} placeholder="Internal notes..." />
-                </div>
-                <div className="flex gap-2">
-                  <Button onClick={() => handleUpdateTracking(selectedOrder.id)}>Save Tracking Info</Button>
-                  <Button variant="outline" onClick={() => setSelectedOrder(null)}>Close</Button>
-                </div>
-              </div>
-
-              {/* Timeline */}
+              {/* Advanced tracking + timeline */}
               <div className="border-t border-border pt-4">
-                <h4 className="font-semibold text-sm mb-2">Timeline</h4>
-                <div className="space-y-2 text-xs text-muted-foreground">
-                  <p>📦 Ordered: {formatDisplayDate(selectedOrder.created_at)}</p>
-                  {selectedOrder.shipped_at && <p>🚚 Shipped: {formatDisplayDate(selectedOrder.shipped_at)}</p>}
-                  {selectedOrder.delivered_at && <p>✅ Delivered: {formatDisplayDate(selectedOrder.delivered_at)}</p>}
-                  {selectedOrder.estimated_delivery && <p>📅 Est. Delivery: {selectedOrder.estimated_delivery}</p>}
-                </div>
+                <OrderTimelinePanel orderId={selectedOrder.id} onSaved={fetchData} />
               </div>
             </div>
           )}
