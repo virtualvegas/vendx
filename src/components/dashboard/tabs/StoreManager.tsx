@@ -744,8 +744,8 @@ const StoreManager = () => {
                       </TableCell>
                       <TableCell className="text-xs">{formatDisplayDate(order.created_at)}</TableCell>
                       <TableCell>
-                        <Button size="sm" variant="ghost" onClick={() => handleViewOrder(order)}>
-                          <Eye className="h-4 w-4" />
+                        <Button size="sm" variant="outline" onClick={() => handleViewOrder(order)}>
+                          Manage
                         </Button>
                       </TableCell>
                     </TableRow>
