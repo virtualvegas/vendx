@@ -72,10 +72,7 @@ const BusinessCardPage = () => {
     })();
   }, [slug]);
 
-  const shareUrl =
-    typeof window !== "undefined"
-      ? `${window.location.origin}/card/${card?.card_slug || card?.id || slug}`
-      : "";
+  const shareUrl = `https://vendxglobal.net/card/${card?.card_slug || card?.id || slug}`;
 
   const downloadVCard = () => {
     if (!card) return;
