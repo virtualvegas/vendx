@@ -11,13 +11,6 @@ import {
 import { toast } from "sonner";
 import { useSEO } from "@/hooks/useSEO";
 
-const isIOS = () =>
-  typeof navigator !== "undefined" &&
-  (/iPad|iPhone|iPod/.test(navigator.userAgent) ||
-    (navigator.platform === "MacIntel" && (navigator as any).maxTouchPoints > 1));
-
-const hasWebNFC = () => typeof window !== "undefined" && "NDEFReader" in window;
-
 interface CardData {
   id: string;
   full_name: string | null;
@@ -91,7 +84,7 @@ const BusinessCardPage = () => {
     URL.revokeObjectURL(url);
   };
 
-  const share = async () => {
+  const openNativeShare = async () => {
     if (!card) return;
     if (navigator.share) {
       try {
@@ -100,61 +93,27 @@ const BusinessCardPage = () => {
           text: `${card.full_name}${card.job_title ? `, ${card.job_title}` : ""}`,
           url: shareUrl,
         });
-      } catch {}
-    } else {
+        return true;
+      } catch {
+        return false;
+      }
+    }
+    return false;
+  };
+
+  const share = async () => {
+    const shared = await openNativeShare();
+    if (!shared) {
       await navigator.clipboard.writeText(shareUrl);
       toast.success("Link copied to clipboard");
     }
   };
 
-  const nfcShare = async () => {
-    if (!hasWebNFC()) {
-      if (isIOS()) {
-        toast.info("iPhone can't write NFC tags from the web. Use the 'NFC Tools' app or an Android device to program a tag with your card URL.");
-      } else {
-        toast.error("NFC writing isn't supported on this device. Try Chrome on Android.");
-      }
-      return;
-    }
-    try {
-      // @ts-ignore
-      const ndef = new window.NDEFReader();
-      await ndef.write({
-        records: [{ recordType: "url", data: shareUrl }],
-      });
-      toast.success("Tap an NFC tag now to write your card");
-    } catch (e: any) {
-      toast.error(e?.message || "NFC write failed");
-    }
-  };
-
-  // Universal "tap to share" — uses Web NFC where available,
-  // otherwise shows a fullscreen QR that iPhone cameras scan natively.
   const tapToShare = async () => {
-    if (hasWebNFC()) {
-      try {
-        // @ts-ignore
-        const ndef = new window.NDEFReader();
-        await ndef.scan();
-        toast.success("Hold this phone near an NFC tag or another phone…");
-        ndef.onreading = (event: any) => {
-          for (const record of event.message.records) {
-            if (record.recordType === "url" || record.recordType === "absolute-url") {
-              const url = new TextDecoder().decode(record.data);
-              toast.success("Card detected — opening…");
-              window.location.href = url;
-              return;
-            }
-          }
-          toast.error("No card URL found on that tag.");
-        };
-        return;
-      } catch {
-        // fall through to QR mode
-      }
+    const shared = await openNativeShare();
+    if (!shared) {
+      setTapMode(true);
     }
-    // iOS / unsupported → fullscreen QR for the other phone's camera
-    setTapMode(true);
   };
 
   if (loading) {
