@@ -130,8 +130,11 @@ const MyBusinessCard = () => {
                 <ExternalLink className="w-4 h-4 mr-1" />Preview
               </Link>
             </Button>
-            <Button size="sm" variant="outline" onClick={tapToShare}><Smartphone className="w-4 h-4 mr-1" />Tap Phones to Share</Button>
+            <Button size="sm" variant="outline" onClick={tapToShare}><Smartphone className="w-4 h-4 mr-1" />Tap to Share</Button>
+            <Button size="sm" variant="outline" onClick={writeNfcTag}><Radio className="w-4 h-4 mr-1" />Program NFC Tag</Button>
           </div>
+          <p className="text-xs text-muted-foreground">
+            Tap-to-Share instantly opens a fullscreen QR — the other phone scans it with the camera, no app or share menu needed. Program NFC Tag writes your card URL to a blank NFC sticker/card (Android Chrome only); after that, both iPhones and Androids open your card just by tapping the sticker.
           {showShareQR && (
             <div className="mt-3 flex flex-col items-center gap-2 rounded-lg bg-white p-4">
               <img
