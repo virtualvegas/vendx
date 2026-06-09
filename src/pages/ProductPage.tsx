@@ -215,9 +215,7 @@ const ProductPage = () => {
         <div className="grid md:grid-cols-2 gap-8 lg:gap-12">
           {/* Images */}
           {(() => {
-            const displayImages = isShopifyLinked && shopifyProduct?.images?.edges?.length
-              ? shopifyProduct.images.edges.map(e => e.node.url)
-              : product.images;
+            const displayImages = product.images?.length ? product.images : [];
             return (
             <div className="space-y-4">
             <div className="aspect-square rounded-xl overflow-hidden bg-card border border-border">
