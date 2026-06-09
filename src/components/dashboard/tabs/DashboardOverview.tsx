@@ -79,7 +79,59 @@ const DashboardOverview = () => {
       if (error) throw error;
       return data || [];
     },
+  // POS receipts (30 days)
+  const { data: posReceipts } = useQuery({
+    queryKey: ["dashboard-pos-receipts"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("vendx_pos_receipts")
+        .select("total_amount, receipt_date, location_id, stand_id, store_name")
+        .gte("receipt_date", new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString());
+      if (error) throw error;
+      return data || [];
+    },
   });
+
+  // External service invoices (30 days) - paid only
+  const { data: extInvoices } = useQuery({
+    queryKey: ["dashboard-ext-invoices"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("vendx_external_service_invoices")
+        .select("total, amount_paid, status, paid_at, issue_date, created_at")
+        .gte("created_at", new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString());
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  // External service ticket counts
+  const { data: extTickets } = useQuery({
+    queryKey: ["dashboard-ext-tickets"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("vendx_external_service_tickets")
+        .select("id, status, priority, created_at");
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  // External income entries (30 days) - other income streams
+  const { data: extIncome } = useQuery({
+    queryKey: ["dashboard-ext-income"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("external_income_entries")
+        .select("amount, entry_date, source, category, status")
+        .eq("status", "completed")
+        .gte("entry_date", new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString());
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+
 
   // Calculate combined revenue from all sources (no double counting)
   // machine_transactions = VendX Pay wallet-based purchases at machines (NOT in synced_transactions)
