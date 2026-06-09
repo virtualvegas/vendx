@@ -307,8 +307,8 @@ const BusinessCardPage = () => {
                 <QrCode className="h-4 w-4" />
                 {showQR ? "Hide QR" : "Show QR"}
               </Button>
-              <Button onClick={nfcScan} variant="outline" className="gap-2 col-span-2" style={{ borderColor: accent, color: accent }}>
-                <Radio className="h-4 w-4" />
+              <Button onClick={tapToShare} className="gap-2 col-span-2 text-white" style={{ background: accent }}>
+                <Smartphone className="h-4 w-4" />
                 Tap Phones to Share
               </Button>
             </div>
