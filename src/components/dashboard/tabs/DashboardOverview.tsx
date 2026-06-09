@@ -210,24 +210,22 @@ const DashboardOverview = () => {
 
   // Daily revenue trend chart data - all 30 days, broken down by source
   const dailyRevenueTrend = useMemo(() => {
-    const dayMap = new Map<string, { date: string; vending: number; arcade: number; ecosnack: number; store: number; wallet: number; other: number }>();
+    type Row = { date: string; vending: number; arcade: number; ecosnack: number; store: number; wallet: number; pos: number; service: number; income: number; other: number };
+    const dayMap = new Map<string, Row>();
     
-    // Pre-fill all 30 days so there are no gaps
     for (let i = 29; i >= 0; i--) {
       const d = new Date();
       d.setDate(d.getDate() - i);
       const key = format(d, "yyyy-MM-dd");
-      dayMap.set(key, { date: key, vending: 0, arcade: 0, ecosnack: 0, store: 0, wallet: 0, other: 0 });
+      dayMap.set(key, { date: key, vending: 0, arcade: 0, ecosnack: 0, store: 0, wallet: 0, pos: 0, service: 0, income: 0, other: 0 });
     }
     
-    // Machine transactions → vending
     transactions?.forEach(t => {
       const key = format(new Date(t.created_at), "yyyy-MM-dd");
       const entry = dayMap.get(key);
       if (entry) entry.vending += Number(t.amount);
     });
     
-    // Synced transactions → categorized by source
     syncedTransactions?.forEach(t => {
       const amt = Number(t.amount);
       if (amt <= 0) return;
@@ -244,6 +242,26 @@ const DashboardOverview = () => {
       else entry.other += amt;
     });
 
+    posReceipts?.forEach(r => {
+      const key = format(new Date(r.receipt_date), "yyyy-MM-dd");
+      const entry = dayMap.get(key);
+      if (entry) entry.pos += Number(r.total_amount || 0);
+    });
+
+    extInvoices?.forEach(i => {
+      const paid = Number(i.amount_paid || 0);
+      if (paid <= 0) return;
+      const key = format(new Date(i.paid_at || i.created_at), "yyyy-MM-dd");
+      const entry = dayMap.get(key);
+      if (entry) entry.service += paid;
+    });
+
+    extIncome?.forEach(e => {
+      const key = format(new Date(e.entry_date), "yyyy-MM-dd");
+      const entry = dayMap.get(key);
+      if (entry) entry.income += Number(e.amount || 0);
+    });
+
     return Array.from(dayMap.values())
       .sort((a, b) => a.date.localeCompare(b.date))
       .map(d => ({
@@ -253,10 +271,13 @@ const DashboardOverview = () => {
         ecosnack: Math.round(d.ecosnack * 100) / 100,
         store: Math.round(d.store * 100) / 100,
         wallet: Math.round(d.wallet * 100) / 100,
+        pos: Math.round(d.pos * 100) / 100,
+        service: Math.round(d.service * 100) / 100,
+        income: Math.round(d.income * 100) / 100,
         other: Math.round(d.other * 100) / 100,
-        total: Math.round((d.vending + d.arcade + d.ecosnack + d.store + d.wallet + d.other) * 100) / 100,
+        total: Math.round((d.vending + d.arcade + d.ecosnack + d.store + d.wallet + d.pos + d.service + d.income + d.other) * 100) / 100,
       }));
-  }, [transactions, syncedTransactions]);
+  }, [transactions, syncedTransactions, posReceipts, extInvoices, extIncome]);
 
   // Compute actual machine counts per location from machine data
   const locationsWithActualCounts = useMemo(() => {
