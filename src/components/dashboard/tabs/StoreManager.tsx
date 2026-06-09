@@ -493,12 +493,43 @@ const StoreManager = () => {
                       </div>
                     </div>
                     <div>
-                      <Label>Image URL</Label>
-                      <Input 
-                        value={productForm.images[0]}
-                        onChange={(e) => setProductForm({...productForm, images: [e.target.value]})}
-                        placeholder="https://..."
-                      />
+                      <div className="flex justify-between items-center mb-2">
+                        <Label>Product Images</Label>
+                        <Button type="button" variant="outline" size="sm" onClick={() => setProductForm({...productForm, images: [...productForm.images, ""]})}>
+                          <Plus className="h-3 w-3 mr-1" /> Add Image
+                        </Button>
+                      </div>
+                      <div className="space-y-2">
+                        {productForm.images.map((img, idx) => (
+                          <div key={idx} className="flex gap-2 items-center">
+                            {img && <img src={img} alt="" className="w-10 h-10 rounded object-cover flex-shrink-0 border border-border" />}
+                            <Input
+                              value={img}
+                              onChange={(e) => {
+                                const next = [...productForm.images];
+                                next[idx] = e.target.value;
+                                setProductForm({...productForm, images: next});
+                              }}
+                              placeholder="https://... (first image is primary)"
+                              className="flex-1"
+                            />
+                            <Button type="button" variant="ghost" size="icon" disabled={idx === 0}
+                              onClick={() => {
+                                const next = [...productForm.images];
+                                [next[idx-1], next[idx]] = [next[idx], next[idx-1]];
+                                setProductForm({...productForm, images: next});
+                              }}
+                            ><span className="text-xs">↑</span></Button>
+                            <Button type="button" variant="ghost" size="icon" className="text-destructive"
+                              onClick={() => {
+                                const next = productForm.images.filter((_, i) => i !== idx);
+                                setProductForm({...productForm, images: next.length ? next : [""]});
+                              }}
+                            ><X className="h-4 w-4" /></Button>
+                          </div>
+                        ))}
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1">First image is shown as the product thumbnail.</p>
                     </div>
                     <div className="flex items-center gap-6">
                       <div className="flex items-center gap-2">
