@@ -20,7 +20,6 @@ import RewardsPage from "./pages/RewardsPage";
 import KioskPage from "./pages/KioskPage";
 import StorePage from "./pages/StorePage";
 import ProductPage from "./pages/ProductPage";
-import ShopifyProductPage from "./pages/ShopifyProductPage";
 import CartPage from "./pages/CartPage";
 import SnackBoxPage from "./pages/SnackBoxPage";
 import ArcadeSubscriptionPage from "./pages/ArcadeSubscriptionPage";
@@ -80,7 +79,7 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <CartProvider>
-        <ShopifyCartSyncInitializer>
+        <GlobalErrorHandler>
           <Toaster />
           <Sonner />
           <BrowserRouter>
@@ -120,7 +119,6 @@ const App = () => (
               <Route path="/store/snack-in-the-box" element={<SnackBoxPage />} />
               <Route path="/store/arcade-subscription" element={<ArcadeSubscriptionPage />} />
               <Route path="/store/order-success" element={<OrderSuccessPage />} />
-              <Route path="/store/product/:handle" element={<ShopifyProductPage />} />
               <Route path="/store/:slug" element={<ProductPage />} />
               <Route path="/funnel/:slug" element={<FunnelPage />} />
               <Route path="/news" element={<NewsPage />} />
@@ -138,7 +136,7 @@ const App = () => (
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
-        </ShopifyCartSyncInitializer>
+        </GlobalErrorHandler>
       </CartProvider>
     </TooltipProvider>
   </QueryClientProvider>
