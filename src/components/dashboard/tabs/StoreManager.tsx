@@ -90,6 +90,7 @@ const StoreManager = () => {
     price: 0,
     category: "apparel",
     stock: 0,
+    low_stock_threshold: 5,
     is_active: true,
     is_featured: false,
     is_subscription: false,
@@ -97,8 +98,6 @@ const StoreManager = () => {
     images: [""],
     retail_status: "online_only" as string,
     retail_links: [] as Array<{ store: string; url: string; link_type: string }>,
-    shopify_handle: "" as string,
-    shopify_variant_id: "" as string,
   });
 
 
