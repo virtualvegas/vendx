@@ -6,7 +6,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
-  Mail, Phone, Globe, Linkedin, Download, Share2, QrCode, Building2, X, Smartphone,
+  Mail, Phone, Globe, Linkedin, Download, Share2, QrCode, Building2, X, Smartphone, Radio,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useSEO } from "@/hooks/useSEO";
@@ -109,10 +109,27 @@ const BusinessCardPage = () => {
     }
   };
 
-  const tapToShare = async () => {
-    const shared = await openNativeShare();
-    if (!shared) {
-      setTapMode(true);
+  const tapToShare = () => {
+    // Skip the share sheet entirely — go straight to a fullscreen QR the other phone can scan.
+    setTapMode(true);
+  };
+
+  const hasWebNFC = () => typeof window !== "undefined" && "NDEFReader" in window;
+
+  const writeNfcTag = async () => {
+    if (!hasWebNFC()) {
+      toast.error("NFC writing requires Chrome on Android. iPhones can't program tags from the browser — use the free 'NFC Tools' app.");
+      return;
+    }
+    try {
+      // @ts-ignore - Web NFC types not in lib.dom
+      const ndef = new NDEFReader();
+      toast.info("Hold a blank NFC tag against the back of your phone…");
+      // @ts-ignore
+      await ndef.write({ records: [{ recordType: "url", data: shareUrl }] });
+      toast.success("NFC tag programmed! Anyone tapping it will open your card.");
+    } catch (e: any) {
+      toast.error(e?.message || "Could not write to NFC tag");
     }
   };
 
@@ -251,13 +268,22 @@ const BusinessCardPage = () => {
               </Button>
               <Button onClick={tapToShare} variant="outline" className="gap-2">
                 <Smartphone className="h-4 w-4" />
-                Tap Phones to Share
+                Tap to Share
               </Button>
               <Button onClick={() => setShowQR((v) => !v)} variant="outline" className="gap-2">
                 <QrCode className="h-4 w-4" />
                 {showQR ? "Hide QR" : "Show QR"}
               </Button>
+              <Button onClick={writeNfcTag} variant="outline" className="gap-2 col-span-2">
+                <Radio className="h-4 w-4" />
+                Program NFC Tag (Android)
+              </Button>
             </div>
+            <p className="text-[11px] text-muted-foreground text-center mt-1 mb-1">
+              Hold a blank NFC sticker/card to your Android — then anyone (iPhone or Android) who taps it opens your card. No app needed.
+            </p>
+
+
 
             {showQR && (
               <div className="mt-4 flex flex-col items-center gap-2 p-4 rounded-lg bg-white">

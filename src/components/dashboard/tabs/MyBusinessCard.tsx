@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { Link } from "react-router-dom";
-import { ExternalLink, Save, Copy, IdCard, Smartphone } from "lucide-react";
+import { ExternalLink, Save, Copy, IdCard, Smartphone, Radio } from "lucide-react";
 
 const MyBusinessCard = () => {
   const [loading, setLoading] = useState(true);
@@ -81,19 +81,24 @@ const MyBusinessCard = () => {
     toast.success("Link copied");
   };
 
-  const tapToShare = async () => {
+  const tapToShare = () => {
+    setShowShareQR(true);
+  };
+
+  const writeNfcTag = async () => {
+    if (typeof window === "undefined" || !("NDEFReader" in window)) {
+      toast.error("NFC writing requires Chrome on Android. iPhones can't program tags from the browser — use the 'NFC Tools' app.");
+      return;
+    }
     try {
-      if (navigator.share) {
-        await navigator.share({
-          title: `${form.full_name || "VendX"} Business Card`,
-          text: form.job_title ? `${form.full_name}, ${form.job_title}` : form.full_name || "VendX business card",
-          url: cardUrl,
-        });
-        return;
-      }
-      setShowShareQR(true);
-    } catch {
-      setShowShareQR(true);
+      // @ts-ignore - Web NFC not in lib.dom
+      const ndef = new NDEFReader();
+      toast.info("Hold a blank NFC tag against the back of your phone…");
+      // @ts-ignore
+      await ndef.write({ records: [{ recordType: "url", data: cardUrl }] });
+      toast.success("NFC tag programmed!");
+    } catch (e: any) {
+      toast.error(e?.message || "Could not write to NFC tag");
     }
   };
 
@@ -125,8 +130,12 @@ const MyBusinessCard = () => {
                 <ExternalLink className="w-4 h-4 mr-1" />Preview
               </Link>
             </Button>
-            <Button size="sm" variant="outline" onClick={tapToShare}><Smartphone className="w-4 h-4 mr-1" />Tap Phones to Share</Button>
+            <Button size="sm" variant="outline" onClick={tapToShare}><Smartphone className="w-4 h-4 mr-1" />Tap to Share</Button>
+            <Button size="sm" variant="outline" onClick={writeNfcTag}><Radio className="w-4 h-4 mr-1" />Program NFC Tag</Button>
           </div>
+          <p className="text-xs text-muted-foreground">
+            Tap-to-Share instantly opens a fullscreen QR — the other phone scans it with the camera, no app or share menu needed. Program NFC Tag writes your card URL to a blank NFC sticker/card (Android Chrome only); after that, both iPhones and Androids open your card just by tapping the sticker.
+          </p>
           {showShareQR && (
             <div className="mt-3 flex flex-col items-center gap-2 rounded-lg bg-white p-4">
               <img
