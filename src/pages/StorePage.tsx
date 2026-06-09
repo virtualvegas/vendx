@@ -165,9 +165,7 @@ const StorePage = () => {
       {/* Hero Section */}
       <section className="pt-24 pb-12 px-4 bg-gradient-space">
         <div className="container mx-auto text-center">
-          <div className="flex justify-end mb-4">
-            <ShopifyCartDrawer />
-          </div>
+
           <h1 className="text-4xl md:text-5xl font-bold mb-4">
             <span className="text-primary glow-blue">VendX</span>{" "}
             <span className="text-foreground">Store</span>
