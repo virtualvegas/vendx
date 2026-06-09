@@ -43,6 +43,7 @@ interface StoreProduct {
   category: string;
   images: string[];
   stock: number | null;
+  low_stock_threshold?: number | null;
   is_subscription: boolean;
   subscription_price: number | null;
   retail_status: string | null;
