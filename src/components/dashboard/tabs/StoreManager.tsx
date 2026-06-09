@@ -14,11 +14,13 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { 
   Package, Plus, Edit, Trash2, ShoppingCart, DollarSign, 
-  Users, TrendingUp, Eye, Loader2, RefreshCw, Search, Link as LinkIcon, X 
+  Users, TrendingUp, Loader2, RefreshCw, AlertTriangle, X 
 } from "lucide-react";
 import { formatDisplayDate } from "@/lib/dateUtils";
 import { AVAILABLE_STORES } from "@/components/store/RetailLinks";
-import { useShopifyProducts, ShopifyProduct } from "@/hooks/useShopifyProducts";
+import { StoreInventoryPanel } from "./store/StoreInventoryPanel";
+import { StoreAddonsPanel } from "./store/StoreAddonsPanel";
+import { OrderTimelinePanel } from "./store/OrderTimelinePanel";
 
 interface Product {
   id: string;
