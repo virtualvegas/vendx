@@ -82,10 +82,7 @@ const MyBusinessCard = () => {
     toast.success("Business card saved");
   };
 
-  const cardUrl =
-    typeof window !== "undefined"
-      ? `${window.location.origin}/card/${form.card_slug || userId}`
-      : "";
+  const cardUrl = `https://vendxglobal.net/card/${form.card_slug || userId}`;
 
   const copyLink = async () => {
     await navigator.clipboard.writeText(cardUrl);
