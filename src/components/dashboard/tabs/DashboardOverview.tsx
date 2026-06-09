@@ -577,6 +577,90 @@ const DashboardOverview = () => {
         compact
       />
 
+      {/* External Service + POS quick stats */}
+      <div className="grid md:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Wrench className="w-5 h-5 text-purple-500" />
+              External Service Tickets
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-4 gap-3">
+              {(["new","in_progress","scheduled","resolved"] as const).map(s => {
+                const count = extTickets?.filter(t => t.status === s).length || 0;
+                return (
+                  <div key={s} className="text-center p-3 rounded-lg bg-muted/40">
+                    <p className="text-2xl font-bold">{count}</p>
+                    <p className="text-[11px] text-muted-foreground capitalize">{s.replace("_"," ")}</p>
+                  </div>
+                );
+              })}
+            </div>
+            <div className="mt-4 flex justify-between text-sm">
+              <span className="text-muted-foreground">High priority open:</span>
+              <span className="font-semibold">
+                {extTickets?.filter(t => ["high","urgent","critical"].includes((t.priority || "").toLowerCase()) && !["resolved","closed","cancelled"].includes(t.status)).length || 0}
+              </span>
+            </div>
+            <div className="mt-1 flex justify-between text-sm">
+              <span className="text-muted-foreground">Invoices outstanding:</span>
+              <span className="font-semibold">
+                ${(extInvoices?.filter(i => i.status !== "paid").reduce((s, i) => s + (Number(i.total || 0) - Number(i.amount_paid || 0)), 0) || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+              </span>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Receipt className="w-5 h-5 text-amber-500" />
+              POS Activity (30 days)
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-3 gap-3">
+              <div className="text-center p-3 rounded-lg bg-muted/40">
+                <p className="text-2xl font-bold">{posReceipts?.length || 0}</p>
+                <p className="text-[11px] text-muted-foreground">Receipts</p>
+              </div>
+              <div className="text-center p-3 rounded-lg bg-muted/40">
+                <p className="text-2xl font-bold">
+                  ${posReceipts && posReceipts.length > 0 
+                    ? (posReceipts.reduce((s, r) => s + Number(r.total_amount || 0), 0) / posReceipts.length).toFixed(2)
+                    : "0.00"}
+                </p>
+                <p className="text-[11px] text-muted-foreground">Avg Ticket</p>
+              </div>
+              <div className="text-center p-3 rounded-lg bg-muted/40">
+                <p className="text-2xl font-bold">{new Set(posReceipts?.map(r => r.store_name).filter(Boolean)).size || 0}</p>
+                <p className="text-[11px] text-muted-foreground">Stores</p>
+              </div>
+            </div>
+            <div className="mt-4 space-y-1.5">
+              {Object.entries((posReceipts || []).reduce((acc: Record<string, number>, r) => {
+                const k = r.store_name || "Unknown";
+                acc[k] = (acc[k] || 0) + Number(r.total_amount || 0);
+                return acc;
+              }, {}))
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 4)
+                .map(([store, amt]) => (
+                  <div key={store} className="flex justify-between text-sm">
+                    <span className="text-muted-foreground truncate">{store}</span>
+                    <span className="font-medium">${amt.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                  </div>
+                ))}
+              {(!posReceipts || posReceipts.length === 0) && (
+                <p className="text-sm text-muted-foreground text-center py-2">No POS receipts yet</p>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
       {/* Bottom Grids */}
       <div className="grid md:grid-cols-3 gap-6">
         {/* Top Machines */}
