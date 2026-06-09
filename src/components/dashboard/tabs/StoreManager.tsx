@@ -14,7 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { 
   Package, Plus, Edit, Trash2, ShoppingCart, DollarSign, 
-  Users, TrendingUp, Loader2, RefreshCw, AlertTriangle, X 
+  Users, Loader2, RefreshCw, AlertTriangle, X 
 } from "lucide-react";
 import { formatDisplayDate } from "@/lib/dateUtils";
 import { AVAILABLE_STORES } from "@/components/store/RetailLinks";
