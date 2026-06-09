@@ -5,7 +5,6 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { CartProvider } from "@/hooks/useCart";
-import { useShopifyCartSync } from "@/hooks/useShopifyCartSync";
 import { toast } from "sonner";
 import Index from "./pages/Index";
 import AboutPage from "./pages/AboutPage";
@@ -21,7 +20,6 @@ import RewardsPage from "./pages/RewardsPage";
 import KioskPage from "./pages/KioskPage";
 import StorePage from "./pages/StorePage";
 import ProductPage from "./pages/ProductPage";
-import ShopifyProductPage from "./pages/ShopifyProductPage";
 import CartPage from "./pages/CartPage";
 import SnackBoxPage from "./pages/SnackBoxPage";
 import ArcadeSubscriptionPage from "./pages/ArcadeSubscriptionPage";
@@ -60,22 +58,20 @@ import ExternalServicePage from "./pages/ExternalServicePage";
 
 const queryClient = new QueryClient();
 
-// Component to initialize Shopify cart sync and global error handling
-const ShopifyCartSyncInitializer = ({ children }: { children: React.ReactNode }) => {
-  useShopifyCartSync();
-  
+// Component for global error handling
+const GlobalErrorHandler = ({ children }: { children: React.ReactNode }) => {
   // Global unhandled rejection handler to prevent blank pages from async errors
   useEffect(() => {
     const handleRejection = (event: PromiseRejectionEvent) => {
       console.error("Unhandled promise rejection:", event.reason);
       toast.error("An unexpected error occurred. Please try again.");
-      event.preventDefault(); // Prevent default console error logging
+      event.preventDefault();
     };
 
     window.addEventListener("unhandledrejection", handleRejection);
     return () => window.removeEventListener("unhandledrejection", handleRejection);
   }, []);
-  
+
   return <>{children}</>;
 };
 
@@ -83,7 +79,7 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <CartProvider>
-        <ShopifyCartSyncInitializer>
+        <GlobalErrorHandler>
           <Toaster />
           <Sonner />
           <BrowserRouter>
@@ -123,7 +119,6 @@ const App = () => (
               <Route path="/store/snack-in-the-box" element={<SnackBoxPage />} />
               <Route path="/store/arcade-subscription" element={<ArcadeSubscriptionPage />} />
               <Route path="/store/order-success" element={<OrderSuccessPage />} />
-              <Route path="/store/product/:handle" element={<ShopifyProductPage />} />
               <Route path="/store/:slug" element={<ProductPage />} />
               <Route path="/funnel/:slug" element={<FunnelPage />} />
               <Route path="/news" element={<NewsPage />} />
@@ -141,7 +136,7 @@ const App = () => (
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
-        </ShopifyCartSyncInitializer>
+        </GlobalErrorHandler>
       </CartProvider>
     </TooltipProvider>
   </QueryClientProvider>

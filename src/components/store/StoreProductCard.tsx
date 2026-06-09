@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Store, MapPin, ShoppingCart } from "lucide-react";
+import { Store, AlertTriangle } from "lucide-react";
 import type { Json } from "@/integrations/supabase/types";
 
 interface RetailLink {
@@ -24,13 +24,13 @@ interface StoreProduct {
   subscription_price: number | null;
   retail_status: string | null;
   retail_links: Json | null;
-  shopify_handle: string | null;
+  shopify_handle?: string | null;
+  low_stock_threshold?: number | null;
 }
 
 interface StoreProductCardProps {
   product: StoreProduct;
   viewMode?: "grid" | "list";
-  shopifyImages?: string[];
 }
 
 const retailStatusLabel: Record<string, string> = {
@@ -45,11 +45,12 @@ const retailStatusColor: Record<string, string> = {
   online_only: "bg-blue-500/20 text-blue-400 border-blue-500/30",
 };
 
-export const StoreProductCard = ({ product, viewMode = "grid", shopifyImages }: StoreProductCardProps) => {
-  const displayImage = (shopifyImages?.length ? shopifyImages[0] : null) || product.images?.[0] || "/placeholder.svg";
+export const StoreProductCard = ({ product, viewMode = "grid" }: StoreProductCardProps) => {
+  const displayImage = product.images?.[0] || "/placeholder.svg";
   const price = product.is_subscription ? (product.subscription_price || product.price) : product.price;
   const isOnSale = product.compare_at_price !== null && product.compare_at_price > product.price;
   const outOfStock = product.stock !== null && product.stock < 1;
+  const lowStock = !outOfStock && product.stock !== null && product.low_stock_threshold != null && product.stock <= product.low_stock_threshold;
   const retailLinks = (product.retail_links && Array.isArray(product.retail_links) ? product.retail_links : []) as unknown as RetailLink[];
   const retailCount = retailLinks.filter(l => l.url && l.store).length;
 
@@ -113,10 +114,10 @@ export const StoreProductCard = ({ product, viewMode = "grid", shopifyImages }: 
           />
           {isOnSale && <Badge className="absolute bottom-2 left-2 bg-destructive">Sale</Badge>}
           {outOfStock && <Badge className="absolute top-2 right-2 bg-muted text-muted-foreground">Out of Stock</Badge>}
-          {product.shopify_handle && (
-            <Badge className="absolute top-2 left-2 bg-primary/80 text-primary-foreground text-[10px]">
-              <ShoppingCart className="w-3 h-3 mr-1" />
-              Buy Online
+          {lowStock && (
+            <Badge className="absolute top-2 right-2 bg-amber-500/20 text-amber-400 border border-amber-500/40 text-[10px]">
+              <AlertTriangle className="w-3 h-3 mr-1" />
+              Only {product.stock} left
             </Badge>
           )}
         </div>

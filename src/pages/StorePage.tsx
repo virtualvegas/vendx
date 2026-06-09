@@ -27,11 +27,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { ShopifyCartDrawer } from "@/components/store/ShopifyCartDrawer";
 import { SubscriptionsSection } from "@/components/store/SubscriptionsSection";
 import { StoreProductCard } from "@/components/store/StoreProductCard";
 import { supabase } from "@/integrations/supabase/client";
-import { useShopifyProducts } from "@/hooks/useShopifyProducts";
 import type { Json } from "@/integrations/supabase/types";
 
 interface StoreProduct {
@@ -45,6 +43,7 @@ interface StoreProduct {
   category: string;
   images: string[];
   stock: number | null;
+  low_stock_threshold?: number | null;
   is_subscription: boolean;
   subscription_price: number | null;
   retail_status: string | null;
@@ -72,18 +71,7 @@ const StorePage = () => {
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
   const [products, setProducts] = useState<StoreProduct[]>([]);
   const [loading, setLoading] = useState(true);
-  const { products: shopifyProducts } = useShopifyProducts();
 
-  // Build a map of shopify handle -> image URLs
-  const shopifyImageMap = useMemo(() => {
-    const map: Record<string, string[]> = {};
-    for (const sp of shopifyProducts) {
-      if (sp.node.handle && sp.node.images?.edges?.length) {
-        map[sp.node.handle] = sp.node.images.edges.map(e => e.node.url);
-      }
-    }
-    return map;
-  }, [shopifyProducts]);
 
   const activeCategory = searchParams.get("category") || "all";
 
@@ -177,9 +165,7 @@ const StorePage = () => {
       {/* Hero Section */}
       <section className="pt-24 pb-12 px-4 bg-gradient-space">
         <div className="container mx-auto text-center">
-          <div className="flex justify-end mb-4">
-            <ShopifyCartDrawer />
-          </div>
+
           <h1 className="text-4xl md:text-5xl font-bold mb-4">
             <span className="text-primary glow-blue">VendX</span>{" "}
             <span className="text-foreground">Store</span>
@@ -308,13 +294,13 @@ const StorePage = () => {
             ) : viewMode === "grid" ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 {filteredAndSortedProducts.map((product) => (
-                  <StoreProductCard key={product.id} product={product} viewMode="grid" shopifyImages={product.shopify_handle ? shopifyImageMap[product.shopify_handle] : undefined} />
+                  <StoreProductCard key={product.id} product={product} viewMode="grid" />
                 ))}
               </div>
             ) : (
               <div className="flex flex-col gap-4">
                 {filteredAndSortedProducts.map((product) => (
-                  <StoreProductCard key={product.id} product={product} viewMode="list" shopifyImages={product.shopify_handle ? shopifyImageMap[product.shopify_handle] : undefined} />
+                  <StoreProductCard key={product.id} product={product} viewMode="list" />
                 ))}
               </div>
             )}

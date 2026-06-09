@@ -8,10 +8,8 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { ShoppingCart, Minus, Plus, ArrowLeft, Package, Check, Loader2, ExternalLink } from "lucide-react";
+import { ShoppingCart, Minus, Plus, ArrowLeft, Package, Check, Loader2 } from "lucide-react";
 import { useCart } from "@/hooks/useCart";
-import { useShopifyProduct } from "@/hooks/useShopifyProducts";
-import { useShopifyCartStore } from "@/stores/shopifyCartStore";
 import { toast } from "sonner";
 import { useSEO } from "@/hooks/useSEO";
 import RetailLinks from "@/components/store/RetailLinks";
@@ -84,10 +82,7 @@ const ProductPage = () => {
   const [loading, setLoading] = useState(true);
   const [adding, setAdding] = useState(false);
   const { addToCart, cartCount } = useCart();
-  const shopifyCartStore = useShopifyCartStore();
 
-  // Fetch linked Shopify product data when product has shopify_handle
-  const { product: shopifyProduct } = useShopifyProduct(product?.shopify_handle || undefined);
 
   // Dynamic SEO for product sharing
   useSEO({
@@ -152,38 +147,15 @@ const ProductPage = () => {
     return (basePrice + addonsTotal) * quantity;
   };
 
-  const isShopifyLinked = !!product?.shopify_handle && !!shopifyProduct;
-
   const handleAddToCart = async () => {
     if (!product) return;
     setAdding(true);
-    
     try {
-      if (isShopifyLinked && shopifyProduct) {
-        // Use Shopify cart for linked products
-        const firstVariant = shopifyProduct.variants.edges[0]?.node;
-        if (!firstVariant) {
-          toast.error("No Shopify variant available");
-          setAdding(false);
-          return;
-        }
-        await shopifyCartStore.addItem({
-          product: { node: shopifyProduct },
-          variantId: product.shopify_variant_id || firstVariant.id,
-          variantTitle: firstVariant.title,
-          price: firstVariant.price,
-          quantity,
-          selectedOptions: firstVariant.selectedOptions || [],
-        });
-        toast.success(`${product.name} added to Shopify cart!`);
-      } else {
-        await addToCart(product.id, quantity, selectedAddons);
-        toast.success(`${product.name} added to cart!`);
-      }
+      await addToCart(product.id, quantity, selectedAddons);
+      toast.success(`${product.name} added to cart!`);
     } catch (error) {
       toast.error("Failed to add to cart");
     }
-    
     setAdding(false);
   };
 
@@ -243,9 +215,7 @@ const ProductPage = () => {
         <div className="grid md:grid-cols-2 gap-8 lg:gap-12">
           {/* Images */}
           {(() => {
-            const displayImages = isShopifyLinked && shopifyProduct?.images?.edges?.length
-              ? shopifyProduct.images.edges.map(e => e.node.url)
-              : product.images;
+            const displayImages = product.images?.length ? product.images : [];
             return (
             <div className="space-y-4">
             <div className="aspect-square rounded-xl overflow-hidden bg-card border border-border">
@@ -280,12 +250,6 @@ const ProductPage = () => {
               <Badge variant="outline" className="capitalize">{product.category}</Badge>
               {product.is_subscription && (
                 <Badge className="bg-accent text-accent-foreground">Subscription</Badge>
-              )}
-              {isShopifyLinked && (
-                <Badge className="bg-primary/20 text-primary border border-primary/30">
-                  <ShoppingCart className="h-3 w-3 mr-1" />
-                  Shopify
-                </Badge>
               )}
               {product.compare_at_price && product.compare_at_price > product.price && (
                 <Badge className="bg-destructive">Sale</Badge>
@@ -393,12 +357,10 @@ const ProductPage = () => {
               >
                 {adding ? (
                   <Loader2 className="h-5 w-5 mr-2 animate-spin" />
-                ) : isShopifyLinked ? (
-                  <ExternalLink className="h-5 w-5 mr-2" />
                 ) : (
                   <ShoppingCart className="h-5 w-5 mr-2" />
                 )}
-                {product.is_subscription ? "Subscribe Now" : isShopifyLinked ? "Add to Cart (Shopify)" : "Add to Cart"}
+                {product.is_subscription ? "Subscribe Now" : "Add to Cart"}
               </Button>
 
               {/* Features */}
