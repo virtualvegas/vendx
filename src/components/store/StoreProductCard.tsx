@@ -24,13 +24,13 @@ interface StoreProduct {
   subscription_price: number | null;
   retail_status: string | null;
   retail_links: Json | null;
-  shopify_handle: string | null;
+  shopify_handle?: string | null;
+  low_stock_threshold?: number | null;
 }
 
 interface StoreProductCardProps {
   product: StoreProduct;
   viewMode?: "grid" | "list";
-  shopifyImages?: string[];
 }
 
 const retailStatusLabel: Record<string, string> = {
