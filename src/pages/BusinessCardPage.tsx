@@ -6,7 +6,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
-  Mail, Phone, Globe, Linkedin, Download, Share2, Radio, QrCode, Building2, X, Smartphone,
+  Mail, Phone, Globe, Linkedin, Download, Share2, QrCode, Building2, X, Smartphone,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useSEO } from "@/hooks/useSEO";
@@ -34,8 +34,6 @@ interface CardData {
   roles: string[];
 }
 
-const formatRole = (r: string) =>
-  r.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 
 function buildVCard(c: CardData): string {
   const lines = [
@@ -225,19 +223,12 @@ const BusinessCardPage = () => {
                 <p className="text-muted-foreground mt-1">{card.job_title}</p>
               )}
               <div className="flex flex-wrap gap-1.5 justify-center mt-3">
-                {card.department && (
+              {card.department && (
                   <Badge variant="outline" className="gap-1">
                     <Building2 className="h-3 w-3" />
                     {card.department}
                   </Badge>
                 )}
-                {card.roles
-                  .filter((r) => r !== "customer")
-                  .map((r) => (
-                    <Badge key={r} style={{ background: accent }} className="text-white">
-                      {formatRole(r)}
-                    </Badge>
-                  ))}
               </div>
             </div>
 
@@ -299,17 +290,13 @@ const BusinessCardPage = () => {
                 <Share2 className="h-4 w-4" />
                 Share
               </Button>
-              <Button onClick={nfcShare} variant="outline" className="gap-2">
-                <Radio className="h-4 w-4" />
-                NFC Write
+              <Button onClick={tapToShare} variant="outline" className="gap-2">
+                <Smartphone className="h-4 w-4" />
+                Tap Phones to Share
               </Button>
               <Button onClick={() => setShowQR((v) => !v)} variant="outline" className="gap-2">
                 <QrCode className="h-4 w-4" />
                 {showQR ? "Hide QR" : "Show QR"}
-              </Button>
-              <Button onClick={tapToShare} className="gap-2 col-span-2 text-white" style={{ background: accent }}>
-                <Smartphone className="h-4 w-4" />
-                Tap Phones to Share
               </Button>
             </div>
 
