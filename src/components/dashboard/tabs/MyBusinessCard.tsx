@@ -125,16 +125,19 @@ const MyBusinessCard = () => {
                 <ExternalLink className="w-4 h-4 mr-1" />Preview
               </Link>
             </Button>
-            <Button size="sm" variant="outline" onClick={writeNFC}><Radio className="w-4 h-4 mr-1" />Write to NFC</Button>
+            <Button size="sm" variant="outline" onClick={tapToShare}><Smartphone className="w-4 h-4 mr-1" />Tap Phones to Share</Button>
           </div>
-          <div className="flex flex-wrap gap-1">
-            {roles.filter((r) => r !== "customer").map((r) => (
-              <Badge key={r} variant="secondary">{formatRole(r)}</Badge>
-            ))}
-            {roles.filter((r) => r !== "customer").length === 0 && (
-              <span className="text-xs text-muted-foreground">No staff role assigned — card will not be publicly listed.</span>
-            )}
-          </div>
+          {showShareQR && (
+            <div className="mt-3 flex flex-col items-center gap-2 rounded-lg bg-white p-4">
+              <img
+                src={`https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(cardUrl)}`}
+                alt="Scan to view business card"
+                width={220}
+                height={220}
+              />
+              <p className="text-xs text-gray-600 break-all text-center">{cardUrl}</p>
+            </div>
+          )}
         </CardContent>
       </Card>
 
