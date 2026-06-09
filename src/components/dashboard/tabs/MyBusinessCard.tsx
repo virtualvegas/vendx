@@ -81,19 +81,24 @@ const MyBusinessCard = () => {
     toast.success("Link copied");
   };
 
-  const tapToShare = async () => {
+  const tapToShare = () => {
+    setShowShareQR(true);
+  };
+
+  const writeNfcTag = async () => {
+    if (typeof window === "undefined" || !("NDEFReader" in window)) {
+      toast.error("NFC writing requires Chrome on Android. iPhones can't program tags from the browser — use the 'NFC Tools' app.");
+      return;
+    }
     try {
-      if (navigator.share) {
-        await navigator.share({
-          title: `${form.full_name || "VendX"} Business Card`,
-          text: form.job_title ? `${form.full_name}, ${form.job_title}` : form.full_name || "VendX business card",
-          url: cardUrl,
-        });
-        return;
-      }
-      setShowShareQR(true);
-    } catch {
-      setShowShareQR(true);
+      // @ts-ignore - Web NFC not in lib.dom
+      const ndef = new NDEFReader();
+      toast.info("Hold a blank NFC tag against the back of your phone…");
+      // @ts-ignore
+      await ndef.write({ records: [{ recordType: "url", data: cardUrl }] });
+      toast.success("NFC tag programmed!");
+    } catch (e: any) {
+      toast.error(e?.message || "Could not write to NFC tag");
     }
   };
 
