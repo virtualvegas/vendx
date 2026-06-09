@@ -79,6 +79,8 @@ const DashboardOverview = () => {
       if (error) throw error;
       return data || [];
     },
+  });
+
   // POS receipts (30 days)
   const { data: posReceipts } = useQuery({
     queryKey: ["dashboard-pos-receipts"],
