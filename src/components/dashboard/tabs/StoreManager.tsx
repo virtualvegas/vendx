@@ -160,6 +160,7 @@ const StoreManager = () => {
       price: 0,
       category: "apparel",
       stock: 0,
+      low_stock_threshold: 5,
       is_active: true,
       is_featured: false,
       is_subscription: false,
@@ -167,8 +168,6 @@ const StoreManager = () => {
       images: [""],
       retail_status: "online_only",
       retail_links: [],
-      shopify_handle: "",
-      shopify_variant_id: "",
     });
     setEditingProduct(null);
   };
@@ -194,6 +193,7 @@ const StoreManager = () => {
       price: product.price,
       category: product.category,
       stock: product.stock,
+      low_stock_threshold: (fullProduct as any)?.low_stock_threshold ?? 5,
       is_active: product.is_active,
       is_featured: product.is_featured,
       is_subscription: product.is_subscription,
@@ -201,8 +201,6 @@ const StoreManager = () => {
       images: fullProduct?.images?.length ? fullProduct.images : [""],
       retail_status: fullProduct?.retail_status || "online_only",
       retail_links: retailLinks,
-      shopify_handle: (fullProduct as any)?.shopify_handle || "",
-      shopify_variant_id: (fullProduct as any)?.shopify_variant_id || "",
     });
     setProductDialogOpen(true);
   };
@@ -218,6 +216,7 @@ const StoreManager = () => {
       price: productForm.price,
       category: productForm.category,
       stock: productForm.stock,
+      low_stock_threshold: productForm.low_stock_threshold,
       is_active: productForm.is_active,
       is_featured: productForm.is_featured,
       is_subscription: productForm.is_subscription,
@@ -225,8 +224,6 @@ const StoreManager = () => {
       images: productForm.images.filter(img => img.trim() !== ""),
       retail_status: productForm.retail_status,
       retail_links: productForm.retail_links.filter(l => l.store && l.url),
-      shopify_handle: productForm.shopify_handle || null,
-      shopify_variant_id: productForm.shopify_variant_id || null,
     };
 
     if (editingProduct) {
