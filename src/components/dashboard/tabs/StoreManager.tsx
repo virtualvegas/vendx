@@ -101,8 +101,8 @@ const StoreManager = () => {
     shopify_variant_id: "" as string,
   });
 
-  const { products: shopifyProducts, loading: shopifyLoading } = useShopifyProducts();
-  const [shopifySearch, setShopifySearch] = useState("");
+
+
 
   useEffect(() => {
     fetchData();
