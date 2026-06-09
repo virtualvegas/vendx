@@ -710,9 +710,17 @@ const StoreManager = () => {
                       <TableCell className="font-medium">{product.name}</TableCell>
                       <TableCell className="capitalize">{product.category}</TableCell>
                       <TableCell>${product.price.toFixed(2)}</TableCell>
-                      <TableCell>{product.stock}</TableCell>
                       <TableCell>
-                        <div className="flex gap-1">
+                        {product.stock <= 0 ? (
+                          <Badge variant="destructive">Out</Badge>
+                        ) : product.stock <= ((product as any).low_stock_threshold ?? 5) ? (
+                          <Badge className="bg-amber-500/20 text-amber-400 border border-amber-500/40"><AlertTriangle className="w-3 h-3 mr-1" />{product.stock}</Badge>
+                        ) : (
+                          <span>{product.stock}</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex gap-1 flex-wrap">
                           {product.is_active && <Badge variant="outline" className="text-green-400">Active</Badge>}
                           {product.is_featured && <Badge variant="outline" className="text-primary">Featured</Badge>}
                           {product.is_subscription && <Badge variant="outline" className="text-accent">Sub</Badge>}
