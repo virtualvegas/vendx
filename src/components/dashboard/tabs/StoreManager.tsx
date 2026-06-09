@@ -140,11 +140,13 @@ const StoreManager = () => {
     const totalRevenue = ordersData?.reduce((sum, o) => sum + Number(o.total), 0) || 0;
     const activeSubscribers = subsData?.filter(s => s.status === "active").length || 0;
     
+    const lowStockCount = (productsData as any[] | null)?.filter(p => p.stock !== null && p.stock <= (p.low_stock_threshold ?? 5)).length || 0;
     setStats({
       totalProducts: productsData?.length || 0,
       totalOrders: ordersData?.length || 0,
       revenue: totalRevenue,
-      subscribers: activeSubscribers
+      subscribers: activeSubscribers,
+      lowStock: lowStockCount,
     });
 
     setLoading(false);
