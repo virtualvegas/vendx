@@ -6,7 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { 
   DollarSign, MapPin, Monitor, AlertTriangle, 
-  TrendingUp, Package, ShoppingCart, Gamepad2, Leaf
+  TrendingUp, Package, ShoppingCart, Gamepad2, Leaf,
+  Receipt, Wrench, Banknote, Ticket
 } from "lucide-react";
 import { MachineStatsCards, BaseMachine } from "@/components/machines";
 import {
