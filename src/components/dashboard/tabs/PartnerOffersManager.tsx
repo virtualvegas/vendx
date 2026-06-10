@@ -391,12 +391,27 @@ const PartnerOffersManager = () => {
             <RefreshCw className="w-4 h-4 mr-2" />
             Refresh
           </Button>
+          <Button onClick={exportCSV} variant="outline" size="sm" disabled={offers.length === 0}>
+            <Download className="w-4 h-4 mr-2" />
+            Export
+          </Button>
           <Button onClick={() => setShowOfferDialog(true)}>
             <Plus className="w-4 h-4 mr-2" />
             Add Offer
           </Button>
         </div>
       </div>
+
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+        <Input
+          className="pl-10"
+          placeholder="Search by partner, offer, or code…"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+      </div>
+
 
       {/* Stats */}
       <div className="grid md:grid-cols-4 gap-4">
