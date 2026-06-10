@@ -169,7 +169,6 @@ const tabGroups: TabGroup[] = [
       { id: "finance", label: "Finance Overview", icon: DollarSign, requiredRoles: r("finance") },
       { id: "finance-manager", label: "Finance Manager", icon: Wallet, requiredRoles: r("finance-manager") },
       { id: "vendx-pay", label: "VendX Pay", icon: Wallet, requiredRoles: r("vendx-pay") },
-      { id: "merchant-api", label: "Merchant API", icon: Globe, requiredRoles: r("merchant-api") },
       { id: "gift-cards", label: "Gift Cards", icon: Gift, requiredRoles: r("gift-cards") },
       { id: "payouts", label: "Payouts (Partners & Artists)", icon: DollarSign, requiredRoles: r("payouts") },
       { id: "profit-splits", label: "Profit Splits", icon: Percent, requiredRoles: r("profit-splits") },
@@ -247,6 +246,7 @@ const tabGroups: TabGroup[] = [
     label: "System Administration",
     tabs: [
       { id: "admin-settings", label: "Users & Roles", icon: Users, requiredRoles: r("admin-settings") },
+      { id: "merchant-api", label: "Merchant API", icon: Globe, requiredRoles: r("merchant-api") },
       { id: "income-streams", label: "Income Streams", icon: Globe, requiredRoles: r("income-streams") },
       { id: "audit-logs", label: "Audit Logs", icon: FileText, requiredRoles: r("audit-logs") },
     ],
