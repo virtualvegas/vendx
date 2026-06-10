@@ -167,6 +167,7 @@ const tabGroups: TabGroup[] = [
       { id: "merchant-api", label: "Merchant API", icon: Globe, requiredRoles: ["super_admin", "finance_accounting"] },
       { id: "gift-cards", label: "Gift Cards", icon: Gift, requiredRoles: ["super_admin"] },
       { id: "payouts", label: "Partner Payouts", icon: DollarSign, requiredRoles: ["super_admin", "finance_accounting"] },
+      { id: "artist-payouts", label: "Artist Payouts", icon: DollarSign, requiredRoles: ["super_admin", "finance_accounting"] },
       { id: "profit-splits", label: "Profit Splits", icon: Percent, requiredRoles: ["super_admin", "finance_accounting"] },
     ],
   },
@@ -182,6 +183,7 @@ const tabGroups: TabGroup[] = [
       { id: "rewards-manager", label: "Rewards Catalog", icon: Gift, requiredRoles: ["super_admin", "marketing_sales"] },
       { id: "partner-offers", label: "Partner Offers", icon: Percent, requiredRoles: ["super_admin", "marketing_sales"] },
       { id: "brand-links", label: "Brand Links", icon: Globe, requiredRoles: ["super_admin", "marketing_sales"] },
+      { id: "quests-manager", label: "Quest Builder", icon: Swords, requiredRoles: ["super_admin", "marketing_sales"] },
     ],
   },
 
@@ -190,27 +192,37 @@ const tabGroups: TabGroup[] = [
     id: "store-group",
     label: "Online Store",
     tabs: [
-      { id: "store-manager", label: "Orders", icon: ShoppingCart, requiredRoles: ["super_admin"] },
-      { id: "products-manager", label: "Subscriptions", icon: Package, requiredRoles: ["super_admin"] },
-      { id: "waitlist-manager", label: "Waitlist", icon: Users, requiredRoles: ["super_admin"] },
-      { id: "funnels", label: "Funnels", icon: GitBranch, requiredRoles: ["super_admin"] },
+      { id: "store-manager", label: "Store Management", icon: ShoppingCart, requiredRoles: ["super_admin"] },
+      { id: "products-manager", label: "Subscription Plans", icon: Package, requiredRoles: ["super_admin"] },
+      { id: "waitlist-manager", label: "Store Waitlist", icon: Users, requiredRoles: ["super_admin"] },
+      { id: "funnels", label: "Sales Funnels", icon: GitBranch, requiredRoles: ["super_admin"] },
     ],
   },
 
-  // === CONTENT & CMS ===
+  // === WEBSITE CONTENT ===
   {
-    id: "content-group",
-    label: "Content & CMS",
+    id: "website-content",
+    label: "Website Content",
     tabs: [
       { id: "news", label: "News Articles", icon: Newspaper, requiredRoles: ["super_admin"] },
       { id: "business-content", label: "Business Page", icon: Briefcase, requiredRoles: ["super_admin"] },
-      { id: "video-games", label: "Video Games", icon: Gamepad2, requiredRoles: ["super_admin"] },
-      { id: "media-manager", label: "Music & Film", icon: Disc3, requiredRoles: ["super_admin"] },
+      { id: "careers", label: "Careers", icon: Briefcase, requiredRoles: ["super_admin"] },
+      { id: "site-policies", label: "Site Policies", icon: FileText, requiredRoles: ["super_admin"] },
+      { id: "divisions-manager", label: "Divisions", icon: Layers, requiredRoles: ["super_admin"] },
+    ],
+  },
+
+  // === MEDIA & ENTERTAINMENT ===
+  {
+    id: "media-content",
+    label: "Media & Entertainment",
+    tabs: [
+      { id: "media-manager", label: "Music & Film Catalog", icon: Disc3, requiredRoles: ["super_admin"] },
       { id: "artists-manager", label: "Artists", icon: Users, requiredRoles: ["super_admin"] },
       { id: "releases-tracks", label: "Releases & Tracks", icon: Music, requiredRoles: ["super_admin"] },
-      { id: "media-shop-manager", label: "Media Shop", icon: ShoppingCart, requiredRoles: ["super_admin"] },
-      { id: "track-shop-manager", label: "Track Shop", icon: Music, requiredRoles: ["super_admin"] },
-      { id: "artist-payouts", label: "Artist Payouts", icon: DollarSign, requiredRoles: ["super_admin"] },
+      { id: "media-shop-manager", label: "Media Merch Shop", icon: ShoppingCart, requiredRoles: ["super_admin"] },
+      { id: "track-shop-manager", label: "Track / Beat Shop", icon: Music, requiredRoles: ["super_admin"] },
+      { id: "video-games", label: "Video Games", icon: Gamepad2, requiredRoles: ["super_admin"] },
     ],
   },
 
@@ -223,19 +235,15 @@ const tabGroups: TabGroup[] = [
       { id: "offices", label: "VendX Offices", icon: Building2, requiredRoles: ["super_admin"] },
       { id: "events-rentals", label: "Events & Rentals", icon: Calendar, requiredRoles: ["super_admin", "event_manager"] },
       { id: "stands-manager", label: "Stands", icon: Store, requiredRoles: ["super_admin"] },
-      { id: "divisions-manager", label: "Divisions", icon: Layers, requiredRoles: ["super_admin"] },
     ],
   },
 
-  // === ADMIN SETTINGS ===
+  // === SYSTEM ADMINISTRATION ===
   {
     id: "admin",
-    label: "Administration",
+    label: "System Administration",
     tabs: [
-      { id: "careers", label: "Careers", icon: Briefcase, requiredRoles: ["super_admin"] },
-      { id: "quests-manager", label: "Quest Builder", icon: Swords, requiredRoles: ["super_admin", "marketing_sales"] },
-      { id: "site-policies", label: "Site Policies", icon: FileText, requiredRoles: ["super_admin"] },
-      { id: "admin-settings", label: "System Settings", icon: Settings, requiredRoles: ["super_admin"] },
+      { id: "admin-settings", label: "Users & Roles", icon: Users, requiredRoles: ["super_admin"] },
       { id: "income-streams", label: "Income Streams", icon: Globe, requiredRoles: ["super_admin"] },
       { id: "audit-logs", label: "Audit Logs", icon: FileText, requiredRoles: ["super_admin"] },
     ],
