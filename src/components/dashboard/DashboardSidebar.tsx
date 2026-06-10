@@ -171,8 +171,7 @@ const tabGroups: TabGroup[] = [
       { id: "vendx-pay", label: "VendX Pay", icon: Wallet, requiredRoles: r("vendx-pay") },
       { id: "merchant-api", label: "Merchant API", icon: Globe, requiredRoles: r("merchant-api") },
       { id: "gift-cards", label: "Gift Cards", icon: Gift, requiredRoles: r("gift-cards") },
-      { id: "payouts", label: "Partner Payouts", icon: DollarSign, requiredRoles: r("payouts") },
-      { id: "artist-payouts", label: "Artist Payouts", icon: DollarSign, requiredRoles: r("artist-payouts") },
+      { id: "payouts", label: "Payouts (Partners & Artists)", icon: DollarSign, requiredRoles: r("payouts") },
       { id: "profit-splits", label: "Profit Splits", icon: Percent, requiredRoles: r("profit-splits") },
     ],
   },
@@ -222,7 +221,6 @@ const tabGroups: TabGroup[] = [
     id: "media-content",
     label: "Media & Entertainment",
     tabs: [
-      { id: "media-manager", label: "Music & Film Catalog", icon: Disc3, requiredRoles: r("media-manager") },
       { id: "artists-manager", label: "Artists", icon: Users, requiredRoles: r("artists-manager") },
       { id: "releases-tracks", label: "Releases & Tracks", icon: Music, requiredRoles: r("releases-tracks") },
       { id: "media-shop-manager", label: "Media Merch Shop", icon: ShoppingCart, requiredRoles: r("media-shop-manager") },
