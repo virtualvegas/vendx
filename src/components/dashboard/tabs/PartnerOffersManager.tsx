@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Percent, Plus, RefreshCw, Copy, Wand2, Calendar, Users, TrendingUp, Clock, CheckCircle, XCircle, Sparkles } from "lucide-react";
+import { Percent, Plus, RefreshCw, Copy, Wand2, Calendar, Users, TrendingUp, Clock, CheckCircle, XCircle, Sparkles, Search, Download } from "lucide-react";
 
 interface PartnerOffer {
   id: string;
@@ -44,6 +44,7 @@ const PartnerOffersManager = () => {
   const [offers, setOffers] = useState<PartnerOffer[]>([]);
   const [redemptions, setRedemptions] = useState<OfferRedemption[]>([]);
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
   const [showOfferDialog, setShowOfferDialog] = useState(false);
   const [editingOffer, setEditingOffer] = useState<PartnerOffer | null>(null);
   const [offerForm, setOfferForm] = useState({
@@ -225,11 +226,35 @@ const PartnerOffersManager = () => {
     return offer.current_redemptions >= offer.max_redemptions;
   };
 
-  const activeOffers = offers.filter((o) => o.is_active && !isExpired(o) && !isMaxedOut(o));
-  const expiredOffers = offers.filter((o) => isExpired(o) || isMaxedOut(o) || !o.is_active);
+  const matchesSearch = (o: PartnerOffer) => {
+    if (!search) return true;
+    const q = search.toLowerCase();
+    return o.partner_name.toLowerCase().includes(q) ||
+      o.offer_name.toLowerCase().includes(q) ||
+      o.discount_code.toLowerCase().includes(q);
+  };
+
+  const activeOffers = offers.filter((o) => o.is_active && !isExpired(o) && !isMaxedOut(o)).filter(matchesSearch);
+  const expiredOffers = offers.filter((o) => isExpired(o) || isMaxedOut(o) || !o.is_active).filter(matchesSearch);
 
   const totalRedemptions = offers.reduce((sum, o) => sum + o.current_redemptions, 0);
   const totalPointsRedeemed = redemptions.reduce((sum, r) => sum + Math.abs(r.points), 0);
+
+  const exportCSV = () => {
+    const rows = [["Partner", "Offer", "Code", "Discount Type", "Discount Value", "Points Cost", "Redemptions", "Max", "Valid Until", "Active"]];
+    offers.forEach((o) => rows.push([
+      o.partner_name, o.offer_name, o.discount_code, o.discount_type, String(o.discount_value),
+      String(o.points_cost), String(o.current_redemptions), o.max_redemptions ? String(o.max_redemptions) : "",
+      o.valid_until || "", o.is_active ? "yes" : "no",
+    ]));
+    const csv = rows.map((r) => r.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(",")).join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `partner-offers-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    toast({ title: "Exported", description: `${offers.length} offers` });
+  };
 
   if (loading) {
     return <div className="text-center py-8 text-muted-foreground">Loading partner offers...</div>;
@@ -366,12 +391,27 @@ const PartnerOffersManager = () => {
             <RefreshCw className="w-4 h-4 mr-2" />
             Refresh
           </Button>
+          <Button onClick={exportCSV} variant="outline" size="sm" disabled={offers.length === 0}>
+            <Download className="w-4 h-4 mr-2" />
+            Export
+          </Button>
           <Button onClick={() => setShowOfferDialog(true)}>
             <Plus className="w-4 h-4 mr-2" />
             Add Offer
           </Button>
         </div>
       </div>
+
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+        <Input
+          className="pl-10"
+          placeholder="Search by partner, offer, or code…"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+      </div>
+
 
       {/* Stats */}
       <div className="grid md:grid-cols-4 gap-4">
