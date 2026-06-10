@@ -78,6 +78,8 @@ import ExternalServiceManager from "@/components/dashboard/tabs/ExternalServiceM
 import BusinessExternalService from "@/components/dashboard/tabs/business-owner/BusinessExternalService";
 import MyBusinessCard from "@/components/dashboard/tabs/MyBusinessCard";
 import { useSEO } from "@/hooks/useSEO";
+import { hasTabAccess } from "@/components/dashboard/tabAccess";
+import { ShieldAlert } from "lucide-react";
 export type AppRole =
   | "super_admin"
   | "global_operations_manager"
