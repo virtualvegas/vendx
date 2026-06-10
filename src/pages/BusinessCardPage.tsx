@@ -25,6 +25,8 @@ interface CardData {
   card_slug: string | null;
   card_accent_color: string | null;
   roles: string[];
+  company_name?: string | null;
+  divisions?: { id: string; name: string; slug: string }[] | null;
 }
 
 
