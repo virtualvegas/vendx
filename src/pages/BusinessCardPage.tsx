@@ -31,12 +31,18 @@ interface CardData {
 
 
 function buildVCard(c: CardData): string {
+  const company = c.company_name || "VendX Global Corporation";
+  const divNames = (c.divisions || []).map((d) => d.name).join(", ");
+  const orgParts = [company];
+  if (c.department) orgParts.push(c.department);
+  else if (divNames) orgParts.push(divNames);
   const lines = [
     "BEGIN:VCARD",
     "VERSION:3.0",
     `FN:${c.full_name || ""}`,
     c.job_title ? `TITLE:${c.job_title}` : "",
-    `ORG:VendX${c.department ? `;${c.department}` : ""}`,
+    `ORG:${orgParts.join(";")}`,
+    divNames ? `CATEGORIES:${divNames}` : "",
     c.email ? `EMAIL;TYPE=WORK:${c.email}` : "",
     c.phone ? `TEL;TYPE=WORK,VOICE:${c.phone}` : "",
     c.website_url ? `URL:${c.website_url}` : "",
