@@ -6651,6 +6651,42 @@ export type Database = {
         }
         Relationships: []
       }
+      vendx_email_subscribers: {
+        Row: {
+          audience: string
+          consent: boolean
+          created_at: string
+          email: string
+          id: string
+          metadata: Json
+          source: string | null
+          unsubscribed_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          audience?: string
+          consent?: boolean
+          created_at?: string
+          email: string
+          id?: string
+          metadata?: Json
+          source?: string | null
+          unsubscribed_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          audience?: string
+          consent?: boolean
+          created_at?: string
+          email?: string
+          id?: string
+          metadata?: Json
+          source?: string | null
+          unsubscribed_at?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       vendx_external_clients: {
         Row: {
           billing_address: string | null
