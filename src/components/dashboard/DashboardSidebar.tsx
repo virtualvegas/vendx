@@ -221,7 +221,6 @@ const tabGroups: TabGroup[] = [
     id: "media-content",
     label: "Media & Entertainment",
     tabs: [
-      { id: "media-manager", label: "Music & Film Catalog", icon: Disc3, requiredRoles: r("media-manager") },
       { id: "artists-manager", label: "Artists", icon: Users, requiredRoles: r("artists-manager") },
       { id: "releases-tracks", label: "Releases & Tracks", icon: Music, requiredRoles: r("releases-tracks") },
       { id: "media-shop-manager", label: "Media Merch Shop", icon: ShoppingCart, requiredRoles: r("media-shop-manager") },
