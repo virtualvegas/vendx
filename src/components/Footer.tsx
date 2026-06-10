@@ -1,11 +1,15 @@
 import { Linkedin, Youtube, Mail, Facebook, Instagram } from "lucide-react";
 import { Link } from "react-router-dom";
 import { SiTiktok, SiX, SiSnapchat } from "react-icons/si";
+import NewsletterSignup from "@/components/NewsletterSignup";
 
 const Footer = () => {
   return (
     <footer className="relative border-t border-border/50">
       <div className="container mx-auto px-4 py-12">
+        <div className="mb-10 p-6 rounded-2xl bg-gradient-to-r from-primary/10 via-card/40 to-accent/10 border border-primary/20">
+          <NewsletterSignup source="footer" />
+        </div>
         <div className="grid md:grid-cols-4 gap-8 mb-8">
           <div className="space-y-4">
             <h3 className="text-2xl font-bold glow-blue">VendX</h3>
