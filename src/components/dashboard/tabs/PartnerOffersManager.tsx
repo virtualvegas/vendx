@@ -44,6 +44,7 @@ const PartnerOffersManager = () => {
   const [offers, setOffers] = useState<PartnerOffer[]>([]);
   const [redemptions, setRedemptions] = useState<OfferRedemption[]>([]);
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
   const [showOfferDialog, setShowOfferDialog] = useState(false);
   const [editingOffer, setEditingOffer] = useState<PartnerOffer | null>(null);
   const [offerForm, setOfferForm] = useState({
