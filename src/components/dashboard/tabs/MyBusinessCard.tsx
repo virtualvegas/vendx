@@ -8,13 +8,17 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { Link } from "react-router-dom";
-import { ExternalLink, Save, Copy, IdCard, Smartphone, Radio } from "lucide-react";
+import { ExternalLink, Save, Copy, IdCard, Smartphone, Radio, Building2 } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+
+type Division = { id: string; name: string; slug: string };
 
 const MyBusinessCard = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [userId, setUserId] = useState<string>("");
   const [showShareQR, setShowShareQR] = useState(false);
+  const [divisions, setDivisions] = useState<Division[]>([]);
   const [form, setForm] = useState({
     full_name: "",
     email: "",
@@ -28,6 +32,7 @@ const MyBusinessCard = () => {
     card_slug: "",
     card_public: true,
     card_accent_color: "#3B82F6",
+    division_ids: [] as string[],
   });
 
   useEffect(() => {
@@ -36,7 +41,11 @@ const MyBusinessCard = () => {
       if (!user) return;
       setUserId(user.id);
 
-      const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle();
+      const [{ data: profile }, { data: divs }] = await Promise.all([
+        supabase.from("profiles").select("*").eq("id", user.id).maybeSingle(),
+        supabase.from("divisions").select("id,name,slug").order("name"),
+      ]);
+      setDivisions((divs as Division[]) || []);
 
       if (profile) {
         setForm({
@@ -52,11 +61,21 @@ const MyBusinessCard = () => {
           card_slug: profile.card_slug || "",
           card_public: profile.card_public ?? true,
           card_accent_color: profile.card_accent_color || "#3B82F6",
+          division_ids: (profile as any).division_ids || [],
         });
       }
       setLoading(false);
     })();
   }, []);
+
+  const toggleDivision = (id: string) => {
+    setForm((f) => ({
+      ...f,
+      division_ids: f.division_ids.includes(id)
+        ? f.division_ids.filter((d) => d !== id)
+        : [...f.division_ids, id],
+    }));
+  };
 
   const save = async () => {
     setSaving(true);
@@ -166,6 +185,33 @@ const MyBusinessCard = () => {
           <div>
             <Label>Department</Label>
             <Input value={form.department} onChange={(e) => setForm({ ...form, department: e.target.value })} placeholder="Operations, Engineering, …" />
+          </div>
+
+          <div className="sm:col-span-2">
+            <Label className="flex items-center gap-2">
+              <Building2 className="w-4 h-4 text-primary" />
+              Assigned Divisions
+            </Label>
+            <p className="text-xs text-muted-foreground mb-2">
+              Pick the VendX Global Corporation divisions you represent. Shown as badges on your public card.
+            </p>
+            <div className="grid sm:grid-cols-2 gap-2 rounded-md border border-border p-3 max-h-64 overflow-y-auto">
+              {divisions.length === 0 && (
+                <p className="text-xs text-muted-foreground col-span-full">No divisions available.</p>
+              )}
+              {divisions.map((d) => {
+                const checked = form.division_ids.includes(d.id);
+                return (
+                  <label
+                    key={d.id}
+                    className="flex items-center gap-2 text-sm cursor-pointer hover:bg-muted/50 rounded px-2 py-1.5"
+                  >
+                    <Checkbox checked={checked} onCheckedChange={() => toggleDivision(d.id)} />
+                    <span className="truncate">{d.name}</span>
+                  </label>
+                );
+              })}
+            </div>
           </div>
           <div>
             <Label>Custom URL Slug</Label>

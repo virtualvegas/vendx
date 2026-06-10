@@ -3887,6 +3887,7 @@ export type Database = {
           card_slug: string | null
           created_at: string
           department: string | null
+          division_ids: string[] | null
           email: string
           full_name: string | null
           id: string
@@ -3909,6 +3910,7 @@ export type Database = {
           card_slug?: string | null
           created_at?: string
           department?: string | null
+          division_ids?: string[] | null
           email: string
           full_name?: string | null
           id: string
@@ -3931,6 +3933,7 @@ export type Database = {
           card_slug?: string | null
           created_at?: string
           department?: string | null
+          division_ids?: string[] | null
           email?: string
           full_name?: string | null
           id?: string
