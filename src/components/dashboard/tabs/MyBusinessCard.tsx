@@ -8,7 +8,10 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { Link } from "react-router-dom";
-import { ExternalLink, Save, Copy, IdCard, Smartphone, Radio } from "lucide-react";
+import { ExternalLink, Save, Copy, IdCard, Smartphone, Radio, Building2 } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+
+type Division = { id: string; name: string; slug: string };
 
 const MyBusinessCard = () => {
   const [loading, setLoading] = useState(true);
