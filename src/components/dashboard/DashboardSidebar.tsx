@@ -176,6 +176,7 @@ const tabGroups: TabGroup[] = [
     label: "Marketing & Engagement",
     tabs: [
       { id: "marketing", label: "Campaigns", icon: TrendingUp, requiredRoles: ["super_admin", "marketing_sales"] },
+      { id: "email-subscribers", label: "Email Subscribers", icon: Mail, requiredRoles: ["super_admin", "marketing_sales"] },
       { id: "adreach-manager", label: "AdReach", icon: Megaphone, requiredRoles: ["super_admin"] },
       { id: "rewards-manager", label: "Rewards Catalog", icon: Gift, requiredRoles: ["super_admin", "marketing_sales"] },
       { id: "partner-offers", label: "Partner Offers", icon: Percent, requiredRoles: ["super_admin", "marketing_sales"] },
