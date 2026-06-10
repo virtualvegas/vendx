@@ -65,7 +65,7 @@ import AdReachManager from "@/components/dashboard/tabs/AdReachManager";
 import ArtistsManager from "@/components/dashboard/tabs/ArtistsManager";
 import ReleaseTracksManager from "@/components/dashboard/tabs/ReleaseTracksManager";
 import BusinessAdReach from "@/components/dashboard/tabs/business-owner/BusinessAdReach";
-import ArtistPayoutsManager from "@/components/dashboard/tabs/ArtistPayoutsManager";
+
 import GiftCardManager from "@/components/dashboard/tabs/GiftCardManager";
 import AuditLogsViewer from "@/components/dashboard/tabs/AuditLogsViewer";
 import EcoVendSuggestionsManager from "@/components/dashboard/tabs/EcoVendSuggestionsManager";
@@ -371,7 +371,7 @@ const DashboardPage = () => {
       case "site-policies":
         content = <PoliciesManager />; break;
       case "artist-payouts":
-        content = <ArtistPayoutsManager />; break;
+        content = <PayoutsManager defaultTab="artists" />; break;
       case "audit-logs":
         content = <AuditLogsViewer />; break;
       case "ecovend-suggestions":
