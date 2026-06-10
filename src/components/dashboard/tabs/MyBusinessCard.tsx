@@ -186,6 +186,33 @@ const MyBusinessCard = () => {
             <Label>Department</Label>
             <Input value={form.department} onChange={(e) => setForm({ ...form, department: e.target.value })} placeholder="Operations, Engineering, …" />
           </div>
+
+          <div className="sm:col-span-2">
+            <Label className="flex items-center gap-2">
+              <Building2 className="w-4 h-4 text-primary" />
+              Assigned Divisions
+            </Label>
+            <p className="text-xs text-muted-foreground mb-2">
+              Pick the VendX Global Corporation divisions you represent. Shown as badges on your public card.
+            </p>
+            <div className="grid sm:grid-cols-2 gap-2 rounded-md border border-border p-3 max-h-64 overflow-y-auto">
+              {divisions.length === 0 && (
+                <p className="text-xs text-muted-foreground col-span-full">No divisions available.</p>
+              )}
+              {divisions.map((d) => {
+                const checked = form.division_ids.includes(d.id);
+                return (
+                  <label
+                    key={d.id}
+                    className="flex items-center gap-2 text-sm cursor-pointer hover:bg-muted/50 rounded px-2 py-1.5"
+                  >
+                    <Checkbox checked={checked} onCheckedChange={() => toggleDivision(d.id)} />
+                    <span className="truncate">{d.name}</span>
+                  </label>
+                );
+              })}
+            </div>
+          </div>
           <div>
             <Label>Custom URL Slug</Label>
             <Input value={form.card_slug} onChange={(e) => setForm({ ...form, card_slug: e.target.value })} placeholder="jane-doe" />
