@@ -41,7 +41,11 @@ const MyBusinessCard = () => {
       if (!user) return;
       setUserId(user.id);
 
-      const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle();
+      const [{ data: profile }, { data: divs }] = await Promise.all([
+        supabase.from("profiles").select("*").eq("id", user.id).maybeSingle(),
+        supabase.from("divisions").select("id,name,slug").order("name"),
+      ]);
+      setDivisions((divs as Division[]) || []);
 
       if (profile) {
         setForm({
@@ -57,11 +61,21 @@ const MyBusinessCard = () => {
           card_slug: profile.card_slug || "",
           card_public: profile.card_public ?? true,
           card_accent_color: profile.card_accent_color || "#3B82F6",
+          division_ids: (profile as any).division_ids || [],
         });
       }
       setLoading(false);
     })();
   }, []);
+
+  const toggleDivision = (id: string) => {
+    setForm((f) => ({
+      ...f,
+      division_ids: f.division_ids.includes(id)
+        ? f.division_ids.filter((d) => d !== id)
+        : [...f.division_ids, id],
+    }));
+  };
 
   const save = async () => {
     setSaving(true);
