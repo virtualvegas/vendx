@@ -232,7 +232,7 @@ const BusinessCardPage = () => {
               )}
             </div>
 
-            <div className="grid grid-cols-2 gap-2 mb-2">
+            <div className="grid grid-cols-2 gap-3">
               <Button onClick={downloadVCard} className="gap-2" style={{ background: accent }}>
                 <Download className="h-4 w-4" />
                 Save Contact
@@ -241,36 +241,7 @@ const BusinessCardPage = () => {
                 <Share2 className="h-4 w-4" />
                 Share
               </Button>
-              <Button onClick={tapToShare} variant="outline" className="gap-2">
-                <Smartphone className="h-4 w-4" />
-                Tap to Share
-              </Button>
-              <Button onClick={() => setShowQR((v) => !v)} variant="outline" className="gap-2">
-                <QrCode className="h-4 w-4" />
-                {showQR ? "Hide QR" : "Show QR"}
-              </Button>
-              <Button onClick={writeNfcTag} variant="outline" className="gap-2 col-span-2">
-                <Radio className="h-4 w-4" />
-                Program NFC Tag (Android)
-              </Button>
             </div>
-            <p className="text-[11px] text-muted-foreground text-center mt-1 mb-1">
-              Hold a blank NFC sticker/card to your Android — then anyone (iPhone or Android) who taps it opens your card. No app needed.
-            </p>
-
-
-
-            {showQR && (
-              <div className="mt-4 flex flex-col items-center gap-2 p-4 rounded-lg bg-white">
-                <img
-                  src={`https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(shareUrl)}`}
-                  alt="QR Code"
-                  width={240}
-                  height={240}
-                />
-                <p className="text-xs text-gray-600 break-all text-center">{shareUrl}</p>
-              </div>
-            )}
           </CardContent>
         </Card>
 
@@ -278,45 +249,6 @@ const BusinessCardPage = () => {
           Powered by <span className="font-semibold">VendX</span> · Digital Business Cards
         </p>
       </div>
-
-      {tapMode && (
-        <div
-          className="fixed inset-0 z-50 flex flex-col items-center justify-center p-6 bg-black/95 backdrop-blur-sm"
-          onClick={() => setTapMode(false)}
-        >
-          <button
-            className="absolute top-5 right-5 p-2 rounded-full bg-white/10 text-white"
-            onClick={(e) => { e.stopPropagation(); setTapMode(false); }}
-            aria-label="Close"
-          >
-            <X className="h-5 w-5" />
-          </button>
-          <p className="text-white/90 text-center text-lg font-medium mb-2">
-            Point the other phone's camera here
-          </p>
-          <p className="text-white/60 text-center text-sm mb-6 max-w-xs">
-            Works on iPhone &amp; Android — no app needed. The camera app will recognize the code and open your card.
-          </p>
-          <div className="p-5 rounded-2xl bg-white shadow-2xl">
-            <img
-              src={`https://api.qrserver.com/v1/create-qr-code/?size=420x420&margin=0&data=${encodeURIComponent(shareUrl)}`}
-              alt="Scan to view card"
-              width={320}
-              height={320}
-              className="block"
-            />
-          </div>
-          <p className="text-white/70 text-xs mt-5 break-all text-center max-w-xs">{shareUrl}</p>
-          <Button
-            variant="secondary"
-            className="mt-5 gap-2"
-            onClick={(e) => { e.stopPropagation(); share(); }}
-          >
-            <Share2 className="h-4 w-4" />
-            Or send via Share / AirDrop
-          </Button>
-        </div>
-      )}
     </div>
   );
 };
