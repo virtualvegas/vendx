@@ -78,6 +78,8 @@ import ExternalServiceManager from "@/components/dashboard/tabs/ExternalServiceM
 import BusinessExternalService from "@/components/dashboard/tabs/business-owner/BusinessExternalService";
 import MyBusinessCard from "@/components/dashboard/tabs/MyBusinessCard";
 import { useSEO } from "@/hooks/useSEO";
+import { hasTabAccess } from "@/components/dashboard/tabAccess";
+import { ShieldAlert } from "lucide-react";
 export type AppRole =
   | "super_admin"
   | "global_operations_manager"
@@ -230,6 +232,20 @@ const DashboardPage = () => {
   ];
 
   const renderTabContent = () => {
+    // Route guard: block access to tabs whose required roles the user lacks.
+    if (!hasTabAccess(activeTab, roles)) {
+      return (
+        <div className="w-full p-6">
+          <div className="max-w-md mx-auto rounded-lg border border-border bg-card p-6 text-center">
+            <ShieldAlert className="h-10 w-10 text-destructive mx-auto mb-3" />
+            <h3 className="text-lg font-semibold mb-1">Access restricted</h3>
+            <p className="text-sm text-muted-foreground">
+              You don't have permission to view this section. Contact an administrator if you believe this is a mistake.
+            </p>
+          </div>
+        </div>
+      );
+    }
     let content: React.ReactNode;
     switch (activeTab) {
       case "overview":

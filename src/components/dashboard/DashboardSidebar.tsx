@@ -42,6 +42,7 @@ import {
   Mail,
 } from "lucide-react";
 import { AppRole } from "@/pages/DashboardPage";
+import { TAB_ACCESS } from "./tabAccess";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -61,6 +62,10 @@ interface TabGroup {
   tabs: TabConfig[];
 }
 
+// Pull required roles from shared TAB_ACCESS so sidebar visibility and the
+// DashboardPage route guard cannot drift apart.
+const r = (id: string): AppRole[] => TAB_ACCESS[id] ?? [];
+
 // Organized tab groups by role/function
 // Note: Users can have multiple roles and will see all tabs their roles grant access to
 const tabGroups: TabGroup[] = [
@@ -69,11 +74,11 @@ const tabGroups: TabGroup[] = [
     id: "customer",
     label: "My Account",
     tabs: [
-      { id: "my-orders", label: "My Orders", icon: Package, requiredRoles: ["customer", "business_owner", "employee_operator", "super_admin", "global_operations_manager", "regional_manager", "finance_accounting", "marketing_sales", "warehouse_logistics", "tech_support_lead", "event_manager", "support"] },
-      { id: "my-wallet", label: "My Wallet", icon: Wallet, requiredRoles: ["customer", "business_owner", "employee_operator", "super_admin", "global_operations_manager", "regional_manager", "finance_accounting", "marketing_sales", "warehouse_logistics", "tech_support_lead", "event_manager", "support"] },
-      { id: "my-tickets", label: "My Tickets", icon: Ticket, requiredRoles: ["customer", "business_owner", "employee_operator", "super_admin", "global_operations_manager", "regional_manager", "finance_accounting", "marketing_sales", "warehouse_logistics", "tech_support_lead", "event_manager", "support"] },
-      { id: "my-rewards", label: "My Rewards", icon: Gift, requiredRoles: ["customer", "business_owner", "employee_operator", "super_admin", "global_operations_manager", "regional_manager", "finance_accounting", "marketing_sales", "warehouse_logistics", "tech_support_lead", "event_manager", "support"] },
-      { id: "my-business-card", label: "My Business Card", icon: Users, requiredRoles: ["business_owner", "employee_operator", "super_admin", "global_operations_manager", "regional_manager", "finance_accounting", "marketing_sales", "warehouse_logistics", "tech_support_lead", "event_manager", "support"] },
+      { id: "my-orders", label: "My Orders", icon: Package, requiredRoles: r("my-orders") },
+      { id: "my-wallet", label: "My Wallet", icon: Wallet, requiredRoles: r("my-wallet") },
+      { id: "my-tickets", label: "My Tickets", icon: Ticket, requiredRoles: r("my-tickets") },
+      { id: "my-rewards", label: "My Rewards", icon: Gift, requiredRoles: r("my-rewards") },
+      { id: "my-business-card", label: "My Business Card", icon: Users, requiredRoles: r("my-business-card") },
     ],
   },
 
@@ -82,13 +87,13 @@ const tabGroups: TabGroup[] = [
     id: "business",
     label: "My Business",
     tabs: [
-      { id: "business-overview", label: "Overview", icon: LayoutDashboard, requiredRoles: ["business_owner", "super_admin"] },
-      { id: "business-locations", label: "My Locations", icon: MapPin, requiredRoles: ["business_owner", "super_admin"] },
-      { id: "business-machines", label: "My Machines", icon: Monitor, requiredRoles: ["business_owner", "super_admin"] },
-      { id: "business-payouts", label: "Payouts", icon: DollarSign, requiredRoles: ["business_owner", "super_admin"] },
-      { id: "business-adreach", label: "AdReach", icon: Megaphone, requiredRoles: ["business_owner", "super_admin"] },
-      { id: "business-support", label: "Support", icon: Wrench, requiredRoles: ["business_owner", "super_admin"] },
-      { id: "business-external-service", label: "Machine Service", icon: Wrench, requiredRoles: ["business_owner", "super_admin"] },
+      { id: "business-overview", label: "Overview", icon: LayoutDashboard, requiredRoles: r("business-overview") },
+      { id: "business-locations", label: "My Locations", icon: MapPin, requiredRoles: r("business-locations") },
+      { id: "business-machines", label: "My Machines", icon: Monitor, requiredRoles: r("business-machines") },
+      { id: "business-payouts", label: "Payouts", icon: DollarSign, requiredRoles: r("business-payouts") },
+      { id: "business-adreach", label: "AdReach", icon: Megaphone, requiredRoles: r("business-adreach") },
+      { id: "business-support", label: "Support", icon: Wrench, requiredRoles: r("business-support") },
+      { id: "business-external-service", label: "Machine Service", icon: Wrench, requiredRoles: r("business-external-service") },
     ],
   },
 
@@ -97,9 +102,9 @@ const tabGroups: TabGroup[] = [
     id: "field-ops",
     label: "Field Operations",
     tabs: [
-      { id: "my-route", label: "My Route", icon: Navigation, requiredRoles: ["super_admin", "global_operations_manager", "regional_manager", "employee_operator"] },
-      { id: "service-tech", label: "Service Operations", icon: Wrench, requiredRoles: ["super_admin", "global_operations_manager", "employee_operator"] },
-      { id: "daily-tasks", label: "Daily Tasks", icon: CheckSquare, requiredRoles: ["super_admin", "employee_operator"] },
+      { id: "my-route", label: "My Route", icon: Navigation, requiredRoles: r("my-route") },
+      { id: "service-tech", label: "Service Operations", icon: Wrench, requiredRoles: r("service-tech") },
+      { id: "daily-tasks", label: "Daily Tasks", icon: CheckSquare, requiredRoles: r("daily-tasks") },
     ],
   },
 
@@ -108,10 +113,10 @@ const tabGroups: TabGroup[] = [
     id: "arcade-prizes",
     label: "Arcade & Prizes",
     tabs: [
-      { id: "arcade-game-titles", label: "Game Titles", icon: Gamepad2, requiredRoles: ["super_admin", "employee_operator"] },
-      { id: "ticket-prizes", label: "Prize Catalog", icon: Gift, requiredRoles: ["super_admin", "employee_operator"] },
-      { id: "prize-inventory", label: "Prize Inventory", icon: Package, requiredRoles: ["super_admin", "warehouse_logistics", "employee_operator"] },
-      { id: "prize-wins", label: "Prize Wins Log", icon: Trophy, requiredRoles: ["super_admin", "finance_accounting", "employee_operator"] },
+      { id: "arcade-game-titles", label: "Game Titles", icon: Gamepad2, requiredRoles: r("arcade-game-titles") },
+      { id: "ticket-prizes", label: "Prize Catalog", icon: Gift, requiredRoles: r("ticket-prizes") },
+      { id: "prize-inventory", label: "Prize Inventory", icon: Package, requiredRoles: r("prize-inventory") },
+      { id: "prize-wins", label: "Prize Wins Log", icon: Trophy, requiredRoles: r("prize-wins") },
     ],
   },
 
@@ -120,11 +125,11 @@ const tabGroups: TabGroup[] = [
     id: "management",
     label: "Overview & Reports",
     tabs: [
-      { id: "overview", label: "Dashboard", icon: LayoutDashboard, requiredRoles: ["super_admin", "global_operations_manager", "finance_accounting", "regional_manager"] },
-      { id: "global-analytics", label: "Global Analytics", icon: TrendingUp, requiredRoles: ["super_admin", "finance_accounting"] },
-      { id: "global-operations", label: "Global Operations", icon: Globe, requiredRoles: ["super_admin", "global_operations_manager"] },
-      { id: "regional-reports", label: "Regional Reports", icon: MapPin, requiredRoles: ["super_admin", "regional_manager"] },
-      { id: "arcade-analytics", label: "Arcade Analytics", icon: BarChart3, requiredRoles: ["super_admin", "finance_accounting"] },
+      { id: "overview", label: "Dashboard", icon: LayoutDashboard, requiredRoles: r("overview") },
+      { id: "global-analytics", label: "Global Analytics", icon: TrendingUp, requiredRoles: r("global-analytics") },
+      { id: "global-operations", label: "Global Operations", icon: Globe, requiredRoles: r("global-operations") },
+      { id: "regional-reports", label: "Regional Reports", icon: MapPin, requiredRoles: r("regional-reports") },
+      { id: "arcade-analytics", label: "Arcade Analytics", icon: BarChart3, requiredRoles: r("arcade-analytics") },
     ],
   },
 
@@ -133,13 +138,13 @@ const tabGroups: TabGroup[] = [
     id: "machines-tech",
     label: "Machines & Technical",
     tabs: [
-      { id: "machine-registry", label: "Machine Registry", icon: Monitor, requiredRoles: ["super_admin", "tech_support_lead", "support"] },
-      { id: "ecosnack-lockers", label: "EcoVend Lockers", icon: Leaf, requiredRoles: ["super_admin", "employee_operator", "tech_support_lead", "support"] },
-      { id: "ecovend-suggestions", label: "EcoVend Suggestions", icon: Lightbulb, requiredRoles: ["super_admin", "global_operations_manager"] },
-      { id: "ticket-config", label: "Ticket Payouts", icon: Ticket, requiredRoles: ["super_admin"] },
-      { id: "kiosk-categories", label: "Kiosk Setup", icon: Layers, requiredRoles: ["super_admin", "tech_support_lead"] },
-      { id: "technical-support", label: "Tech Support", icon: Wrench, requiredRoles: ["super_admin", "tech_support_lead", "support"] },
-      { id: "external-service", label: "External Service (Client Machines)", icon: Wrench, requiredRoles: ["super_admin", "tech_support_lead", "support", "finance_accounting", "global_operations_manager", "regional_manager", "employee_operator"] },
+      { id: "machine-registry", label: "Machine Registry", icon: Monitor, requiredRoles: r("machine-registry") },
+      { id: "ecosnack-lockers", label: "EcoVend Lockers", icon: Leaf, requiredRoles: r("ecosnack-lockers") },
+      { id: "ecovend-suggestions", label: "EcoVend Suggestions", icon: Lightbulb, requiredRoles: r("ecovend-suggestions") },
+      { id: "ticket-config", label: "Ticket Payouts", icon: Ticket, requiredRoles: r("ticket-config") },
+      { id: "kiosk-categories", label: "Kiosk Setup", icon: Layers, requiredRoles: r("kiosk-categories") },
+      { id: "technical-support", label: "Tech Support", icon: Wrench, requiredRoles: r("technical-support") },
+      { id: "external-service", label: "External Service (Client Machines)", icon: Wrench, requiredRoles: r("external-service") },
     ],
   },
 
@@ -148,10 +153,10 @@ const tabGroups: TabGroup[] = [
     id: "routes-logistics",
     label: "Routes & Logistics",
     tabs: [
-      { id: "route-manager", label: "Route Manager", icon: Route, requiredRoles: ["super_admin", "global_operations_manager"] },
-      { id: "warehouses", label: "VendX Warehouses", icon: Warehouse, requiredRoles: ["super_admin"] },
-      { id: "inventory-logistics", label: "Product Catalog", icon: Package, requiredRoles: ["super_admin", "warehouse_logistics"] },
-      { id: "machine-inventory", label: "Machine Inventory", icon: Monitor, requiredRoles: ["super_admin", "warehouse_logistics", "employee_operator"] },
+      { id: "route-manager", label: "Route Manager", icon: Route, requiredRoles: r("route-manager") },
+      { id: "warehouses", label: "VendX Warehouses", icon: Warehouse, requiredRoles: r("warehouses") },
+      { id: "inventory-logistics", label: "Product Catalog", icon: Package, requiredRoles: r("inventory-logistics") },
+      { id: "machine-inventory", label: "Machine Inventory", icon: Monitor, requiredRoles: r("machine-inventory") },
     ],
   },
 
@@ -161,14 +166,14 @@ const tabGroups: TabGroup[] = [
     id: "finance-group",
     label: "Finance & Payouts",
     tabs: [
-      { id: "finance", label: "Finance Overview", icon: DollarSign, requiredRoles: ["super_admin", "finance_accounting"] },
-      { id: "finance-manager", label: "Finance Manager", icon: Wallet, requiredRoles: ["super_admin", "finance_accounting"] },
-      { id: "vendx-pay", label: "VendX Pay", icon: Wallet, requiredRoles: ["super_admin", "finance_accounting"] },
-      { id: "merchant-api", label: "Merchant API", icon: Globe, requiredRoles: ["super_admin", "finance_accounting"] },
-      { id: "gift-cards", label: "Gift Cards", icon: Gift, requiredRoles: ["super_admin"] },
-      { id: "payouts", label: "Partner Payouts", icon: DollarSign, requiredRoles: ["super_admin", "finance_accounting"] },
-      { id: "artist-payouts", label: "Artist Payouts", icon: DollarSign, requiredRoles: ["super_admin", "finance_accounting"] },
-      { id: "profit-splits", label: "Profit Splits", icon: Percent, requiredRoles: ["super_admin", "finance_accounting"] },
+      { id: "finance", label: "Finance Overview", icon: DollarSign, requiredRoles: r("finance") },
+      { id: "finance-manager", label: "Finance Manager", icon: Wallet, requiredRoles: r("finance-manager") },
+      { id: "vendx-pay", label: "VendX Pay", icon: Wallet, requiredRoles: r("vendx-pay") },
+      { id: "merchant-api", label: "Merchant API", icon: Globe, requiredRoles: r("merchant-api") },
+      { id: "gift-cards", label: "Gift Cards", icon: Gift, requiredRoles: r("gift-cards") },
+      { id: "payouts", label: "Partner Payouts", icon: DollarSign, requiredRoles: r("payouts") },
+      { id: "artist-payouts", label: "Artist Payouts", icon: DollarSign, requiredRoles: r("artist-payouts") },
+      { id: "profit-splits", label: "Profit Splits", icon: Percent, requiredRoles: r("profit-splits") },
     ],
   },
 
@@ -177,13 +182,13 @@ const tabGroups: TabGroup[] = [
     id: "marketing-group",
     label: "Marketing & Engagement",
     tabs: [
-      { id: "marketing", label: "Campaigns", icon: TrendingUp, requiredRoles: ["super_admin", "marketing_sales"] },
-      { id: "email-subscribers", label: "Email Subscribers", icon: Mail, requiredRoles: ["super_admin", "marketing_sales"] },
-      { id: "adreach-manager", label: "AdReach", icon: Megaphone, requiredRoles: ["super_admin"] },
-      { id: "rewards-manager", label: "Rewards Catalog", icon: Gift, requiredRoles: ["super_admin", "marketing_sales"] },
-      { id: "partner-offers", label: "Partner Offers", icon: Percent, requiredRoles: ["super_admin", "marketing_sales"] },
-      { id: "brand-links", label: "Brand Links", icon: Globe, requiredRoles: ["super_admin", "marketing_sales"] },
-      { id: "quests-manager", label: "Quest Builder", icon: Swords, requiredRoles: ["super_admin", "marketing_sales"] },
+      { id: "marketing", label: "Campaigns", icon: TrendingUp, requiredRoles: r("marketing") },
+      { id: "email-subscribers", label: "Email Subscribers", icon: Mail, requiredRoles: r("email-subscribers") },
+      { id: "adreach-manager", label: "AdReach", icon: Megaphone, requiredRoles: r("adreach-manager") },
+      { id: "rewards-manager", label: "Rewards Catalog", icon: Gift, requiredRoles: r("rewards-manager") },
+      { id: "partner-offers", label: "Partner Offers", icon: Percent, requiredRoles: r("partner-offers") },
+      { id: "brand-links", label: "Brand Links", icon: Globe, requiredRoles: r("brand-links") },
+      { id: "quests-manager", label: "Quest Builder", icon: Swords, requiredRoles: r("quests-manager") },
     ],
   },
 
@@ -192,10 +197,10 @@ const tabGroups: TabGroup[] = [
     id: "store-group",
     label: "Online Store",
     tabs: [
-      { id: "store-manager", label: "Store Management", icon: ShoppingCart, requiredRoles: ["super_admin"] },
-      { id: "products-manager", label: "Subscription Plans", icon: Package, requiredRoles: ["super_admin"] },
-      { id: "waitlist-manager", label: "Store Waitlist", icon: Users, requiredRoles: ["super_admin"] },
-      { id: "funnels", label: "Sales Funnels", icon: GitBranch, requiredRoles: ["super_admin"] },
+      { id: "store-manager", label: "Store Management", icon: ShoppingCart, requiredRoles: r("store-manager") },
+      { id: "products-manager", label: "Subscription Plans", icon: Package, requiredRoles: r("products-manager") },
+      { id: "waitlist-manager", label: "Store Waitlist", icon: Users, requiredRoles: r("waitlist-manager") },
+      { id: "funnels", label: "Sales Funnels", icon: GitBranch, requiredRoles: r("funnels") },
     ],
   },
 
@@ -204,11 +209,11 @@ const tabGroups: TabGroup[] = [
     id: "website-content",
     label: "Website Content",
     tabs: [
-      { id: "news", label: "News Articles", icon: Newspaper, requiredRoles: ["super_admin"] },
-      { id: "business-content", label: "Business Page", icon: Briefcase, requiredRoles: ["super_admin"] },
-      { id: "careers", label: "Careers", icon: Briefcase, requiredRoles: ["super_admin"] },
-      { id: "site-policies", label: "Site Policies", icon: FileText, requiredRoles: ["super_admin"] },
-      { id: "divisions-manager", label: "Divisions", icon: Layers, requiredRoles: ["super_admin"] },
+      { id: "news", label: "News Articles", icon: Newspaper, requiredRoles: r("news") },
+      { id: "business-content", label: "Business Page", icon: Briefcase, requiredRoles: r("business-content") },
+      { id: "careers", label: "Careers", icon: Briefcase, requiredRoles: r("careers") },
+      { id: "site-policies", label: "Site Policies", icon: FileText, requiredRoles: r("site-policies") },
+      { id: "divisions-manager", label: "Divisions", icon: Layers, requiredRoles: r("divisions-manager") },
     ],
   },
 
@@ -217,12 +222,12 @@ const tabGroups: TabGroup[] = [
     id: "media-content",
     label: "Media & Entertainment",
     tabs: [
-      { id: "media-manager", label: "Music & Film Catalog", icon: Disc3, requiredRoles: ["super_admin"] },
-      { id: "artists-manager", label: "Artists", icon: Users, requiredRoles: ["super_admin"] },
-      { id: "releases-tracks", label: "Releases & Tracks", icon: Music, requiredRoles: ["super_admin"] },
-      { id: "media-shop-manager", label: "Media Merch Shop", icon: ShoppingCart, requiredRoles: ["super_admin"] },
-      { id: "track-shop-manager", label: "Track / Beat Shop", icon: Music, requiredRoles: ["super_admin"] },
-      { id: "video-games", label: "Video Games", icon: Gamepad2, requiredRoles: ["super_admin"] },
+      { id: "media-manager", label: "Music & Film Catalog", icon: Disc3, requiredRoles: r("media-manager") },
+      { id: "artists-manager", label: "Artists", icon: Users, requiredRoles: r("artists-manager") },
+      { id: "releases-tracks", label: "Releases & Tracks", icon: Music, requiredRoles: r("releases-tracks") },
+      { id: "media-shop-manager", label: "Media Merch Shop", icon: ShoppingCart, requiredRoles: r("media-shop-manager") },
+      { id: "track-shop-manager", label: "Track / Beat Shop", icon: Music, requiredRoles: r("track-shop-manager") },
+      { id: "video-games", label: "Video Games", icon: Gamepad2, requiredRoles: r("video-games") },
     ],
   },
 
@@ -231,10 +236,10 @@ const tabGroups: TabGroup[] = [
     id: "locations-group",
     label: "Locations & Sites",
     tabs: [
-      { id: "locations", label: "Global Locations", icon: Map, requiredRoles: ["super_admin"] },
-      { id: "offices", label: "VendX Offices", icon: Building2, requiredRoles: ["super_admin"] },
-      { id: "events-rentals", label: "Events & Rentals", icon: Calendar, requiredRoles: ["super_admin", "event_manager"] },
-      { id: "stands-manager", label: "Stands", icon: Store, requiredRoles: ["super_admin"] },
+      { id: "locations", label: "Global Locations", icon: Map, requiredRoles: r("locations") },
+      { id: "offices", label: "VendX Offices", icon: Building2, requiredRoles: r("offices") },
+      { id: "events-rentals", label: "Events & Rentals", icon: Calendar, requiredRoles: r("events-rentals") },
+      { id: "stands-manager", label: "Stands", icon: Store, requiredRoles: r("stands-manager") },
     ],
   },
 
@@ -243,9 +248,9 @@ const tabGroups: TabGroup[] = [
     id: "admin",
     label: "System Administration",
     tabs: [
-      { id: "admin-settings", label: "Users & Roles", icon: Users, requiredRoles: ["super_admin"] },
-      { id: "income-streams", label: "Income Streams", icon: Globe, requiredRoles: ["super_admin"] },
-      { id: "audit-logs", label: "Audit Logs", icon: FileText, requiredRoles: ["super_admin"] },
+      { id: "admin-settings", label: "Users & Roles", icon: Users, requiredRoles: r("admin-settings") },
+      { id: "income-streams", label: "Income Streams", icon: Globe, requiredRoles: r("income-streams") },
+      { id: "audit-logs", label: "Audit Logs", icon: FileText, requiredRoles: r("audit-logs") },
     ],
   },
 ];
