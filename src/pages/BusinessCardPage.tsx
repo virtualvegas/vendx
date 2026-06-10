@@ -49,8 +49,6 @@ const BusinessCardPage = () => {
   const { slug } = useParams<{ slug: string }>();
   const [card, setCard] = useState<CardData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [showQR, setShowQR] = useState(false);
-  const [tapMode, setTapMode] = useState(false);
 
   useSEO({
     title: card?.full_name
