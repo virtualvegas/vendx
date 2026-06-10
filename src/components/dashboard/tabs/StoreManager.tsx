@@ -551,13 +551,15 @@ const StoreManager = () => {
       </div>
 
       <Tabs defaultValue="products">
-        <TabsList>
-          <TabsTrigger value="products">Products</TabsTrigger>
-          <TabsTrigger value="orders">Orders</TabsTrigger>
-          <TabsTrigger value="inventory">Inventory</TabsTrigger>
-          <TabsTrigger value="addons">Add-ons</TabsTrigger>
-          <TabsTrigger value="subscriptions">Subscriptions</TabsTrigger>
-        </TabsList>
+        <div className="overflow-x-auto">
+          <TabsList className="h-auto">
+            <TabsTrigger value="products" className="gap-1.5"><Package className="h-3.5 w-3.5" />Products</TabsTrigger>
+            <TabsTrigger value="orders" className="gap-1.5"><ShoppingCart className="h-3.5 w-3.5" />Orders</TabsTrigger>
+            <TabsTrigger value="inventory" className="gap-1.5"><AlertTriangle className="h-3.5 w-3.5" />Inventory</TabsTrigger>
+            <TabsTrigger value="addons" className="gap-1.5"><Plus className="h-3.5 w-3.5" />Add-ons</TabsTrigger>
+            <TabsTrigger value="subscriptions" className="gap-1.5"><Users className="h-3.5 w-3.5" />Subscriptions</TabsTrigger>
+          </TabsList>
+        </div>
 
         <TabsContent value="inventory" className="mt-4"><StoreInventoryPanel /></TabsContent>
         <TabsContent value="addons" className="mt-4"><StoreAddonsPanel /></TabsContent>
