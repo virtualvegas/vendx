@@ -18,6 +18,7 @@ const MyBusinessCard = () => {
   const [saving, setSaving] = useState(false);
   const [userId, setUserId] = useState<string>("");
   const [showShareQR, setShowShareQR] = useState(false);
+  const [divisions, setDivisions] = useState<Division[]>([]);
   const [form, setForm] = useState({
     full_name: "",
     email: "",
@@ -31,6 +32,7 @@ const MyBusinessCard = () => {
     card_slug: "",
     card_public: true,
     card_accent_color: "#3B82F6",
+    division_ids: [] as string[],
   });
 
   useEffect(() => {
