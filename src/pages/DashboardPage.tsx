@@ -371,7 +371,7 @@ const DashboardPage = () => {
       case "site-policies":
         content = <PoliciesManager />; break;
       case "artist-payouts":
-        content = <ArtistPayoutsManager />; break;
+        content = <PayoutsManager defaultTab="artists" />; break;
       case "audit-logs":
         content = <AuditLogsViewer />; break;
       case "ecovend-suggestions":
