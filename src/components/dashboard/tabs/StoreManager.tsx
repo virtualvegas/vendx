@@ -328,6 +328,141 @@ const StoreManager = () => {
     });
   };
 
+  // -------- Filtering --------
+  const filteredProducts = products.filter((p) => {
+    if (productCategoryFilter !== "all" && p.category !== productCategoryFilter) return false;
+    if (productStatusFilter === "active" && !p.is_active) return false;
+    if (productStatusFilter === "inactive" && p.is_active) return false;
+    if (productStatusFilter === "featured" && !p.is_featured) return false;
+    if (productStatusFilter === "low_stock") {
+      const t = (p as any).low_stock_threshold ?? 5;
+      if (!(p.stock !== null && p.stock <= t)) return false;
+    }
+    if (productStatusFilter === "out") {
+      if (p.stock > 0) return false;
+    }
+    if (productSearch) {
+      const q = productSearch.toLowerCase();
+      if (!p.name.toLowerCase().includes(q) && !p.slug.toLowerCase().includes(q)) return false;
+    }
+    return true;
+  });
+
+  const filteredOrders = orders.filter((o) => {
+    if (orderStatusFilter !== "all" && o.status !== orderStatusFilter) return false;
+    if (orderSourceFilter === "shopify" && !o.shopify_order_id) return false;
+    if (orderSourceFilter === "internal" && o.shopify_order_id) return false;
+    if (orderSearch) {
+      const q = orderSearch.toLowerCase();
+      const hay = [
+        o.order_number, o.shopify_order_number, o.id,
+        o.customer_email, o.customer_name,
+        o.profiles?.email, o.profiles?.full_name,
+        o.tracking_number,
+      ].filter(Boolean).join(" ").toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    return true;
+  });
+
+  const filteredSubs = subscriptions.filter((s) => subStatusFilter === "all" ? true : s.status === subStatusFilter);
+
+  // -------- Inline / bulk actions --------
+  const toggleProductSelected = (id: string) => {
+    setSelectedProductIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+  const toggleAllProducts = () => {
+    if (selectedProductIds.size === filteredProducts.length && filteredProducts.length > 0) {
+      setSelectedProductIds(new Set());
+    } else {
+      setSelectedProductIds(new Set(filteredProducts.map((p) => p.id)));
+    }
+  };
+
+  const bulkUpdateProducts = async (patch: Partial<Product>) => {
+    if (selectedProductIds.size === 0) return;
+    const ids = Array.from(selectedProductIds);
+    const { error } = await supabase.from("store_products").update(patch as any).in("id", ids);
+    if (error) { toast.error("Bulk update failed"); return; }
+    toast.success(`Updated ${ids.length} product(s)`);
+    setSelectedProductIds(new Set());
+    fetchData();
+  };
+
+  const bulkDeleteProducts = async () => {
+    if (selectedProductIds.size === 0) return;
+    if (!confirm(`Delete ${selectedProductIds.size} product(s)? This cannot be undone.`)) return;
+    const ids = Array.from(selectedProductIds);
+    const { error } = await supabase.from("store_products").delete().in("id", ids);
+    if (error) { toast.error("Bulk delete failed"); return; }
+    toast.success(`Deleted ${ids.length} product(s)`);
+    setSelectedProductIds(new Set());
+    fetchData();
+  };
+
+  const adjustStock = async (product: Product, delta: number) => {
+    const next = Math.max(0, (product.stock || 0) + delta);
+    const { error } = await supabase.from("store_products").update({ stock: next }).eq("id", product.id);
+    if (error) { toast.error("Stock update failed"); return; }
+    setProducts((prev) => prev.map((p) => p.id === product.id ? { ...p, stock: next } : p));
+  };
+
+  const inlineUpdatePrice = async (product: Product, price: number) => {
+    if (isNaN(price) || price < 0 || price === product.price) return;
+    const { error } = await supabase.from("store_products").update({ price }).eq("id", product.id);
+    if (error) { toast.error("Price update failed"); return; }
+    setProducts((prev) => prev.map((p) => p.id === product.id ? { ...p, price } : p));
+    toast.success("Price updated");
+  };
+
+  const duplicateProduct = async (product: Product) => {
+    const { data: full } = await supabase.from("store_products").select("*").eq("id", product.id).single();
+    if (!full) { toast.error("Could not load product"); return; }
+    const { id, created_at, updated_at, ...rest } = full as any;
+    const copy = { ...rest, name: `${rest.name} (Copy)`, slug: `${rest.slug}-copy-${Date.now().toString(36)}`, is_active: false };
+    const { error } = await supabase.from("store_products").insert(copy);
+    if (error) { toast.error("Duplicate failed"); return; }
+    toast.success("Product duplicated");
+    fetchData();
+  };
+
+  const exportOrdersCsv = () => {
+    const rows = filteredOrders.map((o) => ({
+      order: o.order_number || o.shopify_order_number || o.id,
+      source: o.shopify_order_id ? "Shopify" : "Internal",
+      status: o.status,
+      customer: o.customer_name || o.profiles?.full_name || "Guest",
+      email: o.customer_email || o.profiles?.email || "",
+      items: o.store_order_items?.length || 0,
+      subtotal: Number(o.subtotal || 0).toFixed(2),
+      shipping: Number(o.shipping_cost || 0).toFixed(2),
+      total: Number(o.total || 0).toFixed(2),
+      tracking: o.tracking_number || "",
+      created_at: o.created_at,
+    }));
+    if (rows.length === 0) { toast.error("Nothing to export"); return; }
+    const headers = Object.keys(rows[0]);
+    const escape = (v: any) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+    const csv = [headers.join(","), ...rows.map((r) => headers.map((h) => escape((r as any)[h])).join(","))].join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `orders-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const copyToClipboard = (text: string, label = "Copied") => {
+    navigator.clipboard.writeText(text);
+    toast.success(label);
+  };
+
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case "paid": return "bg-green-500/20 text-green-400";
