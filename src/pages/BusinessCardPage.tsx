@@ -181,13 +181,22 @@ const BusinessCardPage = () => {
               {card.job_title && (
                 <p className="text-muted-foreground mt-1">{card.job_title}</p>
               )}
+              <p className="text-sm font-semibold mt-1" style={{ color: accent }}>
+                {card.company_name || "VendX Global Corporation"}
+              </p>
               <div className="flex flex-wrap gap-1.5 justify-center mt-3">
-              {card.department && (
+                {card.department && (
                   <Badge variant="outline" className="gap-1">
                     <Building2 className="h-3 w-3" />
                     {card.department}
                   </Badge>
                 )}
+                {(card.divisions || []).map((d) => (
+                  <Badge key={d.id} variant="secondary" className="gap-1">
+                    <Building2 className="h-3 w-3" />
+                    {d.name}
+                  </Badge>
+                ))}
               </div>
             </div>
 
