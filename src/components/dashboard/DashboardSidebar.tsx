@@ -39,6 +39,7 @@ import {
   Megaphone,
   Lightbulb,
   Warehouse,
+  Mail,
 } from "lucide-react";
 import { AppRole } from "@/pages/DashboardPage";
 import { cn } from "@/lib/utils";

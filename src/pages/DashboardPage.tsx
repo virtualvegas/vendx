@@ -11,6 +11,7 @@ import TechnicalSupport from "@/components/dashboard/tabs/TechnicalSupport";
 import Finance from "@/components/dashboard/tabs/Finance";
 import FinanceManager from "@/components/dashboard/tabs/FinanceManager";
 import Marketing from "@/components/dashboard/tabs/Marketing";
+import EmailSubscribersManager from "@/components/dashboard/tabs/EmailSubscribersManager";
 import InventoryLogistics from "@/components/dashboard/tabs/InventoryLogistics";
 import RegionalReports from "@/components/dashboard/tabs/RegionalReports";
 import DailyTasks from "@/components/dashboard/tabs/DailyTasks";
@@ -271,6 +272,8 @@ const DashboardPage = () => {
         content = <FinanceManager />; break;
       case "marketing":
         content = <Marketing />; break;
+      case "email-subscribers":
+        content = <EmailSubscribersManager />; break;
       case "inventory-logistics":
         content = <InventoryLogistics />; break;
       case "regional-reports":
