@@ -12,10 +12,12 @@ import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { 
-  Package, Plus, Edit, Trash2, ShoppingCart, DollarSign, 
-  Users, Loader2, RefreshCw, AlertTriangle, X 
+import {
+  Package, Plus, Edit, Trash2, ShoppingCart, DollarSign,
+  Users, Loader2, RefreshCw, AlertTriangle, X,
+  Search, Copy, Download, Minus, CopyPlus, Mail, ExternalLink, CheckSquare, Square
 } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import { formatDisplayDate } from "@/lib/dateUtils";
 import { AVAILABLE_STORES } from "@/components/store/RetailLinks";
 import { StoreInventoryPanel } from "./store/StoreInventoryPanel";
