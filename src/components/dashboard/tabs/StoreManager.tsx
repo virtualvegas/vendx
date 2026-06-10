@@ -12,10 +12,12 @@ import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { 
-  Package, Plus, Edit, Trash2, ShoppingCart, DollarSign, 
-  Users, Loader2, RefreshCw, AlertTriangle, X 
+import {
+  Package, Plus, Edit, Trash2, ShoppingCart, DollarSign,
+  Users, Loader2, RefreshCw, AlertTriangle, X,
+  Search, Copy, Download, Minus, CopyPlus, Mail, ExternalLink, CheckSquare, Square
 } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import { formatDisplayDate } from "@/lib/dateUtils";
 import { AVAILABLE_STORES } from "@/components/store/RetailLinks";
 import { StoreInventoryPanel } from "./store/StoreInventoryPanel";
@@ -81,6 +83,16 @@ const StoreManager = () => {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [trackingForm, setTrackingForm] = useState({ tracking_number: "", tracking_url: "", estimated_delivery: "", admin_notes: "" });
   const [stats, setStats] = useState({ totalProducts: 0, totalOrders: 0, revenue: 0, subscribers: 0, lowStock: 0 });
+
+  // Filters & selection
+  const [productSearch, setProductSearch] = useState("");
+  const [productCategoryFilter, setProductCategoryFilter] = useState<string>("all");
+  const [productStatusFilter, setProductStatusFilter] = useState<string>("all");
+  const [selectedProductIds, setSelectedProductIds] = useState<Set<string>>(new Set());
+  const [orderSearch, setOrderSearch] = useState("");
+  const [orderStatusFilter, setOrderStatusFilter] = useState<string>("all");
+  const [orderSourceFilter, setOrderSourceFilter] = useState<string>("all");
+  const [subStatusFilter, setSubStatusFilter] = useState<string>("all");
   
   const [productForm, setProductForm] = useState({
     name: "",
@@ -316,6 +328,141 @@ const StoreManager = () => {
     });
   };
 
+  // -------- Filtering --------
+  const filteredProducts = products.filter((p) => {
+    if (productCategoryFilter !== "all" && p.category !== productCategoryFilter) return false;
+    if (productStatusFilter === "active" && !p.is_active) return false;
+    if (productStatusFilter === "inactive" && p.is_active) return false;
+    if (productStatusFilter === "featured" && !p.is_featured) return false;
+    if (productStatusFilter === "low_stock") {
+      const t = (p as any).low_stock_threshold ?? 5;
+      if (!(p.stock !== null && p.stock <= t)) return false;
+    }
+    if (productStatusFilter === "out") {
+      if (p.stock > 0) return false;
+    }
+    if (productSearch) {
+      const q = productSearch.toLowerCase();
+      if (!p.name.toLowerCase().includes(q) && !p.slug.toLowerCase().includes(q)) return false;
+    }
+    return true;
+  });
+
+  const filteredOrders = orders.filter((o) => {
+    if (orderStatusFilter !== "all" && o.status !== orderStatusFilter) return false;
+    if (orderSourceFilter === "shopify" && !o.shopify_order_id) return false;
+    if (orderSourceFilter === "internal" && o.shopify_order_id) return false;
+    if (orderSearch) {
+      const q = orderSearch.toLowerCase();
+      const hay = [
+        o.order_number, o.shopify_order_number, o.id,
+        o.customer_email, o.customer_name,
+        o.profiles?.email, o.profiles?.full_name,
+        o.tracking_number,
+      ].filter(Boolean).join(" ").toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    return true;
+  });
+
+  const filteredSubs = subscriptions.filter((s) => subStatusFilter === "all" ? true : s.status === subStatusFilter);
+
+  // -------- Inline / bulk actions --------
+  const toggleProductSelected = (id: string) => {
+    setSelectedProductIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+  const toggleAllProducts = () => {
+    if (selectedProductIds.size === filteredProducts.length && filteredProducts.length > 0) {
+      setSelectedProductIds(new Set());
+    } else {
+      setSelectedProductIds(new Set(filteredProducts.map((p) => p.id)));
+    }
+  };
+
+  const bulkUpdateProducts = async (patch: Partial<Product>) => {
+    if (selectedProductIds.size === 0) return;
+    const ids = Array.from(selectedProductIds);
+    const { error } = await supabase.from("store_products").update(patch as any).in("id", ids);
+    if (error) { toast.error("Bulk update failed"); return; }
+    toast.success(`Updated ${ids.length} product(s)`);
+    setSelectedProductIds(new Set());
+    fetchData();
+  };
+
+  const bulkDeleteProducts = async () => {
+    if (selectedProductIds.size === 0) return;
+    if (!confirm(`Delete ${selectedProductIds.size} product(s)? This cannot be undone.`)) return;
+    const ids = Array.from(selectedProductIds);
+    const { error } = await supabase.from("store_products").delete().in("id", ids);
+    if (error) { toast.error("Bulk delete failed"); return; }
+    toast.success(`Deleted ${ids.length} product(s)`);
+    setSelectedProductIds(new Set());
+    fetchData();
+  };
+
+  const adjustStock = async (product: Product, delta: number) => {
+    const next = Math.max(0, (product.stock || 0) + delta);
+    const { error } = await supabase.from("store_products").update({ stock: next }).eq("id", product.id);
+    if (error) { toast.error("Stock update failed"); return; }
+    setProducts((prev) => prev.map((p) => p.id === product.id ? { ...p, stock: next } : p));
+  };
+
+  const inlineUpdatePrice = async (product: Product, price: number) => {
+    if (isNaN(price) || price < 0 || price === product.price) return;
+    const { error } = await supabase.from("store_products").update({ price }).eq("id", product.id);
+    if (error) { toast.error("Price update failed"); return; }
+    setProducts((prev) => prev.map((p) => p.id === product.id ? { ...p, price } : p));
+    toast.success("Price updated");
+  };
+
+  const duplicateProduct = async (product: Product) => {
+    const { data: full } = await supabase.from("store_products").select("*").eq("id", product.id).single();
+    if (!full) { toast.error("Could not load product"); return; }
+    const { id, created_at, updated_at, ...rest } = full as any;
+    const copy = { ...rest, name: `${rest.name} (Copy)`, slug: `${rest.slug}-copy-${Date.now().toString(36)}`, is_active: false };
+    const { error } = await supabase.from("store_products").insert(copy);
+    if (error) { toast.error("Duplicate failed"); return; }
+    toast.success("Product duplicated");
+    fetchData();
+  };
+
+  const exportOrdersCsv = () => {
+    const rows = filteredOrders.map((o) => ({
+      order: o.order_number || o.shopify_order_number || o.id,
+      source: o.shopify_order_id ? "Shopify" : "Internal",
+      status: o.status,
+      customer: o.customer_name || o.profiles?.full_name || "Guest",
+      email: o.customer_email || o.profiles?.email || "",
+      items: o.store_order_items?.length || 0,
+      subtotal: Number(o.subtotal || 0).toFixed(2),
+      shipping: Number(o.shipping_cost || 0).toFixed(2),
+      total: Number(o.total || 0).toFixed(2),
+      tracking: o.tracking_number || "",
+      created_at: o.created_at,
+    }));
+    if (rows.length === 0) { toast.error("Nothing to export"); return; }
+    const headers = Object.keys(rows[0]);
+    const escape = (v: any) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+    const csv = [headers.join(","), ...rows.map((r) => headers.map((h) => escape((r as any)[h])).join(","))].join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `orders-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const copyToClipboard = (text: string, label = "Copied") => {
+    navigator.clipboard.writeText(text);
+    toast.success(label);
+  };
+
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case "paid": return "bg-green-500/20 text-green-400";
@@ -404,13 +551,15 @@ const StoreManager = () => {
       </div>
 
       <Tabs defaultValue="products">
-        <TabsList>
-          <TabsTrigger value="products">Products</TabsTrigger>
-          <TabsTrigger value="orders">Orders</TabsTrigger>
-          <TabsTrigger value="inventory">Inventory</TabsTrigger>
-          <TabsTrigger value="addons">Add-ons</TabsTrigger>
-          <TabsTrigger value="subscriptions">Subscriptions</TabsTrigger>
-        </TabsList>
+        <div className="overflow-x-auto">
+          <TabsList className="h-auto">
+            <TabsTrigger value="products" className="gap-1.5"><Package className="h-3.5 w-3.5" />Products</TabsTrigger>
+            <TabsTrigger value="orders" className="gap-1.5"><ShoppingCart className="h-3.5 w-3.5" />Orders</TabsTrigger>
+            <TabsTrigger value="inventory" className="gap-1.5"><AlertTriangle className="h-3.5 w-3.5" />Inventory</TabsTrigger>
+            <TabsTrigger value="addons" className="gap-1.5"><Plus className="h-3.5 w-3.5" />Add-ons</TabsTrigger>
+            <TabsTrigger value="subscriptions" className="gap-1.5"><Users className="h-3.5 w-3.5" />Subscriptions</TabsTrigger>
+          </TabsList>
+        </div>
 
         <TabsContent value="inventory" className="mt-4"><StoreInventoryPanel /></TabsContent>
         <TabsContent value="addons" className="mt-4"><StoreAddonsPanel /></TabsContent>
@@ -692,52 +841,144 @@ const StoreManager = () => {
                 </DialogContent>
               </Dialog>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-3">
+              {/* Filter bar */}
+              <div className="flex flex-col md:flex-row gap-2 md:items-center">
+                <div className="relative flex-1">
+                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    value={productSearch}
+                    onChange={(e) => setProductSearch(e.target.value)}
+                    placeholder="Search name or slug..."
+                    className="pl-8"
+                  />
+                </div>
+                <Select value={productCategoryFilter} onValueChange={setProductCategoryFilter}>
+                  <SelectTrigger className="w-full md:w-44"><SelectValue placeholder="Category" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All categories</SelectItem>
+                    {categories.map((c) => <SelectItem key={c} value={c} className="capitalize">{c}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+                <Select value={productStatusFilter} onValueChange={setProductStatusFilter}>
+                  <SelectTrigger className="w-full md:w-44"><SelectValue placeholder="Status" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All status</SelectItem>
+                    <SelectItem value="active">Active</SelectItem>
+                    <SelectItem value="inactive">Inactive</SelectItem>
+                    <SelectItem value="featured">Featured</SelectItem>
+                    <SelectItem value="low_stock">Low stock</SelectItem>
+                    <SelectItem value="out">Out of stock</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Bulk action bar */}
+              {selectedProductIds.size > 0 && (
+                <div className="flex flex-wrap items-center gap-2 rounded-md border border-primary/30 bg-primary/5 px-3 py-2 text-sm">
+                  <span className="font-medium">{selectedProductIds.size} selected</span>
+                  <div className="flex-1" />
+                  <Button size="sm" variant="outline" onClick={() => bulkUpdateProducts({ is_active: true } as any)}>Activate</Button>
+                  <Button size="sm" variant="outline" onClick={() => bulkUpdateProducts({ is_active: false } as any)}>Deactivate</Button>
+                  <Button size="sm" variant="outline" onClick={() => bulkUpdateProducts({ is_featured: true } as any)}>Feature</Button>
+                  <Button size="sm" variant="outline" onClick={() => bulkUpdateProducts({ is_featured: false } as any)}>Unfeature</Button>
+                  <Button size="sm" variant="destructive" onClick={bulkDeleteProducts}><Trash2 className="h-3.5 w-3.5 mr-1" />Delete</Button>
+                  <Button size="sm" variant="ghost" onClick={() => setSelectedProductIds(new Set())}><X className="h-3.5 w-3.5" /></Button>
+                </div>
+              )}
+
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead className="w-10">
+                      <button onClick={toggleAllProducts} className="text-muted-foreground hover:text-foreground" aria-label="Select all">
+                        {selectedProductIds.size > 0 && selectedProductIds.size === filteredProducts.length
+                          ? <CheckSquare className="h-4 w-4" /> : <Square className="h-4 w-4" />}
+                      </button>
+                    </TableHead>
                     <TableHead>Name</TableHead>
                     <TableHead>Category</TableHead>
                     <TableHead>Price</TableHead>
                     <TableHead>Stock</TableHead>
                     <TableHead>Status</TableHead>
-                    <TableHead>Actions</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {products.map((product) => (
-                    <TableRow key={product.id}>
-                      <TableCell className="font-medium">{product.name}</TableCell>
-                      <TableCell className="capitalize">{product.category}</TableCell>
-                      <TableCell>${product.price.toFixed(2)}</TableCell>
-                      <TableCell>
-                        {product.stock <= 0 ? (
-                          <Badge variant="destructive">Out</Badge>
-                        ) : product.stock <= ((product as any).low_stock_threshold ?? 5) ? (
-                          <Badge className="bg-amber-500/20 text-amber-400 border border-amber-500/40"><AlertTriangle className="w-3 h-3 mr-1" />{product.stock}</Badge>
-                        ) : (
-                          <span>{product.stock}</span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex gap-1 flex-wrap">
-                          {product.is_active && <Badge variant="outline" className="text-green-400">Active</Badge>}
-                          {product.is_featured && <Badge variant="outline" className="text-primary">Featured</Badge>}
-                          {product.is_subscription && <Badge variant="outline" className="text-accent">Sub</Badge>}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex gap-2">
-                          <Button size="icon" variant="ghost" onClick={() => handleEditProduct(product)}>
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button size="icon" variant="ghost" className="text-destructive" onClick={() => handleDeleteProduct(product.id)}>
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
+                  {filteredProducts.map((product) => {
+                    const threshold = (product as any).low_stock_threshold ?? 5;
+                    const lowStock = product.stock > 0 && product.stock <= threshold;
+                    return (
+                      <TableRow key={product.id} data-state={selectedProductIds.has(product.id) ? "selected" : undefined}>
+                        <TableCell>
+                          <Checkbox
+                            checked={selectedProductIds.has(product.id)}
+                            onCheckedChange={() => toggleProductSelected(product.id)}
+                          />
+                        </TableCell>
+                        <TableCell className="font-medium">{product.name}</TableCell>
+                        <TableCell className="capitalize text-sm text-muted-foreground">{product.category}</TableCell>
+                        <TableCell>
+                          <Input
+                            type="number"
+                            step="0.01"
+                            defaultValue={product.price}
+                            onBlur={(e) => inlineUpdatePrice(product, parseFloat(e.target.value))}
+                            className="h-8 w-24"
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-1">
+                            <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => adjustStock(product, -1)} disabled={product.stock <= 0}>
+                              <Minus className="h-3.5 w-3.5" />
+                            </Button>
+                            {product.stock <= 0 ? (
+                              <Badge variant="destructive" className="min-w-[44px] justify-center">Out</Badge>
+                            ) : lowStock ? (
+                              <Badge className="bg-amber-500/20 text-amber-400 border border-amber-500/40 min-w-[44px] justify-center"><AlertTriangle className="w-3 h-3 mr-1" />{product.stock}</Badge>
+                            ) : (
+                              <span className="min-w-[44px] text-center font-mono text-sm">{product.stock}</span>
+                            )}
+                            <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => adjustStock(product, 1)}>
+                              <Plus className="h-3.5 w-3.5" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex gap-1 flex-wrap">
+                            {product.is_active
+                              ? <Badge variant="outline" className="text-green-400">Active</Badge>
+                              : <Badge variant="outline" className="text-muted-foreground">Off</Badge>}
+                            {product.is_featured && <Badge variant="outline" className="text-primary">★</Badge>}
+                            {product.is_subscription && <Badge variant="outline" className="text-accent">Sub</Badge>}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex gap-1 justify-end">
+                            <Button size="icon" variant="ghost" title="Edit" onClick={() => handleEditProduct(product)}>
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button size="icon" variant="ghost" title="Duplicate" onClick={() => duplicateProduct(product)}>
+                              <CopyPlus className="h-4 w-4" />
+                            </Button>
+                            <Button size="icon" variant="ghost" title="View public page" onClick={() => window.open(`/store/${product.slug}`, "_blank")}>
+                              <ExternalLink className="h-4 w-4" />
+                            </Button>
+                            <Button size="icon" variant="ghost" className="text-destructive" title="Delete" onClick={() => handleDeleteProduct(product.id)}>
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                  {filteredProducts.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                        {products.length === 0 ? "No products yet" : "No products match these filters"}
                       </TableCell>
                     </TableRow>
-                  ))}
+                  )}
                 </TableBody>
               </Table>
             </CardContent>
@@ -746,10 +987,46 @@ const StoreManager = () => {
 
         <TabsContent value="orders" className="mt-4">
           <Card>
-            <CardHeader>
-              <CardTitle>Orders ({orders.length})</CardTitle>
+            <CardHeader className="flex flex-row items-center justify-between gap-2 flex-wrap">
+              <CardTitle>Orders ({filteredOrders.length}{filteredOrders.length !== orders.length ? ` / ${orders.length}` : ""})</CardTitle>
+              <Button size="sm" variant="outline" onClick={exportOrdersCsv}>
+                <Download className="h-4 w-4 mr-2" /> Export CSV
+              </Button>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-3">
+              <div className="flex flex-col md:flex-row gap-2 md:items-center">
+                <div className="relative flex-1">
+                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    value={orderSearch}
+                    onChange={(e) => setOrderSearch(e.target.value)}
+                    placeholder="Search order #, customer, email, tracking..."
+                    className="pl-8"
+                  />
+                </div>
+                <Select value={orderStatusFilter} onValueChange={setOrderStatusFilter}>
+                  <SelectTrigger className="w-full md:w-44"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All status</SelectItem>
+                    <SelectItem value="pending">Pending</SelectItem>
+                    <SelectItem value="paid">Paid</SelectItem>
+                    <SelectItem value="processing">Processing</SelectItem>
+                    <SelectItem value="shipped">Shipped</SelectItem>
+                    <SelectItem value="delivered">Delivered</SelectItem>
+                    <SelectItem value="cancelled">Cancelled</SelectItem>
+                    <SelectItem value="refunded">Refunded</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Select value={orderSourceFilter} onValueChange={setOrderSourceFilter}>
+                  <SelectTrigger className="w-full md:w-36"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All sources</SelectItem>
+                    <SelectItem value="internal">Internal</SelectItem>
+                    <SelectItem value="shopify">Shopify</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -760,63 +1037,80 @@ const StoreManager = () => {
                     <TableHead>Status</TableHead>
                     <TableHead>Tracking</TableHead>
                     <TableHead>Date</TableHead>
-                    <TableHead>Actions</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {orders.map((order) => (
-                    <TableRow key={order.id}>
-                      <TableCell className="font-mono text-xs">
-                        {order.order_number || order.shopify_order_number || order.id.substring(0, 8)}
-                        {order.shopify_order_id && (
-                          <Badge variant="outline" className="ml-1 text-[10px]">Shopify</Badge>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <div>
-                          <p className="text-sm">{order.customer_name || order.profiles?.full_name || "Guest"}</p>
-                          <p className="text-xs text-muted-foreground">{order.customer_email || order.profiles?.email || ""}</p>
-                        </div>
-                      </TableCell>
-                      <TableCell>{order.store_order_items?.length || 0}</TableCell>
-                      <TableCell className="font-bold">${Number(order.total).toFixed(2)}</TableCell>
-                      <TableCell>
-                        <Select value={order.status} onValueChange={(v) => handleUpdateOrderStatus(order.id, v)}>
-                          <SelectTrigger className="w-28 h-8">
-                            <Badge className={getStatusColor(order.status)}>{order.status}</Badge>
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="pending">Pending</SelectItem>
-                            <SelectItem value="paid">Paid</SelectItem>
-                            <SelectItem value="processing">Processing</SelectItem>
-                            <SelectItem value="shipped">Shipped</SelectItem>
-                            <SelectItem value="delivered">Delivered</SelectItem>
-                            <SelectItem value="cancelled">Cancelled</SelectItem>
-                            <SelectItem value="refunded">Refunded</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </TableCell>
-                      <TableCell>
-                        {order.tracking_number ? (
-                          <a href={order.tracking_url || "#"} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline">
-                            {order.tracking_number}
-                          </a>
-                        ) : (
-                          <span className="text-xs text-muted-foreground">—</span>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-xs">{formatDisplayDate(order.created_at)}</TableCell>
-                      <TableCell>
-                        <Button size="sm" variant="outline" onClick={() => handleViewOrder(order)}>
-                          Manage
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                  {orders.length === 0 && (
+                  {filteredOrders.map((order) => {
+                    const email = order.customer_email || order.profiles?.email || "";
+                    return (
+                      <TableRow key={order.id}>
+                        <TableCell className="font-mono text-xs">
+                          {order.order_number || order.shopify_order_number || order.id.substring(0, 8)}
+                          {order.shopify_order_id && (
+                            <Badge variant="outline" className="ml-1 text-[10px]">Shopify</Badge>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-start gap-1">
+                            <div className="min-w-0">
+                              <p className="text-sm truncate">{order.customer_name || order.profiles?.full_name || "Guest"}</p>
+                              <p className="text-xs text-muted-foreground truncate">{email || "—"}</p>
+                            </div>
+                            {email && (
+                              <Button size="icon" variant="ghost" className="h-6 w-6 flex-shrink-0" title="Copy email" onClick={() => copyToClipboard(email, "Email copied")}>
+                                <Copy className="h-3 w-3" />
+                              </Button>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell>{order.store_order_items?.length || 0}</TableCell>
+                        <TableCell className="font-bold">${Number(order.total).toFixed(2)}</TableCell>
+                        <TableCell>
+                          <Select value={order.status} onValueChange={(v) => handleUpdateOrderStatus(order.id, v)}>
+                            <SelectTrigger className="w-28 h-8">
+                              <Badge className={getStatusColor(order.status)}>{order.status}</Badge>
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="pending">Pending</SelectItem>
+                              <SelectItem value="paid">Paid</SelectItem>
+                              <SelectItem value="processing">Processing</SelectItem>
+                              <SelectItem value="shipped">Shipped</SelectItem>
+                              <SelectItem value="delivered">Delivered</SelectItem>
+                              <SelectItem value="cancelled">Cancelled</SelectItem>
+                              <SelectItem value="refunded">Refunded</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </TableCell>
+                        <TableCell>
+                          {order.tracking_number ? (
+                            <a href={order.tracking_url || "#"} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline">
+                              {order.tracking_number}
+                            </a>
+                          ) : (
+                            <span className="text-xs text-muted-foreground">—</span>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-xs">{formatDisplayDate(order.created_at)}</TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex gap-1 justify-end">
+                            {email && (
+                              <Button size="icon" variant="ghost" title="Email customer" onClick={() => window.open(`mailto:${email}?subject=Your order ${order.order_number || order.shopify_order_number || ""}`)}>
+                                <Mail className="h-4 w-4" />
+                              </Button>
+                            )}
+                            <Button size="sm" variant="outline" onClick={() => handleViewOrder(order)}>
+                              Manage
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                  {filteredOrders.length === 0 && (
                     <TableRow>
                       <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
-                        No orders yet
+                        {orders.length === 0 ? "No orders yet" : "No orders match these filters"}
                       </TableCell>
                     </TableRow>
                   )}
@@ -828,8 +1122,17 @@ const StoreManager = () => {
 
         <TabsContent value="subscriptions" className="mt-4">
           <Card>
-            <CardHeader>
-              <CardTitle>Subscriptions</CardTitle>
+            <CardHeader className="flex flex-row items-center justify-between gap-2 flex-wrap">
+              <CardTitle>Subscriptions ({filteredSubs.length})</CardTitle>
+              <Select value={subStatusFilter} onValueChange={setSubStatusFilter}>
+                <SelectTrigger className="w-40 h-8"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All status</SelectItem>
+                  <SelectItem value="active">Active</SelectItem>
+                  <SelectItem value="cancelled">Cancelled</SelectItem>
+                  <SelectItem value="past_due">Past due</SelectItem>
+                </SelectContent>
+              </Select>
             </CardHeader>
             <CardContent>
               <Table>
@@ -842,7 +1145,7 @@ const StoreManager = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {subscriptions.map((sub) => (
+                  {filteredSubs.map((sub) => (
                     <TableRow key={sub.id}>
                       <TableCell>{sub.profiles?.full_name || sub.profiles?.email}</TableCell>
                       <TableCell>{sub.store_products?.name}</TableCell>
@@ -854,10 +1157,10 @@ const StoreManager = () => {
                       <TableCell>{formatDisplayDate(sub.created_at)}</TableCell>
                     </TableRow>
                   ))}
-                  {subscriptions.length === 0 && (
+                  {filteredSubs.length === 0 && (
                     <TableRow>
                       <TableCell colSpan={4} className="text-center text-muted-foreground py-8">
-                        No subscriptions yet
+                        No subscriptions match
                       </TableCell>
                     </TableRow>
                   )}
