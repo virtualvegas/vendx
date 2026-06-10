@@ -234,9 +234,9 @@ const AdminSettings = () => {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-3xl font-bold text-foreground mb-2">Admin Settings</h2>
+        <h2 className="text-3xl font-bold text-foreground mb-2">Users & Roles</h2>
         <p className="text-muted-foreground">
-          Manage user roles and permissions across the system
+          Manage user accounts, roles and permissions across the system
         </p>
       </div>
 
