@@ -42,6 +42,7 @@ import {
   Mail,
 } from "lucide-react";
 import { AppRole } from "@/pages/DashboardPage";
+import { TAB_ACCESS } from "./tabAccess";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -60,6 +61,10 @@ interface TabGroup {
   label: string;
   tabs: TabConfig[];
 }
+
+// Pull required roles from shared TAB_ACCESS so sidebar visibility and the
+// DashboardPage route guard cannot drift apart.
+const r = (id: string): AppRole[] => TAB_ACCESS[id] ?? [];
 
 // Organized tab groups by role/function
 // Note: Users can have multiple roles and will see all tabs their roles grant access to
