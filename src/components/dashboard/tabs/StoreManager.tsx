@@ -83,6 +83,16 @@ const StoreManager = () => {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [trackingForm, setTrackingForm] = useState({ tracking_number: "", tracking_url: "", estimated_delivery: "", admin_notes: "" });
   const [stats, setStats] = useState({ totalProducts: 0, totalOrders: 0, revenue: 0, subscribers: 0, lowStock: 0 });
+
+  // Filters & selection
+  const [productSearch, setProductSearch] = useState("");
+  const [productCategoryFilter, setProductCategoryFilter] = useState<string>("all");
+  const [productStatusFilter, setProductStatusFilter] = useState<string>("all");
+  const [selectedProductIds, setSelectedProductIds] = useState<Set<string>>(new Set());
+  const [orderSearch, setOrderSearch] = useState("");
+  const [orderStatusFilter, setOrderStatusFilter] = useState<string>("all");
+  const [orderSourceFilter, setOrderSourceFilter] = useState<string>("all");
+  const [subStatusFilter, setSubStatusFilter] = useState<string>("all");
   
   const [productForm, setProductForm] = useState({
     name: "",
