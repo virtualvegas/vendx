@@ -40,6 +40,8 @@ import {
   Lightbulb,
   Warehouse,
   Mail,
+  Link2,
+  ShieldCheck,
 } from "lucide-react";
 import { AppRole } from "@/pages/DashboardPage";
 import { TAB_ACCESS } from "./tabAccess";
@@ -79,6 +81,7 @@ const tabGroups: TabGroup[] = [
       { id: "my-tickets", label: "My Tickets", icon: Ticket, requiredRoles: r("my-tickets") },
       { id: "my-rewards", label: "My Rewards", icon: Gift, requiredRoles: r("my-rewards") },
       { id: "my-business-card", label: "My Business Card", icon: Users, requiredRoles: r("my-business-card") },
+      { id: "linked-accounts", label: "Linked Accounts", icon: Link2, requiredRoles: r("linked-accounts") },
     ],
   },
 
@@ -247,6 +250,7 @@ const tabGroups: TabGroup[] = [
     tabs: [
       { id: "admin-settings", label: "Users & Roles", icon: Users, requiredRoles: r("admin-settings") },
       { id: "merchant-api", label: "Merchant API", icon: Globe, requiredRoles: r("merchant-api") },
+      { id: "sso-apps", label: "SSO Applications", icon: ShieldCheck, requiredRoles: r("sso-apps") },
       { id: "income-streams", label: "Income Streams", icon: Globe, requiredRoles: r("income-streams") },
       { id: "audit-logs", label: "Audit Logs", icon: FileText, requiredRoles: r("audit-logs") },
     ],

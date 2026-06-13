@@ -9,6 +9,7 @@ export const TAB_ACCESS: Record<string, AppRole[]> = {
   "my-tickets": ["customer", "business_owner", "employee_operator", "super_admin", "global_operations_manager", "regional_manager", "finance_accounting", "marketing_sales", "warehouse_logistics", "tech_support_lead", "event_manager", "support"],
   "my-rewards": ["customer", "business_owner", "employee_operator", "super_admin", "global_operations_manager", "regional_manager", "finance_accounting", "marketing_sales", "warehouse_logistics", "tech_support_lead", "event_manager", "support"],
   "my-business-card": ["business_owner", "employee_operator", "super_admin", "global_operations_manager", "regional_manager", "finance_accounting", "marketing_sales", "warehouse_logistics", "tech_support_lead", "event_manager", "support"],
+  "linked-accounts": ["customer", "business_owner", "employee_operator", "super_admin", "global_operations_manager", "regional_manager", "finance_accounting", "marketing_sales", "warehouse_logistics", "tech_support_lead", "event_manager", "support"],
 
   // Business owner
   "business-overview": ["business_owner", "super_admin"],
@@ -102,6 +103,7 @@ export const TAB_ACCESS: Record<string, AppRole[]> = {
   "admin-settings": ["super_admin"],
   "income-streams": ["super_admin"],
   "audit-logs": ["super_admin"],
+  "sso-apps": ["super_admin"],
 };
 
 export const hasTabAccess = (tabId: string, roles: AppRole[]): boolean => {
