@@ -7898,6 +7898,254 @@ export type Database = {
         }
         Relationships: []
       }
+      vendx_sso_apps: {
+        Row: {
+          allowed_scopes: string[]
+          client_id: string
+          client_secret_hash: string
+          client_secret_prefix: string
+          created_at: string
+          created_by: string | null
+          description: string | null
+          homepage_url: string | null
+          id: string
+          is_active: boolean
+          is_first_party: boolean
+          logo_url: string | null
+          name: string
+          owner_email: string | null
+          redirect_uris: string[]
+          updated_at: string
+        }
+        Insert: {
+          allowed_scopes?: string[]
+          client_id: string
+          client_secret_hash: string
+          client_secret_prefix: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          homepage_url?: string | null
+          id?: string
+          is_active?: boolean
+          is_first_party?: boolean
+          logo_url?: string | null
+          name: string
+          owner_email?: string | null
+          redirect_uris?: string[]
+          updated_at?: string
+        }
+        Update: {
+          allowed_scopes?: string[]
+          client_id?: string
+          client_secret_hash?: string
+          client_secret_prefix?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          homepage_url?: string | null
+          id?: string
+          is_active?: boolean
+          is_first_party?: boolean
+          logo_url?: string | null
+          name?: string
+          owner_email?: string | null
+          redirect_uris?: string[]
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      vendx_sso_auth_codes: {
+        Row: {
+          app_id: string
+          code_challenge: string | null
+          code_challenge_method: string | null
+          code_hash: string
+          created_at: string
+          expires_at: string
+          id: string
+          redirect_uri: string
+          scopes: string[]
+          state: string | null
+          used_at: string | null
+          user_id: string
+        }
+        Insert: {
+          app_id: string
+          code_challenge?: string | null
+          code_challenge_method?: string | null
+          code_hash: string
+          created_at?: string
+          expires_at: string
+          id?: string
+          redirect_uri: string
+          scopes?: string[]
+          state?: string | null
+          used_at?: string | null
+          user_id: string
+        }
+        Update: {
+          app_id?: string
+          code_challenge?: string | null
+          code_challenge_method?: string | null
+          code_hash?: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          redirect_uri?: string
+          scopes?: string[]
+          state?: string | null
+          used_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendx_sso_auth_codes_app_id_fkey"
+            columns: ["app_id"]
+            isOneToOne: false
+            referencedRelation: "vendx_sso_apps"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vendx_sso_linked_accounts: {
+        Row: {
+          app_id: string
+          external_email: string | null
+          external_user_id: string | null
+          id: string
+          last_used_at: string
+          linked_at: string
+          revoked_at: string | null
+          scopes_granted: string[]
+          user_id: string
+        }
+        Insert: {
+          app_id: string
+          external_email?: string | null
+          external_user_id?: string | null
+          id?: string
+          last_used_at?: string
+          linked_at?: string
+          revoked_at?: string | null
+          scopes_granted?: string[]
+          user_id: string
+        }
+        Update: {
+          app_id?: string
+          external_email?: string | null
+          external_user_id?: string | null
+          id?: string
+          last_used_at?: string
+          linked_at?: string
+          revoked_at?: string | null
+          scopes_granted?: string[]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendx_sso_linked_accounts_app_id_fkey"
+            columns: ["app_id"]
+            isOneToOne: false
+            referencedRelation: "vendx_sso_apps"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vendx_sso_tokens: {
+        Row: {
+          access_token_hash: string
+          app_id: string
+          created_at: string
+          expires_at: string
+          id: string
+          ip_address: string | null
+          last_used_at: string | null
+          refresh_expires_at: string | null
+          refresh_token_hash: string | null
+          revoked_at: string | null
+          scopes: string[]
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          access_token_hash: string
+          app_id: string
+          created_at?: string
+          expires_at: string
+          id?: string
+          ip_address?: string | null
+          last_used_at?: string | null
+          refresh_expires_at?: string | null
+          refresh_token_hash?: string | null
+          revoked_at?: string | null
+          scopes?: string[]
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          access_token_hash?: string
+          app_id?: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          ip_address?: string | null
+          last_used_at?: string | null
+          refresh_expires_at?: string | null
+          refresh_token_hash?: string | null
+          revoked_at?: string | null
+          scopes?: string[]
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendx_sso_tokens_app_id_fkey"
+            columns: ["app_id"]
+            isOneToOne: false
+            referencedRelation: "vendx_sso_apps"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vendx_sso_webhook_subscriptions: {
+        Row: {
+          app_id: string
+          created_at: string
+          endpoint_url: string
+          event_type: string
+          id: string
+          is_active: boolean
+          updated_at: string
+        }
+        Insert: {
+          app_id: string
+          created_at?: string
+          endpoint_url: string
+          event_type: string
+          id?: string
+          is_active?: boolean
+          updated_at?: string
+        }
+        Update: {
+          app_id?: string
+          created_at?: string
+          endpoint_url?: string
+          event_type?: string
+          id?: string
+          is_active?: boolean
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendx_sso_webhook_subscriptions_app_id_fkey"
+            columns: ["app_id"]
+            isOneToOne: false
+            referencedRelation: "vendx_sso_apps"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vendx_warehouses: {
         Row: {
           address: string | null
@@ -8300,6 +8548,23 @@ export type Database = {
           webhook_secret: string
         }[]
       }
+      create_vendx_sso_app: {
+        Args: {
+          p_allowed_scopes?: string[]
+          p_description?: string
+          p_homepage_url?: string
+          p_is_first_party?: boolean
+          p_logo_url?: string
+          p_name: string
+          p_owner_email?: string
+          p_redirect_uris?: string[]
+        }
+        Returns: {
+          app_id: string
+          client_id: string
+          client_secret: string
+        }[]
+      }
       generate_external_stream_api_key: {
         Args: never
         Returns: {
@@ -8473,6 +8738,10 @@ export type Database = {
       }
       rotate_vendx_merchant_webhook_secret: {
         Args: { p_merchant_id: string }
+        Returns: string
+      }
+      rotate_vendx_sso_app_secret: {
+        Args: { p_app_id: string }
         Returns: string
       }
     }
