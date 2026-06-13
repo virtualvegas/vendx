@@ -141,7 +141,7 @@ const SsoAuthorizePage = () => {
         <Card className="max-w-md w-full">
           <CardHeader>
             <CardTitle>Cannot continue</CardTitle>
-            <CardDescription>{error}</CardDescription>
+            <CardDescription className="whitespace-pre-line text-left">{error}</CardDescription>
           </CardHeader>
           <CardContent>
             <Button variant="outline" onClick={() => navigate("/dashboard")}>Back to dashboard</Button>
