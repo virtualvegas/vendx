@@ -8,12 +8,6 @@ const Section = ({ id, children }: { id: string; children: React.ReactNode }) =>
   <section id={id} className="scroll-mt-24 space-y-3">{children}</section>
 );
 
-const Code = ({ lang = "bash", children }: { lang?: string; children: string }) => (
-  <pre className="bg-muted/50 border border-border rounded-lg p-4 overflow-x-auto text-xs leading-relaxed">
-    <code data-lang={lang}>{children}</code>
-  </pre>
-);
-
 const SsoDocsPage = () => {
   useSEO({
     title: "VendX SSO API — Developer Docs",
