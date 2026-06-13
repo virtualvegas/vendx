@@ -54,7 +54,7 @@ Deno.serve(async (req) => {
     // Confidential clients must present client_secret. PKCE-only public clients can skip.
     let confidentialOK = false;
     if (client_secret) {
-      const { data: hashed } = await admin.rpc("hash_api_key", { p_key: client_secret });
+      const hashed = await sha256Hex(client_secret);
       confidentialOK = hashed === app.client_secret_hash;
       if (!confidentialOK) {
         return new Response(JSON.stringify({ error: "invalid_client" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
