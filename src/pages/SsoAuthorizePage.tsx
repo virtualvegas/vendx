@@ -69,10 +69,14 @@ const SsoAuthorizePage = () => {
         setError("Unknown application.");
       } else if (!data.is_active) {
         setError("This application has been disabled.");
-      } else if (!data.redirect_uris.includes(redirectUri)) {
-        setError("This redirect URI is not whitelisted for this application.");
       } else {
-        setApp(data as AppInfo);
+        const norm = (u: string) => u.trim().replace(/\/+$/, "");
+        const allowed = (data.redirect_uris as string[]).map(norm);
+        if (!allowed.includes(norm(redirectUri))) {
+          setError(`This redirect URI is not whitelisted for this application.\n\nYou sent: ${redirectUri}\n\nAllowed: ${data.redirect_uris.join(", ")}`);
+        } else {
+          setApp(data as AppInfo);
+        }
       }
       setLoading(false);
     })();
