@@ -57,6 +57,8 @@ import ServiceRequestPage from "./pages/ServiceRequestPage";
 import ExternalServicePage from "./pages/ExternalServicePage";
 import BusinessCardPage from "./pages/BusinessCardPage";
 import StaffDirectoryPage from "./pages/StaffDirectoryPage";
+import SsoAuthorizePage from "./pages/SsoAuthorizePage";
+import SsoDocsPage from "./pages/SsoDocsPage";
 
 const queryClient = new QueryClient();
 
@@ -137,6 +139,8 @@ const App = () => (
               <Route path="/external-service" element={<ExternalServicePage />} />
               <Route path="/team" element={<StaffDirectoryPage />} />
               <Route path="/card/:slug" element={<BusinessCardPage />} />
+              <Route path="/sso/authorize" element={<SsoAuthorizePage />} />
+              <Route path="/developers/sso" element={<SsoDocsPage />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>

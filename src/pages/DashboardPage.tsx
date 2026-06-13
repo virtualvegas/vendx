@@ -77,6 +77,8 @@ import BrandLinksManager from "@/components/dashboard/tabs/BrandLinksManager";
 import ExternalServiceManager from "@/components/dashboard/tabs/ExternalServiceManager";
 import BusinessExternalService from "@/components/dashboard/tabs/business-owner/BusinessExternalService";
 import MyBusinessCard from "@/components/dashboard/tabs/MyBusinessCard";
+import SsoAppsManager from "@/components/dashboard/tabs/SsoAppsManager";
+import MyLinkedAccounts from "@/components/dashboard/tabs/MyLinkedAccounts";
 import { useSEO } from "@/hooks/useSEO";
 import { hasTabAccess } from "@/components/dashboard/tabAccess";
 import { ShieldAlert } from "lucide-react";
@@ -227,7 +229,7 @@ const DashboardPage = () => {
   };
 
   const NON_ADMIN_TABS = [
-    "my-orders", "my-wallet", "my-tickets", "my-rewards",
+    "my-orders", "my-wallet", "my-tickets", "my-rewards", "linked-accounts",
     "business-overview", "business-locations", "business-machines", "business-payouts", "business-support", "business-adreach", "business-external-service",
   ];
 
@@ -276,6 +278,10 @@ const DashboardPage = () => {
         content = <CustomerRewards />; break;
       case "my-business-card":
         content = <MyBusinessCard />; break;
+      case "linked-accounts":
+        content = <MyLinkedAccounts />; break;
+      case "sso-apps":
+        content = <SsoAppsManager />; break;
       case "global-operations":
         content = <GlobalOperations />; break;
       case "events-rentals":
