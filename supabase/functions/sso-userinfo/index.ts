@@ -70,7 +70,11 @@ Deno.serve(async (req) => {
 
     if (scopes.includes("wallet:read")) {
       const { data: wallet } = await admin
-        .from("wallets").select("balance, tier_level, is_guest").eq("user_id", tok.user_id).maybeSingle();
+        .from("wallets")
+        .select("balance, wallet_type, is_guest, status")
+        .eq("user_id", tok.user_id)
+        .eq("wallet_type", "standard")
+        .maybeSingle();
       out.wallet = wallet ?? null;
     }
     if (scopes.includes("rewards:read")) {
