@@ -57,8 +57,10 @@ Deno.serve(async (req) => {
     if (!app.is_active) {
       return new Response(JSON.stringify({ error: "App is disabled" }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
-    if (!app.redirect_uris.includes(redirect_uri)) {
-      return new Response(JSON.stringify({ error: "redirect_uri not whitelisted" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    const norm = (u: string) => u.trim().replace(/\/+$/, "");
+    const allowed = (app.redirect_uris as string[]).map(norm);
+    if (!allowed.includes(norm(redirect_uri))) {
+      return new Response(JSON.stringify({ error: "redirect_uri not whitelisted", allowed: app.redirect_uris }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
     const requested: string[] = Array.isArray(scopes) ? scopes : [];
     const granted = requested.filter((s) => app.allowed_scopes.includes(s));
