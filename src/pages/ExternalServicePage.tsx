@@ -148,6 +148,11 @@ const ExternalServicePage = () => {
                   </CardHeader>
                   <CardContent>
                     <p className="text-muted-foreground">{mt.desc}</p>
+                    {(mt as any).href && (
+                      <Link to={(mt as any).href} className="inline-flex items-center gap-1 text-sm text-accent mt-3 hover:underline">
+                        Learn more <ArrowRight className="w-4 h-4" />
+                      </Link>
+                    )}
                   </CardContent>
                 </Card>
               </motion.div>
