@@ -55,6 +55,7 @@ import MerchantCheckoutPage from "./pages/MerchantCheckoutPage";
 import WalletPayDocsPage from "./pages/WalletPayDocsPage";
 import ServiceRequestPage from "./pages/ServiceRequestPage";
 import ExternalServicePage from "./pages/ExternalServicePage";
+import InHomeArcadeServicePage from "./pages/InHomeArcadeServicePage";
 import BusinessCardPage from "./pages/BusinessCardPage";
 import StaffDirectoryPage from "./pages/StaffDirectoryPage";
 import SsoAuthorizePage from "./pages/SsoAuthorizePage";
@@ -136,7 +137,8 @@ const App = () => (
               <Route path="/pay/checkout/:token" element={<MerchantCheckoutPage />} />
               <Route path="/docs/wallet-pay" element={<WalletPayDocsPage />} />
               <Route path="/service-request" element={<ServiceRequestPage />} />
-              <Route path="/external-service" element={<ExternalServicePage />} />
+             <Route path="/external-service" element={<ExternalServicePage />} />
+             <Route path="/external-service/in-home-arcade" element={<InHomeArcadeServicePage />} />
               <Route path="/team" element={<StaffDirectoryPage />} />
               <Route path="/card/:slug" element={<BusinessCardPage />} />
               <Route path="/sso/authorize" element={<SsoAuthorizePage />} />

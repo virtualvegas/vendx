@@ -30,7 +30,7 @@ const VENDX_PHONE_TEL = "tel:+17812141806";
 const machineTypes = [
   { icon: Coffee, title: "Vending Machines", desc: "Snack, beverage, combo, and fresh-food units from any manufacturer." },
   { icon: CircleDollarSign, title: "Coin-Operated", desc: "Laundry, car wash, amusement, and specialty coin-op equipment." },
-  { icon: Gamepad2, title: "Arcade & Redemption", desc: "Commercial cabinets, ticket games, claw cranes, and in-home arcades." },
+  { icon: Gamepad2, title: "Arcade & Redemption", desc: "Commercial cabinets, ticket games, claw cranes, and in-home arcades.", href: "/external-service/in-home-arcade" },
   { icon: PinIcon, title: "Pinball", desc: "Classic and modern pinball machines — boards, displays, mechs." },
   { icon: Pin, title: "Bowling Pinsetters", desc: "Pinsetter diagnostics, lane electronics, and scoring systems." },
   { icon: Zap, title: "More Equipment", desc: "Jukeboxes, pool tables, ATMs, kiosks, and custom builds." },
@@ -148,6 +148,11 @@ const ExternalServicePage = () => {
                   </CardHeader>
                   <CardContent>
                     <p className="text-muted-foreground">{mt.desc}</p>
+                    {(mt as any).href && (
+                      <Link to={(mt as any).href} className="inline-flex items-center gap-1 text-sm text-accent mt-3 hover:underline">
+                        Learn more <ArrowRight className="w-4 h-4" />
+                      </Link>
+                    )}
                   </CardContent>
                 </Card>
               </motion.div>
