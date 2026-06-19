@@ -137,7 +137,8 @@ const App = () => (
               <Route path="/pay/checkout/:token" element={<MerchantCheckoutPage />} />
               <Route path="/docs/wallet-pay" element={<WalletPayDocsPage />} />
               <Route path="/service-request" element={<ServiceRequestPage />} />
-              <Route path="/external-service" element={<ExternalServicePage />} />
+             <Route path="/external-service" element={<ExternalServicePage />} />
+             <Route path="/external-service/in-home-arcade" element={<InHomeArcadeServicePage />} />
               <Route path="/team" element={<StaffDirectoryPage />} />
               <Route path="/card/:slug" element={<BusinessCardPage />} />
               <Route path="/sso/authorize" element={<SsoAuthorizePage />} />
