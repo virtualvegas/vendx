@@ -7055,11 +7055,20 @@ export type Database = {
       }
       vendx_external_service_tickets: {
         Row: {
+          access_notes: string | null
+          arcade_cabinet_brand: string | null
+          arcade_cabinet_model: string | null
+          arcade_control_type: string | null
+          arcade_game_title: string | null
+          arcade_monitor_type: string | null
+          arcade_power_type: string | null
+          arcade_year_manufactured: number | null
           assigned_technician_id: string | null
           client_id: string | null
           created_at: string
           created_by: string | null
           description: string | null
+          has_stairs: boolean | null
           id: string
           intake_address: string | null
           intake_company_name: string | null
@@ -7070,11 +7079,14 @@ export type Database = {
           intake_machine_type: string | null
           location_id: string | null
           machine_id: string | null
+          preferred_contact_time: string | null
           priority: string
           resolution: string | null
           resolved_at: string | null
           route_stop_id: string | null
           scheduled_date: string | null
+          service_location_type: string | null
+          service_package: string | null
           source: string
           status: string
           subject: string
@@ -7082,11 +7094,20 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          access_notes?: string | null
+          arcade_cabinet_brand?: string | null
+          arcade_cabinet_model?: string | null
+          arcade_control_type?: string | null
+          arcade_game_title?: string | null
+          arcade_monitor_type?: string | null
+          arcade_power_type?: string | null
+          arcade_year_manufactured?: number | null
           assigned_technician_id?: string | null
           client_id?: string | null
           created_at?: string
           created_by?: string | null
           description?: string | null
+          has_stairs?: boolean | null
           id?: string
           intake_address?: string | null
           intake_company_name?: string | null
@@ -7097,11 +7118,14 @@ export type Database = {
           intake_machine_type?: string | null
           location_id?: string | null
           machine_id?: string | null
+          preferred_contact_time?: string | null
           priority?: string
           resolution?: string | null
           resolved_at?: string | null
           route_stop_id?: string | null
           scheduled_date?: string | null
+          service_location_type?: string | null
+          service_package?: string | null
           source?: string
           status?: string
           subject: string
@@ -7109,11 +7133,20 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          access_notes?: string | null
+          arcade_cabinet_brand?: string | null
+          arcade_cabinet_model?: string | null
+          arcade_control_type?: string | null
+          arcade_game_title?: string | null
+          arcade_monitor_type?: string | null
+          arcade_power_type?: string | null
+          arcade_year_manufactured?: number | null
           assigned_technician_id?: string | null
           client_id?: string | null
           created_at?: string
           created_by?: string | null
           description?: string | null
+          has_stairs?: boolean | null
           id?: string
           intake_address?: string | null
           intake_company_name?: string | null
@@ -7124,11 +7157,14 @@ export type Database = {
           intake_machine_type?: string | null
           location_id?: string | null
           machine_id?: string | null
+          preferred_contact_time?: string | null
           priority?: string
           resolution?: string | null
           resolved_at?: string | null
           route_stop_id?: string | null
           scheduled_date?: string | null
+          service_location_type?: string | null
+          service_package?: string | null
           source?: string
           status?: string
           subject?: string
