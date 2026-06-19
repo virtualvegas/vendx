@@ -55,6 +55,7 @@ import MerchantCheckoutPage from "./pages/MerchantCheckoutPage";
 import WalletPayDocsPage from "./pages/WalletPayDocsPage";
 import ServiceRequestPage from "./pages/ServiceRequestPage";
 import ExternalServicePage from "./pages/ExternalServicePage";
+import InHomeArcadeServicePage from "./pages/InHomeArcadeServicePage";
 import BusinessCardPage from "./pages/BusinessCardPage";
 import StaffDirectoryPage from "./pages/StaffDirectoryPage";
 import SsoAuthorizePage from "./pages/SsoAuthorizePage";
