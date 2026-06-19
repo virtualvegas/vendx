@@ -179,6 +179,50 @@ const ExtTicketsPanel = () => {
             <div className="md:col-span-2"><Label>Subject *</Label><Input value={form.subject} onChange={e => setForm({...form, subject: e.target.value})} /></div>
             <div className="md:col-span-2"><Label>Description</Label><Textarea rows={4} value={form.description || ""} onChange={e => setForm({...form, description: e.target.value})} /></div>
             <div className="md:col-span-2"><Label>Resolution</Label><Textarea rows={2} value={form.resolution || ""} onChange={e => setForm({...form, resolution: e.target.value})} /></div>
+
+            <div className="md:col-span-2 pt-2 border-t"><p className="text-xs text-muted-foreground font-semibold">Service details</p></div>
+            <div>
+              <Label>Service Package</Label>
+              <SearchableSelect value={form.service_package || ""} onValueChange={v => setForm({...form, service_package: v})}
+                options={[
+                  { value: "", label: "—" },
+                  { value: "diagnostic_visit", label: "Diagnostic Visit" },
+                  { value: "monitor_repair", label: "Monitor / Display Repair" },
+                  { value: "board_repair", label: "PCB / Board Repair" },
+                  { value: "full_restoration", label: "Full Restoration" },
+                  { value: "delivery_setup", label: "Delivery & Setup" },
+                  { value: "tune_up", label: "Annual Tune-Up" },
+                ]}
+                placeholder="Package" searchPlaceholder="Search..." />
+            </div>
+            <div>
+              <Label>Service Location</Label>
+              <SearchableSelect value={form.service_location_type || ""} onValueChange={v => setForm({...form, service_location_type: v})}
+                options={[
+                  { value: "", label: "—" },
+                  { value: "in_home", label: "Private Home / Residence" },
+                  { value: "business", label: "Business / Commercial" },
+                  { value: "warehouse", label: "Warehouse / Storage" },
+                  { value: "other", label: "Other" },
+                ]}
+                placeholder="Location type" searchPlaceholder="Search..." />
+            </div>
+            <div className="md:col-span-2 flex items-center gap-2">
+              <input type="checkbox" id="stairs-admin" checked={!!form.has_stairs} onChange={e => setForm({...form, has_stairs: e.target.checked})} />
+              <Label htmlFor="stairs-admin" className="cursor-pointer">Machine is up or down stairs</Label>
+            </div>
+            <div className="md:col-span-2"><Label>Access notes</Label><Textarea rows={2} value={form.access_notes || ""} onChange={e => setForm({...form, access_notes: e.target.value})} /></div>
+            <div className="md:col-span-2"><Label>Preferred contact / visit time</Label><Input value={form.preferred_contact_time || ""} onChange={e => setForm({...form, preferred_contact_time: e.target.value})} /></div>
+
+            <div className="md:col-span-2 pt-2 border-t"><p className="text-xs text-muted-foreground font-semibold">Arcade / cabinet (if applicable)</p></div>
+            <div><Label>Cabinet brand</Label><Input value={form.arcade_cabinet_brand || ""} onChange={e => setForm({...form, arcade_cabinet_brand: e.target.value})} /></div>
+            <div><Label>Cabinet model</Label><Input value={form.arcade_cabinet_model || ""} onChange={e => setForm({...form, arcade_cabinet_model: e.target.value})} /></div>
+            <div><Label>Game title</Label><Input value={form.arcade_game_title || ""} onChange={e => setForm({...form, arcade_game_title: e.target.value})} /></div>
+            <div><Label>Year</Label><Input type="number" value={form.arcade_year_manufactured || ""} onChange={e => setForm({...form, arcade_year_manufactured: e.target.value ? parseInt(e.target.value, 10) : null})} /></div>
+            <div><Label>Monitor</Label><Input value={form.arcade_monitor_type || ""} onChange={e => setForm({...form, arcade_monitor_type: e.target.value})} placeholder="CRT / LCD / DMD..." /></div>
+            <div><Label>Controls</Label><Input value={form.arcade_control_type || ""} onChange={e => setForm({...form, arcade_control_type: e.target.value})} placeholder="Joystick, trackball..." /></div>
+            <div className="md:col-span-2"><Label>Power</Label><Input value={form.arcade_power_type || ""} onChange={e => setForm({...form, arcade_power_type: e.target.value})} placeholder="120V / 220V / iso transformer" /></div>
+
             {!form.client_id && (
               <>
                 <div className="md:col-span-2 pt-2 border-t"><p className="text-xs text-muted-foreground">Intake details (when no client selected)</p></div>
