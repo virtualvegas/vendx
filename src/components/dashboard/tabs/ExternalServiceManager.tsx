@@ -5,6 +5,7 @@ import ExtLocationsPanel from "./external-service/ExtLocationsPanel";
 import ExtMachinesPanel from "./external-service/ExtMachinesPanel";
 import ExtTicketsPanel from "./external-service/ExtTicketsPanel";
 import ExtInvoicesPanel from "./external-service/ExtInvoicesPanel";
+import ExtPackagesPanel from "./external-service/ExtPackagesPanel";
 
 const ExternalServiceManager = () => {
   const [tab, setTab] = useState("tickets");
