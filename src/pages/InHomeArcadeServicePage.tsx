@@ -37,22 +37,6 @@ const cabinetTypes = [
   "Home pool tables, foosball, air hockey",
 ];
 
-const getIcon = (name: string) => {
-  const Ico = (Icons as any)[name];
-  return Ico || Wrench;
-};
-
-const cabinetTypes = [
-  "Classic upright arcades (Pac-Man, Galaga, Donkey Kong)",
-  "Fightsticks & candy cabinets (Vewlix, Astro, Sega Naomi)",
-  "Multicades & MAME builds",
-  "Pinball machines (EM, SS, DMD, LCD)",
-  "Driving / shooter cabinets",
-  "Cocktail tables & bartops",
-  "Redemption & ticket games",
-  "Home pool tables, foosball, air hockey",
-];
-
 const InHomeArcadeServicePage = () => {
   useSEO({
     title: "In-Home Arcade Repair & Restoration — VendX",
