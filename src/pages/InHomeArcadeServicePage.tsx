@@ -1,4 +1,6 @@
 import { Link } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import StarField from "@/components/StarField";
@@ -7,72 +9,26 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useSEO } from "@/hooks/useSEO";
 import { motion } from "framer-motion";
+import * as Icons from "lucide-react";
 import {
   Gamepad2,
   ArrowRight,
   Phone,
   Home,
   Wrench,
-  Monitor,
-  Cpu,
-  Sparkles,
-  Truck,
   CheckCircle2,
   ShieldCheck,
 } from "lucide-react";
 
 const VENDX_PHONE_TEL = "tel:+17812141806";
 
-// These slugs match the SERVICE_PACKAGES options in ServiceRequestPage.tsx
-const packages = [
-  {
-    slug: "diagnostic_visit",
-    icon: Wrench,
-    title: "Diagnostic Visit",
-    price: "From $89",
-    desc: "On-site inspection, fault diagnosis, written estimate. Fee credited toward repair if you proceed.",
-    features: ["1 hour on-site", "Multi-meter / boot tests", "Written estimate", "Same-week scheduling"],
-  },
-  {
-    slug: "monitor_repair",
-    icon: Monitor,
-    title: "Monitor / Display Repair",
-    price: "From $149 + parts",
-    desc: "CRT cap kits, flyback issues, LCD backlight, scaler/converter swaps for modern panels.",
-    features: ["CRT chassis recap", "LCD backlight & inverter", "Scaler / GBS / OSSC install", "Geometry calibration"],
-  },
-  {
-    slug: "board_repair",
-    icon: Cpu,
-    title: "PCB / Board Repair",
-    price: "From $179 + parts",
-    desc: "JAMMA & MultiJAMMA boards, JVS, pinball MPUs, redemption logic boards.",
-    features: ["Cap & battery replacement", "Trace repair", "ROM / EEPROM service", "Bench test before reinstall"],
-  },
-  {
-    slug: "full_restoration",
-    icon: Sparkles,
-    title: "Full Restoration",
-    price: "Quoted",
-    desc: "End-to-end cabinet restoration — artwork, t-molding, controls, monitor, harness, and electronics.",
-    features: ["Cabinet repaint / artwork", "New controls & t-molding", "Harness rebuild", "Electronics overhaul"],
-  },
-  {
-    slug: "delivery_setup",
-    icon: Truck,
-    title: "Delivery & Setup",
-    price: "From $199",
-    desc: "We move, deliver, and set up your in-home arcade — stairs, tight doorways, basement installs included.",
-    features: ["2-person crew", "Stair & basement service", "Level, test, and tune", "Haul-away available"],
-  },
-  {
-    slug: "tune_up",
-    icon: Gamepad2,
-    title: "Annual Tune-Up",
-    price: "From $129",
-    desc: "Yearly preventative service so your cabinet keeps playing like new — controls, monitor, and electronics.",
-    features: ["Control deep clean", "Button & switch test", "Monitor brightness check", "Internal dusting"],
-  },
+const getIcon = (name: string) => {
+  const Ico = (Icons as any)[name];
+  return Ico || Wrench;
+};
+
+const FALLBACK_PACKAGES = [
+  { slug: "diagnostic_visit", icon: "Wrench", title: "Diagnostic Visit", price_label: "From $89", description: "On-site inspection, fault diagnosis, written estimate.", features: ["1 hour on-site","Written estimate","Same-week scheduling"] },
 ];
 
 const cabinetTypes = [
@@ -92,6 +48,22 @@ const InHomeArcadeServicePage = () => {
     description:
       "Professional in-home arcade service: diagnostic visits, monitor and PCB repair, full restorations, delivery, setup, and annual tune-ups for home arcades and pinball.",
   });
+
+  const { data: dbPackages } = useQuery({
+    queryKey: ["public-ext-service-packages", "in_home_arcade"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("vendx_external_service_packages" as any)
+        .select("slug,icon,title,price_label,description,features")
+        .eq("category", "in_home_arcade")
+        .eq("is_active", true)
+        .order("sort_order");
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  const packages = (dbPackages && dbPackages.length > 0 ? dbPackages : FALLBACK_PACKAGES) as any[];
 
   return (
     <div className="relative min-h-screen bg-background">
@@ -166,7 +138,9 @@ const InHomeArcadeServicePage = () => {
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
-            {packages.map((pkg, i) => (
+            {packages.map((pkg: any, i: number) => {
+              const Ico = getIcon(pkg.icon);
+              return (
               <motion.div
                 key={pkg.slug}
                 initial={{ opacity: 0, y: 20 }}
@@ -177,17 +151,17 @@ const InHomeArcadeServicePage = () => {
                 <Card className="h-full bg-card/50 border-border hover:border-primary/50 transition-all duration-300 hover:shadow-[0_0_30px_rgba(26,124,255,0.2)] group flex flex-col">
                   <CardHeader>
                     <div className="w-14 h-14 rounded-xl bg-primary/10 border border-primary/30 flex items-center justify-center mb-4 group-hover:border-primary transition-all">
-                      <pkg.icon className="w-7 h-7 text-primary" />
+                      <Ico className="w-7 h-7 text-primary" />
                     </div>
                     <CardTitle className="text-xl flex items-center justify-between gap-2">
                       <span>{pkg.title}</span>
-                      <span className="text-sm font-medium text-accent">{pkg.price}</span>
+                      <span className="text-sm font-medium text-accent">{pkg.price_label}</span>
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="flex-1 flex flex-col">
-                    <p className="text-muted-foreground mb-4">{pkg.desc}</p>
+                    <p className="text-muted-foreground mb-4">{pkg.description}</p>
                     <ul className="space-y-2 mb-6 flex-1">
-                      {pkg.features.map((f) => (
+                      {(pkg.features || []).map((f: string) => (
                         <li key={f} className="flex items-start gap-2 text-sm">
                           <CheckCircle2 className="w-4 h-4 text-accent flex-shrink-0 mt-0.5" />
                           <span>{f}</span>
@@ -203,7 +177,8 @@ const InHomeArcadeServicePage = () => {
                   </CardContent>
                 </Card>
               </motion.div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </section>

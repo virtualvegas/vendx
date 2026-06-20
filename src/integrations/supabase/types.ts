@@ -7012,6 +7012,57 @@ export type Database = {
           },
         ]
       }
+      vendx_external_service_packages: {
+        Row: {
+          category: string
+          created_at: string
+          description: string
+          features: Json
+          icon: string
+          id: string
+          is_active: boolean
+          machine_type: string
+          price_amount: number | null
+          price_label: string
+          slug: string
+          sort_order: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          description?: string
+          features?: Json
+          icon?: string
+          id?: string
+          is_active?: boolean
+          machine_type?: string
+          price_amount?: number | null
+          price_label?: string
+          slug: string
+          sort_order?: number
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          description?: string
+          features?: Json
+          icon?: string
+          id?: string
+          is_active?: boolean
+          machine_type?: string
+          price_amount?: number | null
+          price_label?: string
+          slug?: string
+          sort_order?: number
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       vendx_external_service_ticket_updates: {
         Row: {
           author_id: string | null
