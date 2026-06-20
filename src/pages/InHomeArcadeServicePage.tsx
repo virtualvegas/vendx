@@ -44,6 +44,22 @@ const InHomeArcadeServicePage = () => {
       "Professional in-home arcade service: diagnostic visits, monitor and PCB repair, full restorations, delivery, setup, and annual tune-ups for home arcades and pinball.",
   });
 
+  const { data: dbPackages } = useQuery({
+    queryKey: ["public-ext-service-packages", "in_home_arcade"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("vendx_external_service_packages" as any)
+        .select("slug,icon,title,price_label,description,features")
+        .eq("category", "in_home_arcade")
+        .eq("is_active", true)
+        .order("sort_order");
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  const packages = (dbPackages && dbPackages.length > 0 ? dbPackages : FALLBACK_PACKAGES) as any[];
+
   return (
     <div className="relative min-h-screen bg-background">
       <StarField />
