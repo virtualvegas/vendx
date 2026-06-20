@@ -133,7 +133,7 @@ const FeaturedBrandCard = ({ link }: { link: LinkItem }) => {
     </Card>
   );
   if (link.external) {
-    return <a href={link.url} target="_blank" rel="noopener noreferrer" className="block group">{inner}</a>;
+    return <a href={link.url} {...externalLinkProps(link.url)} className="block group">{inner}</a>;
   }
   return <Link to={link.url} className="block group">{inner}</Link>;
 };
