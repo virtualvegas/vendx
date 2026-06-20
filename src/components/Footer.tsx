@@ -2,6 +2,7 @@ import { Linkedin, Youtube, Mail, Facebook, Instagram } from "lucide-react";
 import { Link } from "react-router-dom";
 import { SiTiktok, SiX, SiSnapchat } from "react-icons/si";
 import NewsletterSignup from "@/components/NewsletterSignup";
+import { externalLinkProps } from "@/lib/externalLink";
 
 const Footer = () => {
   return (
