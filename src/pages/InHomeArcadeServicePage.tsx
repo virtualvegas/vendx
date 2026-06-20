@@ -1,4 +1,6 @@
 import { Link } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import StarField from "@/components/StarField";
@@ -7,73 +9,38 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useSEO } from "@/hooks/useSEO";
 import { motion } from "framer-motion";
+import * as Icons from "lucide-react";
 import {
   Gamepad2,
   ArrowRight,
   Phone,
   Home,
   Wrench,
-  Monitor,
-  Cpu,
-  Sparkles,
-  Truck,
   CheckCircle2,
   ShieldCheck,
 } from "lucide-react";
 
 const VENDX_PHONE_TEL = "tel:+17812141806";
 
-// These slugs match the SERVICE_PACKAGES options in ServiceRequestPage.tsx
-const packages = [
-  {
-    slug: "diagnostic_visit",
-    icon: Wrench,
-    title: "Diagnostic Visit",
-    price: "From $89",
-    desc: "On-site inspection, fault diagnosis, written estimate. Fee credited toward repair if you proceed.",
-    features: ["1 hour on-site", "Multi-meter / boot tests", "Written estimate", "Same-week scheduling"],
-  },
-  {
-    slug: "monitor_repair",
-    icon: Monitor,
-    title: "Monitor / Display Repair",
-    price: "From $149 + parts",
-    desc: "CRT cap kits, flyback issues, LCD backlight, scaler/converter swaps for modern panels.",
-    features: ["CRT chassis recap", "LCD backlight & inverter", "Scaler / GBS / OSSC install", "Geometry calibration"],
-  },
-  {
-    slug: "board_repair",
-    icon: Cpu,
-    title: "PCB / Board Repair",
-    price: "From $179 + parts",
-    desc: "JAMMA & MultiJAMMA boards, JVS, pinball MPUs, redemption logic boards.",
-    features: ["Cap & battery replacement", "Trace repair", "ROM / EEPROM service", "Bench test before reinstall"],
-  },
-  {
-    slug: "full_restoration",
-    icon: Sparkles,
-    title: "Full Restoration",
-    price: "Quoted",
-    desc: "End-to-end cabinet restoration — artwork, t-molding, controls, monitor, harness, and electronics.",
-    features: ["Cabinet repaint / artwork", "New controls & t-molding", "Harness rebuild", "Electronics overhaul"],
-  },
-  {
-    slug: "delivery_setup",
-    icon: Truck,
-    title: "Delivery & Setup",
-    price: "From $199",
-    desc: "We move, deliver, and set up your in-home arcade — stairs, tight doorways, basement installs included.",
-    features: ["2-person crew", "Stair & basement service", "Level, test, and tune", "Haul-away available"],
-  },
-  {
-    slug: "tune_up",
-    icon: Gamepad2,
-    title: "Annual Tune-Up",
-    price: "From $129",
-    desc: "Yearly preventative service so your cabinet keeps playing like new — controls, monitor, and electronics.",
-    features: ["Control deep clean", "Button & switch test", "Monitor brightness check", "Internal dusting"],
-  },
+const FALLBACK_PACKAGES = [
+  { slug: "diagnostic_visit", icon: "Wrench", title: "Diagnostic Visit", price_label: "From $89", description: "On-site inspection, fault diagnosis, written estimate.", features: ["1 hour on-site","Written estimate","Same-week scheduling"] },
 ];
+
+const cabinetTypes = [
+  "Classic upright arcades (Pac-Man, Galaga, Donkey Kong)",
+  "Fightsticks & candy cabinets (Vewlix, Astro, Sega Naomi)",
+  "Multicades & MAME builds",
+  "Pinball machines (EM, SS, DMD, LCD)",
+  "Driving / shooter cabinets",
+  "Cocktail tables & bartops",
+  "Redemption & ticket games",
+  "Home pool tables, foosball, air hockey",
+];
+
+const getIcon = (name: string) => {
+  const Ico = (Icons as any)[name];
+  return Ico || Wrench;
+};
 
 const cabinetTypes = [
   "Classic upright arcades (Pac-Man, Galaga, Donkey Kong)",
