@@ -10,6 +10,7 @@ import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { useSEO } from "@/hooks/useSEO";
 import { supabase } from "@/integrations/supabase/client";
+import { externalLinkProps } from "@/lib/externalLink";
 
 type LinkItem = {
   name: string;
@@ -101,7 +102,7 @@ const LinkCard = ({ link }: { link: LinkItem }) => {
     </Card>
   );
   if (link.external) {
-    return <a href={link.url} target="_blank" rel="noopener noreferrer" className="block group">{content}</a>;
+    return <a href={link.url} {...externalLinkProps(link.url)} className="block group">{content}</a>;
   }
   return <Link to={link.url} className="block group">{content}</Link>;
 };
@@ -132,7 +133,7 @@ const FeaturedBrandCard = ({ link }: { link: LinkItem }) => {
     </Card>
   );
   if (link.external) {
-    return <a href={link.url} target="_blank" rel="noopener noreferrer" className="block group">{inner}</a>;
+    return <a href={link.url} {...externalLinkProps(link.url)} className="block group">{inner}</a>;
   }
   return <Link to={link.url} className="block group">{inner}</Link>;
 };

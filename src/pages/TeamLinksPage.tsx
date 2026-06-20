@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { useSEO } from "@/hooks/useSEO";
+import { externalLinkProps } from "@/lib/externalLink";
 
 const teamLinks = [
   {
@@ -131,7 +132,7 @@ const TeamLinksPage = () => {
 
             if (link.external) {
               return (
-                <a key={link.name} href={link.url} target="_blank" rel="noopener noreferrer" className="block group">
+                <a key={link.name} href={link.url} {...externalLinkProps(link.url)} className="block group">
                   {content}
                 </a>
               );

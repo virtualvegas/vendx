@@ -10,6 +10,7 @@ import {
 } from "react-icons/si";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { externalLinkProps } from "@/lib/externalLink";
 
 interface RetailLink {
   store: string;
@@ -164,8 +165,7 @@ const RetailLinks = ({ links, compact = false }: RetailLinksProps) => {
             <a
               key={index}
               href={link.url}
-              target="_blank"
-              rel="noopener noreferrer"
+              {...externalLinkProps(link.url)}
               className={`inline-flex items-center gap-2 px-3 py-2 rounded-lg ${config.bgColor} ${config.color} transition-colors text-sm font-medium`}
             >
               {locator ? <MapPin className="w-4 h-4" /> : config.icon}
@@ -195,8 +195,7 @@ const RetailLinks = ({ links, compact = false }: RetailLinksProps) => {
               <a
                 key={index}
                 href={link.url}
-                target="_blank"
-                rel="noopener noreferrer"
+                {...externalLinkProps(link.url)}
               >
                 <Button
                   variant="outline"
