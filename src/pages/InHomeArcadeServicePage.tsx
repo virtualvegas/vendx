@@ -133,7 +133,9 @@ const InHomeArcadeServicePage = () => {
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
-            {packages.map((pkg, i) => (
+            {packages.map((pkg: any, i: number) => {
+              const Ico = getIcon(pkg.icon);
+              return (
               <motion.div
                 key={pkg.slug}
                 initial={{ opacity: 0, y: 20 }}
@@ -144,17 +146,17 @@ const InHomeArcadeServicePage = () => {
                 <Card className="h-full bg-card/50 border-border hover:border-primary/50 transition-all duration-300 hover:shadow-[0_0_30px_rgba(26,124,255,0.2)] group flex flex-col">
                   <CardHeader>
                     <div className="w-14 h-14 rounded-xl bg-primary/10 border border-primary/30 flex items-center justify-center mb-4 group-hover:border-primary transition-all">
-                      <pkg.icon className="w-7 h-7 text-primary" />
+                      <Ico className="w-7 h-7 text-primary" />
                     </div>
                     <CardTitle className="text-xl flex items-center justify-between gap-2">
                       <span>{pkg.title}</span>
-                      <span className="text-sm font-medium text-accent">{pkg.price}</span>
+                      <span className="text-sm font-medium text-accent">{pkg.price_label}</span>
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="flex-1 flex flex-col">
-                    <p className="text-muted-foreground mb-4">{pkg.desc}</p>
+                    <p className="text-muted-foreground mb-4">{pkg.description}</p>
                     <ul className="space-y-2 mb-6 flex-1">
-                      {pkg.features.map((f) => (
+                      {(pkg.features || []).map((f: string) => (
                         <li key={f} className="flex items-start gap-2 text-sm">
                           <CheckCircle2 className="w-4 h-4 text-accent flex-shrink-0 mt-0.5" />
                           <span>{f}</span>
@@ -170,7 +172,8 @@ const InHomeArcadeServicePage = () => {
                   </CardContent>
                 </Card>
               </motion.div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </section>
