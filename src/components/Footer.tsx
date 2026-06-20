@@ -82,56 +82,56 @@ const Footer = () => {
             <div className="flex flex-wrap gap-4">
               <a
                 href="https://www.facebook.com/VendXGlobal"
-                target="_blank"
-                rel="noopener noreferrer"
+                {...externalLinkProps("https://www.facebook.com/VendXGlobal")}
+                aria-label="Facebook"
                 className="w-10 h-10 rounded-full bg-primary/10 border border-primary/30 flex items-center justify-center hover:border-primary hover:shadow-[0_0_20px_rgba(26,124,255,0.5)] transition-smooth"
               >
                 <Facebook className="w-5 h-5 text-primary" />
               </a>
               <a
                 href="https://www.tiktok.com/@vendxglobal"
-                target="_blank"
-                rel="noopener noreferrer"
+                {...externalLinkProps("https://www.tiktok.com/@vendxglobal")}
+                aria-label="TikTok"
                 className="w-10 h-10 rounded-full bg-primary/10 border border-primary/30 flex items-center justify-center hover:border-primary hover:shadow-[0_0_20px_rgba(26,124,255,0.5)] transition-smooth"
               >
                 <SiTiktok className="w-5 h-5 text-primary" />
               </a>
               <a
                 href="https://www.instagram.com/vendx_global/"
-                target="_blank"
-                rel="noopener noreferrer"
+                {...externalLinkProps("https://www.instagram.com/vendx_global/")}
+                aria-label="Instagram"
                 className="w-10 h-10 rounded-full bg-primary/10 border border-primary/30 flex items-center justify-center hover:border-primary hover:shadow-[0_0_20px_rgba(26,124,255,0.5)] transition-smooth"
               >
                 <Instagram className="w-5 h-5 text-primary" />
               </a>
               <a
                 href="https://x.com/VendXglobal"
-                target="_blank"
-                rel="noopener noreferrer"
+                {...externalLinkProps("https://x.com/VendXglobal")}
+                aria-label="X (Twitter)"
                 className="w-10 h-10 rounded-full bg-primary/10 border border-primary/30 flex items-center justify-center hover:border-primary hover:shadow-[0_0_20px_rgba(26,124,255,0.5)] transition-smooth"
               >
                 <SiX className="w-5 h-5 text-primary" />
               </a>
               <a
                 href="https://www.linkedin.com/company/vendx-global-corporation"
-                target="_blank"
-                rel="noopener noreferrer"
+                {...externalLinkProps("https://www.linkedin.com/company/vendx-global-corporation")}
+                aria-label="LinkedIn"
                 className="w-10 h-10 rounded-full bg-primary/10 border border-primary/30 flex items-center justify-center hover:border-primary hover:shadow-[0_0_20px_rgba(26,124,255,0.5)] transition-smooth"
               >
                 <Linkedin className="w-5 h-5 text-primary" />
               </a>
               <a
                 href="https://www.snapchat.com/@vendxglobal"
-                target="_blank"
-                rel="noopener noreferrer"
+                {...externalLinkProps("https://www.snapchat.com/@vendxglobal")}
+                aria-label="Snapchat"
                 className="w-10 h-10 rounded-full bg-primary/10 border border-primary/30 flex items-center justify-center hover:border-primary hover:shadow-[0_0_20px_rgba(26,124,255,0.5)] transition-smooth"
               >
                 <SiSnapchat className="w-5 h-5 text-primary" />
               </a>
               <a
                 href="https://www.youtube.com/@vendxglobal"
-                target="_blank"
-                rel="noopener noreferrer"
+                {...externalLinkProps("https://www.youtube.com/@vendxglobal")}
+                aria-label="YouTube"
                 className="w-10 h-10 rounded-full bg-primary/10 border border-primary/30 flex items-center justify-center hover:border-primary hover:shadow-[0_0_20px_rgba(26,124,255,0.5)] transition-smooth"
               >
                 <Youtube className="w-5 h-5 text-primary" />
