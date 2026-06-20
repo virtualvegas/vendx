@@ -132,7 +132,7 @@ const TeamLinksPage = () => {
 
             if (link.external) {
               return (
-                <a key={link.name} href={link.url} target="_blank" rel="noopener noreferrer" className="block group">
+                <a key={link.name} href={link.url} {...externalLinkProps(link.url)} className="block group">
                   {content}
                 </a>
               );
