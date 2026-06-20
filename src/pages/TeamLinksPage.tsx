@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { useSEO } from "@/hooks/useSEO";
+import { externalLinkProps } from "@/lib/externalLink";
 
 const teamLinks = [
   {
