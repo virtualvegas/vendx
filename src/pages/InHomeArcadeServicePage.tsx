@@ -22,6 +22,11 @@ import {
 
 const VENDX_PHONE_TEL = "tel:+17812141806";
 
+const getIcon = (name: string) => {
+  const Ico = (Icons as any)[name];
+  return Ico || Wrench;
+};
+
 const FALLBACK_PACKAGES = [
   { slug: "diagnostic_visit", icon: "Wrench", title: "Diagnostic Visit", price_label: "From $89", description: "On-site inspection, fault diagnosis, written estimate.", features: ["1 hour on-site","Written estimate","Same-week scheduling"] },
 ];
