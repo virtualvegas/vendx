@@ -195,8 +195,7 @@ const RetailLinks = ({ links, compact = false }: RetailLinksProps) => {
               <a
                 key={index}
                 href={link.url}
-                target="_blank"
-                rel="noopener noreferrer"
+                {...externalLinkProps(link.url)}
               >
                 <Button
                   variant="outline"
