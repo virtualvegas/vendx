@@ -26,6 +26,7 @@ const ExternalServiceManager = () => {
             <TabsTrigger value="locations">Client Sites</TabsTrigger>
             <TabsTrigger value="machines">Client Machines</TabsTrigger>
             <TabsTrigger value="invoices">Invoices</TabsTrigger>
+            <TabsTrigger value="packages">Packages & Pricing</TabsTrigger>
           </TabsList>
         </div>
         <TabsContent value="tickets" className="mt-4"><ExtTicketsPanel /></TabsContent>
@@ -33,6 +34,7 @@ const ExternalServiceManager = () => {
         <TabsContent value="locations" className="mt-4"><ExtLocationsPanel /></TabsContent>
         <TabsContent value="machines" className="mt-4"><ExtMachinesPanel /></TabsContent>
         <TabsContent value="invoices" className="mt-4"><ExtInvoicesPanel /></TabsContent>
+        <TabsContent value="packages" className="mt-4"><ExtPackagesPanel /></TabsContent>
       </Tabs>
     </div>
   );
