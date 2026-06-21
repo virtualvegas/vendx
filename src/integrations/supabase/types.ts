@@ -6671,13 +6671,17 @@ export type Database = {
           country: string | null
           created_at: string
           email: string
+          finance_income_id: string | null
           financing_interest: boolean | null
           full_name: string
           id: string
           in_home_setup: boolean | null
+          invoice_due_date: string | null
           light_gun: boolean | null
           monitor_size: string | null
           online_play: boolean | null
+          paid_at: string | null
+          payment_status: string
           phone: string | null
           postal_code: string | null
           preferred_games: string | null
@@ -6710,13 +6714,17 @@ export type Database = {
           country?: string | null
           created_at?: string
           email: string
+          finance_income_id?: string | null
           financing_interest?: boolean | null
           full_name: string
           id?: string
           in_home_setup?: boolean | null
+          invoice_due_date?: string | null
           light_gun?: boolean | null
           monitor_size?: string | null
           online_play?: boolean | null
+          paid_at?: string | null
+          payment_status?: string
           phone?: string | null
           postal_code?: string | null
           preferred_games?: string | null
@@ -6749,13 +6757,17 @@ export type Database = {
           country?: string | null
           created_at?: string
           email?: string
+          finance_income_id?: string | null
           financing_interest?: boolean | null
           full_name?: string
           id?: string
           in_home_setup?: boolean | null
+          invoice_due_date?: string | null
           light_gun?: boolean | null
           monitor_size?: string | null
           online_play?: boolean | null
+          paid_at?: string | null
+          payment_status?: string
           phone?: string | null
           postal_code?: string | null
           preferred_games?: string | null

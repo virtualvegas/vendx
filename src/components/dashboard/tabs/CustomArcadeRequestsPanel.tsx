@@ -88,6 +88,9 @@ const CustomArcadeRequestsPanel = () => {
           admin_notes: editing.admin_notes,
           quoted_price: editing.quoted_price ? Number(editing.quoted_price) : null,
           quoted_at: editing.status === "quoted" ? new Date().toISOString() : editing.quoted_at,
+          payment_status: editing.payment_status || "unpaid",
+          paid_at: editing.payment_status === "paid" ? (editing.paid_at || new Date().toISOString()) : null,
+          invoice_due_date: editing.invoice_due_date || null,
         })
         .eq("id", editing.id);
       if (error) return toast.error(error.message);
@@ -294,6 +297,21 @@ const CustomArcadeRequestsPanel = () => {
                 <div>
                   <Label className="mb-1.5 block">Quoted price ($)</Label>
                   <Input type="number" step="0.01" value={editing.quoted_price ?? ""} onChange={e => setEditing({ ...editing, quoted_price: e.target.value })} />
+                </div>
+                <div>
+                  <Label className="mb-1.5 block">Payment status</Label>
+                  <Select value={editing.payment_status || "unpaid"} onValueChange={v => setEditing({ ...editing, payment_status: v, paid_at: v === "paid" && !editing.paid_at ? new Date().toISOString() : editing.paid_at })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="unpaid">Unpaid</SelectItem>
+                      <SelectItem value="paid">Paid</SelectItem>
+                      <SelectItem value="refunded">Refunded</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label className="mb-1.5 block">Invoice due date</Label>
+                  <Input type="date" value={editing.invoice_due_date || ""} onChange={e => setEditing({ ...editing, invoice_due_date: e.target.value })} />
                 </div>
                 <div className="md:col-span-2">
                   <Label className="mb-1.5 block">Admin notes</Label>
