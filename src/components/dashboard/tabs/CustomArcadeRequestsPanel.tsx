@@ -30,13 +30,12 @@ const BLANK = {
   isNew: true,
   full_name: "", email: "", phone: "", country: "USA",
   address_line1: "", address_line2: "", city: "", state: "", postal_code: "",
-  cabinet_style: "upright", cabinet_size: "full", control_layout: "2-player",
+  cabinet_style: "upright", cabinet_size: "full", control_layout: "2p",
   monitor_size: "32", artwork_theme: "", trackball: false, spinner: false, light_gun: false,
   preferred_platforms: [] as string[], approx_game_count: "", preferred_games: "",
   online_play: false, in_home_setup: false, financing_interest: false,
   budget_range: "", target_delivery_date: "", additional_notes: "",
   status: "new", admin_notes: "", quoted_price: "",
-  created_by_admin: true,
 };
 
 const CustomArcadeRequestsPanel = () => {
