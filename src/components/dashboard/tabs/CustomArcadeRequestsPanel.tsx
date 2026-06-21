@@ -88,6 +88,9 @@ const CustomArcadeRequestsPanel = () => {
           admin_notes: editing.admin_notes,
           quoted_price: editing.quoted_price ? Number(editing.quoted_price) : null,
           quoted_at: editing.status === "quoted" ? new Date().toISOString() : editing.quoted_at,
+          payment_status: editing.payment_status || "unpaid",
+          paid_at: editing.payment_status === "paid" ? (editing.paid_at || new Date().toISOString()) : null,
+          invoice_due_date: editing.invoice_due_date || null,
         })
         .eq("id", editing.id);
       if (error) return toast.error(error.message);
