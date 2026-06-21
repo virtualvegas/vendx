@@ -71,7 +71,7 @@ interface Subscription {
   profiles?: { email: string; full_name: string } | null;
 }
 
-const categories = ["subscriptions", "apparel", "accessories", "snacks", "tech"];
+const categories = ["subscriptions", "arcade_sales", "arcade_refurbished", "apparel", "accessories", "snacks", "tech"];
 
 const StoreManager = () => {
   const [products, setProducts] = useState<Product[]>([]);
