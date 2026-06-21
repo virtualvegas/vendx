@@ -194,8 +194,15 @@ const CustomArcadeRequestsPanel = () => {
                     <span>{formatDisplayDate(r.created_at, { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" })}</span>
                   </div>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex gap-2 flex-wrap">
                   <Button size="sm" variant="outline" onClick={() => openEdit(r)} className="gap-1"><Eye className="w-3.5 h-3.5" /> View</Button>
+                  {["accepted","completed","quoted"].includes(r.status) && (
+                    linkedRequestIds.has(r.id) ? (
+                      <Badge variant="outline" className="gap-1 text-emerald-400 border-emerald-400/40 self-center"><CheckCircle2 className="w-3 h-3" /> Service-tracked</Badge>
+                    ) : (
+                      <Button size="sm" variant="outline" onClick={() => setConvertReq(r)} className="gap-1 text-primary border-primary/40"><Wrench className="w-3.5 h-3.5" /> Track service</Button>
+                    )
+                  )}
                   <Button size="sm" variant="outline" onClick={() => remove(r.id)} className="gap-1 text-destructive"><Trash2 className="w-3.5 h-3.5" /></Button>
                 </div>
               </div>
@@ -203,6 +210,39 @@ const CustomArcadeRequestsPanel = () => {
           ))}
         </div>
       )}
+
+      <Dialog open={!!convertReq} onOpenChange={(v) => !v && setConvertReq(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Track service for this build</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            Creates a "VendX-built" entry in External Service so this machine appears in Sold/Built, gets a service-history record, and can have manuals/PDFs attached.
+          </p>
+          <div className="space-y-3">
+            <div>
+              <Label className="mb-1.5 block">Customer account *</Label>
+              <Select value={convertClient} onValueChange={setConvertClient}>
+                <SelectTrigger><SelectValue placeholder="Pick client account..." /></SelectTrigger>
+                <SelectContent>
+                  {extClients.map((c: any) => <SelectItem key={c.id} value={c.id}>{c.company_name}</SelectItem>)}
+                </SelectContent>
+              </Select>
+              {extClients.length === 0 && (
+                <p className="text-xs text-amber-400 mt-1">No external client accounts yet — create one in External Service → Clients first.</p>
+              )}
+            </div>
+            <div className="text-xs text-muted-foreground bg-muted/40 p-2 rounded">
+              Request: <b>{convertReq?.request_number}</b> · {convertReq?.full_name}<br />
+              Sale price: ${Number(convertReq?.quoted_price || 0).toFixed(2)}
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setConvertReq(null)}>Cancel</Button>
+            <Button onClick={convertToServiceMachine} disabled={!convertClient}>Create service record</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
