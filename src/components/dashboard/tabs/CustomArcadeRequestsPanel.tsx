@@ -319,4 +319,11 @@ const Info = ({ label, v }: { label: string; v: any }) => (
   </div>
 );
 
+const Field = ({ label, children }: { label: string; children: React.ReactNode }) => (
+  <div>
+    <Label className="mb-1.5 block text-xs">{label}</Label>
+    {children}
+  </div>
+);
+
 export default CustomArcadeRequestsPanel;
