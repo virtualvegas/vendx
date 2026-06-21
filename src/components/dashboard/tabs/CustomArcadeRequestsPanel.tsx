@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/select";
 import { Gamepad2, Eye, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import { formatLocal } from "@/lib/dateUtils";
+import { formatDisplayDate } from "@/lib/dateUtils";
 
 const STATUSES = ["new", "reviewing", "quoted", "accepted", "declined", "completed"];
 const statusColor: Record<string, string> = {
