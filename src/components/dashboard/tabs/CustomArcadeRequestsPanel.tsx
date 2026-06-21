@@ -112,13 +112,16 @@ const CustomArcadeRequestsPanel = () => {
           <h2 className="text-xl font-bold flex items-center gap-2"><Gamepad2 className="w-5 h-5 text-primary" /> Custom Arcade Requests</h2>
           <p className="text-sm text-muted-foreground">Inquiries submitted from the public custom multicade request form.</p>
         </div>
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-48"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All statuses</SelectItem>
-            {STATUSES.map(s => <SelectItem key={s} value={s} className="capitalize">{s}</SelectItem>)}
-          </SelectContent>
-        </Select>
+        <div className="flex gap-2 flex-wrap">
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-48"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All statuses</SelectItem>
+              {STATUSES.map(s => <SelectItem key={s} value={s} className="capitalize">{s}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Button onClick={openCreate} className="gap-1"><Plus className="w-4 h-4" /> New Request</Button>
+        </div>
       </div>
 
       {isLoading ? (
