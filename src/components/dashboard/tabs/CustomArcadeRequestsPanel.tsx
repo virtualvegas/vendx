@@ -11,7 +11,8 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { Gamepad2, Eye, Trash2 } from "lucide-react";
+import { Gamepad2, Eye, Trash2, Plus } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { formatDisplayDate } from "@/lib/dateUtils";
 
@@ -23,6 +24,18 @@ const statusColor: Record<string, string> = {
   accepted: "bg-emerald-500/20 text-emerald-300 border-emerald-500/40",
   declined: "bg-rose-500/20 text-rose-300 border-rose-500/40",
   completed: "bg-primary/20 text-primary border-primary/40",
+};
+
+const BLANK = {
+  isNew: true,
+  full_name: "", email: "", phone: "", country: "USA",
+  address_line1: "", address_line2: "", city: "", state: "", postal_code: "",
+  cabinet_style: "upright", cabinet_size: "full", control_layout: "2p",
+  monitor_size: "32", artwork_theme: "", trackball: false, spinner: false, light_gun: false,
+  preferred_platforms: [] as string[], approx_game_count: "", preferred_games: "",
+  online_play: false, in_home_setup: false, financing_interest: false,
+  budget_range: "", target_delivery_date: "", additional_notes: "",
+  status: "new", admin_notes: "", quoted_price: "",
 };
 
 const CustomArcadeRequestsPanel = () => {
@@ -45,21 +58,41 @@ const CustomArcadeRequestsPanel = () => {
     },
   });
 
-  const openEdit = (row: any) => { setEditing({ ...row }); setOpen(true); };
+  const openCreate = () => { setEditing({ ...BLANK }); setOpen(true); };
+  const openEdit = (row: any) => { setEditing({ ...row, isNew: false }); setOpen(true); };
 
   const save = async () => {
     if (!editing) return;
-    const { error } = await supabase
-      .from("vendx_custom_arcade_requests")
-      .update({
-        status: editing.status,
-        admin_notes: editing.admin_notes,
-        quoted_price: editing.quoted_price ? Number(editing.quoted_price) : null,
-        quoted_at: editing.status === "quoted" ? new Date().toISOString() : editing.quoted_at,
-      })
-      .eq("id", editing.id);
-    if (error) return toast.error(error.message);
-    toast.success("Saved");
+    if (editing.isNew) {
+      if (!editing.full_name?.trim() || !editing.email?.trim()) {
+        return toast.error("Name and email are required");
+      }
+      const { isNew, quoted_price, target_delivery_date, approx_game_count, ...rest } = editing;
+      const { data: { user } } = await supabase.auth.getUser();
+      const payload: any = {
+        ...rest,
+        user_id: user?.id || null,
+        quoted_price: quoted_price ? Number(quoted_price) : null,
+        target_delivery_date: target_delivery_date || null,
+        approx_game_count: approx_game_count ? Number(approx_game_count) : null,
+        quoted_at: rest.status === "quoted" ? new Date().toISOString() : null,
+      };
+      const { error } = await supabase.from("vendx_custom_arcade_requests").insert(payload);
+      if (error) return toast.error(error.message);
+      toast.success("Request created");
+    } else {
+      const { error } = await supabase
+        .from("vendx_custom_arcade_requests")
+        .update({
+          status: editing.status,
+          admin_notes: editing.admin_notes,
+          quoted_price: editing.quoted_price ? Number(editing.quoted_price) : null,
+          quoted_at: editing.status === "quoted" ? new Date().toISOString() : editing.quoted_at,
+        })
+        .eq("id", editing.id);
+      if (error) return toast.error(error.message);
+      toast.success("Saved");
+    }
     setOpen(false);
     qc.invalidateQueries({ queryKey: ["custom-arcade-requests"] });
   };
@@ -79,13 +112,16 @@ const CustomArcadeRequestsPanel = () => {
           <h2 className="text-xl font-bold flex items-center gap-2"><Gamepad2 className="w-5 h-5 text-primary" /> Custom Arcade Requests</h2>
           <p className="text-sm text-muted-foreground">Inquiries submitted from the public custom multicade request form.</p>
         </div>
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-48"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All statuses</SelectItem>
-            {STATUSES.map(s => <SelectItem key={s} value={s} className="capitalize">{s}</SelectItem>)}
-          </SelectContent>
-        </Select>
+        <div className="flex gap-2 flex-wrap">
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-48"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All statuses</SelectItem>
+              {STATUSES.map(s => <SelectItem key={s} value={s} className="capitalize">{s}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Button onClick={openCreate} className="gap-1"><Plus className="w-4 h-4" /> New Request</Button>
+        </div>
       </div>
 
       {isLoading ? (
@@ -126,9 +162,93 @@ const CustomArcadeRequestsPanel = () => {
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Request {editing?.request_number}</DialogTitle>
+            <DialogTitle>{editing?.isNew ? "New Custom Arcade Request" : `Request ${editing?.request_number || ""}`}</DialogTitle>
           </DialogHeader>
-          {editing && (
+          {editing && editing.isNew ? (
+            <div className="space-y-4">
+              <div className="grid md:grid-cols-2 gap-3">
+                <Field label="Full name *"><Input value={editing.full_name} onChange={e => setEditing({ ...editing, full_name: e.target.value })} /></Field>
+                <Field label="Email *"><Input type="email" value={editing.email} onChange={e => setEditing({ ...editing, email: e.target.value })} /></Field>
+                <Field label="Phone"><Input value={editing.phone} onChange={e => setEditing({ ...editing, phone: e.target.value })} /></Field>
+                <Field label="Country"><Input value={editing.country} onChange={e => setEditing({ ...editing, country: e.target.value })} /></Field>
+                <Field label="Address line 1"><Input value={editing.address_line1} onChange={e => setEditing({ ...editing, address_line1: e.target.value })} /></Field>
+                <Field label="Address line 2"><Input value={editing.address_line2} onChange={e => setEditing({ ...editing, address_line2: e.target.value })} /></Field>
+                <Field label="City"><Input value={editing.city} onChange={e => setEditing({ ...editing, city: e.target.value })} /></Field>
+                <Field label="State"><Input value={editing.state} onChange={e => setEditing({ ...editing, state: e.target.value })} /></Field>
+                <Field label="Postal code"><Input value={editing.postal_code} onChange={e => setEditing({ ...editing, postal_code: e.target.value })} /></Field>
+              </div>
+              <div className="border-t pt-3 grid md:grid-cols-2 gap-3">
+                <Field label="Cabinet style">
+                  <Select value={editing.cabinet_style} onValueChange={v => setEditing({ ...editing, cabinet_style: v })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {["upright","cocktail","pedestal","bartop","sit_down"].map(s => <SelectItem key={s} value={s} className="capitalize">{s.replace("_"," ")}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </Field>
+                <Field label="Cabinet size">
+                  <Select value={editing.cabinet_size} onValueChange={v => setEditing({ ...editing, cabinet_size: v })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>{["full","mid","mini"].map(s => <SelectItem key={s} value={s} className="capitalize">{s}</SelectItem>)}</SelectContent>
+                  </Select>
+                </Field>
+                <Field label="Control layout">
+                  <Select value={editing.control_layout} onValueChange={v => setEditing({ ...editing, control_layout: v })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>{["1p","2p","4p"].map(s => <SelectItem key={s} value={s}>{s.toUpperCase()}</SelectItem>)}</SelectContent>
+                  </Select>
+                </Field>
+                <Field label="Monitor size (in)">
+                  <Select value={editing.monitor_size} onValueChange={v => setEditing({ ...editing, monitor_size: v })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>{["19","24","27","32","43"].map(s => <SelectItem key={s} value={s}>{s}"</SelectItem>)}</SelectContent>
+                  </Select>
+                </Field>
+                <Field label="Artwork theme"><Input value={editing.artwork_theme} onChange={e => setEditing({ ...editing, artwork_theme: e.target.value })} /></Field>
+                <Field label="Budget range">
+                  <Select value={editing.budget_range} onValueChange={v => setEditing({ ...editing, budget_range: v })}>
+                    <SelectTrigger><SelectValue placeholder="Select..." /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="under_2k">Under $2k</SelectItem>
+                      <SelectItem value="2k_4k">$2k – $4k</SelectItem>
+                      <SelectItem value="4k_7k">$4k – $7k</SelectItem>
+                      <SelectItem value="7k_10k">$7k – $10k</SelectItem>
+                      <SelectItem value="10k_plus">$10k+</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </Field>
+                <Field label="Target delivery date"><Input type="date" value={editing.target_delivery_date} onChange={e => setEditing({ ...editing, target_delivery_date: e.target.value })} /></Field>
+                <Field label="Approx game count"><Input type="number" value={editing.approx_game_count} onChange={e => setEditing({ ...editing, approx_game_count: e.target.value })} /></Field>
+                <Field label="Preferred platforms (comma separated)"><Input value={(editing.preferred_platforms || []).join(", ")} onChange={e => setEditing({ ...editing, preferred_platforms: e.target.value.split(",").map((x: string) => x.trim()).filter(Boolean) })} /></Field>
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                {[
+                  ["trackball","Trackball"],
+                  ["spinner","Spinner"],
+                  ["light_gun","Light gun"],
+                  ["online_play","Online play"],
+                  ["in_home_setup","In-home setup"],
+                  ["financing_interest","Financing"],
+                ].map(([k,l]) => (
+                  <label key={k} className="flex items-center gap-2 text-sm">
+                    <Checkbox checked={!!editing[k]} onCheckedChange={(v) => setEditing({ ...editing, [k]: !!v })} /> {l}
+                  </label>
+                ))}
+              </div>
+              <Field label="Must-have games / notes"><Textarea rows={3} value={editing.preferred_games} onChange={e => setEditing({ ...editing, preferred_games: e.target.value })} /></Field>
+              <Field label="Additional notes"><Textarea rows={3} value={editing.additional_notes} onChange={e => setEditing({ ...editing, additional_notes: e.target.value })} /></Field>
+              <div className="border-t pt-4 grid md:grid-cols-2 gap-3">
+                <Field label="Status">
+                  <Select value={editing.status} onValueChange={v => setEditing({ ...editing, status: v })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>{STATUSES.map(s => <SelectItem key={s} value={s} className="capitalize">{s}</SelectItem>)}</SelectContent>
+                  </Select>
+                </Field>
+                <Field label="Quoted price ($)"><Input type="number" step="0.01" value={editing.quoted_price} onChange={e => setEditing({ ...editing, quoted_price: e.target.value })} /></Field>
+                <div className="md:col-span-2"><Field label="Admin notes"><Textarea rows={3} value={editing.admin_notes} onChange={e => setEditing({ ...editing, admin_notes: e.target.value })} /></Field></div>
+              </div>
+            </div>
+          ) : editing && (
             <div className="space-y-4">
               <div className="grid md:grid-cols-2 gap-4 text-sm">
                 <Info label="Name" v={editing.full_name} />
@@ -196,6 +316,13 @@ const Info = ({ label, v }: { label: string; v: any }) => (
   <div>
     <div className="text-muted-foreground text-xs">{label}</div>
     <div className="font-medium">{v || "—"}</div>
+  </div>
+);
+
+const Field = ({ label, children }: { label: string; children: React.ReactNode }) => (
+  <div>
+    <Label className="mb-1.5 block text-xs">{label}</Label>
+    {children}
   </div>
 );
 
