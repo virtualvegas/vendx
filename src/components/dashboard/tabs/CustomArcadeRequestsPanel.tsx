@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { Gamepad2, Eye, Trash2, Plus } from "lucide-react";
+import { Gamepad2, Eye, Trash2, Plus, Wrench, CheckCircle2 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { formatDisplayDate } from "@/lib/dateUtils";
@@ -43,6 +43,48 @@ const CustomArcadeRequestsPanel = () => {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<any>(null);
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [convertReq, setConvertReq] = useState<any>(null);
+  const [convertClient, setConvertClient] = useState<string>("");
+
+  const { data: extClients = [] } = useQuery({
+    queryKey: ["ext-clients-min-for-convert"],
+    queryFn: async () => (await supabase.from("vendx_external_clients" as any).select("id,company_name").order("company_name")).data || [],
+  });
+
+  const { data: existingServiceMachines = [] } = useQuery({
+    queryKey: ["ext-machines-by-custom-req"],
+    queryFn: async () => {
+      const { data } = await supabase.from("vendx_external_machines" as any)
+        .select("id, custom_arcade_request_id")
+        .not("custom_arcade_request_id", "is", null);
+      return data || [];
+    },
+  });
+  const linkedRequestIds = new Set(existingServiceMachines.map((m: any) => m.custom_arcade_request_id));
+
+  const convertToServiceMachine = async () => {
+    if (!convertReq || !convertClient) { toast.error("Pick a client account"); return; }
+    const label = `Custom Build ${convertReq.request_number} — ${convertReq.full_name}`;
+    const { error } = await supabase.from("vendx_external_machines" as any).insert({
+      client_id: convertClient,
+      asset_label: label,
+      machine_type: convertReq.cabinet_style === "cocktail" ? "arcade_commercial" : "arcade_home",
+      make: "VendX",
+      model: [convertReq.cabinet_style, convertReq.cabinet_size, convertReq.monitor_size && `${convertReq.monitor_size}"`].filter(Boolean).join(" "),
+      status: "active",
+      purchased_from_us: true,
+      custom_arcade_request_id: convertReq.id,
+      sale_date: convertReq.paid_at ? convertReq.paid_at.slice(0, 10) : new Date().toISOString().slice(0, 10),
+      sale_price: convertReq.quoted_price || null,
+      notes: [convertReq.preferred_games && `Games: ${convertReq.preferred_games}`, convertReq.additional_notes].filter(Boolean).join("\n\n"),
+    });
+    if (error) { toast.error(error.message); return; }
+    toast.success("Service machine record created");
+    setConvertReq(null); setConvertClient("");
+    qc.invalidateQueries({ queryKey: ["ext-machines-by-custom-req"] });
+    qc.invalidateQueries({ queryKey: ["ext-machines"] });
+    qc.invalidateQueries({ queryKey: ["sold-machines-stats"] });
+  };
 
   const { data, isLoading } = useQuery({
     queryKey: ["custom-arcade-requests", statusFilter],
