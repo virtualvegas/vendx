@@ -55,6 +55,8 @@ interface StoreProduct {
 const categories = [
   { id: "all", label: "All Products", icon: Package },
   { id: "subscriptions", label: "Subscriptions", icon: Gift },
+  { id: "arcade_sales", label: "Arcade Sales", icon: Cpu },
+  { id: "arcade_refurbished", label: "Refurbished Arcade", icon: Cpu },
   { id: "apparel", label: "Apparel", icon: Shirt },
   { id: "accessories", label: "Accessories", icon: Package },
   { id: "snacks", label: "Snacks", icon: Cookie },
