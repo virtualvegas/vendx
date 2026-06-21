@@ -11,7 +11,8 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { Gamepad2, Eye, Trash2 } from "lucide-react";
+import { Gamepad2, Eye, Trash2, Plus } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { formatDisplayDate } from "@/lib/dateUtils";
 
