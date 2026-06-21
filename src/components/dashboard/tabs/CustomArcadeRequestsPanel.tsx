@@ -162,9 +162,93 @@ const CustomArcadeRequestsPanel = () => {
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Request {editing?.request_number}</DialogTitle>
+            <DialogTitle>{editing?.isNew ? "New Custom Arcade Request" : `Request ${editing?.request_number || ""}`}</DialogTitle>
           </DialogHeader>
-          {editing && (
+          {editing && editing.isNew ? (
+            <div className="space-y-4">
+              <div className="grid md:grid-cols-2 gap-3">
+                <Field label="Full name *"><Input value={editing.full_name} onChange={e => setEditing({ ...editing, full_name: e.target.value })} /></Field>
+                <Field label="Email *"><Input type="email" value={editing.email} onChange={e => setEditing({ ...editing, email: e.target.value })} /></Field>
+                <Field label="Phone"><Input value={editing.phone} onChange={e => setEditing({ ...editing, phone: e.target.value })} /></Field>
+                <Field label="Country"><Input value={editing.country} onChange={e => setEditing({ ...editing, country: e.target.value })} /></Field>
+                <Field label="Address line 1"><Input value={editing.address_line1} onChange={e => setEditing({ ...editing, address_line1: e.target.value })} /></Field>
+                <Field label="Address line 2"><Input value={editing.address_line2} onChange={e => setEditing({ ...editing, address_line2: e.target.value })} /></Field>
+                <Field label="City"><Input value={editing.city} onChange={e => setEditing({ ...editing, city: e.target.value })} /></Field>
+                <Field label="State"><Input value={editing.state} onChange={e => setEditing({ ...editing, state: e.target.value })} /></Field>
+                <Field label="Postal code"><Input value={editing.postal_code} onChange={e => setEditing({ ...editing, postal_code: e.target.value })} /></Field>
+              </div>
+              <div className="border-t pt-3 grid md:grid-cols-2 gap-3">
+                <Field label="Cabinet style">
+                  <Select value={editing.cabinet_style} onValueChange={v => setEditing({ ...editing, cabinet_style: v })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {["upright","cocktail","pedestal","bartop","sit_down"].map(s => <SelectItem key={s} value={s} className="capitalize">{s.replace("_"," ")}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </Field>
+                <Field label="Cabinet size">
+                  <Select value={editing.cabinet_size} onValueChange={v => setEditing({ ...editing, cabinet_size: v })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>{["full","mid","mini"].map(s => <SelectItem key={s} value={s} className="capitalize">{s}</SelectItem>)}</SelectContent>
+                  </Select>
+                </Field>
+                <Field label="Control layout">
+                  <Select value={editing.control_layout} onValueChange={v => setEditing({ ...editing, control_layout: v })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>{["1p","2p","4p"].map(s => <SelectItem key={s} value={s}>{s.toUpperCase()}</SelectItem>)}</SelectContent>
+                  </Select>
+                </Field>
+                <Field label="Monitor size (in)">
+                  <Select value={editing.monitor_size} onValueChange={v => setEditing({ ...editing, monitor_size: v })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>{["19","24","27","32","43"].map(s => <SelectItem key={s} value={s}>{s}"</SelectItem>)}</SelectContent>
+                  </Select>
+                </Field>
+                <Field label="Artwork theme"><Input value={editing.artwork_theme} onChange={e => setEditing({ ...editing, artwork_theme: e.target.value })} /></Field>
+                <Field label="Budget range">
+                  <Select value={editing.budget_range} onValueChange={v => setEditing({ ...editing, budget_range: v })}>
+                    <SelectTrigger><SelectValue placeholder="Select..." /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="under_2k">Under $2k</SelectItem>
+                      <SelectItem value="2k_4k">$2k – $4k</SelectItem>
+                      <SelectItem value="4k_7k">$4k – $7k</SelectItem>
+                      <SelectItem value="7k_10k">$7k – $10k</SelectItem>
+                      <SelectItem value="10k_plus">$10k+</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </Field>
+                <Field label="Target delivery date"><Input type="date" value={editing.target_delivery_date} onChange={e => setEditing({ ...editing, target_delivery_date: e.target.value })} /></Field>
+                <Field label="Approx game count"><Input type="number" value={editing.approx_game_count} onChange={e => setEditing({ ...editing, approx_game_count: e.target.value })} /></Field>
+                <Field label="Preferred platforms (comma separated)"><Input value={(editing.preferred_platforms || []).join(", ")} onChange={e => setEditing({ ...editing, preferred_platforms: e.target.value.split(",").map((x: string) => x.trim()).filter(Boolean) })} /></Field>
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                {[
+                  ["trackball","Trackball"],
+                  ["spinner","Spinner"],
+                  ["light_gun","Light gun"],
+                  ["online_play","Online play"],
+                  ["in_home_setup","In-home setup"],
+                  ["financing_interest","Financing"],
+                ].map(([k,l]) => (
+                  <label key={k} className="flex items-center gap-2 text-sm">
+                    <Checkbox checked={!!editing[k]} onCheckedChange={(v) => setEditing({ ...editing, [k]: !!v })} /> {l}
+                  </label>
+                ))}
+              </div>
+              <Field label="Must-have games / notes"><Textarea rows={3} value={editing.preferred_games} onChange={e => setEditing({ ...editing, preferred_games: e.target.value })} /></Field>
+              <Field label="Additional notes"><Textarea rows={3} value={editing.additional_notes} onChange={e => setEditing({ ...editing, additional_notes: e.target.value })} /></Field>
+              <div className="border-t pt-4 grid md:grid-cols-2 gap-3">
+                <Field label="Status">
+                  <Select value={editing.status} onValueChange={v => setEditing({ ...editing, status: v })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>{STATUSES.map(s => <SelectItem key={s} value={s} className="capitalize">{s}</SelectItem>)}</SelectContent>
+                  </Select>
+                </Field>
+                <Field label="Quoted price ($)"><Input type="number" step="0.01" value={editing.quoted_price} onChange={e => setEditing({ ...editing, quoted_price: e.target.value })} /></Field>
+                <div className="md:col-span-2"><Field label="Admin notes"><Textarea rows={3} value={editing.admin_notes} onChange={e => setEditing({ ...editing, admin_notes: e.target.value })} /></Field></div>
+              </div>
+            </div>
+          ) : editing && (
             <div className="space-y-4">
               <div className="grid md:grid-cols-2 gap-4 text-sm">
                 <Info label="Name" v={editing.full_name} />
