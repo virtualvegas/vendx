@@ -6654,6 +6654,134 @@ export type Database = {
         }
         Relationships: []
       }
+      vendx_custom_arcade_requests: {
+        Row: {
+          additional_notes: string | null
+          address_line1: string | null
+          address_line2: string | null
+          admin_notes: string | null
+          approx_game_count: number | null
+          artwork_theme: string | null
+          assigned_to: string | null
+          budget_range: string | null
+          cabinet_size: string | null
+          cabinet_style: string | null
+          city: string | null
+          control_layout: string | null
+          country: string | null
+          created_at: string
+          email: string
+          financing_interest: boolean | null
+          full_name: string
+          id: string
+          in_home_setup: boolean | null
+          light_gun: boolean | null
+          monitor_size: string | null
+          online_play: boolean | null
+          phone: string | null
+          postal_code: string | null
+          preferred_games: string | null
+          preferred_platforms: string[] | null
+          quoted_at: string | null
+          quoted_price: number | null
+          reference_product_id: string | null
+          request_number: string | null
+          spinner: boolean | null
+          state: string | null
+          status: string
+          target_delivery_date: string | null
+          trackball: boolean | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          additional_notes?: string | null
+          address_line1?: string | null
+          address_line2?: string | null
+          admin_notes?: string | null
+          approx_game_count?: number | null
+          artwork_theme?: string | null
+          assigned_to?: string | null
+          budget_range?: string | null
+          cabinet_size?: string | null
+          cabinet_style?: string | null
+          city?: string | null
+          control_layout?: string | null
+          country?: string | null
+          created_at?: string
+          email: string
+          financing_interest?: boolean | null
+          full_name: string
+          id?: string
+          in_home_setup?: boolean | null
+          light_gun?: boolean | null
+          monitor_size?: string | null
+          online_play?: boolean | null
+          phone?: string | null
+          postal_code?: string | null
+          preferred_games?: string | null
+          preferred_platforms?: string[] | null
+          quoted_at?: string | null
+          quoted_price?: number | null
+          reference_product_id?: string | null
+          request_number?: string | null
+          spinner?: boolean | null
+          state?: string | null
+          status?: string
+          target_delivery_date?: string | null
+          trackball?: boolean | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          additional_notes?: string | null
+          address_line1?: string | null
+          address_line2?: string | null
+          admin_notes?: string | null
+          approx_game_count?: number | null
+          artwork_theme?: string | null
+          assigned_to?: string | null
+          budget_range?: string | null
+          cabinet_size?: string | null
+          cabinet_style?: string | null
+          city?: string | null
+          control_layout?: string | null
+          country?: string | null
+          created_at?: string
+          email?: string
+          financing_interest?: boolean | null
+          full_name?: string
+          id?: string
+          in_home_setup?: boolean | null
+          light_gun?: boolean | null
+          monitor_size?: string | null
+          online_play?: boolean | null
+          phone?: string | null
+          postal_code?: string | null
+          preferred_games?: string | null
+          preferred_platforms?: string[] | null
+          quoted_at?: string | null
+          quoted_price?: number | null
+          reference_product_id?: string | null
+          request_number?: string | null
+          spinner?: boolean | null
+          state?: string | null
+          status?: string
+          target_delivery_date?: string | null
+          trackball?: boolean | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendx_custom_arcade_requests_reference_product_id_fkey"
+            columns: ["reference_product_id"]
+            isOneToOne: false
+            referencedRelation: "store_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vendx_email_subscribers: {
         Row: {
           audience: string
