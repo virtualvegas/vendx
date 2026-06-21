@@ -183,7 +183,7 @@ export const IncomeTab = () => {
           <CardTitle>Income & Deposits</CardTitle>
           <div className="flex gap-2">
             <Dialog open={importOpen} onOpenChange={setImportOpen}>
-              <DialogTrigger asChild><Button variant="outline" size="sm"><Download className="h-4 w-4 mr-2" />Pull from Machines</Button></DialogTrigger>
+              <DialogTrigger asChild><Button variant="outline" size="sm"><Download className="h-4 w-4 mr-2" />Pull Revenue</Button></DialogTrigger>
               <DialogContent>
                 <DialogHeader><DialogTitle>Import Machine Revenue</DialogTitle></DialogHeader>
                 <div className="space-y-3">
