@@ -10,6 +10,7 @@ import {
   Receipt, Wrench, Banknote, Ticket
 } from "lucide-react";
 import { MachineStatsCards, BaseMachine } from "@/components/machines";
+import PendingTransactionsSummary from "@/components/dashboard/PendingTransactionsSummary";
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
 } from "recharts";
@@ -421,7 +422,11 @@ const DashboardOverview = () => {
         </Card>
       </div>
 
+      {/* Pending transactions snapshot */}
+      <PendingTransactionsSummary />
+
       {/* Revenue by Source */}
+
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
         <Card>
           <CardContent className="p-4">
