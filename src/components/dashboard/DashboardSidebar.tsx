@@ -148,6 +148,7 @@ const tabGroups: TabGroup[] = [
       { id: "kiosk-categories", label: "Kiosk Setup", icon: Layers, requiredRoles: r("kiosk-categories") },
       { id: "technical-support", label: "Tech Support", icon: Wrench, requiredRoles: r("technical-support") },
       { id: "external-service", label: "External Service (Client Machines)", icon: Wrench, requiredRoles: r("external-service") },
+      { id: "custom-arcade-requests", label: "Custom Arcade Requests", icon: Wrench, requiredRoles: r("custom-arcade-requests") },
     ],
   },
 

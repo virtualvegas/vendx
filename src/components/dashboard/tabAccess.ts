@@ -46,6 +46,7 @@ export const TAB_ACCESS: Record<string, AppRole[]> = {
   "kiosk-categories": ["super_admin", "tech_support_lead"],
   "technical-support": ["super_admin", "tech_support_lead", "support"],
   "external-service": ["super_admin", "tech_support_lead", "support", "finance_accounting", "global_operations_manager", "regional_manager", "employee_operator"],
+  "custom-arcade-requests": ["super_admin", "tech_support_lead", "support", "finance_accounting", "global_operations_manager", "regional_manager", "employee_operator"],
 
   // Routes & logistics
   "route-manager": ["super_admin", "global_operations_manager"],
