@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { DollarSign, TrendingUp, TrendingDown, Wallet } from "lucide-react";
+import PendingTransactionsSummary from "@/components/dashboard/PendingTransactionsSummary";
 import { format } from "date-fns";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -256,7 +257,11 @@ const Finance = () => {
         </Card>
       </div>
 
+      {/* Pending transactions snapshot */}
+      <PendingTransactionsSummary />
+
       {/* Charts */}
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Income vs Expenses Trend */}
         <Card>
