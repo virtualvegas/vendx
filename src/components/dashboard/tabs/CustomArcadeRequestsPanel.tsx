@@ -295,6 +295,21 @@ const CustomArcadeRequestsPanel = () => {
                   <Label className="mb-1.5 block">Quoted price ($)</Label>
                   <Input type="number" step="0.01" value={editing.quoted_price ?? ""} onChange={e => setEditing({ ...editing, quoted_price: e.target.value })} />
                 </div>
+                <div>
+                  <Label className="mb-1.5 block">Payment status</Label>
+                  <Select value={editing.payment_status || "unpaid"} onValueChange={v => setEditing({ ...editing, payment_status: v, paid_at: v === "paid" && !editing.paid_at ? new Date().toISOString() : editing.paid_at })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="unpaid">Unpaid</SelectItem>
+                      <SelectItem value="paid">Paid</SelectItem>
+                      <SelectItem value="refunded">Refunded</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label className="mb-1.5 block">Invoice due date</Label>
+                  <Input type="date" value={editing.invoice_due_date || ""} onChange={e => setEditing({ ...editing, invoice_due_date: e.target.value })} />
+                </div>
                 <div className="md:col-span-2">
                   <Label className="mb-1.5 block">Admin notes</Label>
                   <Textarea rows={4} value={editing.admin_notes ?? ""} onChange={e => setEditing({ ...editing, admin_notes: e.target.value })} />
