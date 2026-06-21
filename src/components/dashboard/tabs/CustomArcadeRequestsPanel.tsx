@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { Gamepad2, Eye, Trash2, Plus } from "lucide-react";
+import { Gamepad2, Eye, Trash2, Plus, Wrench, CheckCircle2 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { formatDisplayDate } from "@/lib/dateUtils";
@@ -43,6 +43,48 @@ const CustomArcadeRequestsPanel = () => {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<any>(null);
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [convertReq, setConvertReq] = useState<any>(null);
+  const [convertClient, setConvertClient] = useState<string>("");
+
+  const { data: extClients = [] } = useQuery({
+    queryKey: ["ext-clients-min-for-convert"],
+    queryFn: async () => (await supabase.from("vendx_external_clients" as any).select("id,company_name").order("company_name")).data || [],
+  });
+
+  const { data: existingServiceMachines = [] } = useQuery({
+    queryKey: ["ext-machines-by-custom-req"],
+    queryFn: async () => {
+      const { data } = await supabase.from("vendx_external_machines" as any)
+        .select("id, custom_arcade_request_id")
+        .not("custom_arcade_request_id", "is", null);
+      return data || [];
+    },
+  });
+  const linkedRequestIds = new Set(existingServiceMachines.map((m: any) => m.custom_arcade_request_id));
+
+  const convertToServiceMachine = async () => {
+    if (!convertReq || !convertClient) { toast.error("Pick a client account"); return; }
+    const label = `Custom Build ${convertReq.request_number} — ${convertReq.full_name}`;
+    const { error } = await supabase.from("vendx_external_machines" as any).insert({
+      client_id: convertClient,
+      asset_label: label,
+      machine_type: convertReq.cabinet_style === "cocktail" ? "arcade_commercial" : "arcade_home",
+      make: "VendX",
+      model: [convertReq.cabinet_style, convertReq.cabinet_size, convertReq.monitor_size && `${convertReq.monitor_size}"`].filter(Boolean).join(" "),
+      status: "active",
+      purchased_from_us: true,
+      custom_arcade_request_id: convertReq.id,
+      sale_date: convertReq.paid_at ? convertReq.paid_at.slice(0, 10) : new Date().toISOString().slice(0, 10),
+      sale_price: convertReq.quoted_price || null,
+      notes: [convertReq.preferred_games && `Games: ${convertReq.preferred_games}`, convertReq.additional_notes].filter(Boolean).join("\n\n"),
+    });
+    if (error) { toast.error(error.message); return; }
+    toast.success("Service machine record created");
+    setConvertReq(null); setConvertClient("");
+    qc.invalidateQueries({ queryKey: ["ext-machines-by-custom-req"] });
+    qc.invalidateQueries({ queryKey: ["ext-machines"] });
+    qc.invalidateQueries({ queryKey: ["sold-machines-stats"] });
+  };
 
   const { data, isLoading } = useQuery({
     queryKey: ["custom-arcade-requests", statusFilter],
@@ -152,8 +194,15 @@ const CustomArcadeRequestsPanel = () => {
                     <span>{formatDisplayDate(r.created_at, { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" })}</span>
                   </div>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex gap-2 flex-wrap">
                   <Button size="sm" variant="outline" onClick={() => openEdit(r)} className="gap-1"><Eye className="w-3.5 h-3.5" /> View</Button>
+                  {["accepted","completed","quoted"].includes(r.status) && (
+                    linkedRequestIds.has(r.id) ? (
+                      <Badge variant="outline" className="gap-1 text-emerald-400 border-emerald-400/40 self-center"><CheckCircle2 className="w-3 h-3" /> Service-tracked</Badge>
+                    ) : (
+                      <Button size="sm" variant="outline" onClick={() => setConvertReq(r)} className="gap-1 text-primary border-primary/40"><Wrench className="w-3.5 h-3.5" /> Track service</Button>
+                    )
+                  )}
                   <Button size="sm" variant="outline" onClick={() => remove(r.id)} className="gap-1 text-destructive"><Trash2 className="w-3.5 h-3.5" /></Button>
                 </div>
               </div>
@@ -161,6 +210,39 @@ const CustomArcadeRequestsPanel = () => {
           ))}
         </div>
       )}
+
+      <Dialog open={!!convertReq} onOpenChange={(v) => !v && setConvertReq(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Track service for this build</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            Creates a "VendX-built" entry in External Service so this machine appears in Sold/Built, gets a service-history record, and can have manuals/PDFs attached.
+          </p>
+          <div className="space-y-3">
+            <div>
+              <Label className="mb-1.5 block">Customer account *</Label>
+              <Select value={convertClient} onValueChange={setConvertClient}>
+                <SelectTrigger><SelectValue placeholder="Pick client account..." /></SelectTrigger>
+                <SelectContent>
+                  {extClients.map((c: any) => <SelectItem key={c.id} value={c.id}>{c.company_name}</SelectItem>)}
+                </SelectContent>
+              </Select>
+              {extClients.length === 0 && (
+                <p className="text-xs text-amber-400 mt-1">No external client accounts yet — create one in External Service → Clients first.</p>
+              )}
+            </div>
+            <div className="text-xs text-muted-foreground bg-muted/40 p-2 rounded">
+              Request: <b>{convertReq?.request_number}</b> · {convertReq?.full_name}<br />
+              Sale price: ${Number(convertReq?.quoted_price || 0).toFixed(2)}
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setConvertReq(null)}>Cancel</Button>
+            <Button onClick={convertToServiceMachine} disabled={!convertClient}>Create service record</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">

@@ -6964,57 +6964,75 @@ export type Database = {
           client_id: string
           contract_terms: string | null
           created_at: string
+          custom_arcade_request_id: string | null
           hourly_rate_override: number | null
           id: string
           install_date: string | null
           location_id: string | null
           machine_type: string | null
           make: string | null
+          manual_urls: Json
           model: string | null
           notes: string | null
           photo_url: string | null
+          purchased_from_us: boolean
+          sale_date: string | null
+          sale_price: number | null
           serial_number: string | null
           status: string
           updated_at: string
           warranty_expires_on: string | null
+          warranty_pdf_url: string | null
         }
         Insert: {
           asset_label: string
           client_id: string
           contract_terms?: string | null
           created_at?: string
+          custom_arcade_request_id?: string | null
           hourly_rate_override?: number | null
           id?: string
           install_date?: string | null
           location_id?: string | null
           machine_type?: string | null
           make?: string | null
+          manual_urls?: Json
           model?: string | null
           notes?: string | null
           photo_url?: string | null
+          purchased_from_us?: boolean
+          sale_date?: string | null
+          sale_price?: number | null
           serial_number?: string | null
           status?: string
           updated_at?: string
           warranty_expires_on?: string | null
+          warranty_pdf_url?: string | null
         }
         Update: {
           asset_label?: string
           client_id?: string
           contract_terms?: string | null
           created_at?: string
+          custom_arcade_request_id?: string | null
           hourly_rate_override?: number | null
           id?: string
           install_date?: string | null
           location_id?: string | null
           machine_type?: string | null
           make?: string | null
+          manual_urls?: Json
           model?: string | null
           notes?: string | null
           photo_url?: string | null
+          purchased_from_us?: boolean
+          sale_date?: string | null
+          sale_price?: number | null
           serial_number?: string | null
           status?: string
           updated_at?: string
           warranty_expires_on?: string | null
+          warranty_pdf_url?: string | null
         }
         Relationships: [
           {
@@ -7022,6 +7040,13 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "vendx_external_clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendx_external_machines_custom_arcade_request_id_fkey"
+            columns: ["custom_arcade_request_id"]
+            isOneToOne: false
+            referencedRelation: "vendx_custom_arcade_requests"
             referencedColumns: ["id"]
           },
           {
@@ -8802,6 +8827,17 @@ export type Database = {
       }
       generate_totp_secret: { Args: never; Returns: string }
       get_business_card: { Args: { _slug: string }; Returns: Json }
+      get_external_machine_service_stats: {
+        Args: { p_machine_id: string }
+        Returns: {
+          completed_tickets: number
+          last_service_date: string
+          open_tickets: number
+          total_invoiced: number
+          total_paid: number
+          total_tickets: number
+        }[]
+      }
       get_my_office_id: { Args: never; Returns: string }
       get_my_warehouse_id: { Args: never; Returns: string }
       get_public_machine_info: {
@@ -8892,6 +8928,31 @@ export type Database = {
           id: string
           job_title: string
           roles: string[]
+        }[]
+      }
+      list_sold_machines_with_stats: {
+        Args: never
+        Returns: {
+          asset_label: string
+          client_id: string
+          client_name: string
+          custom_arcade_request_id: string
+          custom_request_number: string
+          install_date: string
+          last_service_date: string
+          machine_id: string
+          machine_type: string
+          make: string
+          model: string
+          open_tickets: number
+          photo_url: string
+          sale_date: string
+          sale_price: number
+          serial_number: string
+          status: string
+          total_invoiced: number
+          total_tickets: number
+          warranty_expires_on: string
         }[]
       }
       log_machine_activity: {
