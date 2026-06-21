@@ -56,6 +56,7 @@ import WalletPayDocsPage from "./pages/WalletPayDocsPage";
 import ServiceRequestPage from "./pages/ServiceRequestPage";
 import ExternalServicePage from "./pages/ExternalServicePage";
 import InHomeArcadeServicePage from "./pages/InHomeArcadeServicePage";
+import CustomArcadeRequestPage from "./pages/CustomArcadeRequestPage";
 import BusinessCardPage from "./pages/BusinessCardPage";
 import StaffDirectoryPage from "./pages/StaffDirectoryPage";
 import SsoAuthorizePage from "./pages/SsoAuthorizePage";
@@ -124,6 +125,7 @@ const App = () => (
               <Route path="/store/snack-in-the-box" element={<SnackBoxPage />} />
               <Route path="/store/arcade-subscription" element={<ArcadeSubscriptionPage />} />
               <Route path="/store/order-success" element={<OrderSuccessPage />} />
+              <Route path="/store/custom-arcade" element={<CustomArcadeRequestPage />} />
               <Route path="/store/:slug" element={<ProductPage />} />
               <Route path="/funnel/:slug" element={<FunnelPage />} />
               <Route path="/news" element={<NewsPage />} />
