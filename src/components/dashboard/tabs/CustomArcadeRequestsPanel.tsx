@@ -110,7 +110,7 @@ const CustomArcadeRequestsPanel = () => {
                     <span>{r.cabinet_style} · {r.cabinet_size} · {r.control_layout} · {r.monitor_size}"</span>
                     <span>Budget: {r.budget_range}</span>
                     {r.city && <span>{r.city}, {r.state}</span>}
-                    <span>{formatLocal(r.created_at, "MMM d, yyyy h:mm a")}</span>
+                    <span>{formatDisplayDate(r.created_at, { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" })}</span>
                   </div>
                 </div>
                 <div className="flex gap-2">

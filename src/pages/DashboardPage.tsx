@@ -75,6 +75,7 @@ import WarehousesManager from "@/components/dashboard/tabs/WarehousesManager";
 import MerchantApiManager from "@/components/dashboard/tabs/MerchantApiManager";
 import BrandLinksManager from "@/components/dashboard/tabs/BrandLinksManager";
 import ExternalServiceManager from "@/components/dashboard/tabs/ExternalServiceManager";
+import CustomArcadeRequestsPanel from "@/components/dashboard/tabs/CustomArcadeRequestsPanel";
 import BusinessExternalService from "@/components/dashboard/tabs/business-owner/BusinessExternalService";
 import MyBusinessCard from "@/components/dashboard/tabs/MyBusinessCard";
 import SsoAppsManager from "@/components/dashboard/tabs/SsoAppsManager";
@@ -268,6 +269,8 @@ const DashboardPage = () => {
         content = <BusinessExternalService />; break;
       case "external-service":
         content = <ExternalServiceManager />; break;
+      case "custom-arcade-requests":
+        content = <CustomArcadeRequestsPanel />; break;
       case "my-orders":
         content = <CustomerOrders />; break;
       case "my-wallet":
