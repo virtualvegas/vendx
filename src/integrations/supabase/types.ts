@@ -3883,6 +3883,7 @@ export type Database = {
           avatar_url: string | null
           bio: string | null
           card_accent_color: string | null
+          card_banner_url: string | null
           card_public: boolean
           card_slug: string | null
           created_at: string
@@ -3906,6 +3907,7 @@ export type Database = {
           avatar_url?: string | null
           bio?: string | null
           card_accent_color?: string | null
+          card_banner_url?: string | null
           card_public?: boolean
           card_slug?: string | null
           created_at?: string
@@ -3929,6 +3931,7 @@ export type Database = {
           avatar_url?: string | null
           bio?: string | null
           card_accent_color?: string | null
+          card_banner_url?: string | null
           card_public?: boolean
           card_slug?: string | null
           created_at?: string
