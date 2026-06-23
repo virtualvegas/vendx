@@ -355,6 +355,70 @@ const MyBusinessCard = () => {
               </div>
             </div>
           </div>
+          <div className="sm:col-span-2">
+            <Label className="flex items-center gap-2">
+              <ImageIcon className="w-4 h-4 text-primary" />
+              Card Banner (image or GIF)
+            </Label>
+            <p className="text-xs text-muted-foreground mb-2">
+              Shown behind your photo at the top of your card. Animated GIFs work great.
+            </p>
+            <div
+              className="w-full h-32 rounded-lg border border-border overflow-hidden relative bg-muted"
+              style={
+                !form.card_banner_url
+                  ? { background: `linear-gradient(135deg, ${form.card_accent_color}, ${form.card_accent_color}88)` }
+                  : undefined
+              }
+            >
+              {form.card_banner_url && (
+                <img src={form.card_banner_url} alt="Card banner" className="w-full h-full object-cover" />
+              )}
+            </div>
+            <div className="flex flex-wrap gap-2 mt-2">
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                disabled={uploadingBanner}
+                onClick={() => document.getElementById("bc-banner-input")?.click()}
+                className="gap-2"
+              >
+                {uploadingBanner ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                {uploadingBanner ? "Uploading…" : form.card_banner_url ? "Replace Banner" : "Upload Banner"}
+              </Button>
+              {form.card_banner_url && (
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => setForm({ ...form, card_banner_url: "" })}
+                  className="gap-2 text-destructive hover:text-destructive"
+                >
+                  <X className="w-4 h-4" />
+                  Remove
+                </Button>
+              )}
+            </div>
+            <input
+              id="bc-banner-input"
+              type="file"
+              accept="image/*,image/gif"
+              className="hidden"
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) handleBannerUpload(f);
+                e.target.value = "";
+              }}
+            />
+            <Input
+              value={form.card_banner_url}
+              onChange={(e) => setForm({ ...form, card_banner_url: e.target.value })}
+              placeholder="…or paste an image / GIF URL"
+              className="text-xs mt-2"
+            />
+            <p className="text-xs text-muted-foreground mt-1">PNG, JPG, WebP, or GIF · up to 10MB</p>
+          </div>
           <div>
             <Label>LinkedIn</Label>
             <Input value={form.linkedin_url} onChange={(e) => setForm({ ...form, linkedin_url: e.target.value })} placeholder="https://linkedin.com/in/…" />
