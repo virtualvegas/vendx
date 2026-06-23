@@ -24,6 +24,7 @@ interface CardData {
   website_url: string | null;
   card_slug: string | null;
   card_accent_color: string | null;
+  card_banner_url?: string | null;
   roles: string[];
   company_name?: string | null;
   divisions?: { id: string; name: string; slug: string }[] | null;
