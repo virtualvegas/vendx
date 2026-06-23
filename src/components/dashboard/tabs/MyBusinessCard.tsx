@@ -20,12 +20,14 @@ const MyBusinessCard = () => {
   const [userId, setUserId] = useState<string>("");
   const [showShareQR, setShowShareQR] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [uploadingBanner, setUploadingBanner] = useState(false);
   const [divisions, setDivisions] = useState<Division[]>([]);
   const [form, setForm] = useState({
     full_name: "",
     email: "",
     phone: "",
     avatar_url: "",
+    card_banner_url: "",
     job_title: "",
     department: "",
     bio: "",
