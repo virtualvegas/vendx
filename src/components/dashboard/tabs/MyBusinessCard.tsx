@@ -57,6 +57,7 @@ const MyBusinessCard = () => {
           email: profile.email || user.email || "",
           phone: profile.phone || "",
           avatar_url: profile.avatar_url || "",
+          card_banner_url: (profile as any).card_banner_url || "",
           job_title: profile.job_title || "",
           department: profile.department || "",
           bio: profile.bio || "",
