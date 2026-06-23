@@ -126,6 +126,8 @@ const App = () => (
               <Route path="/store/arcade-subscription" element={<ArcadeSubscriptionPage />} />
               <Route path="/store/order-success" element={<OrderSuccessPage />} />
               <Route path="/store/custom-arcade" element={<CustomArcadeRequestPage />} />
+              <Route path="/custom-arcade-requests" element={<CustomArcadeRequestPage />} />
+              <Route path="/custom-arcade" element={<CustomArcadeRequestPage />} />
               <Route path="/store/:slug" element={<ProductPage />} />
               <Route path="/funnel/:slug" element={<FunnelPage />} />
               <Route path="/news" element={<NewsPage />} />
