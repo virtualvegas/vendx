@@ -8,8 +8,9 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { Link } from "react-router-dom";
-import { ExternalLink, Save, Copy, IdCard, Smartphone, Radio, Building2 } from "lucide-react";
+import { ExternalLink, Save, Copy, IdCard, Smartphone, Radio, Building2, Upload, Loader2, X } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 type Division = { id: string; name: string; slug: string };
 
@@ -18,6 +19,7 @@ const MyBusinessCard = () => {
   const [saving, setSaving] = useState(false);
   const [userId, setUserId] = useState<string>("");
   const [showShareQR, setShowShareQR] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [divisions, setDivisions] = useState<Division[]>([]);
   const [form, setForm] = useState({
     full_name: "",
@@ -121,7 +123,42 @@ const MyBusinessCard = () => {
     }
   };
 
+  const handlePhotoUpload = async (file: File) => {
+    if (!userId) return;
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please choose an image file");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Image must be under 5MB");
+      return;
+    }
+    setUploading(true);
+    try {
+      const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
+      const path = `${userId}/avatar-${Date.now()}.${ext}`;
+      const { error: upErr } = await supabase.storage
+        .from("business-cards")
+        .upload(path, file, { upsert: true, contentType: file.type, cacheControl: "3600" });
+      if (upErr) throw upErr;
+      // Long-lived signed URL (10 years) since bucket is private
+      const { data: signed, error: sErr } = await supabase.storage
+        .from("business-cards")
+        .createSignedUrl(path, 60 * 60 * 24 * 365 * 10);
+      if (sErr) throw sErr;
+      setForm((f) => ({ ...f, avatar_url: signed.signedUrl }));
+      toast.success("Photo uploaded — click Save Card to keep it");
+    } catch (e: any) {
+      toast.error(e?.message || "Upload failed");
+    } finally {
+      setUploading(false);
+    }
+  };
+
   if (loading) return <div className="p-6 text-muted-foreground">Loading…</div>;
+
+  const initials = (form.full_name || "?")
+    .split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase();
 
   return (
     <div className="space-y-6 max-w-3xl">
@@ -226,8 +263,63 @@ const MyBusinessCard = () => {
             <Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="+1 555 123 4567" />
           </div>
           <div className="sm:col-span-2">
-            <Label>Avatar Image URL</Label>
-            <Input value={form.avatar_url} onChange={(e) => setForm({ ...form, avatar_url: e.target.value })} placeholder="https://…/photo.jpg" />
+            <Label>Profile Photo</Label>
+            <div className="flex items-center gap-4 mt-2">
+              <Avatar className="h-20 w-20 ring-2 ring-border">
+                {form.avatar_url && <AvatarImage src={form.avatar_url} alt={form.full_name} />}
+                <AvatarFallback
+                  className="text-lg font-bold text-white"
+                  style={{ background: form.card_accent_color }}
+                >
+                  {initials}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex-1 space-y-2">
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    disabled={uploading}
+                    onClick={() => document.getElementById("bc-photo-input")?.click()}
+                    className="gap-2"
+                  >
+                    {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                    {uploading ? "Uploading…" : form.avatar_url ? "Replace Photo" : "Upload Photo"}
+                  </Button>
+                  {form.avatar_url && (
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => setForm({ ...form, avatar_url: "" })}
+                      className="gap-2 text-destructive hover:text-destructive"
+                    >
+                      <X className="w-4 h-4" />
+                      Remove
+                    </Button>
+                  )}
+                </div>
+                <input
+                  id="bc-photo-input"
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    if (f) handlePhotoUpload(f);
+                    e.target.value = "";
+                  }}
+                />
+                <Input
+                  value={form.avatar_url}
+                  onChange={(e) => setForm({ ...form, avatar_url: e.target.value })}
+                  placeholder="…or paste an image URL"
+                  className="text-xs"
+                />
+                <p className="text-xs text-muted-foreground">PNG, JPG, or WebP · up to 5MB</p>
+              </div>
+            </div>
           </div>
           <div>
             <Label>LinkedIn</Label>
