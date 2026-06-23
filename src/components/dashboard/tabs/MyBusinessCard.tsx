@@ -8,8 +8,9 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { Link } from "react-router-dom";
-import { ExternalLink, Save, Copy, IdCard, Smartphone, Radio, Building2 } from "lucide-react";
+import { ExternalLink, Save, Copy, IdCard, Smartphone, Radio, Building2, Upload, Loader2, X } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 type Division = { id: string; name: string; slug: string };
 
