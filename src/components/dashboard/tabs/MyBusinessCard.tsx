@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { Link } from "react-router-dom";
-import { ExternalLink, Save, Copy, IdCard, Smartphone, Radio, Building2, Upload, Loader2, X } from "lucide-react";
+import { ExternalLink, Save, Copy, IdCard, Smartphone, Radio, Building2, Upload, Loader2, X, Image as ImageIcon } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
@@ -20,12 +20,14 @@ const MyBusinessCard = () => {
   const [userId, setUserId] = useState<string>("");
   const [showShareQR, setShowShareQR] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [uploadingBanner, setUploadingBanner] = useState(false);
   const [divisions, setDivisions] = useState<Division[]>([]);
   const [form, setForm] = useState({
     full_name: "",
     email: "",
     phone: "",
     avatar_url: "",
+    card_banner_url: "",
     job_title: "",
     department: "",
     bio: "",
@@ -55,6 +57,7 @@ const MyBusinessCard = () => {
           email: profile.email || user.email || "",
           phone: profile.phone || "",
           avatar_url: profile.avatar_url || "",
+          card_banner_url: (profile as any).card_banner_url || "",
           job_title: profile.job_title || "",
           department: profile.department || "",
           bio: profile.bio || "",
@@ -152,6 +155,37 @@ const MyBusinessCard = () => {
       toast.error(e?.message || "Upload failed");
     } finally {
       setUploading(false);
+    }
+  };
+
+  const handleBannerUpload = async (file: File) => {
+    if (!userId) return;
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please choose an image or GIF file");
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("Banner must be under 10MB");
+      return;
+    }
+    setUploadingBanner(true);
+    try {
+      const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
+      const path = `${userId}/banner-${Date.now()}.${ext}`;
+      const { error: upErr } = await supabase.storage
+        .from("business-cards")
+        .upload(path, file, { upsert: true, contentType: file.type, cacheControl: "3600" });
+      if (upErr) throw upErr;
+      const { data: signed, error: sErr } = await supabase.storage
+        .from("business-cards")
+        .createSignedUrl(path, 60 * 60 * 24 * 365 * 10);
+      if (sErr) throw sErr;
+      setForm((f) => ({ ...f, card_banner_url: signed.signedUrl }));
+      toast.success("Banner uploaded — click Save Card to keep it");
+    } catch (e: any) {
+      toast.error(e?.message || "Upload failed");
+    } finally {
+      setUploadingBanner(false);
     }
   };
 
@@ -320,6 +354,70 @@ const MyBusinessCard = () => {
                 <p className="text-xs text-muted-foreground">PNG, JPG, or WebP · up to 5MB</p>
               </div>
             </div>
+          </div>
+          <div className="sm:col-span-2">
+            <Label className="flex items-center gap-2">
+              <ImageIcon className="w-4 h-4 text-primary" />
+              Card Banner (image or GIF)
+            </Label>
+            <p className="text-xs text-muted-foreground mb-2">
+              Shown behind your photo at the top of your card. Animated GIFs work great.
+            </p>
+            <div
+              className="w-full h-32 rounded-lg border border-border overflow-hidden relative bg-muted"
+              style={
+                !form.card_banner_url
+                  ? { background: `linear-gradient(135deg, ${form.card_accent_color}, ${form.card_accent_color}88)` }
+                  : undefined
+              }
+            >
+              {form.card_banner_url && (
+                <img src={form.card_banner_url} alt="Card banner" className="w-full h-full object-cover" />
+              )}
+            </div>
+            <div className="flex flex-wrap gap-2 mt-2">
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                disabled={uploadingBanner}
+                onClick={() => document.getElementById("bc-banner-input")?.click()}
+                className="gap-2"
+              >
+                {uploadingBanner ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                {uploadingBanner ? "Uploading…" : form.card_banner_url ? "Replace Banner" : "Upload Banner"}
+              </Button>
+              {form.card_banner_url && (
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => setForm({ ...form, card_banner_url: "" })}
+                  className="gap-2 text-destructive hover:text-destructive"
+                >
+                  <X className="w-4 h-4" />
+                  Remove
+                </Button>
+              )}
+            </div>
+            <input
+              id="bc-banner-input"
+              type="file"
+              accept="image/*,image/gif"
+              className="hidden"
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) handleBannerUpload(f);
+                e.target.value = "";
+              }}
+            />
+            <Input
+              value={form.card_banner_url}
+              onChange={(e) => setForm({ ...form, card_banner_url: e.target.value })}
+              placeholder="…or paste an image / GIF URL"
+              className="text-xs mt-2"
+            />
+            <p className="text-xs text-muted-foreground mt-1">PNG, JPG, WebP, or GIF · up to 10MB</p>
           </div>
           <div>
             <Label>LinkedIn</Label>

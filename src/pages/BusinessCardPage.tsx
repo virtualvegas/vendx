@@ -24,6 +24,7 @@ interface CardData {
   website_url: string | null;
   card_slug: string | null;
   card_accent_color: string | null;
+  card_banner_url?: string | null;
   roles: string[];
   company_name?: string | null;
   divisions?: { id: string; name: string; slug: string }[] | null;
@@ -155,12 +156,22 @@ const BusinessCardPage = () => {
       <div className="w-full max-w-md">
         <Card className="overflow-hidden border-2 backdrop-blur-sm bg-card/80 shadow-2xl">
           <div
-            className="h-32 relative"
-            style={{
-              background: `linear-gradient(135deg, ${accent}, ${accent}88)`,
-            }}
+            className="h-32 relative overflow-hidden"
+            style={
+              card.card_banner_url
+                ? undefined
+                : { background: `linear-gradient(135deg, ${accent}, ${accent}88)` }
+            }
           >
-            <div className="absolute inset-0 opacity-30 [background-image:linear-gradient(transparent_98%,rgba(255,255,255,.5)_98%),linear-gradient(90deg,transparent_98%,rgba(255,255,255,.5)_98%)] [background-size:24px_24px]" />
+            {card.card_banner_url ? (
+              <img
+                src={card.card_banner_url}
+                alt=""
+                className="absolute inset-0 w-full h-full object-cover"
+              />
+            ) : (
+              <div className="absolute inset-0 opacity-30 [background-image:linear-gradient(transparent_98%,rgba(255,255,255,.5)_98%),linear-gradient(90deg,transparent_98%,rgba(255,255,255,.5)_98%)] [background-size:24px_24px]" />
+            )}
           </div>
 
           <CardContent className="pt-0 pb-6 px-6 -mt-14 relative">
