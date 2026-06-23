@@ -19,6 +19,7 @@ const MyBusinessCard = () => {
   const [saving, setSaving] = useState(false);
   const [userId, setUserId] = useState<string>("");
   const [showShareQR, setShowShareQR] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [divisions, setDivisions] = useState<Division[]>([]);
   const [form, setForm] = useState({
     full_name: "",
