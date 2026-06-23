@@ -158,6 +158,37 @@ const MyBusinessCard = () => {
     }
   };
 
+  const handleBannerUpload = async (file: File) => {
+    if (!userId) return;
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please choose an image or GIF file");
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("Banner must be under 10MB");
+      return;
+    }
+    setUploadingBanner(true);
+    try {
+      const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
+      const path = `${userId}/banner-${Date.now()}.${ext}`;
+      const { error: upErr } = await supabase.storage
+        .from("business-cards")
+        .upload(path, file, { upsert: true, contentType: file.type, cacheControl: "3600" });
+      if (upErr) throw upErr;
+      const { data: signed, error: sErr } = await supabase.storage
+        .from("business-cards")
+        .createSignedUrl(path, 60 * 60 * 24 * 365 * 10);
+      if (sErr) throw sErr;
+      setForm((f) => ({ ...f, card_banner_url: signed.signedUrl }));
+      toast.success("Banner uploaded — click Save Card to keep it");
+    } catch (e: any) {
+      toast.error(e?.message || "Upload failed");
+    } finally {
+      setUploadingBanner(false);
+    }
+  };
+
   if (loading) return <div className="p-6 text-muted-foreground">Loading…</div>;
 
   const initials = (form.full_name || "?")
