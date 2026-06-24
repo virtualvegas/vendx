@@ -8,7 +8,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Pencil, Trash2 } from "lucide-react";
+import { SearchableSelect } from "@/components/ui/searchable-select";
+import { Plus, Pencil, Trash2, Link2, UserCheck } from "lucide-react";
 import { toast } from "sonner";
 
 const empty = {
