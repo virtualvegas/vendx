@@ -28,6 +28,7 @@ const empty = {
   default_payment_terms_days: 30,
   status: "active",
   notes: "",
+  linked_user_id: null as string | null,
 };
 
 const ExtClientsPanel = () => {
