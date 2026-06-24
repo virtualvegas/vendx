@@ -3256,6 +3256,139 @@ export type Database = {
         }
         Relationships: []
       }
+      news_article_comments: {
+        Row: {
+          article_id: string
+          body: string
+          created_at: string
+          id: string
+          is_deleted: boolean
+          parent_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          article_id: string
+          body: string
+          created_at?: string
+          id?: string
+          is_deleted?: boolean
+          parent_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          article_id?: string
+          body?: string
+          created_at?: string
+          id?: string
+          is_deleted?: boolean
+          parent_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "news_article_comments_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: false
+            referencedRelation: "news_article_stats"
+            referencedColumns: ["article_id"]
+          },
+          {
+            foreignKeyName: "news_article_comments_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: false
+            referencedRelation: "news_articles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "news_article_comments_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "news_article_comments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      news_article_likes: {
+        Row: {
+          anon_hash: string | null
+          article_id: string
+          created_at: string
+          id: string
+          user_id: string | null
+        }
+        Insert: {
+          anon_hash?: string | null
+          article_id: string
+          created_at?: string
+          id?: string
+          user_id?: string | null
+        }
+        Update: {
+          anon_hash?: string | null
+          article_id?: string
+          created_at?: string
+          id?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "news_article_likes_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: false
+            referencedRelation: "news_article_stats"
+            referencedColumns: ["article_id"]
+          },
+          {
+            foreignKeyName: "news_article_likes_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: false
+            referencedRelation: "news_articles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      news_article_views: {
+        Row: {
+          article_id: string
+          id: number
+          referrer: string | null
+          user_id: string | null
+          viewed_at: string
+        }
+        Insert: {
+          article_id: string
+          id?: number
+          referrer?: string | null
+          user_id?: string | null
+          viewed_at?: string
+        }
+        Update: {
+          article_id?: string
+          id?: number
+          referrer?: string | null
+          user_id?: string | null
+          viewed_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "news_article_views_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: false
+            referencedRelation: "news_article_stats"
+            referencedColumns: ["article_id"]
+          },
+          {
+            foreignKeyName: "news_article_views_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: false
+            referencedRelation: "news_articles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       news_articles: {
         Row: {
           author_id: string | null
@@ -3267,10 +3400,14 @@ export type Database = {
           id: string
           is_featured: boolean | null
           is_published: boolean | null
+          last_notified_at: string | null
           meta_description: string | null
           meta_title: string | null
+          notify_on_publish: boolean
           published_at: string | null
+          scheduled_publish_at: string | null
           slug: string
+          status: string
           tags: string[] | null
           title: string
           updated_at: string | null
@@ -3286,10 +3423,14 @@ export type Database = {
           id?: string
           is_featured?: boolean | null
           is_published?: boolean | null
+          last_notified_at?: string | null
           meta_description?: string | null
           meta_title?: string | null
+          notify_on_publish?: boolean
           published_at?: string | null
+          scheduled_publish_at?: string | null
           slug: string
+          status?: string
           tags?: string[] | null
           title: string
           updated_at?: string | null
@@ -3305,10 +3446,14 @@ export type Database = {
           id?: string
           is_featured?: boolean | null
           is_published?: boolean | null
+          last_notified_at?: string | null
           meta_description?: string | null
           meta_title?: string | null
+          notify_on_publish?: boolean
           published_at?: string | null
+          scheduled_publish_at?: string | null
           slug?: string
+          status?: string
           tags?: string[] | null
           title?: string
           updated_at?: string | null
@@ -3356,6 +3501,42 @@ export type Database = {
           slug?: string
         }
         Relationships: []
+      }
+      news_category_subscriptions: {
+        Row: {
+          category_id: string | null
+          created_at: string
+          id: string
+          subscriber_id: string
+        }
+        Insert: {
+          category_id?: string | null
+          created_at?: string
+          id?: string
+          subscriber_id: string
+        }
+        Update: {
+          category_id?: string | null
+          created_at?: string
+          id?: string
+          subscriber_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "news_category_subscriptions_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "news_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "news_category_subscriptions_subscriber_id_fkey"
+            columns: ["subscriber_id"]
+            isOneToOne: false
+            referencedRelation: "vendx_email_subscribers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       partner_offers: {
         Row: {
@@ -8735,7 +8916,27 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      news_article_stats: {
+        Row: {
+          article_id: string | null
+          comment_count: number | null
+          like_count: number | null
+          views_30d: number | null
+        }
+        Insert: {
+          article_id?: string | null
+          comment_count?: never
+          like_count?: never
+          views_30d?: never
+        }
+        Update: {
+          article_id?: string | null
+          comment_count?: never
+          like_count?: never
+          views_30d?: never
+        }
+        Relationships: []
+      }
     }
     Functions: {
       award_pos_points: {
@@ -8774,6 +8975,7 @@ export type Database = {
         }[]
       }
       calculate_quest_level: { Args: { xp: number }; Returns: number }
+      can_moderate_news: { Args: { _uid: string }; Returns: boolean }
       check_wallet_spending_limits: {
         Args: { p_amount: number; p_wallet_id: string }
         Returns: {
