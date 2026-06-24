@@ -8,8 +8,10 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Calendar, Eye, Search, Tag, ArrowRight } from "lucide-react";
+import { Calendar, Eye, Search, Tag, ArrowRight, Rss } from "lucide-react";
 import { format } from "date-fns";
+import NewsletterCategorySubscribe from "@/components/news/NewsletterCategorySubscribe";
+import { useSEO } from "@/hooks/useSEO";
 
 interface NewsCategory {
   id: string;
@@ -34,6 +36,8 @@ interface NewsArticle {
   category?: NewsCategory;
 }
 
+const RSS_URL = `https://xbbnodpvfvxtbffziuvr.supabase.co/functions/v1/news-rss`;
+
 export default function NewsPage() {
   const [articles, setArticles] = useState<NewsArticle[]>([]);
   const [categories, setCategories] = useState<NewsCategory[]>([]);
@@ -41,8 +45,24 @@ export default function NewsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
+  useSEO({
+    title: "News & Updates — VendX Global",
+    description: "Latest announcements, releases, and stories from the VendX ecosystem.",
+    type: "website",
+  });
+
   useEffect(() => {
     fetchData();
+    // Inject RSS link for feed readers
+    const link = document.createElement("link");
+    link.rel = "alternate";
+    link.type = "application/rss+xml";
+    link.title = "VendX News";
+    link.href = RSS_URL;
+    document.head.appendChild(link);
+    return () => {
+      document.head.removeChild(link);
+    };
   }, []);
 
   const fetchData = async () => {
@@ -99,6 +119,16 @@ export default function NewsPage() {
                 placeholder="Search articles..."
                 className="pl-12 h-12 text-lg"
               />
+            </div>
+            <div className="mt-4 flex justify-center">
+              <a
+                href={RSS_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 text-xs text-muted-foreground hover:text-primary transition-colors"
+              >
+                <Rss className="h-3.5 w-3.5" /> Subscribe via RSS
+              </a>
             </div>
           </div>
         </div>
@@ -296,6 +326,9 @@ export default function NewsPage() {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Newsletter Subscribe */}
+            <NewsletterCategorySubscribe categories={categories} />
 
             {/* Recent Articles */}
             <Card>

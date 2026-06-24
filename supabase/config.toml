@@ -72,3 +72,12 @@ verify_jwt = false
 
 [functions.merchant-webhook-redeliver]
 verify_jwt = false
+
+[functions.news-rss]
+verify_jwt = false
+
+[functions.news-publish-scheduled]
+verify_jwt = false
+
+[functions.news-notify-subscribers]
+verify_jwt = false
