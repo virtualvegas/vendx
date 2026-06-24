@@ -9,6 +9,7 @@ const iconMap: Record<string, any> = {
   calendar: Calendar
 };
 const Stats = () => {
+  const { data: stats } = useRealStats();
   const {
     data: metrics,
     isLoading
