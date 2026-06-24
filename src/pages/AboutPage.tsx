@@ -54,7 +54,7 @@ const AboutPage = () => {
               About <span className="glow-blue">VendX</span>
             </h1>
             <p className="text-xl text-muted-foreground">
-              Pioneering the future of automated retail across Earth and beyond
+              An ecosystem of automated retail, interactive entertainment, and creative media — built for everyday convenience.
             </p>
           </div>
 
