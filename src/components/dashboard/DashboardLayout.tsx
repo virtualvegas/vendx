@@ -6,6 +6,7 @@ import DashboardHeader from "./DashboardHeader";
 import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import vendxLogoAsset from "@/assets/vendx-logo.png.asset.json";
 
 interface DashboardLayoutProps {
   user: User;
@@ -43,7 +44,7 @@ const DashboardLayout = ({
         >
           {sidebarOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
         </Button>
-        <h1 className="text-lg font-bold text-foreground">VendX</h1>
+        <img src={vendxLogoAsset.url} alt="VendX" className="h-8 w-auto" />
         <div className="w-10" /> {/* Spacer for centering */}
       </div>
 
