@@ -327,6 +327,9 @@ export default function NewsPage() {
               </CardContent>
             </Card>
 
+            {/* Newsletter Subscribe */}
+            <NewsletterCategorySubscribe categories={categories} />
+
             {/* Recent Articles */}
             <Card>
               <CardHeader>
