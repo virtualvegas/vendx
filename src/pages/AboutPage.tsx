@@ -4,6 +4,7 @@ import { Globe, Users, Award, TrendingUp, LucideIcon, Package, Gamepad2, Coins, 
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useBusinessServices } from "@/hooks/useBusinessContent";
+import { useRealStats, getRealValueForLabel } from "@/hooks/useRealStats";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 
@@ -42,6 +43,7 @@ const AboutPage = () => {
   });
 
   const { data: services } = useBusinessServices();
+  const { data: realStats } = useRealStats();
 
   return (
     <div className="min-h-screen bg-background">
@@ -93,10 +95,12 @@ const AboutPage = () => {
                   highlights?.map((highlight, idx) => {
                     const config = iconConfig[highlight.display_order || idx + 1] || iconConfig[1];
                     const Icon = config.icon;
+                    const realValue = getRealValueForLabel(highlight.metric_label, realStats);
+                    const value = realValue ?? highlight.metric_value;
                     const description = highlightDescriptions[highlight.metric_label]?.replace(
                       "{value}",
-                      highlight.metric_value.toLocaleString()
-                    ) || `${highlight.metric_value.toLocaleString()}+ ${highlight.metric_label}`;
+                      value.toLocaleString()
+                    ) || `${value.toLocaleString()}+ ${highlight.metric_label}`;
                     
                     return (
                       <div key={highlight.id} className="flex items-start gap-4">
