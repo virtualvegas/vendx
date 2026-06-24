@@ -6,6 +6,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Monitor, ChevronRight, Building2 } from "lucide-react";
+import MyMachines from "@/components/dashboard/tabs/MyMachines";
+import { Separator } from "@/components/ui/separator";
 import { useBusinessOwnerData } from "./useBusinessOwnerData";
 import { 
   MachineStatsCards, 
@@ -294,6 +296,11 @@ const BusinessMachines = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      <Separator className="my-2" />
+
+      {/* Equipment you've bought, custom-built, or have us service */}
+      <MyMachines />
     </div>
   );
 };
