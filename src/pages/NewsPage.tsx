@@ -8,8 +8,10 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Calendar, Eye, Search, Tag, ArrowRight } from "lucide-react";
+import { Calendar, Eye, Search, Tag, ArrowRight, Rss } from "lucide-react";
 import { format } from "date-fns";
+import NewsletterCategorySubscribe from "@/components/news/NewsletterCategorySubscribe";
+import { useSEO } from "@/hooks/useSEO";
 
 interface NewsCategory {
   id: string;
