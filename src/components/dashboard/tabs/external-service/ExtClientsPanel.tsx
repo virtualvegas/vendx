@@ -8,7 +8,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Pencil, Trash2 } from "lucide-react";
+import { SearchableSelect } from "@/components/ui/searchable-select";
+import { Plus, Pencil, Trash2, Link2, UserCheck } from "lucide-react";
 import { toast } from "sonner";
 
 const empty = {
@@ -27,6 +28,7 @@ const empty = {
   default_payment_terms_days: 30,
   status: "active",
   notes: "",
+  linked_user_id: null as string | null,
 };
 
 const ExtClientsPanel = () => {
@@ -45,6 +47,29 @@ const ExtClientsPanel = () => {
       return data || [];
     },
   });
+
+  const { data: users = [] } = useQuery({
+    queryKey: ["ext-clients-linkable-users"],
+    queryFn: async () => {
+      const [profilesRes, rolesRes] = await Promise.all([
+        supabase.from("profiles").select("id, email, full_name").order("email"),
+        supabase.from("user_roles").select("user_id, role"),
+      ]);
+      const roleMap = new Map<string, string[]>();
+      (rolesRes.data || []).forEach((r: any) => {
+        const arr = roleMap.get(r.user_id) || [];
+        arr.push(r.role);
+        roleMap.set(r.user_id, arr);
+      });
+      return (profilesRes.data || []).map((p: any) => ({
+        id: p.id,
+        email: p.email,
+        full_name: p.full_name,
+        roles: roleMap.get(p.id) || [],
+      }));
+    },
+  });
+  const userById = (id: string | null) => users.find((u: any) => u.id === id);
 
   const save = async () => {
     if (!form.company_name?.trim()) { toast.error("Company name required"); return; }
@@ -83,6 +108,11 @@ const ExtClientsPanel = () => {
                   <div className="flex items-center gap-2 flex-wrap">
                     <h3 className="font-semibold">{c.company_name}</h3>
                     <Badge variant={c.status === "active" ? "default" : "outline"}>{c.status}</Badge>
+                    {c.linked_user_id ? (
+                      <Badge variant="secondary" className="gap-1"><UserCheck className="w-3 h-3" /> {userById(c.linked_user_id)?.email || "linked user"}</Badge>
+                    ) : (
+                      <Badge variant="outline" className="gap-1 opacity-70"><Link2 className="w-3 h-3" /> no linked account</Badge>
+                    )}
                   </div>
                   <p className="text-sm text-muted-foreground">
                     {c.contact_name} · {c.contact_email} · {c.contact_phone}
@@ -109,6 +139,31 @@ const ExtClientsPanel = () => {
             <div><Label>Contact Name</Label><Input value={form.contact_name || ""} onChange={e => setForm({...form, contact_name: e.target.value})} /></div>
             <div><Label>Contact Email</Label><Input type="email" value={form.contact_email || ""} onChange={e => setForm({...form, contact_email: e.target.value})} /></div>
             <div><Label>Contact Phone</Label><Input value={form.contact_phone || ""} onChange={e => setForm({...form, contact_phone: e.target.value})} /></div>
+            <div className="md:col-span-2 rounded-md border border-primary/30 bg-primary/5 p-3 space-y-2">
+              <div className="flex items-center gap-2 text-sm font-medium"><Link2 className="w-4 h-4 text-primary" /> Link to existing account</div>
+              <p className="text-xs text-muted-foreground">Connect this client record to a customer or business-owner login. They'll see their machines, tickets &amp; invoices in their dashboard.</p>
+              <SearchableSelect
+                value={form.linked_user_id || ""}
+                onValueChange={(v) => {
+                  const u = userById(v);
+                  setForm({
+                    ...form,
+                    linked_user_id: v || null,
+                    contact_name: !form.contact_name && u?.full_name ? u.full_name : form.contact_name,
+                    contact_email: !form.contact_email && u?.email ? u.email : form.contact_email,
+                  });
+                }}
+                options={[
+                  { value: "", label: "— None (custom client) —" },
+                  ...users.map((u: any) => ({
+                    value: u.id,
+                    label: `${u.full_name || u.email}${u.roles.length ? ` · ${u.roles.join("/")}` : ""}${u.full_name ? ` · ${u.email}` : ""}`,
+                  })),
+                ]}
+                placeholder="Search users by name, email or role…"
+                searchPlaceholder="Type to search users…"
+              />
+            </div>
             <div><Label>Tax ID</Label><Input value={form.tax_id || ""} onChange={e => setForm({...form, tax_id: e.target.value})} /></div>
             <div className="md:col-span-2"><Label>Billing Address</Label><Input value={form.billing_address || ""} onChange={e => setForm({...form, billing_address: e.target.value})} /></div>
             <div><Label>City</Label><Input value={form.billing_city || ""} onChange={e => setForm({...form, billing_city: e.target.value})} /></div>
