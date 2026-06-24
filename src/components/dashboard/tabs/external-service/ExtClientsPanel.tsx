@@ -48,6 +48,29 @@ const ExtClientsPanel = () => {
     },
   });
 
+  const { data: users = [] } = useQuery({
+    queryKey: ["ext-clients-linkable-users"],
+    queryFn: async () => {
+      const [profilesRes, rolesRes] = await Promise.all([
+        supabase.from("profiles").select("id, email, full_name").order("email"),
+        supabase.from("user_roles").select("user_id, role"),
+      ]);
+      const roleMap = new Map<string, string[]>();
+      (rolesRes.data || []).forEach((r: any) => {
+        const arr = roleMap.get(r.user_id) || [];
+        arr.push(r.role);
+        roleMap.set(r.user_id, arr);
+      });
+      return (profilesRes.data || []).map((p: any) => ({
+        id: p.id,
+        email: p.email,
+        full_name: p.full_name,
+        roles: roleMap.get(p.id) || [],
+      }));
+    },
+  });
+  const userById = (id: string | null) => users.find((u: any) => u.id === id);
+
   const save = async () => {
     if (!form.company_name?.trim()) { toast.error("Company name required"); return; }
     const payload = { ...form };
