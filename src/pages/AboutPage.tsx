@@ -4,6 +4,7 @@ import { Globe, Users, Award, TrendingUp, LucideIcon, Package, Gamepad2, Coins, 
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useBusinessServices } from "@/hooks/useBusinessContent";
+import { useRealStats, getRealValueForLabel } from "@/hooks/useRealStats";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 
