@@ -1,6 +1,7 @@
 import { Users, MapPin, TrendingUp, Calendar } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useRealStats, getRealValueForLabel } from "@/hooks/useRealStats";
 const iconMap: Record<string, any> = {
   users: Users,
   map_pin: MapPin,
