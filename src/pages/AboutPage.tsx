@@ -146,14 +146,20 @@ const AboutPage = () => {
             </div>
           )}
 
-          <div className="max-w-6xl mx-auto bg-gradient-space border border-primary/30 rounded-3xl p-12 text-center">
+          <div className="max-w-6xl mx-auto bg-card/40 backdrop-blur-sm border border-primary/30 rounded-3xl p-12 text-center">
             <h2 className="text-4xl font-bold mb-6">
-              Join Us on Our <span className="glow-green">Journey</span>
+              Explore the <span className="glow-green">Ecosystem</span>
             </h2>
             <p className="text-xl text-muted-foreground mb-8 max-w-3xl mx-auto">
-              From Earth to Mars, VendX is redefining what's possible in automated retail. 
-              Be part of the future of convenience.
+              From a snack at your favourite spot, to a round on an arcade cabinet, to a release from
+              one of our artists — every part of VendX is designed to work together.
             </p>
+            <div className="flex flex-wrap justify-center gap-3">
+              <Link to="/divisions"><Button variant="outline">Our Divisions</Button></Link>
+              <Link to="/locations"><Button variant="outline">Find a Machine</Button></Link>
+              <Link to="/store"><Button variant="outline">VendX Store</Button></Link>
+              <Link to="/business"><Button className="bg-primary hover:bg-primary/90">Partner With Us<ArrowRight className="w-4 h-4 ml-2" /></Button></Link>
+            </div>
           </div>
         </div>
       </main>
