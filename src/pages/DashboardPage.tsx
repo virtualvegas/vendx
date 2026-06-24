@@ -24,6 +24,7 @@ import RewardsManager from "@/components/dashboard/tabs/RewardsManager";
 import MachineRegistry from "@/components/dashboard/tabs/MachineRegistry";
 import PartnerOffersManager from "@/components/dashboard/tabs/PartnerOffersManager";
 import CustomerOrders from "@/components/dashboard/tabs/CustomerOrders";
+import MyMachines from "@/components/dashboard/tabs/MyMachines";
 import CustomerWallet from "@/components/dashboard/tabs/CustomerWallet";
 import CustomerRewards from "@/components/dashboard/tabs/CustomerRewards";
 import MyRoute from "@/components/dashboard/tabs/MyRoute";
@@ -230,7 +231,7 @@ const DashboardPage = () => {
   };
 
   const NON_ADMIN_TABS = [
-    "my-orders", "my-wallet", "my-tickets", "my-rewards", "linked-accounts",
+    "my-orders", "my-machines", "my-wallet", "my-tickets", "my-rewards", "linked-accounts",
     "business-overview", "business-locations", "business-machines", "business-payouts", "business-support", "business-adreach", "business-external-service",
   ];
 
@@ -273,6 +274,8 @@ const DashboardPage = () => {
         content = <CustomArcadeRequestsPanel />; break;
       case "my-orders":
         content = <CustomerOrders />; break;
+      case "my-machines":
+        content = <MyMachines />; break;
       case "my-wallet":
         content = <CustomerWallet />; break;
       case "my-tickets":
