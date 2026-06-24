@@ -95,10 +95,12 @@ const AboutPage = () => {
                   highlights?.map((highlight, idx) => {
                     const config = iconConfig[highlight.display_order || idx + 1] || iconConfig[1];
                     const Icon = config.icon;
+                    const realValue = getRealValueForLabel(highlight.metric_label, realStats);
+                    const value = realValue ?? highlight.metric_value;
                     const description = highlightDescriptions[highlight.metric_label]?.replace(
                       "{value}",
-                      highlight.metric_value.toLocaleString()
-                    ) || `${highlight.metric_value.toLocaleString()}+ ${highlight.metric_label}`;
+                      value.toLocaleString()
+                    ) || `${value.toLocaleString()}+ ${highlight.metric_label}`;
                     
                     return (
                       <div key={highlight.id} className="flex items-start gap-4">
