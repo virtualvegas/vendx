@@ -62,15 +62,17 @@ const AboutPage = () => {
             <div className="space-y-6">
               <h2 className="text-4xl font-bold glow-green">Our Mission</h2>
               <p className="text-lg text-foreground leading-relaxed">
-                VendX was founded with a singular vision: to revolutionize the vending industry 
-                through cutting-edge technology, artificial intelligence, and sustainable practices. 
-                We're not just building vending machines—we're creating an intelligent, interconnected 
-                network that spans the globe and prepares for humanity's expansion into space.
+                VendX exists to make everyday access effortless. We design, deploy, and operate
+                smart vending machines, arcade cabinets, locker systems, and event stands —
+                connecting them through one platform so customers can pay, play, and earn
+                rewards from a single account.
               </p>
               <p className="text-lg text-foreground leading-relaxed">
-                Our commitment to innovation drives us to constantly push boundaries, from AI-powered 
-                inventory management to solar-powered operations, ensuring we provide unparalleled 
-                convenience while minimizing environmental impact.
+                Around that hardware we've built a full ecosystem: the VendX Store and
+                Snack in the Box subscription, our Vendx Pay wallet, an Interactive Gaming
+                division, Media &amp; Publishing for our artists, and AdReach for brands that
+                want to be seen on our screens. One company, many touchpoints — all built
+                in-house.
               </p>
             </div>
 
