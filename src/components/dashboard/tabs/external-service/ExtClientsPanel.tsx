@@ -139,6 +139,31 @@ const ExtClientsPanel = () => {
             <div><Label>Contact Name</Label><Input value={form.contact_name || ""} onChange={e => setForm({...form, contact_name: e.target.value})} /></div>
             <div><Label>Contact Email</Label><Input type="email" value={form.contact_email || ""} onChange={e => setForm({...form, contact_email: e.target.value})} /></div>
             <div><Label>Contact Phone</Label><Input value={form.contact_phone || ""} onChange={e => setForm({...form, contact_phone: e.target.value})} /></div>
+            <div className="md:col-span-2 rounded-md border border-primary/30 bg-primary/5 p-3 space-y-2">
+              <div className="flex items-center gap-2 text-sm font-medium"><Link2 className="w-4 h-4 text-primary" /> Link to existing account</div>
+              <p className="text-xs text-muted-foreground">Connect this client record to a customer or business-owner login. They'll see their machines, tickets &amp; invoices in their dashboard.</p>
+              <SearchableSelect
+                value={form.linked_user_id || ""}
+                onValueChange={(v) => {
+                  const u = userById(v);
+                  setForm({
+                    ...form,
+                    linked_user_id: v || null,
+                    contact_name: !form.contact_name && u?.full_name ? u.full_name : form.contact_name,
+                    contact_email: !form.contact_email && u?.email ? u.email : form.contact_email,
+                  });
+                }}
+                options={[
+                  { value: "", label: "— None (custom client) —" },
+                  ...users.map((u: any) => ({
+                    value: u.id,
+                    label: `${u.full_name || u.email}${u.roles.length ? ` · ${u.roles.join("/")}` : ""}${u.full_name ? ` · ${u.email}` : ""}`,
+                  })),
+                ]}
+                placeholder="Search users by name, email or role…"
+                searchPlaceholder="Type to search users…"
+              />
+            </div>
             <div><Label>Tax ID</Label><Input value={form.tax_id || ""} onChange={e => setForm({...form, tax_id: e.target.value})} /></div>
             <div className="md:col-span-2"><Label>Billing Address</Label><Input value={form.billing_address || ""} onChange={e => setForm({...form, billing_address: e.target.value})} /></div>
             <div><Label>City</Label><Input value={form.billing_city || ""} onChange={e => setForm({...form, billing_city: e.target.value})} /></div>
