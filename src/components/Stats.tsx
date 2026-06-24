@@ -50,6 +50,8 @@ const Stats = () => {
                     <div className="h-4 bg-muted rounded w-32 mx-auto" />
                   </div>) : metrics?.map((metric, index) => {
               const Icon = iconMap[metric.metric_type] || MapPin;
+              const realValue = getRealValueForLabel(metric.metric_label, stats);
+              const displayValue = realValue ?? metric.metric_value;
               return <div key={metric.id} className="text-center space-y-4 group">
                       <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 border-2 border-primary group-hover:border-primary group-hover:shadow-[0_0_30px_rgba(26,124,255,0.6)] transition-smooth">
                         <Icon className="w-8 h-8 text-primary" />
@@ -57,7 +59,7 @@ const Stats = () => {
                       
                       <div>
                         <div className="text-4xl lg:text-5xl font-bold glow-blue mb-2">
-                          {metric.metric_value.toLocaleString()}
+                          {displayValue.toLocaleString()}
                           {metric.metric_label.includes("Countries") && "+"}
                         </div>
                         <div className="text-muted-foreground font-medium">
