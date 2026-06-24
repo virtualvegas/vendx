@@ -43,6 +43,7 @@ const AboutPage = () => {
   });
 
   const { data: services } = useBusinessServices();
+  const { data: realStats } = useRealStats();
 
   return (
     <div className="min-h-screen bg-background">
