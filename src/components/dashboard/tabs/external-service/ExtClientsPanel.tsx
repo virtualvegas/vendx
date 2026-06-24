@@ -108,6 +108,11 @@ const ExtClientsPanel = () => {
                   <div className="flex items-center gap-2 flex-wrap">
                     <h3 className="font-semibold">{c.company_name}</h3>
                     <Badge variant={c.status === "active" ? "default" : "outline"}>{c.status}</Badge>
+                    {c.linked_user_id ? (
+                      <Badge variant="secondary" className="gap-1"><UserCheck className="w-3 h-3" /> {userById(c.linked_user_id)?.email || "linked user"}</Badge>
+                    ) : (
+                      <Badge variant="outline" className="gap-1 opacity-70"><Link2 className="w-3 h-3" /> no linked account</Badge>
+                    )}
                   </div>
                   <p className="text-sm text-muted-foreground">
                     {c.contact_name} · {c.contact_email} · {c.contact_phone}
