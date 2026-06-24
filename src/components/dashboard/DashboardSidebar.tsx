@@ -50,6 +50,7 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import vendxLogoAsset from "@/assets/vendx-logo.png.asset.json";
 
 interface TabConfig {
   id: string;
@@ -303,7 +304,7 @@ const DashboardSidebar = ({
     <div className="h-full flex flex-col">
       {/* Logo/Brand */}
       <div className="p-4 lg:p-6 border-b border-border">
-        <h2 className="text-xl font-bold text-foreground">VendX Dashboard</h2>
+        <img src={vendxLogoAsset.url} alt="VendX Dashboard" className="h-8 w-auto mb-2" />
         <p className="text-xs text-muted-foreground mt-1">
           {roles.length > 0 ? roles.map(r => r.replace(/_/g, ' ')).join(', ') : 'Customer'}
         </p>
