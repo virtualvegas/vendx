@@ -81,6 +81,7 @@ const tabGroups: TabGroup[] = [
       { id: "my-machines", label: "My Machines", icon: Monitor, requiredRoles: r("my-machines") },
       { id: "my-wallet", label: "My Wallet", icon: Wallet, requiredRoles: r("my-wallet") },
       { id: "my-tickets", label: "My Tickets", icon: Ticket, requiredRoles: r("my-tickets") },
+      { id: "my-subscriptions", label: "My Subscriptions", icon: Disc3, requiredRoles: r("my-subscriptions") },
       { id: "my-rewards", label: "My Rewards", icon: Gift, requiredRoles: r("my-rewards") },
       { id: "my-business-card", label: "My Business Card", icon: Users, requiredRoles: r("my-business-card") },
       { id: "linked-accounts", label: "Linked Accounts", icon: Link2, requiredRoles: r("linked-accounts") },
