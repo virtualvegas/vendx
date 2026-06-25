@@ -81,6 +81,8 @@ import BusinessExternalService from "@/components/dashboard/tabs/business-owner/
 import MyBusinessCard from "@/components/dashboard/tabs/MyBusinessCard";
 import SsoAppsManager from "@/components/dashboard/tabs/SsoAppsManager";
 import MyLinkedAccounts from "@/components/dashboard/tabs/MyLinkedAccounts";
+import MySubscriptions from "@/components/dashboard/tabs/MySubscriptions";
+import SubscriptionsAdmin from "@/components/dashboard/tabs/SubscriptionsAdmin";
 import { useSEO } from "@/hooks/useSEO";
 import { hasTabAccess } from "@/components/dashboard/tabAccess";
 import { ShieldAlert } from "lucide-react";
@@ -231,7 +233,7 @@ const DashboardPage = () => {
   };
 
   const NON_ADMIN_TABS = [
-    "my-orders", "my-machines", "my-wallet", "my-tickets", "my-rewards", "linked-accounts",
+    "my-orders", "my-machines", "my-wallet", "my-tickets", "my-rewards", "linked-accounts", "my-subscriptions",
     "business-overview", "business-locations", "business-machines", "business-payouts", "business-support", "business-adreach", "business-external-service",
   ];
 
@@ -286,6 +288,10 @@ const DashboardPage = () => {
         content = <MyBusinessCard />; break;
       case "linked-accounts":
         content = <MyLinkedAccounts />; break;
+      case "my-subscriptions":
+        content = <MySubscriptions />; break;
+      case "subscriptions-admin":
+        content = <SubscriptionsAdmin />; break;
       case "sso-apps":
         content = <SsoAppsManager />; break;
       case "global-operations":

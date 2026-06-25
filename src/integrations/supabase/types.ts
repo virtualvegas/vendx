@@ -6178,6 +6178,8 @@ export type Database = {
           low_stock_threshold: number
           metadata: Json | null
           name: string
+          paypal_plan_id: string | null
+          paypal_product_id: string | null
           price: number
           retail_links: Json | null
           retail_status: string | null
@@ -6208,6 +6210,8 @@ export type Database = {
           low_stock_threshold?: number
           metadata?: Json | null
           name: string
+          paypal_plan_id?: string | null
+          paypal_product_id?: string | null
           price?: number
           retail_links?: Json | null
           retail_status?: string | null
@@ -6238,6 +6242,8 @@ export type Database = {
           low_stock_threshold?: number
           metadata?: Json | null
           name?: string
+          paypal_plan_id?: string | null
+          paypal_product_id?: string | null
           price?: number
           retail_links?: Json | null
           retail_status?: string | null
@@ -6264,15 +6270,68 @@ export type Database = {
           },
         ]
       }
+      store_subscription_events: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          event_type: string
+          id: string
+          message: string | null
+          payload: Json
+          source: string
+          subscription_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          event_type: string
+          id?: string
+          message?: string | null
+          payload?: Json
+          source?: string
+          subscription_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          event_type?: string
+          id?: string
+          message?: string | null
+          payload?: Json
+          source?: string
+          subscription_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "store_subscription_events_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "store_subscriptions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       store_subscriptions: {
         Row: {
           addon_ids: string[] | null
+          cancel_at_period_end: boolean
           canceled_at: string | null
+          comp_credits_remaining: number
           created_at: string | null
           current_period_end: string | null
           current_period_start: string | null
+          failed_payment_count: number
           id: string
+          last_payment_at: string | null
+          last_payment_failure_at: string | null
+          last_payment_failure_reason: string | null
+          metadata: Json
+          next_retry_at: string | null
+          pause_collection: boolean
+          paypal_plan_id: string | null
+          paypal_subscription_id: string | null
           product_id: string | null
+          provider: string
           shipping_address_id: string | null
           status: string
           stripe_customer_id: string | null
@@ -6282,12 +6341,24 @@ export type Database = {
         }
         Insert: {
           addon_ids?: string[] | null
+          cancel_at_period_end?: boolean
           canceled_at?: string | null
+          comp_credits_remaining?: number
           created_at?: string | null
           current_period_end?: string | null
           current_period_start?: string | null
+          failed_payment_count?: number
           id?: string
+          last_payment_at?: string | null
+          last_payment_failure_at?: string | null
+          last_payment_failure_reason?: string | null
+          metadata?: Json
+          next_retry_at?: string | null
+          pause_collection?: boolean
+          paypal_plan_id?: string | null
+          paypal_subscription_id?: string | null
           product_id?: string | null
+          provider?: string
           shipping_address_id?: string | null
           status?: string
           stripe_customer_id?: string | null
@@ -6297,12 +6368,24 @@ export type Database = {
         }
         Update: {
           addon_ids?: string[] | null
+          cancel_at_period_end?: boolean
           canceled_at?: string | null
+          comp_credits_remaining?: number
           created_at?: string | null
           current_period_end?: string | null
           current_period_start?: string | null
+          failed_payment_count?: number
           id?: string
+          last_payment_at?: string | null
+          last_payment_failure_at?: string | null
+          last_payment_failure_reason?: string | null
+          metadata?: Json
+          next_retry_at?: string | null
+          pause_collection?: boolean
+          paypal_plan_id?: string | null
+          paypal_subscription_id?: string | null
           product_id?: string | null
+          provider?: string
           shipping_address_id?: string | null
           status?: string
           stripe_customer_id?: string | null

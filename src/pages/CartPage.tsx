@@ -84,9 +84,19 @@ const CartPage = () => {
     }
 
     // Validate payment method for subscriptions
-    if (hasSubscription && (paymentMethod === "paypal" || paymentMethod === "vendx" || paymentMethod === "vendx_paypal")) {
-      toast.error("Subscriptions require Debit/Credit card payment.");
+    // Wallet/Hybrid wallet methods aren't compatible with recurring billing.
+    if (hasSubscription && (paymentMethod === "vendx" || paymentMethod === "vendx_paypal" || paymentMethod === "vendx_stripe")) {
+      toast.error("Subscriptions can't use VendX Pay credit. Choose Card or PayPal.");
       return;
+    }
+
+    // Subscription via PayPal — one product per checkout (PayPal limitation)
+    const subItems = cartItems.filter(i => i.product?.is_subscription);
+    if (paymentMethod === "paypal" && subItems.length > 0) {
+      if (subItems.length > 1 || cartItems.length > 1) {
+        toast.error("PayPal subscriptions must be checked out one at a time.");
+        return;
+      }
     }
 
     // Validate VendX Pay full payment
@@ -140,16 +150,22 @@ const CartPage = () => {
           throw new Error(data?.error || "Failed to create PayPal order");
         }
       } else {
-        // Standard Stripe or PayPal checkout
-        const functionName = paymentMethod === "paypal" ? "store-paypal-checkout" : "store-create-checkout";
-        const { data, error } = await supabase.functions.invoke(functionName, {
-          body: { cartItems }
-        });
-
-        if (error) throw error;
-        
-        if (data?.url) {
-          window.location.href = data.url;
+        // Standard Stripe or PayPal checkout — route subscriptions on PayPal to the recurring-billing endpoint
+        if (paymentMethod === "paypal" && subItems.length === 1) {
+          const subItem = subItems[0];
+          const { data, error } = await supabase.functions.invoke("store-paypal-subscription-checkout", {
+            body: { productId: subItem.product_id, addonIds: subItem.addon_ids || [] }
+          });
+          if (error) throw error;
+          if (data?.url) window.location.href = data.url;
+          else throw new Error(data?.error || "Failed to start PayPal subscription");
+        } else {
+          const functionName = paymentMethod === "paypal" ? "store-paypal-checkout" : "store-create-checkout";
+          const { data, error } = await supabase.functions.invoke(functionName, {
+            body: { cartItems }
+          });
+          if (error) throw error;
+          if (data?.url) window.location.href = data.url;
         }
       }
     } catch (error: any) {
@@ -162,9 +178,10 @@ const CartPage = () => {
   // Check if checkout is disabled
   const isCheckoutDisabled = () => {
     if (checkingOut) return true;
-    if (hasSubscription && (paymentMethod === "paypal" || paymentMethod === "vendx" || paymentMethod === "vendx_paypal" || paymentMethod === "vendx_stripe")) {
+    if (hasSubscription && (paymentMethod === "vendx" || paymentMethod === "vendx_paypal" || paymentMethod === "vendx_stripe")) {
       return true;
     }
+    if (hasSubscription && paymentMethod === "paypal" && cartItems.length > 1) return true;
     if (paymentMethod === "vendx" && walletBalance < total) return true;
     return false;
   };
@@ -346,10 +363,15 @@ const CartPage = () => {
                         orderTotal={total}
                       />
                       
-                      {/* Subscription warning */}
-                      {hasSubscription && (paymentMethod === "paypal" || paymentMethod === "vendx" || paymentMethod === "vendx_paypal" || paymentMethod === "vendx_stripe") && (
+                      {/* Subscription guidance */}
+                      {hasSubscription && (paymentMethod === "vendx" || paymentMethod === "vendx_paypal" || paymentMethod === "vendx_stripe") && (
                         <p className="text-xs text-destructive mt-2">
-                          Subscriptions require Debit/Credit card payment only
+                          Subscriptions can't use wallet credit. Choose Card or PayPal.
+                        </p>
+                      )}
+                      {hasSubscription && paymentMethod === "paypal" && cartItems.length > 1 && (
+                        <p className="text-xs text-destructive mt-2">
+                          PayPal subscriptions must be checked out one at a time.
                         </p>
                       )}
                     </div>
