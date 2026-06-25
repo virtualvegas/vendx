@@ -92,9 +92,9 @@ serve(async (req) => {
       const product = products.find((p: any) => p.id === cartItem.product_id);
       if (!product) continue;
 
-      // PayPal doesn't support subscriptions in basic checkout - only one-time payments
+      // Subscriptions are routed to store-paypal-subscription-checkout — reject if any slipped through
       if (product.is_subscription) {
-        throw new Error("PayPal checkout is not available for subscription products. Please use Debit/Credit card.");
+        throw new Error("Subscription products use the dedicated PayPal subscription flow.");
       }
 
       let unitPrice = product.price;
