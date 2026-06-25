@@ -84,9 +84,19 @@ const CartPage = () => {
     }
 
     // Validate payment method for subscriptions
-    if (hasSubscription && (paymentMethod === "paypal" || paymentMethod === "vendx" || paymentMethod === "vendx_paypal")) {
-      toast.error("Subscriptions require Debit/Credit card payment.");
+    // Wallet/Hybrid wallet methods aren't compatible with recurring billing.
+    if (hasSubscription && (paymentMethod === "vendx" || paymentMethod === "vendx_paypal" || paymentMethod === "vendx_stripe")) {
+      toast.error("Subscriptions can't use VendX Pay credit. Choose Card or PayPal.");
       return;
+    }
+
+    // Subscription via PayPal — one product per checkout (PayPal limitation)
+    const subItems = cartItems.filter(i => i.product?.is_subscription);
+    if (paymentMethod === "paypal" && subItems.length > 0) {
+      if (subItems.length > 1 || cartItems.length > 1) {
+        toast.error("PayPal subscriptions must be checked out one at a time.");
+        return;
+      }
     }
 
     // Validate VendX Pay full payment
