@@ -81,6 +81,8 @@ import BusinessExternalService from "@/components/dashboard/tabs/business-owner/
 import MyBusinessCard from "@/components/dashboard/tabs/MyBusinessCard";
 import SsoAppsManager from "@/components/dashboard/tabs/SsoAppsManager";
 import MyLinkedAccounts from "@/components/dashboard/tabs/MyLinkedAccounts";
+import MySubscriptions from "@/components/dashboard/tabs/MySubscriptions";
+import SubscriptionsAdmin from "@/components/dashboard/tabs/SubscriptionsAdmin";
 import { useSEO } from "@/hooks/useSEO";
 import { hasTabAccess } from "@/components/dashboard/tabAccess";
 import { ShieldAlert } from "lucide-react";
