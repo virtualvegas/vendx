@@ -178,9 +178,10 @@ const CartPage = () => {
   // Check if checkout is disabled
   const isCheckoutDisabled = () => {
     if (checkingOut) return true;
-    if (hasSubscription && (paymentMethod === "paypal" || paymentMethod === "vendx" || paymentMethod === "vendx_paypal" || paymentMethod === "vendx_stripe")) {
+    if (hasSubscription && (paymentMethod === "vendx" || paymentMethod === "vendx_paypal" || paymentMethod === "vendx_stripe")) {
       return true;
     }
+    if (hasSubscription && paymentMethod === "paypal" && cartItems.length > 1) return true;
     if (paymentMethod === "vendx" && walletBalance < total) return true;
     return false;
   };
