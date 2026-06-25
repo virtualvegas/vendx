@@ -363,10 +363,15 @@ const CartPage = () => {
                         orderTotal={total}
                       />
                       
-                      {/* Subscription warning */}
-                      {hasSubscription && (paymentMethod === "paypal" || paymentMethod === "vendx" || paymentMethod === "vendx_paypal" || paymentMethod === "vendx_stripe") && (
+                      {/* Subscription guidance */}
+                      {hasSubscription && (paymentMethod === "vendx" || paymentMethod === "vendx_paypal" || paymentMethod === "vendx_stripe") && (
                         <p className="text-xs text-destructive mt-2">
-                          Subscriptions require Debit/Credit card payment only
+                          Subscriptions can't use wallet credit. Choose Card or PayPal.
+                        </p>
+                      )}
+                      {hasSubscription && paymentMethod === "paypal" && cartItems.length > 1 && (
+                        <p className="text-xs text-destructive mt-2">
+                          PayPal subscriptions must be checked out one at a time.
                         </p>
                       )}
                     </div>
