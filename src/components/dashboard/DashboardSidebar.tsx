@@ -203,6 +203,7 @@ const tabGroups: TabGroup[] = [
     label: "Online Store",
     tabs: [
       { id: "store-manager", label: "Store Management", icon: ShoppingCart, requiredRoles: r("store-manager") },
+      { id: "subscriptions-admin", label: "Subscriptions", icon: Disc3, requiredRoles: r("subscriptions-admin") },
       { id: "products-manager", label: "Subscription Plans", icon: Package, requiredRoles: r("products-manager") },
       { id: "waitlist-manager", label: "Store Waitlist", icon: Users, requiredRoles: r("waitlist-manager") },
       { id: "funnels", label: "Sales Funnels", icon: GitBranch, requiredRoles: r("funnels") },
