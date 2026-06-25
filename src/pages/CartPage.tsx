@@ -150,16 +150,22 @@ const CartPage = () => {
           throw new Error(data?.error || "Failed to create PayPal order");
         }
       } else {
-        // Standard Stripe or PayPal checkout
-        const functionName = paymentMethod === "paypal" ? "store-paypal-checkout" : "store-create-checkout";
-        const { data, error } = await supabase.functions.invoke(functionName, {
-          body: { cartItems }
-        });
-
-        if (error) throw error;
-        
-        if (data?.url) {
-          window.location.href = data.url;
+        // Standard Stripe or PayPal checkout — route subscriptions on PayPal to the recurring-billing endpoint
+        if (paymentMethod === "paypal" && subItems.length === 1) {
+          const subItem = subItems[0];
+          const { data, error } = await supabase.functions.invoke("store-paypal-subscription-checkout", {
+            body: { productId: subItem.product_id, addonIds: subItem.addon_ids || [] }
+          });
+          if (error) throw error;
+          if (data?.url) window.location.href = data.url;
+          else throw new Error(data?.error || "Failed to start PayPal subscription");
+        } else {
+          const functionName = paymentMethod === "paypal" ? "store-paypal-checkout" : "store-create-checkout";
+          const { data, error } = await supabase.functions.invoke(functionName, {
+            body: { cartItems }
+          });
+          if (error) throw error;
+          if (data?.url) window.location.href = data.url;
         }
       }
     } catch (error: any) {
