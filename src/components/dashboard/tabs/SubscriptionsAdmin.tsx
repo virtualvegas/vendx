@@ -35,11 +35,16 @@ export default function SubscriptionsAdmin() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("store_subscriptions")
-        .select("*, product:store_products(name, subscription_price, price, subscription_interval), profile:profiles!store_subscriptions_user_id_fkey(email, full_name)")
+        .select("*, product:store_products(name, subscription_price, price, subscription_interval)")
         .order("created_at", { ascending: false })
         .limit(500);
       if (error) throw error;
-      return data || [];
+      const userIds = Array.from(new Set((data || []).map((s: any) => s.user_id).filter(Boolean)));
+      const { data: profiles } = userIds.length
+        ? await supabase.from("profiles").select("id, email, full_name").in("id", userIds)
+        : { data: [] };
+      const map = new Map((profiles || []).map((p: any) => [p.id, p]));
+      return (data || []).map((s: any) => ({ ...s, profile: map.get(s.user_id) || null }));
     },
   });
 
