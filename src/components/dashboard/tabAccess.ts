@@ -77,6 +77,7 @@ export const TAB_ACCESS: Record<string, AppRole[]> = {
 
   // Online store
   "store-manager": ["super_admin"],
+  "subscriptions-admin": ["super_admin", "finance_accounting", "support"],
   "products-manager": ["super_admin"],
   "waitlist-manager": ["super_admin"],
   "funnels": ["super_admin"],
