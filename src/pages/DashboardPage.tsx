@@ -288,6 +288,10 @@ const DashboardPage = () => {
         content = <MyBusinessCard />; break;
       case "linked-accounts":
         content = <MyLinkedAccounts />; break;
+      case "my-subscriptions":
+        content = <MySubscriptions />; break;
+      case "subscriptions-admin":
+        content = <SubscriptionsAdmin />; break;
       case "sso-apps":
         content = <SsoAppsManager />; break;
       case "global-operations":
