@@ -72,12 +72,25 @@ const emptyTrack = {
   media_type: "audio", video_file_url: "", video_embed_url: "", cover_image_url: "",
 };
 
-const ReleaseTracksManager = () => {
+interface ReleaseTracksManagerProps {
+  mediaType?: "music" | "film";
+}
+
+const ReleaseTracksManager = ({ mediaType }: ReleaseTracksManagerProps = {}) => {
   const [artists, setArtists] = useState<Artist[]>([]);
-  const [releases, setReleases] = useState<Release[]>([]);
-  const [tracks, setTracks] = useState<Track[]>([]);
+  const [releasesAll, setReleasesAll] = useState<Release[]>([]);
+  const [tracksAll, setTracksAll] = useState<Track[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("releases");
+
+  const releases = mediaType ? releasesAll.filter(r => r.media_type === mediaType) : releasesAll;
+  const tracks = mediaType
+    ? tracksAll.filter(t => {
+        const rel = releasesAll.find(r => r.id === t.release_id);
+        if (rel) return rel.media_type === mediaType;
+        return mediaType === "film" ? t.media_type === "video" : t.media_type !== "video";
+      })
+    : tracksAll;
 
   // Release dialog
   const [releaseDialog, setReleaseDialog] = useState(false);
@@ -98,8 +111,8 @@ const ReleaseTracksManager = () => {
       supabase.from("media_tracks").select("*").order("track_number"),
     ]);
     if (a.data) setArtists(a.data as unknown as Artist[]);
-    if (r.data) setReleases(r.data as unknown as Release[]);
-    if (t.data) setTracks(t.data as unknown as Track[]);
+    if (r.data) setReleasesAll(r.data as unknown as Release[]);
+    if (t.data) setTracksAll(t.data as unknown as Track[]);
     setLoading(false);
   };
 
@@ -111,7 +124,7 @@ const ReleaseTracksManager = () => {
   // ============= RELEASES =============
   const openCreateRelease = () => {
     setEditingRelease(null);
-    setReleaseForm(emptyRelease);
+    setReleaseForm({ ...emptyRelease, media_type: mediaType || "music" });
     setReleaseDialog(true);
   };
 
@@ -290,9 +303,16 @@ const ReleaseTracksManager = () => {
     <div className="space-y-6">
       <div>
         <h2 className="text-2xl font-bold text-foreground flex items-center gap-2">
-          <Disc3 className="w-6 h-6" /> Releases & Tracks
+          {mediaType === "film" ? <Film className="w-6 h-6" /> : <Disc3 className="w-6 h-6" />}
+          {mediaType === "music" ? "Music Releases & Tracks" : mediaType === "film" ? "Film Releases" : "Releases & Tracks"}
         </h2>
-        <p className="text-muted-foreground text-sm">Manage albums, singles, films and individual tracks linked to artist profiles</p>
+        <p className="text-muted-foreground text-sm">
+          {mediaType === "film"
+            ? "Manage films, episodes, trailers and video content linked to filmmakers"
+            : mediaType === "music"
+            ? "Manage albums, singles, EPs and individual music tracks linked to artists"
+            : "Manage albums, singles, films and individual tracks linked to artist profiles"}
+        </p>
       </div>
 
       {/* Stats */}

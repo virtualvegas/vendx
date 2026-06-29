@@ -44,7 +44,16 @@ interface MediaArtist {
   legacy_background_url: string | null;
 }
 
-const emptyForm = {
+const emptyForm: {
+  name: string; slug: string; artist_type: string; bio: string; short_bio: string;
+  profile_image_url: string; banner_image_url: string;
+  is_legacy: boolean; legacy_tribute_text: string; birth_date: string; death_date: string;
+  website_url: string; instagram_url: string; twitter_url: string; youtube_url: string;
+  spotify_url: string; apple_music_url: string; soundcloud_url: string; tiktok_url: string;
+  contact_email: string; booking_email: string; management_company: string;
+  is_active: boolean; is_featured: boolean; display_order: number;
+  legacy_background_url: string;
+} = {
   name: "", slug: "", artist_type: "music", bio: "", short_bio: "",
   profile_image_url: "", banner_image_url: "",
   is_legacy: false, legacy_tribute_text: "", birth_date: "", death_date: "",
@@ -55,12 +64,20 @@ const emptyForm = {
   legacy_background_url: "",
 };
 
-const ArtistsManager = () => {
-  const [artists, setArtists] = useState<MediaArtist[]>([]);
+interface ArtistsManagerProps {
+  filterType?: "music" | "film";
+}
+
+const ArtistsManager = ({ filterType }: ArtistsManagerProps = {}) => {
+  const [artistsAll, setArtistsAll] = useState<MediaArtist[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<MediaArtist | null>(null);
-  const [form, setForm] = useState(emptyForm);
+  const [form, setForm] = useState<typeof emptyForm>({ ...emptyForm, artist_type: filterType || "music" });
+
+  const artists = filterType
+    ? artistsAll.filter(a => a.artist_type === filterType || a.artist_type === "both")
+    : artistsAll;
 
   const fetchArtists = async () => {
     setLoading(true);
@@ -68,7 +85,7 @@ const ArtistsManager = () => {
       .from("media_artists")
       .select("*")
       .order("display_order", { ascending: true });
-    if (!error) setArtists((data as unknown as MediaArtist[]) || []);
+    if (!error) setArtistsAll((data as unknown as MediaArtist[]) || []);
     setLoading(false);
   };
 
@@ -78,7 +95,7 @@ const ArtistsManager = () => {
 
   const openCreate = () => {
     setEditing(null);
-    setForm(emptyForm);
+    setForm({ ...emptyForm, artist_type: filterType || "music" });
     setDialogOpen(true);
   };
 
@@ -149,9 +166,9 @@ const ArtistsManager = () => {
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="min-w-0">
           <h2 className="text-xl sm:text-2xl font-bold text-foreground flex items-center gap-2">
-            <Users className="w-5 h-5 sm:w-6 sm:h-6 flex-shrink-0" /> <span className="truncate">Artists & Filmmakers</span>
+            <Users className="w-5 h-5 sm:w-6 sm:h-6 flex-shrink-0" /> <span className="truncate">{filterType === "music" ? "Music Artists" : filterType === "film" ? "Filmmakers" : "Artists & Filmmakers"}</span>
           </h2>
-          <p className="text-muted-foreground text-sm">Manage artist profiles, legacy memorials, and contact info</p>
+          <p className="text-muted-foreground text-sm">{filterType === "film" ? "Manage director, cast and filmmaker profiles" : filterType === "music" ? "Manage music artist profiles, legacy memorials, and contact info" : "Manage artist profiles, legacy memorials, and contact info"}</p>
         </div>
         <Button onClick={openCreate} size="sm" className="gap-2 flex-shrink-0"><Plus className="w-4 h-4" /> <span className="hidden sm:inline">Add Artist</span><span className="sm:hidden">Add</span></Button>
       </div>
