@@ -101,15 +101,25 @@ const DivisionsPage = () => {
                       </ul>
                     )}
 
-                    <Link to={`/divisions/${division.slug}`}>
-                      <Button 
-                        variant="outline"
-                        className="w-full border-accent/30 text-accent hover:bg-accent hover:text-accent-foreground group/btn"
-                      >
-                        Learn More
-                        <ArrowRight className="ml-2 w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
-                      </Button>
-                    </Link>
+                    {(() => {
+                      const ext = (division as any).external_url as string | null | undefined;
+                      const isExternal = !!ext && /^https?:\/\//i.test(ext);
+                      const href = ext || `/divisions/${division.slug}`;
+                      const btn = (
+                        <Button
+                          variant="outline"
+                          className="w-full border-accent/30 text-accent hover:bg-accent hover:text-accent-foreground group/btn"
+                        >
+                          Learn More
+                          <ArrowRight className="ml-2 w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
+                        </Button>
+                      );
+                      return isExternal ? (
+                        <a href={href} target="_blank" rel="noopener noreferrer">{btn}</a>
+                      ) : (
+                        <Link to={href}>{btn}</Link>
+                      );
+                    })()}
                   </div>
                 );
               })

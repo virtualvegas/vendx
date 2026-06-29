@@ -72,6 +72,7 @@ const DivisionsManager = () => {
     description: "",
     icon: "",
     status: "active",
+    external_url: "",
   });
 
   const { data: divisions, isLoading } = useQuery({
@@ -134,7 +135,7 @@ const DivisionsManager = () => {
   });
 
   const resetForm = () => {
-    setForm({ name: "", slug: "", description: "", icon: "", status: "active" });
+    setForm({ name: "", slug: "", description: "", icon: "", status: "active", external_url: "" });
     setEditingDivision(null);
   };
 
@@ -146,18 +147,20 @@ const DivisionsManager = () => {
       description: division.description || "",
       icon: division.icon || "",
       status: division.status || "active",
+      external_url: (division as any).external_url || "",
     });
     setIsDialogOpen(true);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const data = {
+    const data: any = {
       name: form.name,
       slug: form.slug,
       description: form.description || null,
       icon: form.icon || null,
       status: form.status,
+      external_url: form.external_url.trim() || null,
     };
 
     if (editingDivision) {
@@ -239,6 +242,20 @@ const DivisionsManager = () => {
                   placeholder="Brief description of the division..."
                   rows={3}
                 />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="external_url">External Redirect URL (optional)</Label>
+                <Input
+                  id="external_url"
+                  type="url"
+                  value={form.external_url}
+                  onChange={(e) => setForm({ ...form, external_url: e.target.value })}
+                  placeholder="https://example.com or /custom-page"
+                />
+                <p className="text-xs text-muted-foreground">
+                  If set, clicking this division anywhere on the site sends the user here instead of the default division page. External URLs open in a new tab.
+                </p>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
