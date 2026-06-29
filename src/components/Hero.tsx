@@ -57,7 +57,7 @@ const Hero = () => {
           <div className="relative animate-in fade-in slide-in-from-right duration-1000 delay-300">
             <div className="relative animate-float">
               <img 
-                src={heroVending} 
+                src={heroVending.url} 
                 alt="VendX smart vending machine"
                 className="w-full h-auto rounded-2xl border-2 border-primary/30 shadow-[0_0_50px_rgba(26,124,255,0.4)]"
               />
