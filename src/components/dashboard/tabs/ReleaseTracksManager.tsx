@@ -189,21 +189,52 @@ const ReleaseTracksManager = ({ mediaType }: ReleaseTracksManagerProps = {}) => 
   const saveRelease = async () => {
     if (!releaseForm.title) { toast.error("Title required"); return; }
     const slug = releaseForm.slug || generateSlug(releaseForm.title);
+    const isFilm = releaseForm.media_type === "film";
+    const toArr = (s: string) => s ? s.split(",").map(g => g.trim()).filter(Boolean) : null;
+    const toInt = (s: string) => s ? parseInt(s) || null : null;
+
     const payload: any = {
       title: releaseForm.title, slug,
       media_type: releaseForm.media_type,
-      music_release_type: releaseForm.media_type === "music" ? releaseForm.music_release_type : null,
+      music_release_type: isFilm ? null : releaseForm.music_release_type,
       cover_image_url: releaseForm.cover_image_url || null,
       release_date: releaseForm.release_date || null,
       release_status: releaseForm.release_status,
-      genre: releaseForm.genre ? releaseForm.genre.split(",").map(g => g.trim()).filter(Boolean) : null,
+      genre: toArr(releaseForm.genre),
       short_description: releaseForm.short_description || null,
       artist_id: releaseForm.artist_id || null,
-      spotify_url: releaseForm.spotify_url || null,
-      apple_music_url: releaseForm.apple_music_url || null,
-      youtube_url: releaseForm.youtube_url || null,
       is_active: releaseForm.is_active,
     };
+
+    if (isFilm) {
+      Object.assign(payload, {
+        film_type: releaseForm.film_type || null,
+        runtime_minutes: toInt(releaseForm.runtime_minutes as string),
+        mpaa_rating: releaseForm.mpaa_rating || null,
+        language: releaseForm.language || null,
+        country: releaseForm.country || null,
+        director: releaseForm.director || null,
+        writers: toArr(releaseForm.writers),
+        producers: toArr(releaseForm.producers),
+        cast_members: toArr(releaseForm.cast_members),
+        synopsis: releaseForm.synopsis || null,
+        season_count: toInt(releaseForm.season_count as string),
+        episode_count: toInt(releaseForm.episode_count as string),
+        imdb_url: releaseForm.imdb_url || null,
+        letterboxd_url: releaseForm.letterboxd_url || null,
+        tmdb_url: releaseForm.tmdb_url || null,
+        rotten_tomatoes_url: releaseForm.rotten_tomatoes_url || null,
+        backdrop_image_url: releaseForm.backdrop_image_url || null,
+        poster_image_url: releaseForm.poster_image_url || null,
+        youtube_url: releaseForm.youtube_url || null, // trailer
+      });
+    } else {
+      Object.assign(payload, {
+        spotify_url: releaseForm.spotify_url || null,
+        apple_music_url: releaseForm.apple_music_url || null,
+        youtube_url: releaseForm.youtube_url || null,
+      });
+    }
 
     let error;
     if (editingRelease) {
