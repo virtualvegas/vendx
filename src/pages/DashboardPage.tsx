@@ -74,6 +74,7 @@ import ServiceTech from "@/components/dashboard/tabs/ServiceTech";
 import OfficesManager from "@/components/dashboard/tabs/OfficesManager";
 import WarehousesManager from "@/components/dashboard/tabs/WarehousesManager";
 import MerchantApiManager from "@/components/dashboard/tabs/MerchantApiManager";
+import PartnerApiManager from "@/components/dashboard/tabs/PartnerApiManager";
 import BrandLinksManager from "@/components/dashboard/tabs/BrandLinksManager";
 import ExternalServiceManager from "@/components/dashboard/tabs/ExternalServiceManager";
 import CustomArcadeRequestsPanel from "@/components/dashboard/tabs/CustomArcadeRequestsPanel";
@@ -330,6 +331,8 @@ const DashboardPage = () => {
         content = <VendXPayManager />; break;
       case "merchant-api":
         content = <MerchantApiManager />; break;
+      case "partner-api":
+        content = <PartnerApiManager />; break;
       case "brand-links":
         content = <BrandLinksManager />; break;
       case "gift-cards":

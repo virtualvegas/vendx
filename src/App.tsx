@@ -61,6 +61,7 @@ import BusinessCardPage from "./pages/BusinessCardPage";
 import StaffDirectoryPage from "./pages/StaffDirectoryPage";
 import SsoAuthorizePage from "./pages/SsoAuthorizePage";
 import SsoDocsPage from "./pages/SsoDocsPage";
+import PartnerApiDocsPage from "./pages/PartnerApiDocsPage";
 
 const queryClient = new QueryClient();
 
@@ -147,6 +148,8 @@ const App = () => (
               <Route path="/card/:slug" element={<BusinessCardPage />} />
               <Route path="/sso/authorize" element={<SsoAuthorizePage />} />
               <Route path="/developers/sso" element={<SsoDocsPage />} />
+              <Route path="/api/partners" element={<PartnerApiDocsPage />} />
+              <Route path="/developers/partners" element={<PartnerApiDocsPage />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
