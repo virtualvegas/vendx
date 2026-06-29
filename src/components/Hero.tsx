@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { ChevronRight, ShoppingBag, MapPin } from "lucide-react";
 import { Link } from "react-router-dom";
-import heroVending from "@/assets/hero-vending.jpg";
+import heroVending from "@/assets/hero-ecosystem.png.asset.json";
 
 const Hero = () => {
   return (
