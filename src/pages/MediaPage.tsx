@@ -409,11 +409,46 @@ const MediaPage = () => {
                       </h3>
 
                       {release.artist_director && (
-                        <p className="text-sm text-primary mb-2">{release.artist_director}</p>
+                        <p className="text-sm text-primary mb-2">
+                          {release.media_type === "film" ? "Dir. " : ""}{release.artist_director}
+                        </p>
                       )}
 
-                      {release.short_description && (
-                        <p className="text-muted-foreground text-sm mb-3 line-clamp-2">{release.short_description}</p>
+                      {release.media_type === "film" && (
+                        <div className="flex flex-wrap items-center gap-2 mb-3 text-xs text-muted-foreground">
+                          {(release as any).film_type && (
+                            <Badge variant="secondary" className="capitalize text-xs">
+                              {((release as any).film_type as string).replace("_", " ")}
+                            </Badge>
+                          )}
+                          {(release as any).mpaa_rating && (
+                            <span className="border border-border/50 px-1.5 py-0.5 rounded uppercase font-mono">
+                              {(release as any).mpaa_rating}
+                            </span>
+                          )}
+                          {(release as any).runtime_minutes && (
+                            <span className="flex items-center gap-1">
+                              <Clock className="w-3 h-3" /> {(release as any).runtime_minutes}m
+                            </span>
+                          )}
+                          {(release as any).language && <span>{(release as any).language}</span>}
+                          {(release as any).film_type === "series" && (release as any).season_count && (
+                            <span>{(release as any).season_count} Season{(release as any).season_count > 1 ? "s" : ""}</span>
+                          )}
+                        </div>
+                      )}
+
+                      {(release.short_description || (release.media_type === "film" && (release as any).synopsis)) && (
+                        <p className="text-muted-foreground text-sm mb-3 line-clamp-3">
+                          {release.short_description || (release as any).synopsis}
+                        </p>
+                      )}
+
+                      {release.media_type === "film" && (release as any).cast_members && (release as any).cast_members.length > 0 && (
+                        <p className="text-xs text-muted-foreground mb-3 line-clamp-1">
+                          <span className="font-medium text-foreground">Cast:</span>{" "}
+                          {((release as any).cast_members as string[]).slice(0, 4).join(", ")}
+                        </p>
                       )}
 
                       {release.genre && release.genre.length > 0 && (
