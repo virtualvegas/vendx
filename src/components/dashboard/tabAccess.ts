@@ -93,7 +93,11 @@ export const TAB_ACCESS: Record<string, AppRole[]> = {
   // Media
   "media-manager": ["super_admin"],
   "artists-manager": ["super_admin"],
+  "music-artists": ["super_admin"],
+  "filmmakers": ["super_admin"],
   "releases-tracks": ["super_admin"],
+  "music-releases": ["super_admin"],
+  "film-releases": ["super_admin"],
   "media-shop-manager": ["super_admin"],
   "track-shop-manager": ["super_admin"],
   "video-games": ["super_admin"],

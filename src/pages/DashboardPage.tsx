@@ -395,8 +395,16 @@ const DashboardPage = () => {
         content = <MediaManager />; break;
       case "artists-manager":
         content = <ArtistsManager />; break;
+      case "music-artists":
+        content = <ArtistsManager filterType="music" />; break;
+      case "filmmakers":
+        content = <ArtistsManager filterType="film" />; break;
       case "releases-tracks":
         content = <ReleaseTracksManager />; break;
+      case "music-releases":
+        content = <ReleaseTracksManager mediaType="music" />; break;
+      case "film-releases":
+        content = <ReleaseTracksManager mediaType="film" />; break;
       case "media-shop-manager":
         content = <MediaShopManager />; break;
       case "track-shop-manager":
