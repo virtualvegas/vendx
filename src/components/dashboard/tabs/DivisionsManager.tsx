@@ -135,7 +135,7 @@ const DivisionsManager = () => {
   });
 
   const resetForm = () => {
-    setForm({ name: "", slug: "", description: "", icon: "", status: "active" });
+    setForm({ name: "", slug: "", description: "", icon: "", status: "active", external_url: "" });
     setEditingDivision(null);
   };
 
@@ -147,18 +147,20 @@ const DivisionsManager = () => {
       description: division.description || "",
       icon: division.icon || "",
       status: division.status || "active",
+      external_url: (division as any).external_url || "",
     });
     setIsDialogOpen(true);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const data = {
+    const data: any = {
       name: form.name,
       slug: form.slug,
       description: form.description || null,
       icon: form.icon || null,
       status: form.status,
+      external_url: form.external_url.trim() || null,
     };
 
     if (editingDivision) {
