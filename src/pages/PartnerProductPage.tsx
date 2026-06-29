@@ -202,7 +202,9 @@ export default function PartnerProductPage() {
               <CardContent className="p-5 space-y-3">
                 <h3 className="font-semibold">Order from {partnerName}</h3>
                 <p className="text-xs text-muted-foreground">
-                  Your order is forwarded to {partnerName} who will fulfill and contact you to complete payment & shipping.
+                  {hasHostedCheckout
+                    ? `You'll complete payment securely on ${partnerName}'s site. We confirm and track fulfillment once payment is captured.`
+                    : `Your order is forwarded to ${partnerName} who will fulfill and contact you to complete payment & shipping.`}
                 </p>
                 <div>
                   <Label>Full name</Label>
@@ -222,10 +224,13 @@ export default function PartnerProductPage() {
                 </div>
                 <Button className="w-full" onClick={placeOrder} disabled={submitting}>
                   {submitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                  Place Order (${(product.price * form.quantity).toFixed(2)})
+                  {hasHostedCheckout
+                    ? <>Continue to {partnerName} <ExternalLink className="h-4 w-4 ml-2" /></>
+                    : `Place Order ($${(product.price * form.quantity).toFixed(2)})`}
                 </Button>
               </CardContent>
             </Card>
+
           </div>
         </div>
       </div>
