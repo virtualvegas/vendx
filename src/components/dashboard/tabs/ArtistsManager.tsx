@@ -44,7 +44,16 @@ interface MediaArtist {
   legacy_background_url: string | null;
 }
 
-const emptyForm = {
+const emptyForm: {
+  name: string; slug: string; artist_type: string; bio: string; short_bio: string;
+  profile_image_url: string; banner_image_url: string;
+  is_legacy: boolean; legacy_tribute_text: string; birth_date: string; death_date: string;
+  website_url: string; instagram_url: string; twitter_url: string; youtube_url: string;
+  spotify_url: string; apple_music_url: string; soundcloud_url: string; tiktok_url: string;
+  contact_email: string; booking_email: string; management_company: string;
+  is_active: boolean; is_featured: boolean; display_order: number;
+  legacy_background_url: string;
+} = {
   name: "", slug: "", artist_type: "music", bio: "", short_bio: "",
   profile_image_url: "", banner_image_url: "",
   is_legacy: false, legacy_tribute_text: "", birth_date: "", death_date: "",
