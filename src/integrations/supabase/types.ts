@@ -8304,6 +8304,99 @@ export type Database = {
           },
         ]
       }
+      vendx_partner_subscriptions: {
+        Row: {
+          cancelled_at: string | null
+          created_at: string
+          currency: string
+          current_period_end: string | null
+          customer_email: string | null
+          customer_name: string | null
+          direction: string
+          external_product_id: string | null
+          external_subscription_id: string
+          failed_payment_count: number
+          id: string
+          interval: string | null
+          last_event: string | null
+          last_payment_at: string | null
+          metadata: Json
+          partner_id: string
+          payload: Json | null
+          price: number | null
+          product_ref: string | null
+          started_at: string | null
+          status: string
+          updated_at: string
+          vendx_subscription_id: string | null
+        }
+        Insert: {
+          cancelled_at?: string | null
+          created_at?: string
+          currency?: string
+          current_period_end?: string | null
+          customer_email?: string | null
+          customer_name?: string | null
+          direction: string
+          external_product_id?: string | null
+          external_subscription_id: string
+          failed_payment_count?: number
+          id?: string
+          interval?: string | null
+          last_event?: string | null
+          last_payment_at?: string | null
+          metadata?: Json
+          partner_id: string
+          payload?: Json | null
+          price?: number | null
+          product_ref?: string | null
+          started_at?: string | null
+          status?: string
+          updated_at?: string
+          vendx_subscription_id?: string | null
+        }
+        Update: {
+          cancelled_at?: string | null
+          created_at?: string
+          currency?: string
+          current_period_end?: string | null
+          customer_email?: string | null
+          customer_name?: string | null
+          direction?: string
+          external_product_id?: string | null
+          external_subscription_id?: string
+          failed_payment_count?: number
+          id?: string
+          interval?: string | null
+          last_event?: string | null
+          last_payment_at?: string | null
+          metadata?: Json
+          partner_id?: string
+          payload?: Json | null
+          price?: number | null
+          product_ref?: string | null
+          started_at?: string | null
+          status?: string
+          updated_at?: string
+          vendx_subscription_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendx_partner_subscriptions_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "vendx_catalog_partners"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendx_partner_subscriptions_vendx_subscription_id_fkey"
+            columns: ["vendx_subscription_id"]
+            isOneToOne: false
+            referencedRelation: "store_subscriptions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vendx_partner_webhook_deliveries: {
         Row: {
           attempt: number
