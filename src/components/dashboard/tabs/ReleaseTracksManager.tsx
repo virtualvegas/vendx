@@ -36,6 +36,25 @@ interface Release {
   apple_music_url: string | null;
   youtube_url: string | null;
   is_active: boolean;
+  // Film-specific
+  film_type?: string | null;
+  runtime_minutes?: number | null;
+  mpaa_rating?: string | null;
+  language?: string | null;
+  country?: string | null;
+  director?: string | null;
+  writers?: string[] | null;
+  producers?: string[] | null;
+  cast_members?: string[] | null;
+  synopsis?: string | null;
+  season_count?: number | null;
+  episode_count?: number | null;
+  imdb_url?: string | null;
+  letterboxd_url?: string | null;
+  tmdb_url?: string | null;
+  rotten_tomatoes_url?: string | null;
+  backdrop_image_url?: string | null;
+  poster_image_url?: string | null;
 }
 
 interface Track {
@@ -63,6 +82,13 @@ const emptyRelease = {
   cover_image_url: "", release_date: "", release_status: "live",
   genre: "", short_description: "", artist_id: "",
   spotify_url: "", apple_music_url: "", youtube_url: "", is_active: true,
+  // Film-specific
+  film_type: "feature", runtime_minutes: "", mpaa_rating: "",
+  language: "English", country: "", director: "",
+  writers: "", producers: "", cast_members: "", synopsis: "",
+  season_count: "", episode_count: "",
+  imdb_url: "", letterboxd_url: "", tmdb_url: "", rotten_tomatoes_url: "",
+  backdrop_image_url: "", poster_image_url: "",
 };
 
 const emptyTrack = {
