@@ -166,9 +166,9 @@ const ArtistsManager = ({ filterType }: ArtistsManagerProps = {}) => {
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="min-w-0">
           <h2 className="text-xl sm:text-2xl font-bold text-foreground flex items-center gap-2">
-            <Users className="w-5 h-5 sm:w-6 sm:h-6 flex-shrink-0" /> <span className="truncate">Artists & Filmmakers</span>
+            <Users className="w-5 h-5 sm:w-6 sm:h-6 flex-shrink-0" /> <span className="truncate">{filterType === "music" ? "Music Artists" : filterType === "film" ? "Filmmakers" : "Artists & Filmmakers"}</span>
           </h2>
-          <p className="text-muted-foreground text-sm">Manage artist profiles, legacy memorials, and contact info</p>
+          <p className="text-muted-foreground text-sm">{filterType === "film" ? "Manage director, cast and filmmaker profiles" : filterType === "music" ? "Manage music artist profiles, legacy memorials, and contact info" : "Manage artist profiles, legacy memorials, and contact info"}</p>
         </div>
         <Button onClick={openCreate} size="sm" className="gap-2 flex-shrink-0"><Plus className="w-4 h-4" /> <span className="hidden sm:inline">Add Artist</span><span className="sm:hidden">Add</span></Button>
       </div>
