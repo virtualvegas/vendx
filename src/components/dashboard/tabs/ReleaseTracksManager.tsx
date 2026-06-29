@@ -111,8 +111,8 @@ const ReleaseTracksManager = ({ mediaType }: ReleaseTracksManagerProps = {}) => 
       supabase.from("media_tracks").select("*").order("track_number"),
     ]);
     if (a.data) setArtists(a.data as unknown as Artist[]);
-    if (r.data) setReleases(r.data as unknown as Release[]);
-    if (t.data) setTracks(t.data as unknown as Track[]);
+    if (r.data) setReleasesAll(r.data as unknown as Release[]);
+    if (t.data) setTracksAll(t.data as unknown as Track[]);
     setLoading(false);
   };
 
@@ -124,7 +124,7 @@ const ReleaseTracksManager = ({ mediaType }: ReleaseTracksManagerProps = {}) => 
   // ============= RELEASES =============
   const openCreateRelease = () => {
     setEditingRelease(null);
-    setReleaseForm(emptyRelease);
+    setReleaseForm({ ...emptyRelease, media_type: mediaType || "music" });
     setReleaseDialog(true);
   };
 
