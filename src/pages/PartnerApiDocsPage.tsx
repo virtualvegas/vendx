@@ -168,6 +168,45 @@ if (expected !== req.headers["x-vendx-signature"]) {
         </section>
 
         <section className="mb-10">
+          <h2 className="text-2xl font-bold mb-3">Partner-hosted checkout flow</h2>
+          <p className="text-sm text-muted-foreground mb-3">
+            When you set a <code>checkout_url_template</code> on your partner record, VendX customers
+            who order an inbound product (one you pushed to our store) are redirected to your hosted
+            checkout instead of paying on VendX. Placeholders are URL-encoded automatically:
+            <code>&#123;token&#125;</code>, <code>&#123;order_id&#125;</code>, <code>&#123;external_product_id&#125;</code>,
+            <code>&#123;quantity&#125;</code>, <code>&#123;email&#125;</code>, <code>&#123;amount&#125;</code>,
+            <code>&#123;currency&#125;</code>, <code>&#123;return_url&#125;</code>.
+          </p>
+          <Code>{`Example template:
+https://partner.com/checkout?ref={token}&sku={external_product_id}&qty={quantity}&email={email}`}</Code>
+          <p className="text-sm text-muted-foreground mt-4 mb-2">
+            Flow:
+          </p>
+          <ol className="text-sm text-muted-foreground list-decimal pl-5 space-y-1 mb-4">
+            <li>Customer clicks "Continue to checkout" on VendX. We create a pending order and a one-time <code>checkout_token</code> (60 min TTL).</li>
+            <li>Browser is redirected to your hosted checkout with the interpolated URL.</li>
+            <li>You capture payment. On success, POST <code>partner-order-create</code> with <code>vendx_checkout_token</code> to confirm.</li>
+            <li>VendX flips the order to paid and dispatches a signed <code>order.created</code> webhook back to your <code>inbound_fulfillment_url</code>.</li>
+          </ol>
+          <Endpoint
+            method="POST"
+            path={`${BASE}/partner-order-create`}
+            title="Confirm a hosted-checkout payment"
+            desc="Use vendx_checkout_token to convert a pending order to paid. external_order_id and payment_reference are optional but recommended for reconciliation."
+            example={`curl -X POST "${BASE}/partner-order-create" \\
+  -H "X-VendX-Partner-Key: $VENDX_KEY" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "vendx_checkout_token": "vxct_abcdef0123...",
+    "external_order_id": "ORD-9821",
+    "payment_reference": "stripe_pi_xxx"
+  }'`}
+          />
+        </section>
+
+
+
+        <section className="mb-10">
           <h2 className="text-2xl font-bold mb-3">Inbound endpoints</h2>
 
           <Endpoint
