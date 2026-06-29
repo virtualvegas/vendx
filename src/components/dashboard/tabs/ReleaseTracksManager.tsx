@@ -303,9 +303,16 @@ const ReleaseTracksManager = ({ mediaType }: ReleaseTracksManagerProps = {}) => 
     <div className="space-y-6">
       <div>
         <h2 className="text-2xl font-bold text-foreground flex items-center gap-2">
-          <Disc3 className="w-6 h-6" /> Releases & Tracks
+          {mediaType === "film" ? <Film className="w-6 h-6" /> : <Disc3 className="w-6 h-6" />}
+          {mediaType === "music" ? "Music Releases & Tracks" : mediaType === "film" ? "Film Releases" : "Releases & Tracks"}
         </h2>
-        <p className="text-muted-foreground text-sm">Manage albums, singles, films and individual tracks linked to artist profiles</p>
+        <p className="text-muted-foreground text-sm">
+          {mediaType === "film"
+            ? "Manage films, episodes, trailers and video content linked to filmmakers"
+            : mediaType === "music"
+            ? "Manage albums, singles, EPs and individual music tracks linked to artists"
+            : "Manage albums, singles, films and individual tracks linked to artist profiles"}
+        </p>
       </div>
 
       {/* Stats */}
