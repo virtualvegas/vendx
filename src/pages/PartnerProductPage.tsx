@@ -60,6 +60,8 @@ export default function PartnerProductPage() {
     })();
   }, [id]);
 
+  const hasHostedCheckout = !!product?.vendx_catalog_partners?.checkout_url_template;
+
   const placeOrder = async () => {
     if (!product) return;
     if (!form.email || !form.name) {
@@ -67,8 +69,29 @@ export default function PartnerProductPage() {
       return;
     }
     setSubmitting(true);
-    const total = product.price * form.quantity;
     try {
+      if (hasHostedCheckout) {
+        // Redirect customer to partner-hosted checkout. Partner confirms payment
+        // back to us via partner-order-create with the vendx_checkout_token.
+        const { data, error } = await supabase.functions.invoke("partner-checkout-initiate", {
+          body: {
+            partner_product_id: product.id,
+            quantity: form.quantity,
+            customer_email: form.email,
+            customer_name: form.name,
+            notes: form.notes,
+            return_url: `${window.location.origin}/store/partner/${product.id}?checkout=complete`,
+          },
+        });
+        if (error) throw error;
+        const url = (data as any)?.redirect_url;
+        if (!url) throw new Error("No redirect URL returned");
+        toast.success(`Redirecting to ${product.vendx_catalog_partners?.name} checkout…`);
+        window.location.href = url;
+        return;
+      }
+
+      const total = product.price * form.quantity;
       const { data: po, error: poErr } = await supabase
         .from("vendx_partner_orders")
         .insert({
@@ -106,6 +129,7 @@ export default function PartnerProductPage() {
     }
     setSubmitting(false);
   };
+
 
   if (loading) {
     return (
