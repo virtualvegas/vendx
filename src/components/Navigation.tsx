@@ -195,10 +195,6 @@ const Navigation = () => {
                       <NavListItem to="/event-rentals" title="Party & Event Rentals" icon={Gamepad2}>
                         Rent arcade machines and packages for parties &amp; events
                       </NavListItem>
-                      <li className="hidden">
-                        <NavigationMenuLink asChild>
-                          <span />
-                      </li>
                     </ul>
                   </NavigationMenuContent>
                 </NavigationMenuItem>
