@@ -63,6 +63,7 @@ import SsoAuthorizePage from "./pages/SsoAuthorizePage";
 import SsoDocsPage from "./pages/SsoDocsPage";
 import PartnerApiDocsPage from "./pages/PartnerApiDocsPage";
 import PartnerProductPage from "./pages/PartnerProductPage";
+import EventRentalsPage from "./pages/EventRentalsPage";
 
 const queryClient = new QueryClient();
 
@@ -152,6 +153,8 @@ const App = () => (
               <Route path="/developers/sso" element={<SsoDocsPage />} />
               <Route path="/api/partners" element={<PartnerApiDocsPage />} />
               <Route path="/developers/partners" element={<PartnerApiDocsPage />} />
+              <Route path="/event-rentals" element={<EventRentalsPage />} />
+              <Route path="/locations/rentals" element={<EventRentalsPage />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
