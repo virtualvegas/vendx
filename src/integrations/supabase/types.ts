@@ -6929,6 +6929,7 @@ export type Database = {
           allowed_outbound_categories: string[] | null
           api_key_hash: string
           api_key_prefix: string
+          checkout_url_template: string | null
           commission_pct: number | null
           contact_email: string | null
           created_at: string
@@ -6948,6 +6949,7 @@ export type Database = {
           allowed_outbound_categories?: string[] | null
           api_key_hash: string
           api_key_prefix: string
+          checkout_url_template?: string | null
           commission_pct?: number | null
           contact_email?: string | null
           created_at?: string
@@ -6967,6 +6969,7 @@ export type Database = {
           allowed_outbound_categories?: string[] | null
           api_key_hash?: string
           api_key_prefix?: string
+          checkout_url_template?: string | null
           commission_pct?: number | null
           contact_email?: string | null
           created_at?: string
@@ -8142,6 +8145,9 @@ export type Database = {
       }
       vendx_partner_orders: {
         Row: {
+          checkout_expires_at: string | null
+          checkout_redirect_url: string | null
+          checkout_token: string | null
           commission_amount: number | null
           created_at: string
           currency: string
@@ -8163,6 +8169,9 @@ export type Database = {
           vendx_order_id: string | null
         }
         Insert: {
+          checkout_expires_at?: string | null
+          checkout_redirect_url?: string | null
+          checkout_token?: string | null
           commission_amount?: number | null
           created_at?: string
           currency?: string
@@ -8184,6 +8193,9 @@ export type Database = {
           vendx_order_id?: string | null
         }
         Update: {
+          checkout_expires_at?: string | null
+          checkout_redirect_url?: string | null
+          checkout_token?: string | null
           commission_amount?: number | null
           created_at?: string
           currency?: string

@@ -30,7 +30,7 @@ type PartnerProduct = {
   product_url: string | null;
   partner_id: string;
   external_product_id: string;
-  vendx_catalog_partners: { name: string; slug: string; website_url: string | null } | null;
+  vendx_catalog_partners: { name: string; slug: string; website_url: string | null; checkout_url_template: string | null } | null;
 };
 
 export default function PartnerProductPage() {
@@ -51,7 +51,7 @@ export default function PartnerProductPage() {
     (async () => {
       const { data } = await supabase
         .from("vendx_partner_products")
-        .select("*, vendx_catalog_partners(name, slug, website_url)")
+        .select("*, vendx_catalog_partners(name, slug, website_url, checkout_url_template)")
         .eq("id", id)
         .eq("is_active", true)
         .maybeSingle();
@@ -60,6 +60,8 @@ export default function PartnerProductPage() {
     })();
   }, [id]);
 
+  const hasHostedCheckout = !!product?.vendx_catalog_partners?.checkout_url_template;
+
   const placeOrder = async () => {
     if (!product) return;
     if (!form.email || !form.name) {
@@ -67,8 +69,29 @@ export default function PartnerProductPage() {
       return;
     }
     setSubmitting(true);
-    const total = product.price * form.quantity;
     try {
+      if (hasHostedCheckout) {
+        // Redirect customer to partner-hosted checkout. Partner confirms payment
+        // back to us via partner-order-create with the vendx_checkout_token.
+        const { data, error } = await supabase.functions.invoke("partner-checkout-initiate", {
+          body: {
+            partner_product_id: product.id,
+            quantity: form.quantity,
+            customer_email: form.email,
+            customer_name: form.name,
+            notes: form.notes,
+            return_url: `${window.location.origin}/store/partner/${product.id}?checkout=complete`,
+          },
+        });
+        if (error) throw error;
+        const url = (data as any)?.redirect_url;
+        if (!url) throw new Error("No redirect URL returned");
+        toast.success(`Redirecting to ${product.vendx_catalog_partners?.name} checkout…`);
+        window.location.href = url;
+        return;
+      }
+
+      const total = product.price * form.quantity;
       const { data: po, error: poErr } = await supabase
         .from("vendx_partner_orders")
         .insert({
@@ -106,6 +129,7 @@ export default function PartnerProductPage() {
     }
     setSubmitting(false);
   };
+
 
   if (loading) {
     return (
@@ -178,7 +202,9 @@ export default function PartnerProductPage() {
               <CardContent className="p-5 space-y-3">
                 <h3 className="font-semibold">Order from {partnerName}</h3>
                 <p className="text-xs text-muted-foreground">
-                  Your order is forwarded to {partnerName} who will fulfill and contact you to complete payment & shipping.
+                  {hasHostedCheckout
+                    ? `You'll complete payment securely on ${partnerName}'s site. We confirm and track fulfillment once payment is captured.`
+                    : `Your order is forwarded to ${partnerName} who will fulfill and contact you to complete payment & shipping.`}
                 </p>
                 <div>
                   <Label>Full name</Label>
@@ -198,10 +224,13 @@ export default function PartnerProductPage() {
                 </div>
                 <Button className="w-full" onClick={placeOrder} disabled={submitting}>
                   {submitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                  Place Order (${(product.price * form.quantity).toFixed(2)})
+                  {hasHostedCheckout
+                    ? <>Continue to {partnerName} <ExternalLink className="h-4 w-4 ml-2" /></>
+                    : `Place Order ($${(product.price * form.quantity).toFixed(2)})`}
                 </Button>
               </CardContent>
             </Card>
+
           </div>
         </div>
       </div>
