@@ -29,11 +29,53 @@ serve(async (req) => {
     payment_reference,
     shipping_address,
     notes,
+    vendx_checkout_token,
   } = body;
+
+  // ── Inbound confirmation path: partner confirms a hosted-checkout payment ──
+  // VendX previously created a pending order via partner-checkout-initiate and handed
+  // the partner a one-time token. Partner POSTs back with that token to mark the order
+  // paid; we then dispatch fulfillment back to the partner.
+  if (vendx_checkout_token) {
+    const { data: pending, error: pErr } = await supabase
+      .from("vendx_partner_orders")
+      .select("*")
+      .eq("partner_id", partner.id)
+      .eq("checkout_token", vendx_checkout_token)
+      .maybeSingle();
+    if (pErr || !pending) return json({ error: "Invalid or unknown checkout token" }, 404);
+    if (pending.checkout_expires_at && new Date(pending.checkout_expires_at) < new Date()) {
+      return json({ error: "Checkout token expired" }, 410);
+    }
+    if (pending.payment_status === "paid") {
+      return json({ ok: true, duplicate: true, partner_order_id: pending.id, vendx_order_id: pending.vendx_order_id });
+    }
+
+    const updates: Record<string, unknown> = {
+      payment_status: "paid",
+      status: "received",
+      checkout_token: null,
+      external_order_id: external_order_id ?? pending.external_order_id,
+      payload: { ...(pending.payload as object || {}), payment_reference, confirmed_at: new Date().toISOString() },
+    };
+    const { error: uErr } = await supabase.from("vendx_partner_orders").update(updates).eq("id", pending.id);
+    if (uErr) return json({ error: `Confirm failed: ${uErr.message}` }, 500);
+
+    // For inbound products: dispatch fulfillment webhook back to partner so they ship/fulfill.
+    if (pending.direction === "inbound") {
+      try {
+        await supabase.functions.invoke("partner-fulfillment-dispatch", {
+          body: { partner_order_id: pending.id },
+        });
+      } catch (e) { console.error("dispatch:", e); }
+    }
+    return json({ ok: true, confirmed: true, partner_order_id: pending.id });
+  }
 
   if (!external_order_id) return json({ error: "external_order_id is required" }, 400);
   if (!Array.isArray(items) || items.length === 0) return json({ error: "items must be a non-empty array" }, 400);
   if (typeof total !== "number" || total <= 0) return json({ error: "total must be a positive number" }, 400);
+
 
   // Idempotency: dedupe by (partner, external_order_id)
   const { data: existing } = await supabase
