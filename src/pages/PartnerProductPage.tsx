@@ -51,7 +51,7 @@ export default function PartnerProductPage() {
     (async () => {
       const { data } = await supabase
         .from("vendx_partner_products")
-        .select("*, vendx_catalog_partners(name, slug, website_url)")
+        .select("*, vendx_catalog_partners(name, slug, website_url, checkout_url_template)")
         .eq("id", id)
         .eq("is_active", true)
         .maybeSingle();
