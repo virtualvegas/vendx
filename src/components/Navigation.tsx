@@ -56,7 +56,7 @@ const Navigation = () => {
       links: [
         { name: "Find Locations", path: "/locations", icon: MapPin },
         { name: "Events", path: "/locations/events", icon: Gamepad2 },
-        { name: "Event Rentals", path: "https://hostheroz.com", icon: Briefcase, external: true },
+        { name: "Event Rentals", path: "/event-rentals", icon: Briefcase },
       ],
     },
     {
@@ -150,14 +150,15 @@ const Navigation = () => {
                 </NavigationMenuItem>
 
                 <NavigationMenuItem>
-                  <a
-                    href="https://hostheroz.com"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="group inline-flex h-10 w-max items-center justify-center rounded-md bg-transparent px-4 py-2 text-sm font-medium transition-colors hover:bg-primary/5 hover:text-accent-foreground focus:bg-primary/5 focus:text-accent-foreground focus:outline-none"
+                  <Link
+                    to="/event-rentals"
+                    className={cn(
+                      "group inline-flex h-10 w-max items-center justify-center rounded-md bg-transparent px-4 py-2 text-sm font-medium transition-colors hover:bg-primary/5 hover:text-accent-foreground focus:bg-primary/5 focus:text-accent-foreground focus:outline-none",
+                      location.pathname === "/event-rentals" && "text-primary"
+                    )}
                   >
                     Event Rentals
-                  </a>
+                  </Link>
                 </NavigationMenuItem>
 
                 {/* More VendX Dropdown */}
@@ -191,24 +192,9 @@ const Navigation = () => {
                       <NavListItem to="/contact" title="Contact Us" icon={Phone}>
                         Get in touch with our team
                       </NavListItem>
-                      <li>
-                        <NavigationMenuLink asChild>
-                          <a
-                            href="https://hostheroz.com"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent/10 hover:text-accent-foreground focus:bg-accent/10 focus:text-accent-foreground"
-                          >
-                            <div className="flex items-center gap-2 text-sm font-medium leading-none">
-                              <Gamepad2 className="w-4 h-4 text-primary" />
-                              Party & Event Rentals
-                            </div>
-                            <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
-                              Rent arcade machines for parties and events
-                            </p>
-                          </a>
-                        </NavigationMenuLink>
-                      </li>
+                      <NavListItem to="/event-rentals" title="Party & Event Rentals" icon={Gamepad2}>
+                        Rent arcade machines and packages for parties &amp; events
+                      </NavListItem>
                     </ul>
                   </NavigationMenuContent>
                 </NavigationMenuItem>
