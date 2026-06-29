@@ -8408,6 +8408,7 @@ export type Database = {
           next_retry_at: string | null
           partner_id: string
           partner_order_id: string | null
+          partner_subscription_id: string | null
           request_body: Json | null
           response_body: string | null
           status_code: number | null
@@ -8423,6 +8424,7 @@ export type Database = {
           next_retry_at?: string | null
           partner_id: string
           partner_order_id?: string | null
+          partner_subscription_id?: string | null
           request_body?: Json | null
           response_body?: string | null
           status_code?: number | null
@@ -8438,6 +8440,7 @@ export type Database = {
           next_retry_at?: string | null
           partner_id?: string
           partner_order_id?: string | null
+          partner_subscription_id?: string | null
           request_body?: Json | null
           response_body?: string | null
           status_code?: number | null
@@ -8456,6 +8459,13 @@ export type Database = {
             columns: ["partner_order_id"]
             isOneToOne: false
             referencedRelation: "vendx_partner_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendx_partner_webhook_deliveries_partner_subscription_id_fkey"
+            columns: ["partner_subscription_id"]
+            isOneToOne: false
+            referencedRelation: "vendx_partner_subscriptions"
             referencedColumns: ["id"]
           },
         ]
