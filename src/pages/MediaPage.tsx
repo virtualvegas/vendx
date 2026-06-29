@@ -190,8 +190,29 @@ const ReleaseInlinePlayer = ({ releaseId, releaseCover, artistName }: {
 };
 
 const MediaPage = () => {
-  const [mediaFilter, setMediaFilter] = useState<"all" | "music" | "film">("all");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const initialType = searchParams.get("type");
+  const [mediaFilter, setMediaFilter] = useState<"all" | "music" | "film">(
+    initialType === "music" || initialType === "film" ? initialType : "all",
+  );
   const [expandedPlayer, setExpandedPlayer] = useState<string | null>(null);
+
+  useEffect(() => {
+    const t = searchParams.get("type");
+    if (t === "music" || t === "film" || t === "all") {
+      setMediaFilter(t as "all" | "music" | "film");
+    }
+  }, [searchParams]);
+
+  const handleFilterChange = (v: string) => {
+    setMediaFilter(v as "all" | "music" | "film");
+    if (v === "all") {
+      searchParams.delete("type");
+    } else {
+      searchParams.set("type", v);
+    }
+    setSearchParams(searchParams, { replace: true });
+  };
 
   useSEO({
     title: "VendX Music & Film — Releases",
