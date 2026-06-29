@@ -83,15 +83,45 @@ const StorePage = () => {
 
   const fetchProducts = async () => {
     setLoading(true);
-    const { data, error } = await supabase
-      .from("store_products")
-      .select("id, name, slug, short_description, description, price, compare_at_price, category, images, stock, is_subscription, subscription_price, retail_status, retail_links, shopify_handle, created_at")
-      .eq("is_active", true)
-      .order("created_at", { ascending: false });
+    const [{ data, error }, { data: partnerData }] = await Promise.all([
+      supabase
+        .from("store_products")
+        .select("id, name, slug, short_description, description, price, compare_at_price, category, images, stock, is_subscription, subscription_price, retail_status, retail_links, shopify_handle, created_at")
+        .eq("is_active", true)
+        .order("created_at", { ascending: false }),
+      supabase
+        .from("vendx_partner_products")
+        .select("id, name, slug, short_description, description, price, category, images, image_url, stock, is_subscription, subscription_interval, last_synced_at, partner_id, external_product_id, vendx_catalog_partners(name, slug)")
+        .eq("is_active", true)
+        .order("last_synced_at", { ascending: false }),
+    ]);
 
-    if (!error && data) {
-      setProducts(data as StoreProduct[]);
+    const combined: StoreProduct[] = [];
+    if (!error && data) combined.push(...(data as StoreProduct[]));
+    if (partnerData) {
+      for (const p of partnerData as any[]) {
+        const imgs = Array.isArray(p.images) && p.images.length ? p.images : (p.image_url ? [p.image_url] : []);
+        combined.push({
+          id: `partner:${p.id}`,
+          name: p.name,
+          slug: `partner-${p.slug}`,
+          short_description: p.short_description || `via ${p.vendx_catalog_partners?.name || "partner"}`,
+          description: p.description || "",
+          price: Number(p.price),
+          compare_at_price: null,
+          category: p.category || "partner",
+          images: imgs,
+          stock: p.stock,
+          is_subscription: !!p.is_subscription,
+          subscription_price: p.is_subscription ? Number(p.price) : null,
+          retail_status: "online_only",
+          retail_links: null,
+          shopify_handle: null,
+          created_at: p.last_synced_at,
+        });
+      }
     }
+    setProducts(combined);
     setLoading(false);
   };
 
