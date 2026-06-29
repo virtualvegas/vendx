@@ -72,12 +72,25 @@ const emptyTrack = {
   media_type: "audio", video_file_url: "", video_embed_url: "", cover_image_url: "",
 };
 
-const ReleaseTracksManager = () => {
+interface ReleaseTracksManagerProps {
+  mediaType?: "music" | "film";
+}
+
+const ReleaseTracksManager = ({ mediaType }: ReleaseTracksManagerProps = {}) => {
   const [artists, setArtists] = useState<Artist[]>([]);
-  const [releases, setReleases] = useState<Release[]>([]);
-  const [tracks, setTracks] = useState<Track[]>([]);
+  const [releasesAll, setReleasesAll] = useState<Release[]>([]);
+  const [tracksAll, setTracksAll] = useState<Track[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("releases");
+
+  const releases = mediaType ? releasesAll.filter(r => r.media_type === mediaType) : releasesAll;
+  const tracks = mediaType
+    ? tracksAll.filter(t => {
+        const rel = releasesAll.find(r => r.id === t.release_id);
+        if (rel) return rel.media_type === mediaType;
+        return mediaType === "film" ? t.media_type === "video" : t.media_type !== "video";
+      })
+    : tracksAll;
 
   // Release dialog
   const [releaseDialog, setReleaseDialog] = useState(false);
