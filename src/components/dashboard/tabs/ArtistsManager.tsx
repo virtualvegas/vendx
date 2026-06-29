@@ -55,12 +55,20 @@ const emptyForm = {
   legacy_background_url: "",
 };
 
-const ArtistsManager = () => {
-  const [artists, setArtists] = useState<MediaArtist[]>([]);
+interface ArtistsManagerProps {
+  filterType?: "music" | "film";
+}
+
+const ArtistsManager = ({ filterType }: ArtistsManagerProps = {}) => {
+  const [artistsAll, setArtistsAll] = useState<MediaArtist[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<MediaArtist | null>(null);
-  const [form, setForm] = useState(emptyForm);
+  const [form, setForm] = useState({ ...emptyForm, artist_type: filterType || "music" });
+
+  const artists = filterType
+    ? artistsAll.filter(a => a.artist_type === filterType || a.artist_type === "both")
+    : artistsAll;
 
   const fetchArtists = async () => {
     setLoading(true);
@@ -68,7 +76,7 @@ const ArtistsManager = () => {
       .from("media_artists")
       .select("*")
       .order("display_order", { ascending: true });
-    if (!error) setArtists((data as unknown as MediaArtist[]) || []);
+    if (!error) setArtistsAll((data as unknown as MediaArtist[]) || []);
     setLoading(false);
   };
 
@@ -78,7 +86,7 @@ const ArtistsManager = () => {
 
   const openCreate = () => {
     setEditing(null);
-    setForm(emptyForm);
+    setForm({ ...emptyForm, artist_type: filterType || "music" });
     setDialogOpen(true);
   };
 
