@@ -104,7 +104,7 @@ const StorePage = () => {
         combined.push({
           id: `partner:${p.id}`,
           name: p.name,
-          slug: `partner-${p.slug}`,
+          slug: `partner/${p.id}`,
           short_description: p.short_description || `via ${p.vendx_catalog_partners?.name || "partner"}`,
           description: p.description || "",
           price: Number(p.price),
