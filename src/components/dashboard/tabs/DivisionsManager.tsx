@@ -72,6 +72,7 @@ const DivisionsManager = () => {
     description: "",
     icon: "",
     status: "active",
+    external_url: "",
   });
 
   const { data: divisions, isLoading } = useQuery({
