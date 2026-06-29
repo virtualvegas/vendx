@@ -244,6 +244,20 @@ const DivisionsManager = () => {
                 />
               </div>
 
+              <div className="space-y-2">
+                <Label htmlFor="external_url">External Redirect URL (optional)</Label>
+                <Input
+                  id="external_url"
+                  type="url"
+                  value={form.external_url}
+                  onChange={(e) => setForm({ ...form, external_url: e.target.value })}
+                  placeholder="https://example.com or /custom-page"
+                />
+                <p className="text-xs text-muted-foreground">
+                  If set, clicking this division anywhere on the site sends the user here instead of the default division page. External URLs open in a new tab.
+                </p>
+              </div>
+
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="icon">Icon</Label>
