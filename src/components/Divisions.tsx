@@ -54,12 +54,12 @@ const Divisions = () => {
           ) : (
             divisions?.map((division, index) => {
               const Icon = iconMap[division.icon || "Zap"] || Zap;
-              return (
-                <Link
-                  key={division.id}
-                  to={`/divisions/${division.slug}`}
-                  className="group relative bg-card/40 backdrop-blur-sm border border-border hover:border-accent/50 rounded-2xl p-6 transition-smooth hover:shadow-[0_0_30px_rgba(57,255,136,0.2)] hover:-translate-y-2 block"
-                >
+              const ext = (division as any).external_url as string | null | undefined;
+              const isExternal = !!ext && /^https?:\/\//i.test(ext);
+              const href = ext || `/divisions/${division.slug}`;
+              const cardClass = "group relative bg-card/40 backdrop-blur-sm border border-border hover:border-accent/50 rounded-2xl p-6 transition-smooth hover:shadow-[0_0_30px_rgba(57,255,136,0.2)] hover:-translate-y-2 block";
+              const inner = (
+                <>
                   {division.status === "coming-soon" && (
                     <div className="absolute top-4 right-4">
                       <span className="text-xs font-bold text-accent border border-accent px-2 py-1 rounded-full bg-accent/10 animate-glow-pulse">
@@ -67,13 +67,23 @@ const Divisions = () => {
                       </span>
                     </div>
                   )}
-                  
                   <div className="inline-flex items-center justify-center w-14 h-14 rounded-xl bg-accent/10 border border-accent/30 group-hover:border-accent group-hover:shadow-[0_0_20px_rgba(57,255,136,0.4)] transition-smooth mb-4">
                     <Icon className="w-7 h-7 text-accent" />
                   </div>
-                  
                   <h3 className="text-xl font-bold mb-2">{division.name}</h3>
                   <p className="text-muted-foreground text-sm leading-relaxed">{division.description}</p>
+                </>
+              );
+              if (isExternal) {
+                return (
+                  <a key={division.id} href={href} target="_blank" rel="noopener noreferrer" className={cardClass}>
+                    {inner}
+                  </a>
+                );
+              }
+              return (
+                <Link key={division.id} to={href} className={cardClass}>
+                  {inner}
                 </Link>
               );
             })
