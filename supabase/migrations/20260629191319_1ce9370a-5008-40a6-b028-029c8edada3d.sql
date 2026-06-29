@@ -1,0 +1,20 @@
+
+ALTER TABLE public.media_releases
+  ADD COLUMN IF NOT EXISTS film_type text,
+  ADD COLUMN IF NOT EXISTS runtime_minutes integer,
+  ADD COLUMN IF NOT EXISTS mpaa_rating text,
+  ADD COLUMN IF NOT EXISTS language text,
+  ADD COLUMN IF NOT EXISTS country text,
+  ADD COLUMN IF NOT EXISTS director text,
+  ADD COLUMN IF NOT EXISTS writers text[],
+  ADD COLUMN IF NOT EXISTS producers text[],
+  ADD COLUMN IF NOT EXISTS cast_members text[],
+  ADD COLUMN IF NOT EXISTS synopsis text,
+  ADD COLUMN IF NOT EXISTS season_count integer,
+  ADD COLUMN IF NOT EXISTS episode_count integer,
+  ADD COLUMN IF NOT EXISTS imdb_url text,
+  ADD COLUMN IF NOT EXISTS letterboxd_url text,
+  ADD COLUMN IF NOT EXISTS tmdb_url text,
+  ADD COLUMN IF NOT EXISTS rotten_tomatoes_url text,
+  ADD COLUMN IF NOT EXISTS backdrop_image_url text,
+  ADD COLUMN IF NOT EXISTS poster_image_url text;

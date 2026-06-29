@@ -2943,39 +2943,57 @@ export type Database = {
           apple_tv_url: string | null
           artist_director: string | null
           artist_id: string | null
+          backdrop_image_url: string | null
           bandcamp_url: string | null
+          cast_members: string[] | null
+          country: string | null
           cover_image_url: string | null
           created_at: string
           deezer_url: string | null
+          director: string | null
           disney_plus_url: string | null
           display_order: number | null
+          episode_count: number | null
+          film_type: string | null
           full_description: string | null
           genre: string[] | null
           google_play_url: string | null
           hulu_url: string | null
           id: string
+          imdb_url: string | null
           is_active: boolean | null
           is_featured: boolean | null
           itunes_url: string | null
+          language: string | null
+          letterboxd_url: string | null
           media_type: string
+          mpaa_rating: string | null
           music_release_type: string | null
           netflix_url: string | null
           paramount_plus_url: string | null
           peacock_url: string | null
+          poster_image_url: string | null
           prime_video_url: string | null
+          producers: string[] | null
           release_date: string | null
           release_status: string
+          rotten_tomatoes_url: string | null
+          runtime_minutes: number | null
+          season_count: number | null
           short_description: string | null
           slug: string
           soundcloud_url: string | null
           spotify_url: string | null
+          synopsis: string | null
           tidal_url: string | null
           title: string
+          tmdb_url: string | null
           tracklist: Json | null
           trailer_url: string | null
           tubi_url: string | null
           updated_at: string
           vudu_url: string | null
+          writers: string[] | null
           youtube_music_url: string | null
           youtube_url: string | null
         }
@@ -2985,39 +3003,57 @@ export type Database = {
           apple_tv_url?: string | null
           artist_director?: string | null
           artist_id?: string | null
+          backdrop_image_url?: string | null
           bandcamp_url?: string | null
+          cast_members?: string[] | null
+          country?: string | null
           cover_image_url?: string | null
           created_at?: string
           deezer_url?: string | null
+          director?: string | null
           disney_plus_url?: string | null
           display_order?: number | null
+          episode_count?: number | null
+          film_type?: string | null
           full_description?: string | null
           genre?: string[] | null
           google_play_url?: string | null
           hulu_url?: string | null
           id?: string
+          imdb_url?: string | null
           is_active?: boolean | null
           is_featured?: boolean | null
           itunes_url?: string | null
+          language?: string | null
+          letterboxd_url?: string | null
           media_type: string
+          mpaa_rating?: string | null
           music_release_type?: string | null
           netflix_url?: string | null
           paramount_plus_url?: string | null
           peacock_url?: string | null
+          poster_image_url?: string | null
           prime_video_url?: string | null
+          producers?: string[] | null
           release_date?: string | null
           release_status?: string
+          rotten_tomatoes_url?: string | null
+          runtime_minutes?: number | null
+          season_count?: number | null
           short_description?: string | null
           slug: string
           soundcloud_url?: string | null
           spotify_url?: string | null
+          synopsis?: string | null
           tidal_url?: string | null
           title: string
+          tmdb_url?: string | null
           tracklist?: Json | null
           trailer_url?: string | null
           tubi_url?: string | null
           updated_at?: string
           vudu_url?: string | null
+          writers?: string[] | null
           youtube_music_url?: string | null
           youtube_url?: string | null
         }
@@ -3027,39 +3063,57 @@ export type Database = {
           apple_tv_url?: string | null
           artist_director?: string | null
           artist_id?: string | null
+          backdrop_image_url?: string | null
           bandcamp_url?: string | null
+          cast_members?: string[] | null
+          country?: string | null
           cover_image_url?: string | null
           created_at?: string
           deezer_url?: string | null
+          director?: string | null
           disney_plus_url?: string | null
           display_order?: number | null
+          episode_count?: number | null
+          film_type?: string | null
           full_description?: string | null
           genre?: string[] | null
           google_play_url?: string | null
           hulu_url?: string | null
           id?: string
+          imdb_url?: string | null
           is_active?: boolean | null
           is_featured?: boolean | null
           itunes_url?: string | null
+          language?: string | null
+          letterboxd_url?: string | null
           media_type?: string
+          mpaa_rating?: string | null
           music_release_type?: string | null
           netflix_url?: string | null
           paramount_plus_url?: string | null
           peacock_url?: string | null
+          poster_image_url?: string | null
           prime_video_url?: string | null
+          producers?: string[] | null
           release_date?: string | null
           release_status?: string
+          rotten_tomatoes_url?: string | null
+          runtime_minutes?: number | null
+          season_count?: number | null
           short_description?: string | null
           slug?: string
           soundcloud_url?: string | null
           spotify_url?: string | null
+          synopsis?: string | null
           tidal_url?: string | null
           title?: string
+          tmdb_url?: string | null
           tracklist?: Json | null
           trailer_url?: string | null
           tubi_url?: string | null
           updated_at?: string
           vudu_url?: string | null
+          writers?: string[] | null
           youtube_music_url?: string | null
           youtube_url?: string | null
         }
