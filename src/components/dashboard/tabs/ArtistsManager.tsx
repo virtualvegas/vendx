@@ -73,7 +73,7 @@ const ArtistsManager = ({ filterType }: ArtistsManagerProps = {}) => {
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<MediaArtist | null>(null);
-  const [form, setForm] = useState({ ...emptyForm, artist_type: filterType || "music" });
+  const [form, setForm] = useState<typeof emptyForm>({ ...emptyForm, artist_type: filterType || "music" });
 
   const artists = filterType
     ? artistsAll.filter(a => a.artist_type === filterType || a.artist_type === "both")
