@@ -30,7 +30,7 @@ type PartnerProduct = {
   product_url: string | null;
   partner_id: string;
   external_product_id: string;
-  vendx_catalog_partners: { name: string; slug: string; website_url: string | null } | null;
+  vendx_catalog_partners: { name: string; slug: string; website_url: string | null; checkout_url_template: string | null } | null;
 };
 
 export default function PartnerProductPage() {
