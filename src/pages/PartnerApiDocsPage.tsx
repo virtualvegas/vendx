@@ -207,6 +207,95 @@ if (expected !== req.headers["x-vendx-signature"]) {
         </section>
 
         <section className="mb-10">
+          <h2 className="text-2xl font-bold mb-3">Subscription endpoints</h2>
+          <p className="text-sm text-muted-foreground mb-4">
+            Recurring billing items work like products but live on dedicated endpoints. Outbound
+            partners can list our subscription plans and report lifecycle events from their billing
+            system. Inbound subscriptions are billed by VendX and we dispatch lifecycle webhooks
+            back to you.
+          </p>
+
+          <Endpoint
+            method="GET"
+            path={`${BASE}/partner-subscription-list?interval=month`}
+            title="List VendX subscription plans"
+            desc="Returns the subscription products available to you (filtered by your allowed categories). Optional interval=month|year."
+            example={`curl "${BASE}/partner-subscription-list" \\
+  -H "X-VendX-Partner-Key: $VENDX_KEY"`}
+          />
+
+          <Endpoint
+            method="POST"
+            path={`${BASE}/partner-subscription-sync`}
+            title="Report a subscription event"
+            desc="Upserts a subscription record and records finance income/commission on paid events. Valid events: created, renewed, updated, cancelled, paused, resumed, payment_failed, payment_succeeded."
+            example={`curl -X POST "${BASE}/partner-subscription-sync" \\
+  -H "X-VendX-Partner-Key: $VENDX_KEY" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "external_subscription_id": "SUB-7782",
+    "event": "created",
+    "product_ref": "snack-in-the-box",
+    "customer_email": "shopper@example.com",
+    "customer_name": "Sam Shopper",
+    "price": 29.99,
+    "currency": "USD",
+    "interval": "month",
+    "started_at": "2026-06-29T16:30:00Z",
+    "current_period_end": "2026-07-29T16:30:00Z"
+  }'`}
+          />
+
+          <Endpoint
+            method="GET"
+            path={`${BASE}/partner-subscription-status?external_subscription_id=SUB-7782`}
+            title="Check a subscription record"
+            desc="Returns the latest status we have for a subscription."
+            example={`curl "${BASE}/partner-subscription-status?external_subscription_id=SUB-7782" \\
+  -H "X-VendX-Partner-Key: $VENDX_KEY"`}
+          />
+        </section>
+
+        <section className="mb-10">
+          <h2 className="text-2xl font-bold mb-3">Inbound subscription webhooks</h2>
+          <p className="text-sm text-muted-foreground mb-3">
+            When VendX bills one of your inbound subscription products, we POST signed events to
+            your <code>inbound_fulfillment_url</code>. Events you should handle:
+          </p>
+          <ul className="text-sm text-muted-foreground mb-3 list-disc pl-5 space-y-1">
+            <li><code>subscription.created</code> — a customer started a sub on your product</li>
+            <li><code>subscription.renewed</code> — successful renewal payment</li>
+            <li><code>subscription.payment_failed</code> — billing failed; retries follow</li>
+            <li><code>subscription.payment_succeeded</code> — retry succeeded</li>
+            <li><code>subscription.paused</code> / <code>subscription.resumed</code></li>
+            <li><code>subscription.cancelled</code> — final cancellation</li>
+          </ul>
+          <Code>{`POST https://your-site.com/webhooks/vendx
+Headers:
+  Content-Type: application/json
+  X-VendX-Signature: <hmac-sha256 hex>
+  X-VendX-Event: subscription.renewed
+
+Body:
+{
+  "event": "subscription.renewed",
+  "partner_subscription_id": "uuid",
+  "vendx_subscription_id": "uuid",
+  "external_subscription_id": "SUB-7782",
+  "customer_email": "shopper@example.com",
+  "price": 29.99,
+  "currency": "USD",
+  "interval": "month",
+  "current_period_end": "2026-08-29T16:30:00Z",
+  "sent_at": "2026-07-29T16:30:00Z"
+}`}</Code>
+          <p className="text-sm text-muted-foreground mt-3">
+            Respond 2xx to acknowledge. Non-2xx responses are retried with backoff (up to 24h between attempts).
+          </p>
+        </section>
+
+
+        <section className="mb-10">
           <h2 className="text-2xl font-bold mb-3">Inbound order webhook</h2>
           <p className="text-sm text-muted-foreground mb-3">
             When a VendX customer buys one of your products, we POST to your{" "}
