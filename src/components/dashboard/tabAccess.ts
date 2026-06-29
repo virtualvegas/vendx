@@ -61,6 +61,7 @@ export const TAB_ACCESS: Record<string, AppRole[]> = {
   "finance-manager": ["super_admin", "finance_accounting"],
   "vendx-pay": ["super_admin", "finance_accounting"],
   "merchant-api": ["super_admin", "finance_accounting"],
+  "partner-api": ["super_admin", "finance_accounting"],
   "gift-cards": ["super_admin"],
   "payouts": ["super_admin", "finance_accounting"],
   "artist-payouts": ["super_admin", "finance_accounting"],

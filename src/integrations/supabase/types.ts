@@ -6924,6 +6924,66 @@ export type Database = {
         }
         Relationships: []
       }
+      vendx_catalog_partners: {
+        Row: {
+          allowed_outbound_categories: string[] | null
+          api_key_hash: string
+          api_key_prefix: string
+          commission_pct: number | null
+          contact_email: string | null
+          created_at: string
+          id: string
+          inbound_fulfillment_url: string | null
+          is_active: boolean
+          logo_url: string | null
+          mode: string
+          name: string
+          notes: string | null
+          slug: string
+          updated_at: string
+          webhook_secret: string
+          website_url: string | null
+        }
+        Insert: {
+          allowed_outbound_categories?: string[] | null
+          api_key_hash: string
+          api_key_prefix: string
+          commission_pct?: number | null
+          contact_email?: string | null
+          created_at?: string
+          id?: string
+          inbound_fulfillment_url?: string | null
+          is_active?: boolean
+          logo_url?: string | null
+          mode?: string
+          name: string
+          notes?: string | null
+          slug: string
+          updated_at?: string
+          webhook_secret: string
+          website_url?: string | null
+        }
+        Update: {
+          allowed_outbound_categories?: string[] | null
+          api_key_hash?: string
+          api_key_prefix?: string
+          commission_pct?: number | null
+          contact_email?: string | null
+          created_at?: string
+          id?: string
+          inbound_fulfillment_url?: string | null
+          is_active?: boolean
+          logo_url?: string | null
+          mode?: string
+          name?: string
+          notes?: string | null
+          slug?: string
+          updated_at?: string
+          webhook_secret?: string
+          website_url?: string | null
+        }
+        Relationships: []
+      }
       vendx_custom_arcade_requests: {
         Row: {
           additional_notes: string | null
@@ -8080,6 +8140,233 @@ export type Database = {
           },
         ]
       }
+      vendx_partner_orders: {
+        Row: {
+          commission_amount: number | null
+          created_at: string
+          currency: string
+          customer_email: string | null
+          customer_name: string | null
+          direction: string
+          error_message: string | null
+          external_order_id: string | null
+          fulfillment_status: string | null
+          id: string
+          items: Json
+          partner_id: string
+          payload: Json | null
+          payment_status: string | null
+          status: string
+          subtotal: number | null
+          total: number
+          updated_at: string
+          vendx_order_id: string | null
+        }
+        Insert: {
+          commission_amount?: number | null
+          created_at?: string
+          currency?: string
+          customer_email?: string | null
+          customer_name?: string | null
+          direction: string
+          error_message?: string | null
+          external_order_id?: string | null
+          fulfillment_status?: string | null
+          id?: string
+          items?: Json
+          partner_id: string
+          payload?: Json | null
+          payment_status?: string | null
+          status?: string
+          subtotal?: number | null
+          total: number
+          updated_at?: string
+          vendx_order_id?: string | null
+        }
+        Update: {
+          commission_amount?: number | null
+          created_at?: string
+          currency?: string
+          customer_email?: string | null
+          customer_name?: string | null
+          direction?: string
+          error_message?: string | null
+          external_order_id?: string | null
+          fulfillment_status?: string | null
+          id?: string
+          items?: Json
+          partner_id?: string
+          payload?: Json | null
+          payment_status?: string | null
+          status?: string
+          subtotal?: number | null
+          total?: number
+          updated_at?: string
+          vendx_order_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendx_partner_orders_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "vendx_catalog_partners"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendx_partner_orders_vendx_order_id_fkey"
+            columns: ["vendx_order_id"]
+            isOneToOne: false
+            referencedRelation: "store_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vendx_partner_products: {
+        Row: {
+          category: string | null
+          created_at: string
+          currency: string
+          description: string | null
+          external_product_id: string
+          id: string
+          image_url: string | null
+          images: Json | null
+          is_active: boolean
+          is_subscription: boolean | null
+          last_synced_at: string
+          metadata: Json | null
+          name: string
+          partner_id: string
+          price: number
+          product_url: string | null
+          short_description: string | null
+          sku: string | null
+          slug: string
+          stock: number | null
+          subscription_interval: string | null
+          updated_at: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          currency?: string
+          description?: string | null
+          external_product_id: string
+          id?: string
+          image_url?: string | null
+          images?: Json | null
+          is_active?: boolean
+          is_subscription?: boolean | null
+          last_synced_at?: string
+          metadata?: Json | null
+          name: string
+          partner_id: string
+          price: number
+          product_url?: string | null
+          short_description?: string | null
+          sku?: string | null
+          slug: string
+          stock?: number | null
+          subscription_interval?: string | null
+          updated_at?: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          currency?: string
+          description?: string | null
+          external_product_id?: string
+          id?: string
+          image_url?: string | null
+          images?: Json | null
+          is_active?: boolean
+          is_subscription?: boolean | null
+          last_synced_at?: string
+          metadata?: Json | null
+          name?: string
+          partner_id?: string
+          price?: number
+          product_url?: string | null
+          short_description?: string | null
+          sku?: string | null
+          slug?: string
+          stock?: number | null
+          subscription_interval?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendx_partner_products_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "vendx_catalog_partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vendx_partner_webhook_deliveries: {
+        Row: {
+          attempt: number
+          created_at: string
+          delivered: boolean
+          error_message: string | null
+          event: string
+          id: string
+          next_retry_at: string | null
+          partner_id: string
+          partner_order_id: string | null
+          request_body: Json | null
+          response_body: string | null
+          status_code: number | null
+          url: string
+        }
+        Insert: {
+          attempt?: number
+          created_at?: string
+          delivered?: boolean
+          error_message?: string | null
+          event: string
+          id?: string
+          next_retry_at?: string | null
+          partner_id: string
+          partner_order_id?: string | null
+          request_body?: Json | null
+          response_body?: string | null
+          status_code?: number | null
+          url: string
+        }
+        Update: {
+          attempt?: number
+          created_at?: string
+          delivered?: boolean
+          error_message?: string | null
+          event?: string
+          id?: string
+          next_retry_at?: string | null
+          partner_id?: string
+          partner_order_id?: string | null
+          request_body?: Json | null
+          response_body?: string | null
+          status_code?: number | null
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendx_partner_webhook_deliveries_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "vendx_catalog_partners"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendx_partner_webhook_deliveries_partner_order_id_fkey"
+            columns: ["partner_order_id"]
+            isOneToOne: false
+            referencedRelation: "vendx_partner_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vendx_pos_receipt_items: {
         Row: {
           created_at: string
@@ -9077,6 +9364,23 @@ export type Database = {
           success: boolean
         }[]
       }
+      create_vendx_catalog_partner: {
+        Args: {
+          p_allowed_outbound_categories?: string[]
+          p_commission_pct?: number
+          p_contact_email?: string
+          p_inbound_fulfillment_url?: string
+          p_mode?: string
+          p_name: string
+          p_slug: string
+          p_website_url?: string
+        }
+        Returns: {
+          api_key: string
+          partner_id: string
+          webhook_secret: string
+        }[]
+      }
       create_vendx_merchant: {
         Args: {
           p_allowed_return_domains?: string[]
@@ -9309,6 +9613,10 @@ export type Database = {
       }
       rotate_external_stream_api_key: {
         Args: { p_stream_id: string }
+        Returns: string
+      }
+      rotate_vendx_catalog_partner_api_key: {
+        Args: { p_partner_id: string }
         Returns: string
       }
       rotate_vendx_merchant_api_key: {

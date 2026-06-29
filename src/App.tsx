@@ -61,6 +61,8 @@ import BusinessCardPage from "./pages/BusinessCardPage";
 import StaffDirectoryPage from "./pages/StaffDirectoryPage";
 import SsoAuthorizePage from "./pages/SsoAuthorizePage";
 import SsoDocsPage from "./pages/SsoDocsPage";
+import PartnerApiDocsPage from "./pages/PartnerApiDocsPage";
+import PartnerProductPage from "./pages/PartnerProductPage";
 
 const queryClient = new QueryClient();
 
@@ -128,6 +130,7 @@ const App = () => (
               <Route path="/store/custom-arcade" element={<CustomArcadeRequestPage />} />
               <Route path="/custom-arcade-requests" element={<CustomArcadeRequestPage />} />
               <Route path="/custom-arcade" element={<CustomArcadeRequestPage />} />
+              <Route path="/store/partner/:id" element={<PartnerProductPage />} />
               <Route path="/store/:slug" element={<ProductPage />} />
               <Route path="/funnel/:slug" element={<FunnelPage />} />
               <Route path="/news" element={<NewsPage />} />
@@ -147,6 +150,8 @@ const App = () => (
               <Route path="/card/:slug" element={<BusinessCardPage />} />
               <Route path="/sso/authorize" element={<SsoAuthorizePage />} />
               <Route path="/developers/sso" element={<SsoDocsPage />} />
+              <Route path="/api/partners" element={<PartnerApiDocsPage />} />
+              <Route path="/developers/partners" element={<PartnerApiDocsPage />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
