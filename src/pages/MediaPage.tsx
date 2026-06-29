@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import Navigation from "@/components/Navigation";
 import StarField from "@/components/StarField";
@@ -190,8 +190,29 @@ const ReleaseInlinePlayer = ({ releaseId, releaseCover, artistName }: {
 };
 
 const MediaPage = () => {
-  const [mediaFilter, setMediaFilter] = useState<"all" | "music" | "film">("all");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const initialType = searchParams.get("type");
+  const [mediaFilter, setMediaFilter] = useState<"all" | "music" | "film">(
+    initialType === "music" || initialType === "film" ? initialType : "all",
+  );
   const [expandedPlayer, setExpandedPlayer] = useState<string | null>(null);
+
+  useEffect(() => {
+    const t = searchParams.get("type");
+    if (t === "music" || t === "film" || t === "all") {
+      setMediaFilter(t as "all" | "music" | "film");
+    }
+  }, [searchParams]);
+
+  const handleFilterChange = (v: string) => {
+    setMediaFilter(v as "all" | "music" | "film");
+    if (v === "all") {
+      searchParams.delete("type");
+    } else {
+      searchParams.set("type", v);
+    }
+    setSearchParams(searchParams, { replace: true });
+  };
 
   useSEO({
     title: "VendX Music & Film — Releases",
@@ -282,7 +303,7 @@ const MediaPage = () => {
             </div>
 
             {/* Type Filter */}
-            <Tabs value={mediaFilter} onValueChange={(v) => setMediaFilter(v as typeof mediaFilter)} className="inline-flex">
+            <Tabs value={mediaFilter} onValueChange={handleFilterChange} className="inline-flex">
               <TabsList className="bg-muted/50">
                 <TabsTrigger value="all" className="gap-2">
                   <Filter className="w-4 h-4" /> All
@@ -388,11 +409,46 @@ const MediaPage = () => {
                       </h3>
 
                       {release.artist_director && (
-                        <p className="text-sm text-primary mb-2">{release.artist_director}</p>
+                        <p className="text-sm text-primary mb-2">
+                          {release.media_type === "film" ? "Dir. " : ""}{release.artist_director}
+                        </p>
                       )}
 
-                      {release.short_description && (
-                        <p className="text-muted-foreground text-sm mb-3 line-clamp-2">{release.short_description}</p>
+                      {release.media_type === "film" && (
+                        <div className="flex flex-wrap items-center gap-2 mb-3 text-xs text-muted-foreground">
+                          {(release as any).film_type && (
+                            <Badge variant="secondary" className="capitalize text-xs">
+                              {((release as any).film_type as string).replace("_", " ")}
+                            </Badge>
+                          )}
+                          {(release as any).mpaa_rating && (
+                            <span className="border border-border/50 px-1.5 py-0.5 rounded uppercase font-mono">
+                              {(release as any).mpaa_rating}
+                            </span>
+                          )}
+                          {(release as any).runtime_minutes && (
+                            <span className="flex items-center gap-1">
+                              <Clock className="w-3 h-3" /> {(release as any).runtime_minutes}m
+                            </span>
+                          )}
+                          {(release as any).language && <span>{(release as any).language}</span>}
+                          {(release as any).film_type === "series" && (release as any).season_count && (
+                            <span>{(release as any).season_count} Season{(release as any).season_count > 1 ? "s" : ""}</span>
+                          )}
+                        </div>
+                      )}
+
+                      {(release.short_description || (release.media_type === "film" && (release as any).synopsis)) && (
+                        <p className="text-muted-foreground text-sm mb-3 line-clamp-3">
+                          {release.short_description || (release as any).synopsis}
+                        </p>
+                      )}
+
+                      {release.media_type === "film" && (release as any).cast_members && (release as any).cast_members.length > 0 && (
+                        <p className="text-xs text-muted-foreground mb-3 line-clamp-1">
+                          <span className="font-medium text-foreground">Cast:</span>{" "}
+                          {((release as any).cast_members as string[]).slice(0, 4).join(", ")}
+                        </p>
                       )}
 
                       {release.genre && release.genre.length > 0 && (

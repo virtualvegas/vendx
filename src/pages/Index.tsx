@@ -5,7 +5,8 @@ import About from "@/components/About";
 import ServicesOverview from "@/components/home/ServicesOverview";
 import FeaturedProducts from "@/components/home/FeaturedProducts";
 import FeaturedGames from "@/components/home/FeaturedGames";
-import FeaturedMedia from "@/components/home/FeaturedMedia";
+import FeaturedMusic from "@/components/home/FeaturedMusic";
+import FeaturedFilm from "@/components/home/FeaturedFilm";
 
 import Divisions from "@/components/Divisions";
 
@@ -23,7 +24,8 @@ const Index = () => {
         <Hero />
         <FeaturedProducts />
         <FeaturedGames />
-        <FeaturedMedia />
+        <FeaturedMusic />
+        <FeaturedFilm />
         
         <ServicesOverview />
         <Divisions />
