@@ -540,13 +540,21 @@ const ReleaseTracksManager = ({ mediaType }: ReleaseTracksManagerProps = {}) => 
       {/* ========= RELEASE DIALOG ========= */}
       <Dialog open={releaseDialog} onOpenChange={setReleaseDialog}>
         <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
-          <DialogHeader><DialogTitle>{editingRelease ? "Edit Release" : "Create Release"}</DialogTitle></DialogHeader>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              {releaseForm.media_type === "film" ? <Film className="w-5 h-5" /> : <Disc3 className="w-5 h-5" />}
+              {editingRelease ? "Edit" : "Create"} {releaseForm.media_type === "film" ? "Film" : "Music Release"}
+            </DialogTitle>
+          </DialogHeader>
           <div className="space-y-4">
+            {/* Title / Slug */}
             <div className="grid grid-cols-2 gap-4">
               <div><Label>Title *</Label><Input value={releaseForm.title} onChange={e => { setReleaseForm(f => ({ ...f, title: e.target.value, slug: editingRelease ? f.slug : generateSlug(e.target.value) })); }} /></div>
               <div><Label>Slug</Label><Input value={releaseForm.slug} onChange={e => setReleaseForm(f => ({ ...f, slug: e.target.value }))} /></div>
             </div>
-            <div className="grid grid-cols-3 gap-4">
+
+            {/* Type row - differs per media */}
+            {!mediaType && (
               <div>
                 <Label>Media Type</Label>
                 <Select value={releaseForm.media_type} onValueChange={v => setReleaseForm(f => ({ ...f, media_type: v }))}>
@@ -557,7 +565,10 @@ const ReleaseTracksManager = ({ mediaType }: ReleaseTracksManagerProps = {}) => 
                   </SelectContent>
                 </Select>
               </div>
-              {releaseForm.media_type === "music" && (
+            )}
+
+            {releaseForm.media_type === "music" ? (
+              <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label>Release Type</Label>
                   <Select value={releaseForm.music_release_type} onValueChange={v => setReleaseForm(f => ({ ...f, music_release_type: v }))}>
@@ -570,56 +581,185 @@ const ReleaseTracksManager = ({ mediaType }: ReleaseTracksManagerProps = {}) => 
                     </SelectContent>
                   </Select>
                 </div>
-              )}
-              <div>
-                <Label>Status</Label>
-                <Select value={releaseForm.release_status} onValueChange={v => setReleaseForm(f => ({ ...f, release_status: v }))}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="live">Live</SelectItem>
-                    <SelectItem value="coming_soon">Coming Soon</SelectItem>
-                    <SelectItem value="in_production">In Production</SelectItem>
-                  </SelectContent>
-                </Select>
+                <div>
+                  <Label>Status</Label>
+                  <Select value={releaseForm.release_status} onValueChange={v => setReleaseForm(f => ({ ...f, release_status: v }))}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="live">Live</SelectItem>
+                      <SelectItem value="coming_soon">Coming Soon</SelectItem>
+                      <SelectItem value="in_production">In Production</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
-            </div>
+            ) : (
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <Label>Film Type</Label>
+                  <Select value={releaseForm.film_type} onValueChange={v => setReleaseForm(f => ({ ...f, film_type: v }))}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="feature">Feature</SelectItem>
+                      <SelectItem value="short">Short</SelectItem>
+                      <SelectItem value="series">Series</SelectItem>
+                      <SelectItem value="documentary">Documentary</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>MPAA Rating</Label>
+                  <Select value={releaseForm.mpaa_rating || "none"} onValueChange={v => setReleaseForm(f => ({ ...f, mpaa_rating: v === "none" ? "" : v }))}>
+                    <SelectTrigger><SelectValue placeholder="Rating" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Not Rated</SelectItem>
+                      <SelectItem value="G">G</SelectItem>
+                      <SelectItem value="PG">PG</SelectItem>
+                      <SelectItem value="PG-13">PG-13</SelectItem>
+                      <SelectItem value="R">R</SelectItem>
+                      <SelectItem value="NC-17">NC-17</SelectItem>
+                      <SelectItem value="TV-Y">TV-Y</SelectItem>
+                      <SelectItem value="TV-PG">TV-PG</SelectItem>
+                      <SelectItem value="TV-14">TV-14</SelectItem>
+                      <SelectItem value="TV-MA">TV-MA</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Status</Label>
+                  <Select value={releaseForm.release_status} onValueChange={v => setReleaseForm(f => ({ ...f, release_status: v }))}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="live">Released</SelectItem>
+                      <SelectItem value="coming_soon">Coming Soon</SelectItem>
+                      <SelectItem value="in_production">In Production</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            )}
+
+            {/* Artist / Release Date */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label>Artist</Label>
+                <Label>{releaseForm.media_type === "film" ? "Filmmaker / Studio" : "Artist"}</Label>
                 <Select value={releaseForm.artist_id} onValueChange={v => setReleaseForm(f => ({ ...f, artist_id: v }))}>
-                  <SelectTrigger><SelectValue placeholder="Select artist" /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder={releaseForm.media_type === "film" ? "Select filmmaker" : "Select artist"} /></SelectTrigger>
                   <SelectContent>
                     {artists.map(a => <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
-              <div><Label>Release Date</Label><Input type="date" value={releaseForm.release_date} onChange={e => setReleaseForm(f => ({ ...f, release_date: e.target.value }))} /></div>
+              <div><Label>{releaseForm.media_type === "film" ? "Release Date" : "Release Date"}</Label><Input type="date" value={releaseForm.release_date} onChange={e => setReleaseForm(f => ({ ...f, release_date: e.target.value }))} /></div>
             </div>
-            <div>
-              <Label>Cover Image</Label>
-              <div className="flex gap-2">
-                <Input value={releaseForm.cover_image_url} onChange={e => setReleaseForm(f => ({ ...f, cover_image_url: e.target.value }))} placeholder="URL or upload" className="flex-1" />
-                <Input type="file" accept="image/*" onChange={handleReleaseCoverUpload} disabled={uploading} className="w-40" />
-              </div>
-            </div>
-            <div><Label>Genre (comma-separated)</Label><Input value={releaseForm.genre} onChange={e => setReleaseForm(f => ({ ...f, genre: e.target.value }))} placeholder="Hip-Hop, R&B" /></div>
-            <div><Label>Description</Label><Textarea value={releaseForm.short_description} onChange={e => setReleaseForm(f => ({ ...f, short_description: e.target.value }))} rows={2} /></div>
-            <Card className="bg-card/50 border-border/50">
-              <CardHeader className="pb-2"><CardTitle className="text-sm">Streaming Links</CardTitle></CardHeader>
-              <CardContent className="grid grid-cols-2 gap-3">
-                <div><Label>Spotify</Label><Input value={releaseForm.spotify_url} onChange={e => setReleaseForm(f => ({ ...f, spotify_url: e.target.value }))} /></div>
-                <div><Label>Apple Music</Label><Input value={releaseForm.apple_music_url} onChange={e => setReleaseForm(f => ({ ...f, apple_music_url: e.target.value }))} /></div>
-                <div><Label>YouTube</Label><Input value={releaseForm.youtube_url} onChange={e => setReleaseForm(f => ({ ...f, youtube_url: e.target.value }))} /></div>
-              </CardContent>
-            </Card>
+
+            {/* MUSIC FORM */}
+            {releaseForm.media_type === "music" && (
+              <>
+                <div>
+                  <Label>Cover Image</Label>
+                  <div className="flex gap-2">
+                    <Input value={releaseForm.cover_image_url} onChange={e => setReleaseForm(f => ({ ...f, cover_image_url: e.target.value }))} placeholder="URL or upload" className="flex-1" />
+                    <Input type="file" accept="image/*" onChange={handleReleaseCoverUpload} disabled={uploading} className="w-40" />
+                  </div>
+                </div>
+                <div><Label>Genre (comma-separated)</Label><Input value={releaseForm.genre} onChange={e => setReleaseForm(f => ({ ...f, genre: e.target.value }))} placeholder="Hip-Hop, R&B" /></div>
+                <div><Label>Description</Label><Textarea value={releaseForm.short_description} onChange={e => setReleaseForm(f => ({ ...f, short_description: e.target.value }))} rows={2} /></div>
+                <Card className="bg-card/50 border-border/50">
+                  <CardHeader className="pb-2"><CardTitle className="text-sm">Streaming Links</CardTitle></CardHeader>
+                  <CardContent className="grid grid-cols-2 gap-3">
+                    <div><Label>Spotify</Label><Input value={releaseForm.spotify_url} onChange={e => setReleaseForm(f => ({ ...f, spotify_url: e.target.value }))} /></div>
+                    <div><Label>Apple Music</Label><Input value={releaseForm.apple_music_url} onChange={e => setReleaseForm(f => ({ ...f, apple_music_url: e.target.value }))} /></div>
+                    <div><Label>YouTube</Label><Input value={releaseForm.youtube_url} onChange={e => setReleaseForm(f => ({ ...f, youtube_url: e.target.value }))} /></div>
+                  </CardContent>
+                </Card>
+              </>
+            )}
+
+            {/* FILM FORM */}
+            {releaseForm.media_type === "film" && (
+              <>
+                {/* Imagery */}
+                <Card className="bg-card/50 border-border/50">
+                  <CardHeader className="pb-2"><CardTitle className="text-sm">Artwork</CardTitle></CardHeader>
+                  <CardContent className="space-y-3">
+                    <div>
+                      <Label>Poster (2:3 portrait)</Label>
+                      <Input value={releaseForm.poster_image_url} onChange={e => setReleaseForm(f => ({ ...f, poster_image_url: e.target.value, cover_image_url: f.cover_image_url || e.target.value }))} placeholder="Poster URL" />
+                    </div>
+                    <div>
+                      <Label>Backdrop / Banner (16:9)</Label>
+                      <Input value={releaseForm.backdrop_image_url} onChange={e => setReleaseForm(f => ({ ...f, backdrop_image_url: e.target.value }))} placeholder="Backdrop URL" />
+                    </div>
+                    <div>
+                      <Label>Thumbnail / Cover</Label>
+                      <div className="flex gap-2">
+                        <Input value={releaseForm.cover_image_url} onChange={e => setReleaseForm(f => ({ ...f, cover_image_url: e.target.value }))} placeholder="URL or upload" className="flex-1" />
+                        <Input type="file" accept="image/*" onChange={handleReleaseCoverUpload} disabled={uploading} className="w-40" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Classification */}
+                <Card className="bg-card/50 border-border/50">
+                  <CardHeader className="pb-2"><CardTitle className="text-sm">Details</CardTitle></CardHeader>
+                  <CardContent className="space-y-3">
+                    <div className="grid grid-cols-3 gap-3">
+                      <div><Label>Runtime (min)</Label><Input type="number" value={releaseForm.runtime_minutes} onChange={e => setReleaseForm(f => ({ ...f, runtime_minutes: e.target.value }))} /></div>
+                      <div><Label>Language</Label><Input value={releaseForm.language} onChange={e => setReleaseForm(f => ({ ...f, language: e.target.value }))} /></div>
+                      <div><Label>Country</Label><Input value={releaseForm.country} onChange={e => setReleaseForm(f => ({ ...f, country: e.target.value }))} placeholder="USA" /></div>
+                    </div>
+                    <div><Label>Genre (comma-separated)</Label><Input value={releaseForm.genre} onChange={e => setReleaseForm(f => ({ ...f, genre: e.target.value }))} placeholder="Drama, Sci-Fi" /></div>
+                    {releaseForm.film_type === "series" && (
+                      <div className="grid grid-cols-2 gap-3">
+                        <div><Label>Seasons</Label><Input type="number" value={releaseForm.season_count} onChange={e => setReleaseForm(f => ({ ...f, season_count: e.target.value }))} /></div>
+                        <div><Label>Episodes</Label><Input type="number" value={releaseForm.episode_count} onChange={e => setReleaseForm(f => ({ ...f, episode_count: e.target.value }))} /></div>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+
+                {/* Credits */}
+                <Card className="bg-card/50 border-border/50">
+                  <CardHeader className="pb-2"><CardTitle className="text-sm">Credits</CardTitle></CardHeader>
+                  <CardContent className="space-y-3">
+                    <div><Label>Director</Label><Input value={releaseForm.director} onChange={e => setReleaseForm(f => ({ ...f, director: e.target.value }))} /></div>
+                    <div><Label>Writers (comma-separated)</Label><Input value={releaseForm.writers} onChange={e => setReleaseForm(f => ({ ...f, writers: e.target.value }))} /></div>
+                    <div><Label>Producers (comma-separated)</Label><Input value={releaseForm.producers} onChange={e => setReleaseForm(f => ({ ...f, producers: e.target.value }))} /></div>
+                    <div><Label>Cast (comma-separated)</Label><Textarea value={releaseForm.cast_members} onChange={e => setReleaseForm(f => ({ ...f, cast_members: e.target.value }))} rows={2} /></div>
+                  </CardContent>
+                </Card>
+
+                {/* Synopsis */}
+                <div><Label>Tagline / Short Description</Label><Input value={releaseForm.short_description} onChange={e => setReleaseForm(f => ({ ...f, short_description: e.target.value }))} placeholder="One-liner" /></div>
+                <div><Label>Synopsis</Label><Textarea value={releaseForm.synopsis} onChange={e => setReleaseForm(f => ({ ...f, synopsis: e.target.value }))} rows={5} placeholder="Full plot summary..." /></div>
+
+                {/* External DB Links */}
+                <Card className="bg-card/50 border-border/50">
+                  <CardHeader className="pb-2"><CardTitle className="text-sm">External Links</CardTitle></CardHeader>
+                  <CardContent className="grid grid-cols-2 gap-3">
+                    <div><Label>Trailer (YouTube)</Label><Input value={releaseForm.youtube_url} onChange={e => setReleaseForm(f => ({ ...f, youtube_url: e.target.value }))} /></div>
+                    <div><Label>IMDb</Label><Input value={releaseForm.imdb_url} onChange={e => setReleaseForm(f => ({ ...f, imdb_url: e.target.value }))} /></div>
+                    <div><Label>Letterboxd</Label><Input value={releaseForm.letterboxd_url} onChange={e => setReleaseForm(f => ({ ...f, letterboxd_url: e.target.value }))} /></div>
+                    <div><Label>TMDb</Label><Input value={releaseForm.tmdb_url} onChange={e => setReleaseForm(f => ({ ...f, tmdb_url: e.target.value }))} /></div>
+                    <div className="col-span-2"><Label>Rotten Tomatoes</Label><Input value={releaseForm.rotten_tomatoes_url} onChange={e => setReleaseForm(f => ({ ...f, rotten_tomatoes_url: e.target.value }))} /></div>
+                  </CardContent>
+                </Card>
+              </>
+            )}
+
             <div className="flex items-center gap-2">
               <Switch checked={releaseForm.is_active} onCheckedChange={v => setReleaseForm(f => ({ ...f, is_active: v }))} />
               <Label>Active</Label>
             </div>
-            <Button onClick={saveRelease} className="w-full">{editingRelease ? "Update Release" : "Create Release"}</Button>
+            <Button onClick={saveRelease} className="w-full">
+              {editingRelease ? "Update" : "Create"} {releaseForm.media_type === "film" ? "Film" : "Release"}
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
+
 
       {/* ========= TRACK DIALOG ========= */}
       <Dialog open={trackDialog} onOpenChange={setTrackDialog}>
