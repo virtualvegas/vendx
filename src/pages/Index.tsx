@@ -24,7 +24,8 @@ const Index = () => {
         <Hero />
         <FeaturedProducts />
         <FeaturedGames />
-        <FeaturedMedia />
+        <FeaturedMusic />
+        <FeaturedFilm />
         
         <ServicesOverview />
         <Divisions />
