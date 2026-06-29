@@ -303,7 +303,7 @@ const MediaPage = () => {
             </div>
 
             {/* Type Filter */}
-            <Tabs value={mediaFilter} onValueChange={(v) => setMediaFilter(v as typeof mediaFilter)} className="inline-flex">
+            <Tabs value={mediaFilter} onValueChange={handleFilterChange} className="inline-flex">
               <TabsList className="bg-muted/50">
                 <TabsTrigger value="all" className="gap-2">
                   <Filter className="w-4 h-4" /> All
