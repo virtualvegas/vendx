@@ -1,103 +1,128 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
+import { createClient } from "@supabase/supabase-js";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowRight, ExternalLink, PartyPopper, Package, Wrench, Calendar, Sparkles } from "lucide-react";
+import { ArrowRight, ExternalLink, PartyPopper, Package, Wrench, Sparkles, Star } from "lucide-react";
 import { useSEO } from "@/hooks/useSEO";
 
-type PartnerProduct = {
-  id: string;
-  name: string;
-  slug: string;
-  short_description: string | null;
-  description: string | null;
-  price: number;
-  currency: string;
-  category: string | null;
-  images: any;
-  image_url: string | null;
-  is_subscription: boolean;
-  subscription_interval: string | null;
-  product_url: string | null;
-  partner_id: string;
-};
-
-type Partner = {
-  id: string;
-  name: string;
-  slug: string;
-  logo_url: string | null;
-  website_url: string | null;
-};
+// Public Host Heroz Supabase (anon key — RLS protected, read-only public data)
+const HH_URL = "https://lhrsktjlfyqotntacpxp.supabase.co";
+const HH_ANON =
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxocnNrdGpsZnlxb3RudGFjcHhwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTAyODg4NzksImV4cCI6MjA2NTg2NDg3OX0.85Goy1oHoKTlj31zgHsckw95EsXD7iPkrRHUfqpr-To";
+const hh = createClient(HH_URL, HH_ANON, { auth: { persistSession: false } });
 
 const HOST_HEROZ_URL = "https://hostheroz.com";
-const PARTNER_SLUGS = ["host-heroz", "hostheroz"];
+const LISTING_URL = (id: string) => `${HOST_HEROZ_URL}/listing/${id}`;
 
-const isServiceItem = (p: PartnerProduct) => {
-  const cat = (p.category || "").toLowerCase();
-  return (
-    p.is_subscription ||
-    cat.includes("service") ||
-    cat.includes("rental") ||
-    cat.includes("package") ||
-    cat.includes("booking") ||
-    cat.includes("event")
-  );
+type Listing = {
+  id: string;
+  title: string;
+  description: string | null;
+  base_price: number | null;
+  price_type: string | null;
+  images: string[] | null;
+  category_id: string | null;
+  featured: boolean | null;
+  tags: string[] | null;
 };
 
-const productImage = (p: PartnerProduct): string | null => {
-  if (p.image_url) return p.image_url;
-  if (Array.isArray(p.images) && p.images.length > 0) return String(p.images[0]);
-  return null;
+type Category = { id: string; name: string };
+
+const SERVICE_KEYWORDS = [
+  "service", "dj", "band", "musician", "magician", "comedian", "performer",
+  "host", "mc", "planner", "coordinator", "bartender", "caterer", "catering",
+  "photograph", "videograph", "face paint", "balloon", "caricature",
+  "cleaning", "security", "entertainer",
+];
+
+const isServiceCategory = (name?: string | null) => {
+  if (!name) return false;
+  const n = name.toLowerCase();
+  return SERVICE_KEYWORDS.some((k) => n.includes(k));
 };
+
+const priceLabel = (type: string | null | undefined) => {
+  if (!type) return "";
+  const map: Record<string, string> = {
+    daily: "/ day",
+    hourly: "/ hr",
+    flat: "",
+    fixed: "",
+    package: "/ package",
+    event: "/ event",
+  };
+  return map[type.toLowerCase()] ?? `/ ${type}`;
+};
+
+const firstImage = (l: Listing) =>
+  Array.isArray(l.images) && l.images.length > 0 ? String(l.images[0]) : null;
 
 export default function EventRentalsPage() {
-  const [partner, setPartner] = useState<Partner | null>(null);
-  const [products, setProducts] = useState<PartnerProduct[]>([]);
+  const [listings, setListings] = useState<Listing[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [activeCat, setActiveCat] = useState<string>("all");
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useSEO({
     title: "Event Rentals — Host Heroz × VendX",
     description:
-      "Browse party rentals, arcade machines, and event packages from Host Heroz. Book online or view the full catalog at hostheroz.com.",
+      "Live catalog of arcade rentals, party packages, DJs, photo booths, inflatables and event services from Host Heroz. Book directly at hostheroz.com.",
   });
 
   useEffect(() => {
     (async () => {
-      const { data: partners } = await supabase
-        .from("vendx_catalog_partners")
-        .select("id,name,slug,logo_url,website_url")
-        .in("slug", PARTNER_SLUGS)
-        .eq("is_active", true)
-        .limit(1);
-
-      const p = partners?.[0] as Partner | undefined;
-      setPartner(p ?? null);
-
-      if (p) {
-        const { data: prods } = await supabase
-          .from("vendx_partner_products")
-          .select(
-            "id,name,slug,short_description,description,price,currency,category,images,image_url,is_subscription,subscription_interval,product_url,partner_id",
-          )
-          .eq("partner_id", p.id)
-          .eq("is_active", true)
-          .order("is_subscription", { ascending: false })
-          .order("price", { ascending: true })
-          .limit(60);
-        setProducts((prods as any) || []);
+      try {
+        const [{ data: l, error: lErr }, { data: c }] = await Promise.all([
+          hh
+            .from("marketplace_listings")
+            .select("id,title,description,base_price,price_type,images,category_id,featured,tags")
+            .eq("status", "active")
+            .order("featured", { ascending: false })
+            .order("created_at", { ascending: false })
+            .limit(120),
+          hh.from("marketplace_categories").select("id,name").eq("active", true),
+        ]);
+        if (lErr) throw lErr;
+        setListings((l as Listing[]) || []);
+        setCategories((c as Category[]) || []);
+      } catch (e: any) {
+        setError(e?.message || "Failed to load catalog");
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     })();
   }, []);
 
-  const services = useMemo(() => products.filter(isServiceItem), [products]);
-  const items = useMemo(() => products.filter((p) => !isServiceItem(p)), [products]);
+  const catMap = useMemo(() => new Map(categories.map((c) => [c.id, c.name])), [categories]);
+
+  const filtered = useMemo(() => {
+    if (activeCat === "all") return listings;
+    if (activeCat === "services")
+      return listings.filter((l) => isServiceCategory(catMap.get(l.category_id || "")));
+    if (activeCat === "rentals")
+      return listings.filter((l) => !isServiceCategory(catMap.get(l.category_id || "")));
+    return listings.filter((l) => l.category_id === activeCat);
+  }, [listings, activeCat, catMap]);
+
+  const services = useMemo(
+    () => filtered.filter((l) => isServiceCategory(catMap.get(l.category_id || ""))),
+    [filtered, catMap],
+  );
+  const rentals = useMemo(
+    () => filtered.filter((l) => !isServiceCategory(catMap.get(l.category_id || ""))),
+    [filtered, catMap],
+  );
+
+  // Categories that actually have listings, for the filter bar
+  const activeCategories = useMemo(() => {
+    const ids = new Set(listings.map((l) => l.category_id).filter(Boolean) as string[]);
+    return categories.filter((c) => ids.has(c.id)).sort((a, b) => a.name.localeCompare(b.name));
+  }, [listings, categories]);
 
   return (
     <div className="min-h-screen bg-background overflow-x-hidden">
@@ -110,14 +135,14 @@ export default function EventRentalsPage() {
         <div className="container mx-auto relative">
           <div className="max-w-3xl">
             <Badge variant="outline" className="mb-4 border-primary/50 text-primary">
-              <Sparkles className="w-3 h-3 mr-1" /> Partner Catalog · Live API
+              <Sparkles className="w-3 h-3 mr-1" /> Live Catalog · Host Heroz
             </Badge>
             <h1 className="font-orbitron text-4xl md:text-6xl font-bold mb-4 bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent">
-              Event Rentals by Host Heroz
+              Event Rentals & Services
             </h1>
             <p className="text-lg text-muted-foreground mb-6">
-              Throw an unforgettable celebration. Browse rental packages, arcade machines, and party services pulled
-              live from our partner Host Heroz — book directly through their hosted checkout.
+              Throw an unforgettable celebration. Browse arcade rentals, party packages, DJs, photo booths,
+              inflatables, and full event services — pulled live from our partner Host Heroz.
             </p>
             <div className="flex flex-wrap gap-3">
               <Button asChild size="lg" className="font-orbitron">
@@ -137,37 +162,72 @@ export default function EventRentalsPage() {
 
       {/* Catalog */}
       <section id="catalog" className="px-4 py-12">
-        <div className="container mx-auto space-y-16">
+        <div className="container mx-auto space-y-12">
+          {/* Filter bar */}
+          {!loading && listings.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              <FilterChip label={`All (${listings.length})`} active={activeCat === "all"} onClick={() => setActiveCat("all")} />
+              <FilterChip label="Services" active={activeCat === "services"} onClick={() => setActiveCat("services")} />
+              <FilterChip label="Rentals" active={activeCat === "rentals"} onClick={() => setActiveCat("rentals")} />
+              <span className="w-px bg-border mx-1" />
+              {activeCategories.map((c) => (
+                <FilterChip
+                  key={c.id}
+                  label={c.name}
+                  active={activeCat === c.id}
+                  onClick={() => setActiveCat(c.id)}
+                />
+              ))}
+            </div>
+          )}
+
           {loading ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {Array.from({ length: 6 }).map((_, i) => (
                 <Skeleton key={i} className="h-72 w-full rounded-xl" />
               ))}
             </div>
-          ) : !partner ? (
+          ) : error ? (
+            <EmptyState title="Couldn't reach Host Heroz" message={error} />
+          ) : listings.length === 0 ? (
             <EmptyState
-              title="Partner not configured yet"
-              message="Host Heroz isn't connected to the VendX partner API yet. You can still browse their full catalog on their site."
-            />
-          ) : products.length === 0 ? (
-            <EmptyState
-              title="No live products synced yet"
-              message="Host Heroz hasn't pushed any catalog items through the API yet. Visit their site for the full lineup."
+              title="No live listings yet"
+              message="Host Heroz hasn't published anything yet. Visit their site for the full lineup."
             />
           ) : (
             <>
-              <CatalogSection
-                title="Services & Packages"
-                icon={Wrench}
-                empty="No event packages synced yet."
-                items={services}
-              />
-              <CatalogSection
-                title="Products & Rentals"
-                icon={Package}
-                empty="No individual rental products synced yet."
-                items={items}
-              />
+              {activeCat === "all" ? (
+                <>
+                  <CatalogSection
+                    title="Services & Packages"
+                    icon={Wrench}
+                    empty="No event services in this view."
+                    items={services}
+                    catMap={catMap}
+                  />
+                  <CatalogSection
+                    title="Rentals & Equipment"
+                    icon={Package}
+                    empty="No rental products in this view."
+                    items={rentals}
+                    catMap={catMap}
+                  />
+                </>
+              ) : (
+                <CatalogSection
+                  title={
+                    activeCat === "services"
+                      ? "Services & Packages"
+                      : activeCat === "rentals"
+                        ? "Rentals & Equipment"
+                        : catMap.get(activeCat) || "Catalog"
+                  }
+                  icon={Package}
+                  empty="No listings match this filter yet."
+                  items={filtered}
+                  catMap={catMap}
+                />
+              )}
             </>
           )}
 
@@ -175,8 +235,8 @@ export default function EventRentalsPage() {
             <PartyPopper className="w-10 h-10 mx-auto text-primary mb-3" />
             <h3 className="font-orbitron text-2xl font-bold mb-2">Want the full lineup?</h3>
             <p className="text-muted-foreground mb-5 max-w-xl mx-auto">
-              See every package, custom build, and add-on Host Heroz offers — including availability and instant
-              booking.
+              See every package, custom build, and add-on Host Heroz offers — including real-time availability
+              and instant booking.
             </p>
             <Button asChild size="lg" className="font-orbitron">
               <a href={HOST_HEROZ_URL} target="_blank" rel="noopener noreferrer">
@@ -192,59 +252,74 @@ export default function EventRentalsPage() {
   );
 }
 
+function FilterChip({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`px-3 py-1.5 rounded-full text-sm border transition ${
+        active
+          ? "bg-primary text-primary-foreground border-primary"
+          : "bg-card/50 text-foreground border-border hover:border-primary/60"
+      }`}
+    >
+      {label}
+    </button>
+  );
+}
+
 function CatalogSection({
   title,
   icon: Icon,
   items,
   empty,
+  catMap,
 }: {
   title: string;
   icon: any;
-  items: PartnerProduct[];
+  items: Listing[];
   empty: string;
+  catMap: Map<string, string>;
 }) {
-  if (items.length === 0) {
-    return (
-      <div>
-        <SectionHeader title={title} icon={Icon} count={0} />
-        <p className="text-muted-foreground text-sm">{empty}</p>
-      </div>
-    );
-  }
   return (
     <div>
-      <SectionHeader title={title} icon={Icon} count={items.length} />
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {items.map((p) => (
-          <ProductCard key={p.id} product={p} />
-        ))}
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="font-orbitron text-2xl md:text-3xl font-bold flex items-center gap-3">
+          <Icon className="w-6 h-6 text-primary" />
+          {title}
+        </h2>
+        <Badge variant="secondary">
+          {items.length} item{items.length === 1 ? "" : "s"}
+        </Badge>
       </div>
+      {items.length === 0 ? (
+        <p className="text-muted-foreground text-sm">{empty}</p>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {items.map((l) => (
+            <ListingCard key={l.id} listing={l} category={catMap.get(l.category_id || "")} />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
 
-function SectionHeader({ title, icon: Icon, count }: { title: string; icon: any; count: number }) {
+function ListingCard({ listing, category }: { listing: Listing; category?: string }) {
+  const img = firstImage(listing);
   return (
-    <div className="flex items-center justify-between mb-6">
-      <h2 className="font-orbitron text-2xl md:text-3xl font-bold flex items-center gap-3">
-        <Icon className="w-6 h-6 text-primary" />
-        {title}
-      </h2>
-      <Badge variant="secondary">{count} item{count === 1 ? "" : "s"}</Badge>
-    </div>
-  );
-}
-
-function ProductCard({ product }: { product: PartnerProduct }) {
-  const img = productImage(product);
-  return (
-    <Card className="group overflow-hidden border-border/50 bg-card/50 backdrop-blur hover:border-primary/50 transition-all hover:shadow-[0_0_30px_-10px_hsl(var(--primary))]">
-      <Link to={`/store/partner/${product.id}`} className="block">
+    <a
+      href={LISTING_URL(listing.id)}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="block group"
+    >
+      <Card className="overflow-hidden border-border/50 bg-card/50 backdrop-blur hover:border-primary/50 transition-all hover:shadow-[0_0_30px_-10px_hsl(var(--primary))] h-full flex flex-col">
         <div className="aspect-video bg-muted relative overflow-hidden">
           {img ? (
             <img
               src={img}
-              alt={product.name}
+              alt={listing.title}
               loading="lazy"
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
             />
@@ -253,34 +328,38 @@ function ProductCard({ product }: { product: PartnerProduct }) {
               <PartyPopper className="w-12 h-12 text-muted-foreground/50" />
             </div>
           )}
-          {product.is_subscription && (
-            <Badge className="absolute top-2 right-2 bg-primary/90 backdrop-blur">
-              <Calendar className="w-3 h-3 mr-1" />
-              {product.subscription_interval || "Recurring"}
+          {listing.featured && (
+            <Badge className="absolute top-2 left-2 bg-primary/90 backdrop-blur">
+              <Star className="w-3 h-3 mr-1" /> Featured
             </Badge>
           )}
+          <Badge className="absolute top-2 right-2 bg-background/80 text-foreground backdrop-blur">
+            Host Heroz
+          </Badge>
         </div>
-        <CardContent className="p-4 space-y-2">
-          <div className="flex items-start justify-between gap-2">
-            <h3 className="font-semibold leading-tight line-clamp-2">{product.name}</h3>
-          </div>
-          {product.short_description && (
-            <p className="text-sm text-muted-foreground line-clamp-2">{product.short_description}</p>
+        <CardContent className="p-4 space-y-2 flex-1 flex flex-col">
+          <h3 className="font-semibold leading-tight line-clamp-2">{listing.title}</h3>
+          {listing.description && (
+            <p className="text-sm text-muted-foreground line-clamp-2">
+              {listing.description.replace(/\n+/g, " ")}
+            </p>
           )}
-          <div className="flex items-center justify-between pt-2">
+          <div className="flex items-center justify-between pt-2 mt-auto">
             <span className="font-orbitron text-lg font-bold text-primary">
-              ${Number(product.price).toFixed(2)}
-              <span className="text-xs text-muted-foreground ml-1">{product.currency}</span>
+              ${Number(listing.base_price ?? 0).toFixed(0)}
+              <span className="text-xs text-muted-foreground ml-1 font-normal">
+                {priceLabel(listing.price_type)}
+              </span>
             </span>
-            {product.category && (
-              <Badge variant="outline" className="text-xs capitalize">
-                {product.category}
+            {category && (
+              <Badge variant="outline" className="text-xs">
+                {category}
               </Badge>
             )}
           </div>
         </CardContent>
-      </Link>
-    </Card>
+      </Card>
+    </a>
   );
 }
 
