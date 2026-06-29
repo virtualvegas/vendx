@@ -918,6 +918,7 @@ export type Database = {
         Row: {
           created_at: string
           description: string | null
+          external_url: string | null
           features: Json | null
           icon: string | null
           id: string
@@ -928,6 +929,7 @@ export type Database = {
         Insert: {
           created_at?: string
           description?: string | null
+          external_url?: string | null
           features?: Json | null
           icon?: string | null
           id?: string
@@ -938,6 +940,7 @@ export type Database = {
         Update: {
           created_at?: string
           description?: string | null
+          external_url?: string | null
           features?: Json | null
           icon?: string | null
           id?: string
