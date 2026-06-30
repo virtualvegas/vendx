@@ -405,8 +405,8 @@ const ReleaseTracksManager = ({ mediaType }: ReleaseTracksManagerProps = {}) => 
           <p className="text-xs text-muted-foreground">Playable Tracks</p>
         </CardContent></Card>
         <Card className="bg-card/50 border-border/50"><CardContent className="p-4 text-center">
-          <p className="text-2xl font-bold text-foreground">{releases.filter(r => r.media_type === "film").length}</p>
-          <p className="text-xs text-muted-foreground">Film Releases</p>
+          <p className="text-2xl font-bold text-foreground">{releases.filter(r => r.release_status === "live" || r.release_status === "released").length}</p>
+          <p className="text-xs text-muted-foreground">Live / Released</p>
         </CardContent></Card>
       </div>
 
