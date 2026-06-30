@@ -396,15 +396,15 @@ const DashboardPage = () => {
       case "artists-manager":
         content = <ArtistsManager />; break;
       case "music-artists":
-        content = <ArtistsManager filterType="music" />; break;
+        content = <ArtistsManager key="artists-music" filterType="music" />; break;
       case "filmmakers":
-        content = <ArtistsManager filterType="film" />; break;
+        content = <ArtistsManager key="artists-film" filterType="film" />; break;
       case "releases-tracks":
         content = <ReleaseTracksManager />; break;
       case "music-releases":
-        content = <ReleaseTracksManager mediaType="music" />; break;
+        content = <ReleaseTracksManager key="rel-music" mediaType="music" />; break;
       case "film-releases":
-        content = <ReleaseTracksManager mediaType="film" />; break;
+        content = <ReleaseTracksManager key="rel-film" mediaType="film" />; break;
       case "media-shop-manager":
         content = <MediaShopManager />; break;
       case "track-shop-manager":
