@@ -37,16 +37,30 @@ const FeaturedFilm = () => {
   const { data: releases, isLoading } = useQuery({
     queryKey: ["featured-film-home"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const base = supabase
         .from("media_releases")
         .select("*")
         .eq("is_active", true)
+        .eq("media_type", "film");
+
+      const { data: featured, error } = await base
         .eq("is_featured", true)
-        .eq("media_type", "film")
         .order("display_order", { ascending: true })
         .limit(3);
       if (error) throw error;
-      return data;
+      if (featured && featured.length > 0) return featured;
+
+      // Fallback: latest active films when none are explicitly featured
+      const { data: latest, error: e2 } = await supabase
+        .from("media_releases")
+        .select("*")
+        .eq("is_active", true)
+        .eq("media_type", "film")
+        .order("display_order", { ascending: true })
+        .order("created_at", { ascending: false })
+        .limit(3);
+      if (e2) throw e2;
+      return latest ?? [];
     },
   });
 
