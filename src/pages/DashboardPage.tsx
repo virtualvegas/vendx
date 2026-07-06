@@ -130,6 +130,11 @@ const DashboardPage = () => {
       return "overview";
     }
     // Business owners get their business dashboard
+    // Franchise owners get their franchise dashboard
+    if (userRoles.includes("franchise_owner")) {
+      return "franchise-overview";
+    }
+    // Business owners get their business dashboard
     if (userRoles.includes("business_owner")) {
       return "business-overview";
     }
