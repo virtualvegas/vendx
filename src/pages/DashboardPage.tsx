@@ -99,6 +99,7 @@ export type AppRole =
   | "employee_operator"
   | "customer"
   | "business_owner"
+  | "franchise_owner"
   | "support";
 
 const DashboardPage = () => {
