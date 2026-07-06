@@ -7805,6 +7805,266 @@ export type Database = {
           },
         ]
       }
+      vendx_franchise_machines: {
+        Row: {
+          assigned_at: string
+          franchise_id: string
+          id: string
+          machine_id: string
+        }
+        Insert: {
+          assigned_at?: string
+          franchise_id: string
+          id?: string
+          machine_id: string
+        }
+        Update: {
+          assigned_at?: string
+          franchise_id?: string
+          id?: string
+          machine_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendx_franchise_machines_franchise_id_fkey"
+            columns: ["franchise_id"]
+            isOneToOne: false
+            referencedRelation: "vendx_franchises"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendx_franchise_machines_machine_id_fkey"
+            columns: ["machine_id"]
+            isOneToOne: true
+            referencedRelation: "vendx_machines"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vendx_franchise_orders: {
+        Row: {
+          admin_notes: string | null
+          created_at: string
+          franchise_id: string
+          id: string
+          items: Json
+          notes: string | null
+          order_number: string | null
+          order_type: string
+          shipping: number
+          shipping_address: Json | null
+          status: string
+          subtotal: number
+          total: number
+          updated_at: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          created_at?: string
+          franchise_id: string
+          id?: string
+          items?: Json
+          notes?: string | null
+          order_number?: string | null
+          order_type: string
+          shipping?: number
+          shipping_address?: Json | null
+          status?: string
+          subtotal?: number
+          total?: number
+          updated_at?: string
+        }
+        Update: {
+          admin_notes?: string | null
+          created_at?: string
+          franchise_id?: string
+          id?: string
+          items?: Json
+          notes?: string | null
+          order_number?: string | null
+          order_type?: string
+          shipping?: number
+          shipping_address?: Json | null
+          status?: string
+          subtotal?: number
+          total?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendx_franchise_orders_franchise_id_fkey"
+            columns: ["franchise_id"]
+            isOneToOne: false
+            referencedRelation: "vendx_franchises"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vendx_franchise_payouts: {
+        Row: {
+          commission_amount: number
+          commission_pct: number
+          created_at: string
+          franchise_id: string
+          gross_sales: number
+          id: string
+          net_payout: number
+          notes: string | null
+          paid_at: string | null
+          payment_reference: string | null
+          period_end: string
+          period_start: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          commission_amount?: number
+          commission_pct?: number
+          created_at?: string
+          franchise_id: string
+          gross_sales?: number
+          id?: string
+          net_payout?: number
+          notes?: string | null
+          paid_at?: string | null
+          payment_reference?: string | null
+          period_end: string
+          period_start: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          commission_amount?: number
+          commission_pct?: number
+          created_at?: string
+          franchise_id?: string
+          gross_sales?: number
+          id?: string
+          net_payout?: number
+          notes?: string | null
+          paid_at?: string | null
+          payment_reference?: string | null
+          period_end?: string
+          period_start?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendx_franchise_payouts_franchise_id_fkey"
+            columns: ["franchise_id"]
+            isOneToOne: false
+            referencedRelation: "vendx_franchises"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vendx_franchise_territories: {
+        Row: {
+          created_at: string
+          franchise_id: string
+          id: string
+          location_id: string | null
+          notes: string | null
+          region_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          franchise_id: string
+          id?: string
+          location_id?: string | null
+          notes?: string | null
+          region_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          franchise_id?: string
+          id?: string
+          location_id?: string | null
+          notes?: string | null
+          region_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendx_franchise_territories_franchise_id_fkey"
+            columns: ["franchise_id"]
+            isOneToOne: false
+            referencedRelation: "vendx_franchises"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendx_franchise_territories_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendx_franchise_territories_region_id_fkey"
+            columns: ["region_id"]
+            isOneToOne: false
+            referencedRelation: "regions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vendx_franchises: {
+        Row: {
+          agreement_signed_at: string | null
+          business_name: string
+          commission_pct: number
+          contact_email: string | null
+          contact_phone: string | null
+          created_at: string
+          id: string
+          machine_ownership_model: string
+          notes: string | null
+          setup_fee_amount: number
+          setup_fee_paid: boolean
+          setup_fee_paid_at: string | null
+          setup_fee_stripe_session_id: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          agreement_signed_at?: string | null
+          business_name: string
+          commission_pct?: number
+          contact_email?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          id?: string
+          machine_ownership_model?: string
+          notes?: string | null
+          setup_fee_amount?: number
+          setup_fee_paid?: boolean
+          setup_fee_paid_at?: string | null
+          setup_fee_stripe_session_id?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          agreement_signed_at?: string | null
+          business_name?: string
+          commission_pct?: number
+          contact_email?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          id?: string
+          machine_ownership_model?: string
+          notes?: string | null
+          setup_fee_amount?: number
+          setup_fee_paid?: boolean
+          setup_fee_paid_at?: string | null
+          setup_fee_stripe_session_id?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       vendx_integration_state: {
         Row: {
           key: string
@@ -9602,6 +9862,7 @@ export type Database = {
           total_tickets: number
         }[]
       }
+      get_my_franchise_id: { Args: never; Returns: string }
       get_my_office_id: { Args: never; Returns: string }
       get_my_warehouse_id: { Args: never; Returns: string }
       get_public_machine_info: {
@@ -9815,6 +10076,7 @@ export type Database = {
         | "customer"
         | "business_owner"
         | "support"
+        | "franchise_owner"
       quest_completion_status:
         | "in_progress"
         | "completed"
@@ -9963,6 +10225,7 @@ export const Constants = {
         "customer",
         "business_owner",
         "support",
+        "franchise_owner",
       ],
       quest_completion_status: [
         "in_progress",
