@@ -248,6 +248,7 @@ const DashboardPage = () => {
   const NON_ADMIN_TABS = [
     "my-orders", "my-machines", "my-wallet", "my-tickets", "my-rewards", "linked-accounts", "my-subscriptions",
     "business-overview", "business-locations", "business-machines", "business-payouts", "business-support", "business-adreach", "business-external-service",
+    "franchise-onboarding", "franchise-overview", "franchise-route", "franchise-orders", "franchise-payouts",
   ];
 
   const renderTabContent = () => {
