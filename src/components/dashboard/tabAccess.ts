@@ -22,6 +22,14 @@ export const TAB_ACCESS: Record<string, AppRole[]> = {
   "business-support": ["business_owner", "super_admin"],
   "business-external-service": ["business_owner", "super_admin"],
 
+  // Franchise owner
+  "franchise-onboarding": ["customer", "franchise_owner", "business_owner", "employee_operator", "super_admin", "global_operations_manager", "regional_manager", "finance_accounting", "marketing_sales", "warehouse_logistics", "tech_support_lead", "event_manager", "support"],
+  "franchise-overview": ["franchise_owner", "super_admin"],
+  "franchise-route": ["franchise_owner", "super_admin"],
+  "franchise-orders": ["franchise_owner", "super_admin"],
+  "franchise-payouts": ["franchise_owner", "super_admin", "finance_accounting"],
+  "franchises-manager": ["super_admin", "finance_accounting"],
+
   // Field ops
   "my-route": ["super_admin", "global_operations_manager", "regional_manager", "employee_operator"],
   "service-tech": ["super_admin", "global_operations_manager", "employee_operator"],
