@@ -104,7 +104,18 @@ const tabGroups: TabGroup[] = [
     ],
   },
 
-  // === EMPLOYEE/OPERATOR TABS ===
+  // === FRANCHISE OWNER TABS ===
+  {
+    id: "franchise",
+    label: "My Franchise",
+    tabs: [
+      { id: "franchise-overview", label: "Overview", icon: LayoutDashboard, requiredRoles: r("franchise-overview") },
+      { id: "franchise-route", label: "My Route", icon: Route, requiredRoles: r("franchise-route") },
+      { id: "franchise-orders", label: "Order Machines & Products", icon: Package, requiredRoles: r("franchise-orders") },
+      { id: "franchise-payouts", label: "Sales & Payouts", icon: DollarSign, requiredRoles: r("franchise-payouts") },
+      { id: "franchise-onboarding", label: "Application / Setup", icon: Briefcase, requiredRoles: r("franchise-onboarding") },
+    ],
+  },
   {
     id: "field-ops",
     label: "Field Operations",
@@ -257,6 +268,7 @@ const tabGroups: TabGroup[] = [
     label: "System Administration",
     tabs: [
       { id: "admin-settings", label: "Users & Roles", icon: Users, requiredRoles: r("admin-settings") },
+      { id: "franchises-manager", label: "Franchise Program", icon: Briefcase, requiredRoles: r("franchises-manager") },
       { id: "merchant-api", label: "Merchant API", icon: Globe, requiredRoles: r("merchant-api") },
       { id: "partner-api", label: "Partner API", icon: Globe, requiredRoles: r("partner-api") },
       { id: "sso-apps", label: "SSO Applications", icon: ShieldCheck, requiredRoles: r("sso-apps") },

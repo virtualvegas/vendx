@@ -79,6 +79,12 @@ import BrandLinksManager from "@/components/dashboard/tabs/BrandLinksManager";
 import ExternalServiceManager from "@/components/dashboard/tabs/ExternalServiceManager";
 import CustomArcadeRequestsPanel from "@/components/dashboard/tabs/CustomArcadeRequestsPanel";
 import BusinessExternalService from "@/components/dashboard/tabs/business-owner/BusinessExternalService";
+import FranchiseOnboarding from "@/components/dashboard/tabs/franchise/FranchiseOnboarding";
+import FranchiseOverview from "@/components/dashboard/tabs/franchise/FranchiseOverview";
+import FranchiseRoute from "@/components/dashboard/tabs/franchise/FranchiseRoute";
+import FranchiseOrders from "@/components/dashboard/tabs/franchise/FranchiseOrders";
+import FranchisePayouts from "@/components/dashboard/tabs/franchise/FranchisePayouts";
+import FranchisesManager from "@/components/dashboard/tabs/FranchisesManager";
 import MyBusinessCard from "@/components/dashboard/tabs/MyBusinessCard";
 import SsoAppsManager from "@/components/dashboard/tabs/SsoAppsManager";
 import MyLinkedAccounts from "@/components/dashboard/tabs/MyLinkedAccounts";
@@ -99,6 +105,7 @@ export type AppRole =
   | "employee_operator"
   | "customer"
   | "business_owner"
+  | "franchise_owner"
   | "support";
 
 const DashboardPage = () => {
@@ -121,6 +128,11 @@ const DashboardPage = () => {
     if (userRoles.includes("super_admin") || userRoles.includes("global_operations_manager") || 
         userRoles.includes("finance_accounting") || userRoles.includes("regional_manager")) {
       return "overview";
+    }
+    // Business owners get their business dashboard
+    // Franchise owners get their franchise dashboard
+    if (userRoles.includes("franchise_owner")) {
+      return "franchise-overview";
     }
     // Business owners get their business dashboard
     if (userRoles.includes("business_owner")) {
@@ -236,6 +248,7 @@ const DashboardPage = () => {
   const NON_ADMIN_TABS = [
     "my-orders", "my-machines", "my-wallet", "my-tickets", "my-rewards", "linked-accounts", "my-subscriptions",
     "business-overview", "business-locations", "business-machines", "business-payouts", "business-support", "business-adreach", "business-external-service",
+    "franchise-onboarding", "franchise-overview", "franchise-route", "franchise-orders", "franchise-payouts",
   ];
 
   const renderTabContent = () => {
@@ -271,6 +284,18 @@ const DashboardPage = () => {
         content = <BusinessSupport />; break;
       case "business-external-service":
         content = <BusinessExternalService />; break;
+      case "franchise-onboarding":
+        content = <FranchiseOnboarding />; break;
+      case "franchise-overview":
+        content = <FranchiseOverview />; break;
+      case "franchise-route":
+        content = <FranchiseRoute />; break;
+      case "franchise-orders":
+        content = <FranchiseOrders />; break;
+      case "franchise-payouts":
+        content = <FranchisePayouts />; break;
+      case "franchises-manager":
+        content = <FranchisesManager />; break;
       case "external-service":
         content = <ExternalServiceManager />; break;
       case "custom-arcade-requests":
