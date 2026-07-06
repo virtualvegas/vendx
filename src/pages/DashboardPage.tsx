@@ -284,6 +284,18 @@ const DashboardPage = () => {
         content = <BusinessSupport />; break;
       case "business-external-service":
         content = <BusinessExternalService />; break;
+      case "franchise-onboarding":
+        content = <FranchiseOnboarding />; break;
+      case "franchise-overview":
+        content = <FranchiseOverview />; break;
+      case "franchise-route":
+        content = <FranchiseRoute />; break;
+      case "franchise-orders":
+        content = <FranchiseOrders />; break;
+      case "franchise-payouts":
+        content = <FranchisePayouts />; break;
+      case "franchises-manager":
+        content = <FranchisesManager />; break;
       case "external-service":
         content = <ExternalServiceManager />; break;
       case "custom-arcade-requests":
