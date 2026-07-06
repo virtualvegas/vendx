@@ -61,6 +61,7 @@ const roleDescriptions: Record<AppRole, string> = {
   employee_operator: "Daily operational tasks",
   customer: "Standard customer access with wallet and rewards",
   business_owner: "View location performance and payouts",
+  franchise_owner: "Own and operate a machine route through VendX",
   support: "Handle customer support tickets and inquiries",
 };
 
