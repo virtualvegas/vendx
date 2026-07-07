@@ -36,6 +36,9 @@ interface Location {
   contact_name: string | null;
   contact_phone: string | null;
   contact_email: string | null;
+  booking_url: string | null;
+  booking_label: string | null;
+  additional_categories: string[] | null;
   snack_machine_count: number | null;
   drink_machine_count: number | null;
   combo_machine_count: number | null;
