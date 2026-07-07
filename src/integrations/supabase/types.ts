@@ -3116,8 +3116,11 @@ export type Database = {
       }
       locations: {
         Row: {
+          additional_categories: string[]
           address: string | null
           arcade_machine_count: number | null
+          booking_label: string | null
+          booking_url: string | null
           business_type: string | null
           city: string
           combo_machine_count: number | null
@@ -3143,8 +3146,11 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          additional_categories?: string[]
           address?: string | null
           arcade_machine_count?: number | null
+          booking_label?: string | null
+          booking_url?: string | null
           business_type?: string | null
           city: string
           combo_machine_count?: number | null
@@ -3170,8 +3176,11 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          additional_categories?: string[]
           address?: string | null
           arcade_machine_count?: number | null
+          booking_label?: string | null
+          booking_url?: string | null
           business_type?: string | null
           city?: string
           combo_machine_count?: number | null

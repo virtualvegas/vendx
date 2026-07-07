@@ -36,6 +36,9 @@ interface Location {
   contact_name: string | null;
   contact_phone: string | null;
   contact_email: string | null;
+  booking_url: string | null;
+  booking_label: string | null;
+  additional_categories: string[] | null;
   snack_machine_count: number | null;
   drink_machine_count: number | null;
   combo_machine_count: number | null;
@@ -240,6 +243,23 @@ const LOCATION_CATEGORIES = [
   { value: "vending", label: "Vending Only" },
   { value: "arcade", label: "Arcade Only" },
   { value: "mixed", label: "Mixed (Vending + Arcade)" },
+  { value: "entertainment_center", label: "Entertainment Center" },
+  { value: "family_entertainment_center", label: "Family Entertainment Center (FEC)" },
+  { value: "bowling_alley", label: "Bowling Alley" },
+  { value: "movie_theater", label: "Movie Theater / Cinema" },
+  { value: "mini_golf", label: "Mini Golf" },
+  { value: "laser_tag", label: "Laser Tag" },
+  { value: "escape_room", label: "Escape Room" },
+  { value: "go_karting", label: "Go-Karting / Track" },
+  { value: "trampoline_park", label: "Trampoline Park" },
+  { value: "roller_rink", label: "Roller / Skating Rink" },
+  { value: "sports_bar", label: "Sports Bar" },
+  { value: "restaurant", label: "Restaurant" },
+  { value: "cafe", label: "Café / Coffee Shop" },
+  { value: "bar_nightclub", label: "Bar / Nightclub" },
+  { value: "billiards", label: "Pool / Billiards Hall" },
+  { value: "vr_arena", label: "VR Arena" },
+  { value: "event_venue", label: "Event / Party Venue" },
   { value: "kiosk", label: "Digital / Info Kiosk" },
   { value: "atm", label: "ATM / Financial" },
   { value: "ev_charging", label: "EV Charging" },
@@ -313,6 +333,9 @@ const GlobalLocations = () => {
     contact_name: "",
     contact_phone: "",
     contact_email: "",
+    booking_url: "",
+    booking_label: "",
+    additional_categories: [] as string[],
     snack_machine_count: 0,
     drink_machine_count: 0,
     combo_machine_count: 0,
@@ -396,6 +419,9 @@ const GlobalLocations = () => {
         contact_name: data.contact_name || null,
         contact_phone: data.contact_phone || null,
         contact_email: data.contact_email || null,
+        booking_url: data.booking_url || null,
+        booking_label: data.booking_label || null,
+        additional_categories: data.additional_categories || [],
         snack_machine_count: data.snack_machine_count || 0,
         drink_machine_count: data.drink_machine_count || 0,
         combo_machine_count: data.combo_machine_count || 0,
@@ -559,6 +585,7 @@ const GlobalLocations = () => {
       name: "", country: "", city: "", address: "", latitude: "", longitude: "", 
       status: "active", is_visible: true, location_type: "office", location_category: "vending", business_type: "", ownership: "vendx_owned",
       contact_name: "", contact_phone: "", contact_email: "",
+      booking_url: "", booking_label: "", additional_categories: [],
       snack_machine_count: 0, drink_machine_count: 0, combo_machine_count: 0, 
       specialty_machine_count: 0, arcade_machine_count: 0 
     });
@@ -583,6 +610,9 @@ const GlobalLocations = () => {
       contact_name: location.contact_name || "",
       contact_phone: location.contact_phone || "",
       contact_email: location.contact_email || "",
+      booking_url: location.booking_url || "",
+      booking_label: location.booking_label || "",
+      additional_categories: location.additional_categories || [],
       snack_machine_count: location.snack_machine_count || 0,
       drink_machine_count: location.drink_machine_count || 0,
       combo_machine_count: location.combo_machine_count || 0,
@@ -768,6 +798,39 @@ const GlobalLocations = () => {
                 </div>
               </div>
             )}
+
+            <div className="border rounded-lg p-4 space-y-3">
+              <h3 className="font-semibold">Additional Categories</h3>
+              <p className="text-xs text-muted-foreground">Tag this venue with every service it offers (e.g., Bowling Alley + Arcade + Vending).</p>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-2 max-h-60 overflow-y-auto">
+                {LOCATION_CATEGORIES.filter(c => c.value !== formData.location_category).map(cat => {
+                  const checked = formData.additional_categories.includes(cat.value);
+                  return (
+                    <label key={cat.value} className="flex items-center gap-2 text-sm cursor-pointer">
+                      <Checkbox
+                        checked={checked}
+                        onCheckedChange={(v) => {
+                          const next = v
+                            ? [...formData.additional_categories, cat.value]
+                            : formData.additional_categories.filter(x => x !== cat.value);
+                          setFormData({ ...formData, additional_categories: next });
+                        }}
+                      />
+                      <span>{cat.label}</span>
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="border rounded-lg p-4 space-y-3">
+              <h3 className="font-semibold">Booking / Reservation</h3>
+              <p className="text-xs text-muted-foreground">Add a link customers use to book lanes, reserve a table, buy tickets, etc.</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2 md:col-span-2"><Label>Booking URL</Label><Input type="url" value={formData.booking_url} onChange={(e) => setFormData({ ...formData, booking_url: e.target.value })} placeholder="https://book.example.com/venue" /></div>
+                <div className="space-y-2 md:col-span-2"><Label>Button Label</Label><Input value={formData.booking_label} onChange={(e) => setFormData({ ...formData, booking_label: e.target.value })} placeholder="e.g. Reserve a Lane, Buy Tickets, Book a Table" /></div>
+              </div>
+            </div>
 
             <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg"><Label>Public Visibility</Label><Switch checked={formData.is_visible} onCheckedChange={(v) => setFormData({ ...formData, is_visible: v })} /></div>
             <DialogFooter><Button type="button" variant="outline" onClick={() => setShowDialog(false)}>Cancel</Button><Button type="submit">{editingLocation ? "Update" : "Add"}</Button></DialogFooter>

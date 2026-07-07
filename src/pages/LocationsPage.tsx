@@ -30,7 +30,10 @@ import {
   Factory,
   Store,
   Warehouse,
-  PartyPopper
+  PartyPopper,
+  CalendarCheck,
+  ExternalLink
+
 } from "lucide-react";
 
 interface Location {
@@ -44,6 +47,9 @@ interface Location {
   status: string;
   location_category: string | null;
   location_type: string | null;
+  additional_categories: string[] | null;
+  booking_url: string | null;
+  booking_label: string | null;
   machine_count: number;
   snack_machine_count: number | null;
   drink_machine_count: number | null;
@@ -56,18 +62,54 @@ const categoryIcons: Record<string, React.ReactNode> = {
   vending: <Coffee className="w-5 h-5" />,
   arcade: <Gamepad2 className="w-5 h-5" />,
   mixed: <Combine className="w-5 h-5" />,
+  entertainment_center: <PartyPopper className="w-5 h-5" />,
+  family_entertainment_center: <PartyPopper className="w-5 h-5" />,
+  bowling_alley: <PartyPopper className="w-5 h-5" />,
+  movie_theater: <PartyPopper className="w-5 h-5" />,
 };
 
 const categoryLabels: Record<string, string> = {
-  vending: "Vending Only",
-  arcade: "Arcade Only",
+  vending: "Vending",
+  arcade: "Arcade",
   mixed: "Vending + Arcade",
+  entertainment_center: "Entertainment Center",
+  family_entertainment_center: "Family Entertainment Center",
+  bowling_alley: "Bowling Alley",
+  movie_theater: "Movie Theater",
+  mini_golf: "Mini Golf",
+  laser_tag: "Laser Tag",
+  escape_room: "Escape Room",
+  go_karting: "Go-Karting",
+  trampoline_park: "Trampoline Park",
+  roller_rink: "Skating Rink",
+  sports_bar: "Sports Bar",
+  restaurant: "Restaurant",
+  cafe: "Café",
+  bar_nightclub: "Bar / Nightclub",
+  billiards: "Billiards",
+  vr_arena: "VR Arena",
+  event_venue: "Event Venue",
+  kiosk: "Kiosk",
+  atm: "ATM",
+  ev_charging: "EV Charging",
+  phone_charging: "Phone Charging",
+  laundry: "Laundry",
+  photo_booth: "Photo Booth",
+  smart_locker: "Smart Locker",
+  ad_display: "Ad Display",
+  self_service: "Self-Service",
+  full_service: "Full-Service",
+  other: "Other",
 };
 
 const categoryColors: Record<string, string> = {
   vending: "bg-primary/20 text-primary border-primary/30",
   arcade: "bg-purple-500/20 text-purple-400 border-purple-500/30",
   mixed: "bg-accent/20 text-accent border-accent/30",
+  entertainment_center: "bg-pink-500/20 text-pink-400 border-pink-500/30",
+  family_entertainment_center: "bg-pink-500/20 text-pink-400 border-pink-500/30",
+  bowling_alley: "bg-orange-500/20 text-orange-400 border-orange-500/30",
+  movie_theater: "bg-red-500/20 text-red-400 border-red-500/30",
 };
 
 const statusColors: Record<string, string> = {
@@ -367,9 +409,14 @@ const LocationsPage = () => {
                           </div>
 
                           <div className="flex flex-wrap gap-2">
-                            <Badge className={categoryColors[location.location_category || "vending"]}>
-                              {categoryLabels[location.location_category || "vending"]}
+                            <Badge className={categoryColors[location.location_category || "vending"] || "bg-muted text-muted-foreground border-border"}>
+                              {categoryLabels[location.location_category || "vending"] || location.location_category}
                             </Badge>
+                            {(location.additional_categories || []).map((c) => (
+                              <Badge key={c} variant="outline" className={categoryColors[c] || ""}>
+                                {categoryLabels[c] || c}
+                              </Badge>
+                            ))}
                             {location.location_type && (
                               <Badge variant="outline" className="gap-1">
                                 {locationTypeIcons[location.location_type] || <Building2 className="w-4 h-4" />}
@@ -377,6 +424,21 @@ const LocationsPage = () => {
                               </Badge>
                             )}
                           </div>
+
+                          {location.booking_url && (
+                            <a
+                              href={location.booking_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="mt-3 block"
+                            >
+                              <Button size="sm" className="w-full gap-2">
+                                <CalendarCheck className="w-4 h-4" />
+                                {location.booking_label || "Book / Reserve"}
+                                <ExternalLink className="w-3 h-3 opacity-70" />
+                              </Button>
+                            </a>
+                          )}
 
                           <div className="flex items-center justify-between mt-4 pt-4 border-t border-border/50">
                             <div className="flex gap-4 text-sm text-muted-foreground">
