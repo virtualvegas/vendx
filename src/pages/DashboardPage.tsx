@@ -86,6 +86,8 @@ import FranchiseOrders from "@/components/dashboard/tabs/franchise/FranchiseOrde
 import FranchisePayouts from "@/components/dashboard/tabs/franchise/FranchisePayouts";
 import FranchiseStorefront from "@/components/dashboard/tabs/franchise/FranchiseStorefront";
 import FranchisesManager from "@/components/dashboard/tabs/FranchisesManager";
+import FranchiseLeaderboard from "@/components/dashboard/tabs/FranchiseLeaderboard";
+import FinanceKpiDashboard from "@/components/dashboard/tabs/FinanceKpiDashboard";
 import MyBusinessCard from "@/components/dashboard/tabs/MyBusinessCard";
 import SsoAppsManager from "@/components/dashboard/tabs/SsoAppsManager";
 import MyLinkedAccounts from "@/components/dashboard/tabs/MyLinkedAccounts";
