@@ -1,5 +1,8 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Wallet, Receipt, Repeat, PiggyBank, Package, TrendingUp, Clock, BarChart3, Target, FileMinus, FilePlus, Landmark } from "lucide-react";
+import { Wallet, Receipt, Repeat, PiggyBank, Package, TrendingUp, Clock, BarChart3, Target, FileMinus, FilePlus, Landmark, Calendar, Scale, Globe } from "lucide-react";
+import { RecurringBillsTab } from "./finance-manager/RecurringBillsTab";
+import { TaxTab } from "./finance-manager/TaxTab";
+import { CurrencyTab } from "./finance-manager/CurrencyTab";
 import { AccountsTab } from "./finance-manager/AccountsTab";
 import { ExpensesTab } from "./finance-manager/ExpensesTab";
 import { IncomeTab } from "./finance-manager/IncomeTab";
