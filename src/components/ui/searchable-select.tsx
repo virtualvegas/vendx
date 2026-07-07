@@ -82,8 +82,12 @@ export function SearchableSelect({
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
-        <div className="flex items-center border-b px-3 py-2">
+      <PopoverContent
+        className="w-[--radix-popover-trigger-width] p-0 flex flex-col max-h-[min(360px,var(--radix-popover-content-available-height))]"
+        align="start"
+        onOpenAutoFocus={(e) => e.preventDefault()}
+      >
+        <div className="flex items-center border-b px-3 py-2 shrink-0">
           <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
           <Input
             ref={inputRef}
@@ -93,7 +97,7 @@ export function SearchableSelect({
             className="h-8 border-0 p-0 shadow-none focus-visible:ring-0"
           />
         </div>
-        <ScrollArea className="max-h-[240px]">
+        <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain">
           {filtered.length === 0 ? (
             <p className="py-6 text-center text-sm text-muted-foreground">
               No results found
@@ -103,6 +107,7 @@ export function SearchableSelect({
               {filtered.map((option) => (
                 <button
                   key={option.value}
+                  type="button"
                   onClick={() => {
                     onValueChange(option.value === value ? "" : option.value);
                     setOpen(false);
@@ -117,12 +122,12 @@ export function SearchableSelect({
                       <Check className="h-4 w-4" />
                     )}
                   </span>
-                  <span className="truncate">{option.label}</span>
+                  <span className="truncate text-left">{option.label}</span>
                 </button>
               ))}
             </div>
           )}
-        </ScrollArea>
+        </div>
       </PopoverContent>
     </Popover>
   );
