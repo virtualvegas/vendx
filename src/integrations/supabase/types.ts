@@ -1388,6 +1388,51 @@ export type Database = {
           },
         ]
       }
+      finance_1099_recipients: {
+        Row: {
+          created_at: string
+          form_type: string
+          id: string
+          notes: string | null
+          recipient_address: Json | null
+          recipient_email: string | null
+          recipient_name: string
+          recipient_tin: string | null
+          status: string
+          tax_year: number
+          total_paid: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          form_type?: string
+          id?: string
+          notes?: string | null
+          recipient_address?: Json | null
+          recipient_email?: string | null
+          recipient_name: string
+          recipient_tin?: string | null
+          status?: string
+          tax_year: number
+          total_paid?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          form_type?: string
+          id?: string
+          notes?: string | null
+          recipient_address?: Json | null
+          recipient_email?: string | null
+          recipient_name?: string
+          recipient_tin?: string | null
+          status?: string
+          tax_year?: number
+          total_paid?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       finance_account_transactions: {
         Row: {
           account_id: string
@@ -1493,6 +1538,514 @@ export type Database = {
           name?: string
           opening_balance?: number
           updated_at?: string
+        }
+        Relationships: []
+      }
+      finance_ap_bill_payments: {
+        Row: {
+          amount: number
+          bill_id: string
+          created_at: string
+          created_by: string | null
+          id: string
+          notes: string | null
+          paid_from_account_id: string | null
+          payment_date: string
+          payment_method: string | null
+          reference: string | null
+        }
+        Insert: {
+          amount: number
+          bill_id: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          notes?: string | null
+          paid_from_account_id?: string | null
+          payment_date?: string
+          payment_method?: string | null
+          reference?: string | null
+        }
+        Update: {
+          amount?: number
+          bill_id?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          notes?: string | null
+          paid_from_account_id?: string | null
+          payment_date?: string
+          payment_method?: string | null
+          reference?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_ap_bill_payments_bill_id_fkey"
+            columns: ["bill_id"]
+            isOneToOne: false
+            referencedRelation: "finance_ap_bills"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "finance_ap_bill_payments_paid_from_account_id_fkey"
+            columns: ["paid_from_account_id"]
+            isOneToOne: false
+            referencedRelation: "finance_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      finance_ap_bills: {
+        Row: {
+          amount: number
+          amount_paid: number
+          attachments: Json | null
+          bill_date: string
+          bill_number: string | null
+          category: string
+          created_at: string
+          created_by: string | null
+          currency: string
+          description: string | null
+          due_date: string
+          external_reference: string | null
+          id: string
+          notes: string | null
+          paid_from_account_id: string | null
+          status: string
+          subcategory: string | null
+          updated_at: string
+          vendor: string
+          vendor_email: string | null
+        }
+        Insert: {
+          amount: number
+          amount_paid?: number
+          attachments?: Json | null
+          bill_date?: string
+          bill_number?: string | null
+          category: string
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          description?: string | null
+          due_date: string
+          external_reference?: string | null
+          id?: string
+          notes?: string | null
+          paid_from_account_id?: string | null
+          status?: string
+          subcategory?: string | null
+          updated_at?: string
+          vendor: string
+          vendor_email?: string | null
+        }
+        Update: {
+          amount?: number
+          amount_paid?: number
+          attachments?: Json | null
+          bill_date?: string
+          bill_number?: string | null
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          description?: string | null
+          due_date?: string
+          external_reference?: string | null
+          id?: string
+          notes?: string | null
+          paid_from_account_id?: string | null
+          status?: string
+          subcategory?: string | null
+          updated_at?: string
+          vendor?: string
+          vendor_email?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_ap_bills_paid_from_account_id_fkey"
+            columns: ["paid_from_account_id"]
+            isOneToOne: false
+            referencedRelation: "finance_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      finance_ar_invoice_items: {
+        Row: {
+          created_at: string
+          description: string
+          id: string
+          invoice_id: string
+          line_total: number
+          quantity: number
+          tax_rate: number | null
+          unit_price: number
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          id?: string
+          invoice_id: string
+          line_total?: number
+          quantity?: number
+          tax_rate?: number | null
+          unit_price?: number
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          id?: string
+          invoice_id?: string
+          line_total?: number
+          quantity?: number
+          tax_rate?: number | null
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_ar_invoice_items_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "finance_ar_invoices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      finance_ar_invoice_payments: {
+        Row: {
+          amount: number
+          created_at: string
+          created_by: string | null
+          deposit_to_account_id: string | null
+          id: string
+          invoice_id: string
+          payment_date: string
+          payment_method: string | null
+          reference: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          created_by?: string | null
+          deposit_to_account_id?: string | null
+          id?: string
+          invoice_id: string
+          payment_date?: string
+          payment_method?: string | null
+          reference?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          created_by?: string | null
+          deposit_to_account_id?: string | null
+          id?: string
+          invoice_id?: string
+          payment_date?: string
+          payment_method?: string | null
+          reference?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_ar_invoice_payments_deposit_to_account_id_fkey"
+            columns: ["deposit_to_account_id"]
+            isOneToOne: false
+            referencedRelation: "finance_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "finance_ar_invoice_payments_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "finance_ar_invoices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      finance_ar_invoices: {
+        Row: {
+          amount_paid: number
+          created_at: string
+          created_by: string | null
+          currency: string
+          customer_address: Json | null
+          customer_email: string | null
+          customer_name: string
+          deposit_to_account_id: string | null
+          due_date: string
+          id: string
+          invoice_date: string
+          invoice_number: string | null
+          notes: string | null
+          status: string
+          subtotal: number
+          tax_amount: number
+          terms: string | null
+          total: number
+          updated_at: string
+        }
+        Insert: {
+          amount_paid?: number
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          customer_address?: Json | null
+          customer_email?: string | null
+          customer_name: string
+          deposit_to_account_id?: string | null
+          due_date: string
+          id?: string
+          invoice_date?: string
+          invoice_number?: string | null
+          notes?: string | null
+          status?: string
+          subtotal?: number
+          tax_amount?: number
+          terms?: string | null
+          total?: number
+          updated_at?: string
+        }
+        Update: {
+          amount_paid?: number
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          customer_address?: Json | null
+          customer_email?: string | null
+          customer_name?: string
+          deposit_to_account_id?: string | null
+          due_date?: string
+          id?: string
+          invoice_date?: string
+          invoice_number?: string | null
+          notes?: string | null
+          status?: string
+          subtotal?: number
+          tax_amount?: number
+          terms?: string | null
+          total?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_ar_invoices_deposit_to_account_id_fkey"
+            columns: ["deposit_to_account_id"]
+            isOneToOne: false
+            referencedRelation: "finance_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      finance_bank_statement_entries: {
+        Row: {
+          amount: number
+          balance_after: number | null
+          created_at: string
+          description: string | null
+          id: string
+          import_id: string
+          match_status: string
+          matched_bill_payment_id: string | null
+          matched_expense_id: string | null
+          matched_income_id: string | null
+          matched_invoice_payment_id: string | null
+          notes: string | null
+          reference: string | null
+          txn_date: string
+        }
+        Insert: {
+          amount: number
+          balance_after?: number | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          import_id: string
+          match_status?: string
+          matched_bill_payment_id?: string | null
+          matched_expense_id?: string | null
+          matched_income_id?: string | null
+          matched_invoice_payment_id?: string | null
+          notes?: string | null
+          reference?: string | null
+          txn_date: string
+        }
+        Update: {
+          amount?: number
+          balance_after?: number | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          import_id?: string
+          match_status?: string
+          matched_bill_payment_id?: string | null
+          matched_expense_id?: string | null
+          matched_income_id?: string | null
+          matched_invoice_payment_id?: string | null
+          notes?: string | null
+          reference?: string | null
+          txn_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_bank_statement_entries_import_id_fkey"
+            columns: ["import_id"]
+            isOneToOne: false
+            referencedRelation: "finance_bank_statement_imports"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "finance_bank_statement_entries_matched_bill_payment_id_fkey"
+            columns: ["matched_bill_payment_id"]
+            isOneToOne: false
+            referencedRelation: "finance_ap_bill_payments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "finance_bank_statement_entries_matched_expense_id_fkey"
+            columns: ["matched_expense_id"]
+            isOneToOne: false
+            referencedRelation: "finance_expenses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "finance_bank_statement_entries_matched_income_id_fkey"
+            columns: ["matched_income_id"]
+            isOneToOne: false
+            referencedRelation: "finance_income"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "finance_bank_statement_entries_matched_invoice_payment_id_fkey"
+            columns: ["matched_invoice_payment_id"]
+            isOneToOne: false
+            referencedRelation: "finance_ar_invoice_payments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      finance_bank_statement_imports: {
+        Row: {
+          account_id: string | null
+          created_at: string
+          filename: string | null
+          id: string
+          imported_by: string | null
+          matched_entries: number | null
+          period_end: string | null
+          period_start: string | null
+          status: string | null
+          total_entries: number | null
+          updated_at: string
+        }
+        Insert: {
+          account_id?: string | null
+          created_at?: string
+          filename?: string | null
+          id?: string
+          imported_by?: string | null
+          matched_entries?: number | null
+          period_end?: string | null
+          period_start?: string | null
+          status?: string | null
+          total_entries?: number | null
+          updated_at?: string
+        }
+        Update: {
+          account_id?: string | null
+          created_at?: string
+          filename?: string | null
+          id?: string
+          imported_by?: string | null
+          matched_entries?: number | null
+          period_end?: string | null
+          period_start?: string | null
+          status?: string | null
+          total_entries?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_bank_statement_imports_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "finance_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      finance_budgets: {
+        Row: {
+          account_id: string | null
+          budget_amount: number
+          budget_month: string
+          category: string
+          created_at: string
+          created_by: string | null
+          id: string
+          notes: string | null
+          subcategory: string | null
+          updated_at: string
+        }
+        Insert: {
+          account_id?: string | null
+          budget_amount?: number
+          budget_month: string
+          category: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          notes?: string | null
+          subcategory?: string | null
+          updated_at?: string
+        }
+        Update: {
+          account_id?: string | null
+          budget_amount?: number
+          budget_month?: string
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          notes?: string | null
+          subcategory?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_budgets_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "finance_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      finance_currencies: {
+        Row: {
+          code: string
+          created_at: string
+          is_active: boolean
+          is_base: boolean
+          name: string
+          symbol: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          is_active?: boolean
+          is_base?: boolean
+          name: string
+          symbol: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          is_active?: boolean
+          is_base?: boolean
+          name?: string
+          symbol?: string
         }
         Relationships: []
       }
@@ -1637,6 +2190,51 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "finance_accounts"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      finance_fx_rates: {
+        Row: {
+          created_at: string
+          from_currency: string
+          id: string
+          rate: number
+          rate_date: string
+          source: string | null
+          to_currency: string
+        }
+        Insert: {
+          created_at?: string
+          from_currency: string
+          id?: string
+          rate: number
+          rate_date?: string
+          source?: string | null
+          to_currency: string
+        }
+        Update: {
+          created_at?: string
+          from_currency?: string
+          id?: string
+          rate?: number
+          rate_date?: string
+          source?: string | null
+          to_currency?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_fx_rates_from_currency_fkey"
+            columns: ["from_currency"]
+            isOneToOne: false
+            referencedRelation: "finance_currencies"
+            referencedColumns: ["code"]
+          },
+          {
+            foreignKeyName: "finance_fx_rates_to_currency_fkey"
+            columns: ["to_currency"]
+            isOneToOne: false
+            referencedRelation: "finance_currencies"
+            referencedColumns: ["code"]
           },
         ]
       }
@@ -1804,6 +2402,71 @@ export type Database = {
           },
         ]
       }
+      finance_recurring_bills: {
+        Row: {
+          amount: number
+          auto_create_bill: boolean
+          category: string
+          created_at: string
+          created_by: string | null
+          currency: string
+          description: string | null
+          frequency: string
+          id: string
+          is_active: boolean
+          next_due_date: string
+          paid_from_account_id: string | null
+          reminder_days_before: number
+          subcategory: string | null
+          updated_at: string
+          vendor: string
+        }
+        Insert: {
+          amount: number
+          auto_create_bill?: boolean
+          category: string
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          description?: string | null
+          frequency: string
+          id?: string
+          is_active?: boolean
+          next_due_date: string
+          paid_from_account_id?: string | null
+          reminder_days_before?: number
+          subcategory?: string | null
+          updated_at?: string
+          vendor: string
+        }
+        Update: {
+          amount?: number
+          auto_create_bill?: boolean
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          description?: string | null
+          frequency?: string
+          id?: string
+          is_active?: boolean
+          next_due_date?: string
+          paid_from_account_id?: string | null
+          reminder_days_before?: number
+          subcategory?: string | null
+          updated_at?: string
+          vendor?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_recurring_bills_paid_from_account_id_fkey"
+            columns: ["paid_from_account_id"]
+            isOneToOne: false
+            referencedRelation: "finance_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       finance_subscription_payments: {
         Row: {
           amount: number
@@ -1938,6 +2601,89 @@ export type Database = {
             columns: ["paid_from_account_id"]
             isOneToOne: false
             referencedRelation: "finance_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      finance_tax_jurisdictions: {
+        Row: {
+          city: string | null
+          country: string
+          created_at: string
+          filing_frequency: string | null
+          id: string
+          is_active: boolean
+          name: string
+          notes: string | null
+          registration_number: string | null
+          state_or_region: string | null
+          updated_at: string
+        }
+        Insert: {
+          city?: string | null
+          country?: string
+          created_at?: string
+          filing_frequency?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          notes?: string | null
+          registration_number?: string | null
+          state_or_region?: string | null
+          updated_at?: string
+        }
+        Update: {
+          city?: string | null
+          country?: string
+          created_at?: string
+          filing_frequency?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          notes?: string | null
+          registration_number?: string | null
+          state_or_region?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      finance_tax_rates: {
+        Row: {
+          created_at: string
+          effective_from: string
+          effective_to: string | null
+          id: string
+          jurisdiction_id: string
+          notes: string | null
+          rate_pct: number
+          tax_type: string
+        }
+        Insert: {
+          created_at?: string
+          effective_from?: string
+          effective_to?: string | null
+          id?: string
+          jurisdiction_id: string
+          notes?: string | null
+          rate_pct: number
+          tax_type?: string
+        }
+        Update: {
+          created_at?: string
+          effective_from?: string
+          effective_to?: string | null
+          id?: string
+          jurisdiction_id?: string
+          notes?: string | null
+          rate_pct?: number
+          tax_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_tax_rates_jurisdiction_id_fkey"
+            columns: ["jurisdiction_id"]
+            isOneToOne: false
+            referencedRelation: "finance_tax_jurisdictions"
             referencedColumns: ["id"]
           },
         ]
@@ -7805,6 +8551,152 @@ export type Database = {
           },
         ]
       }
+      vendx_franchise_cart_items: {
+        Row: {
+          catalog_item_id: string
+          created_at: string
+          franchise_id: string
+          id: string
+          quantity: number
+          updated_at: string
+        }
+        Insert: {
+          catalog_item_id: string
+          created_at?: string
+          franchise_id: string
+          id?: string
+          quantity?: number
+          updated_at?: string
+        }
+        Update: {
+          catalog_item_id?: string
+          created_at?: string
+          franchise_id?: string
+          id?: string
+          quantity?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendx_franchise_cart_items_catalog_item_id_fkey"
+            columns: ["catalog_item_id"]
+            isOneToOne: false
+            referencedRelation: "vendx_franchise_catalog_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendx_franchise_cart_items_franchise_id_fkey"
+            columns: ["franchise_id"]
+            isOneToOne: false
+            referencedRelation: "vendx_franchises"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vendx_franchise_catalog_items: {
+        Row: {
+          category: string | null
+          created_at: string
+          description: string | null
+          id: string
+          image_url: string | null
+          is_active: boolean
+          item_type: string
+          metadata: Json | null
+          min_order_quantity: number | null
+          name: string
+          sku: string | null
+          stock_quantity: number | null
+          unit_price: number
+          updated_at: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          item_type: string
+          metadata?: Json | null
+          min_order_quantity?: number | null
+          name: string
+          sku?: string | null
+          stock_quantity?: number | null
+          unit_price?: number
+          updated_at?: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          item_type?: string
+          metadata?: Json | null
+          min_order_quantity?: number | null
+          name?: string
+          sku?: string | null
+          stock_quantity?: number | null
+          unit_price?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      vendx_franchise_documents: {
+        Row: {
+          content_url: string | null
+          created_at: string
+          doc_type: string
+          franchise_id: string
+          id: string
+          metadata: Json | null
+          signature_ip: string | null
+          signature_name: string | null
+          signed_at: string | null
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          content_url?: string | null
+          created_at?: string
+          doc_type: string
+          franchise_id: string
+          id?: string
+          metadata?: Json | null
+          signature_ip?: string | null
+          signature_name?: string | null
+          signed_at?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          content_url?: string | null
+          created_at?: string
+          doc_type?: string
+          franchise_id?: string
+          id?: string
+          metadata?: Json | null
+          signature_ip?: string | null
+          signature_name?: string | null
+          signed_at?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendx_franchise_documents_franchise_id_fkey"
+            columns: ["franchise_id"]
+            isOneToOne: false
+            referencedRelation: "vendx_franchises"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vendx_franchise_machines: {
         Row: {
           assigned_at: string
@@ -7844,6 +8736,7 @@ export type Database = {
       vendx_franchise_orders: {
         Row: {
           admin_notes: string | null
+          carrier: string | null
           created_at: string
           franchise_id: string
           id: string
@@ -7851,15 +8744,22 @@ export type Database = {
           notes: string | null
           order_number: string | null
           order_type: string
+          payment_status: string | null
           shipping: number
           shipping_address: Json | null
+          shipping_amount: number | null
           status: string
+          stripe_payment_intent_id: string | null
+          stripe_session_id: string | null
           subtotal: number
+          tax_amount: number | null
           total: number
+          tracking_number: string | null
           updated_at: string
         }
         Insert: {
           admin_notes?: string | null
+          carrier?: string | null
           created_at?: string
           franchise_id: string
           id?: string
@@ -7867,15 +8767,22 @@ export type Database = {
           notes?: string | null
           order_number?: string | null
           order_type: string
+          payment_status?: string | null
           shipping?: number
           shipping_address?: Json | null
+          shipping_amount?: number | null
           status?: string
+          stripe_payment_intent_id?: string | null
+          stripe_session_id?: string | null
           subtotal?: number
+          tax_amount?: number | null
           total?: number
+          tracking_number?: string | null
           updated_at?: string
         }
         Update: {
           admin_notes?: string | null
+          carrier?: string | null
           created_at?: string
           franchise_id?: string
           id?: string
@@ -7883,11 +8790,17 @@ export type Database = {
           notes?: string | null
           order_number?: string | null
           order_type?: string
+          payment_status?: string | null
           shipping?: number
           shipping_address?: Json | null
+          shipping_amount?: number | null
           status?: string
+          stripe_payment_intent_id?: string | null
+          stripe_session_id?: string | null
           subtotal?: number
+          tax_amount?: number | null
           total?: number
+          tracking_number?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -7952,6 +8865,144 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "vendx_franchise_payouts_franchise_id_fkey"
+            columns: ["franchise_id"]
+            isOneToOne: false
+            referencedRelation: "vendx_franchises"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vendx_franchise_setup_payments: {
+        Row: {
+          amount: number
+          created_at: string
+          franchise_id: string
+          id: string
+          paid_at: string | null
+          status: string
+          stripe_payment_intent_id: string | null
+          stripe_session_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          franchise_id: string
+          id?: string
+          paid_at?: string | null
+          status?: string
+          stripe_payment_intent_id?: string | null
+          stripe_session_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          franchise_id?: string
+          id?: string
+          paid_at?: string | null
+          status?: string
+          stripe_payment_intent_id?: string | null
+          stripe_session_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendx_franchise_setup_payments_franchise_id_fkey"
+            columns: ["franchise_id"]
+            isOneToOne: false
+            referencedRelation: "vendx_franchises"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vendx_franchise_support_messages: {
+        Row: {
+          attachments: Json | null
+          created_at: string
+          id: string
+          message: string
+          sender_id: string | null
+          sender_type: string
+          ticket_id: string
+        }
+        Insert: {
+          attachments?: Json | null
+          created_at?: string
+          id?: string
+          message: string
+          sender_id?: string | null
+          sender_type: string
+          ticket_id: string
+        }
+        Update: {
+          attachments?: Json | null
+          created_at?: string
+          id?: string
+          message?: string
+          sender_id?: string | null
+          sender_type?: string
+          ticket_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendx_franchise_support_messages_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "vendx_franchise_support_tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vendx_franchise_support_tickets: {
+        Row: {
+          assigned_to: string | null
+          category: string | null
+          created_at: string
+          created_by: string | null
+          franchise_id: string
+          id: string
+          priority: string
+          resolved_at: string | null
+          sla_due_at: string | null
+          status: string
+          subject: string
+          ticket_number: string | null
+          updated_at: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          category?: string | null
+          created_at?: string
+          created_by?: string | null
+          franchise_id: string
+          id?: string
+          priority?: string
+          resolved_at?: string | null
+          sla_due_at?: string | null
+          status?: string
+          subject: string
+          ticket_number?: string | null
+          updated_at?: string
+        }
+        Update: {
+          assigned_to?: string | null
+          category?: string | null
+          created_at?: string
+          created_by?: string | null
+          franchise_id?: string
+          id?: string
+          priority?: string
+          resolved_at?: string | null
+          sla_due_at?: string | null
+          status?: string
+          subject?: string
+          ticket_number?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendx_franchise_support_tickets_franchise_id_fkey"
             columns: ["franchise_id"]
             isOneToOne: false
             referencedRelation: "vendx_franchises"
@@ -9769,6 +10820,18 @@ export type Database = {
           transaction_id: string
         }[]
       }
+      calculate_franchise_period_revenue: {
+        Args: { p_end: string; p_franchise_id: string; p_start: string }
+        Returns: {
+          arcade_sales: number
+          commission_amount: number
+          machine_sales: number
+          net_payout: number
+          pos_sales: number
+          total_gross: number
+          txn_count: number
+        }[]
+      }
       calculate_machine_inventory_priority: {
         Args: { p_machine_id: string }
         Returns: {
@@ -9850,7 +10913,35 @@ export type Database = {
         }[]
       }
       generate_totp_secret: { Args: never; Returns: string }
+      get_balance_sheet_report: {
+        Args: { p_as_of?: string }
+        Returns: {
+          amount: number
+          label: string
+          section: string
+        }[]
+      }
+      get_budget_variance: {
+        Args: { p_month: string }
+        Returns: {
+          actual: number
+          budgeted: number
+          category: string
+          subcategory: string
+          variance: number
+          variance_pct: number
+        }[]
+      }
       get_business_card: { Args: { _slug: string }; Returns: Json }
+      get_cash_flow_report: {
+        Args: { p_from: string; p_to: string }
+        Returns: {
+          inflow: number
+          month: string
+          net: number
+          outflow: number
+        }[]
+      }
       get_external_machine_service_stats: {
         Args: { p_machine_id: string }
         Returns: {
@@ -9865,6 +10956,15 @@ export type Database = {
       get_my_franchise_id: { Args: never; Returns: string }
       get_my_office_id: { Args: never; Returns: string }
       get_my_warehouse_id: { Args: never; Returns: string }
+      get_pnl_report: {
+        Args: { p_from: string; p_to: string }
+        Returns: {
+          category: string
+          kind: string
+          subcategory: string
+          total: number
+        }[]
+      }
       get_public_machine_info: {
         Args: { p_machine_code: string }
         Returns: {
