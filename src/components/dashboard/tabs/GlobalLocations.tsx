@@ -677,6 +677,8 @@ const GlobalLocations = () => {
                   <TableHead>Location</TableHead>
                   <TableHead>Type</TableHead>
                   <TableHead>Category</TableHead>
+                  <TableHead>Business Type</TableHead>
+                  <TableHead>Ownership</TableHead>
                   <TableHead>Business Owner</TableHead>
                   <TableHead>Machines</TableHead>
                   <TableHead>Arcade Games</TableHead>
