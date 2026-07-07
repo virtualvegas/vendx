@@ -306,10 +306,16 @@ const DashboardPage = () => {
         content = <FranchisePayouts />; break;
       case "franchise-territory":
         content = <FranchiseTerritory />; break;
+      case "franchise-location-request":
+        content = <FranchiseLocationRequest />; break;
       case "franchise-support":
         content = <FranchiseSupport />; break;
       case "franchises-manager":
         content = <FranchisesManager />; break;
+      case "franchise-territory-manager":
+        content = <FranchiseTerritoryManager />; break;
+      case "franchise-catalog":
+        content = <FranchiseCatalogManager />; break;
       case "franchise-leaderboard":
         content = <FranchiseLeaderboard />; break;
       case "finance-kpi":
