@@ -799,6 +799,39 @@ const GlobalLocations = () => {
               </div>
             )}
 
+            <div className="border rounded-lg p-4 space-y-3">
+              <h3 className="font-semibold">Additional Categories</h3>
+              <p className="text-xs text-muted-foreground">Tag this venue with every service it offers (e.g., Bowling Alley + Arcade + Vending).</p>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-2 max-h-60 overflow-y-auto">
+                {LOCATION_CATEGORIES.filter(c => c.value !== formData.location_category).map(cat => {
+                  const checked = formData.additional_categories.includes(cat.value);
+                  return (
+                    <label key={cat.value} className="flex items-center gap-2 text-sm cursor-pointer">
+                      <Checkbox
+                        checked={checked}
+                        onCheckedChange={(v) => {
+                          const next = v
+                            ? [...formData.additional_categories, cat.value]
+                            : formData.additional_categories.filter(x => x !== cat.value);
+                          setFormData({ ...formData, additional_categories: next });
+                        }}
+                      />
+                      <span>{cat.label}</span>
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="border rounded-lg p-4 space-y-3">
+              <h3 className="font-semibold">Booking / Reservation</h3>
+              <p className="text-xs text-muted-foreground">Add a link customers use to book lanes, reserve a table, buy tickets, etc.</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2 md:col-span-2"><Label>Booking URL</Label><Input type="url" value={formData.booking_url} onChange={(e) => setFormData({ ...formData, booking_url: e.target.value })} placeholder="https://book.example.com/venue" /></div>
+                <div className="space-y-2 md:col-span-2"><Label>Button Label</Label><Input value={formData.booking_label} onChange={(e) => setFormData({ ...formData, booking_label: e.target.value })} placeholder="e.g. Reserve a Lane, Buy Tickets, Book a Table" /></div>
+              </div>
+            </div>
+
             <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg"><Label>Public Visibility</Label><Switch checked={formData.is_visible} onCheckedChange={(v) => setFormData({ ...formData, is_visible: v })} /></div>
             <DialogFooter><Button type="button" variant="outline" onClick={() => setShowDialog(false)}>Cancel</Button><Button type="submit">{editingLocation ? "Update" : "Add"}</Button></DialogFooter>
           </form>
