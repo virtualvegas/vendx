@@ -31,6 +31,8 @@ interface Location {
   is_visible: boolean;
   location_type: string | null;
   location_category: string | null;
+  business_type: string | null;
+  ownership: string | null;
   contact_name: string | null;
   contact_phone: string | null;
   contact_email: string | null;
