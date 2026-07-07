@@ -9015,6 +9015,7 @@ export type Database = {
           created_at: string
           franchise_id: string
           id: string
+          is_exclusive: boolean
           location_id: string | null
           notes: string | null
           region_id: string | null
@@ -9023,6 +9024,7 @@ export type Database = {
           created_at?: string
           franchise_id: string
           id?: string
+          is_exclusive?: boolean
           location_id?: string | null
           notes?: string | null
           region_id?: string | null
@@ -9031,6 +9033,7 @@ export type Database = {
           created_at?: string
           franchise_id?: string
           id?: string
+          is_exclusive?: boolean
           location_id?: string | null
           notes?: string | null
           region_id?: string | null

@@ -1,0 +1,1 @@
+ALTER TABLE public.vendx_franchise_territories ADD COLUMN IF NOT EXISTS is_exclusive boolean NOT NULL DEFAULT false;
