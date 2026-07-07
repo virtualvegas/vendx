@@ -696,6 +696,8 @@ const GlobalLocations = () => {
                     </TableCell>
                     <TableCell><Badge variant="outline">{LOCATION_TYPES.find(t => t.value === loc.location_type)?.label || loc.location_type}</Badge></TableCell>
                     <TableCell><Badge variant={loc.location_category === "mixed" ? "default" : "secondary"}>{LOCATION_CATEGORIES.find(c => c.value === loc.location_category)?.label || loc.location_category || "Vending"}</Badge></TableCell>
+                    <TableCell>{loc.business_type ? <Badge variant="outline">{BUSINESS_TYPES.find(b => b.value === loc.business_type)?.label || loc.business_type}</Badge> : <span className="text-xs text-muted-foreground">—</span>}</TableCell>
+                    <TableCell><Badge variant={OWNERSHIP_TYPES.find(o => o.value === loc.ownership)?.color || "secondary"}>{OWNERSHIP_TYPES.find(o => o.value === loc.ownership)?.label || loc.ownership || "VendX Owned"}</Badge></TableCell>
                     <TableCell>
                       {(() => {
                         const owner = getLocationOwner(loc.id);
