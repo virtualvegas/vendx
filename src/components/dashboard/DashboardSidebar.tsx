@@ -41,6 +41,7 @@ import {
   Lightbulb,
   Warehouse,
   Mail,
+  MessageCircle,
   Link2,
   ShieldCheck,
 } from "lucide-react";
@@ -114,6 +115,8 @@ const tabGroups: TabGroup[] = [
       { id: "franchise-storefront", label: "Storefront", icon: Store, requiredRoles: r("franchise-storefront") },
       { id: "franchise-orders", label: "Order History", icon: Package, requiredRoles: r("franchise-orders") },
       { id: "franchise-payouts", label: "Sales & Payouts", icon: DollarSign, requiredRoles: r("franchise-payouts") },
+      { id: "franchise-territory", label: "My Territory", icon: Map, requiredRoles: r("franchise-territory") },
+      { id: "franchise-support", label: "Support", icon: MessageCircle, requiredRoles: r("franchise-support") },
       { id: "franchise-onboarding", label: "Application / Setup", icon: Briefcase, requiredRoles: r("franchise-onboarding") },
     ],
   },

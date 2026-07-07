@@ -85,6 +85,8 @@ import FranchiseRoute from "@/components/dashboard/tabs/franchise/FranchiseRoute
 import FranchiseOrders from "@/components/dashboard/tabs/franchise/FranchiseOrders";
 import FranchisePayouts from "@/components/dashboard/tabs/franchise/FranchisePayouts";
 import FranchiseStorefront from "@/components/dashboard/tabs/franchise/FranchiseStorefront";
+import FranchiseSupport from "@/components/dashboard/tabs/franchise/FranchiseSupport";
+import FranchiseTerritory from "@/components/dashboard/tabs/franchise/FranchiseTerritory";
 import FranchisesManager from "@/components/dashboard/tabs/FranchisesManager";
 import FranchiseLeaderboard from "@/components/dashboard/tabs/FranchiseLeaderboard";
 import FinanceKpiDashboard from "@/components/dashboard/tabs/FinanceKpiDashboard";
@@ -251,7 +253,7 @@ const DashboardPage = () => {
   const NON_ADMIN_TABS = [
     "my-orders", "my-machines", "my-wallet", "my-tickets", "my-rewards", "linked-accounts", "my-subscriptions",
     "business-overview", "business-locations", "business-machines", "business-payouts", "business-support", "business-adreach", "business-external-service",
-    "franchise-onboarding", "franchise-overview", "franchise-route", "franchise-storefront", "franchise-orders", "franchise-payouts",
+    "franchise-onboarding", "franchise-overview", "franchise-route", "franchise-storefront", "franchise-orders", "franchise-payouts", "franchise-territory", "franchise-support",
   ];
 
   const renderTabContent = () => {
@@ -299,6 +301,10 @@ const DashboardPage = () => {
         content = <FranchiseStorefront />; break;
       case "franchise-payouts":
         content = <FranchisePayouts />; break;
+      case "franchise-territory":
+        content = <FranchiseTerritory />; break;
+      case "franchise-support":
+        content = <FranchiseSupport />; break;
       case "franchises-manager":
         content = <FranchisesManager />; break;
       case "franchise-leaderboard":
