@@ -276,6 +276,8 @@ const tabGroups: TabGroup[] = [
       { id: "admin-settings", label: "Users & Roles", icon: Users, requiredRoles: r("admin-settings") },
       { id: "franchises-manager", label: "Franchise Program", icon: Briefcase, requiredRoles: r("franchises-manager") },
       { id: "franchise-leaderboard", label: "Franchise Leaderboard", icon: Trophy, requiredRoles: r("franchise-leaderboard") },
+      { id: "franchise-territory-manager", label: "Franchise Territories", icon: Map, requiredRoles: r("franchise-territory-manager") },
+      { id: "franchise-catalog", label: "Franchise Catalog & Pricing", icon: Package, requiredRoles: r("franchise-catalog") },
       { id: "merchant-api", label: "Merchant API", icon: Globe, requiredRoles: r("merchant-api") },
       { id: "partner-api", label: "Partner API", icon: Globe, requiredRoles: r("partner-api") },
       { id: "sso-apps", label: "SSO Applications", icon: ShieldCheck, requiredRoles: r("sso-apps") },
