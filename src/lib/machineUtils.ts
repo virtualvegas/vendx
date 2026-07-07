@@ -1,14 +1,59 @@
 // Universal machine utilities for consistent behavior across all dashboard pages
 
 export const MACHINE_TYPES = [
+  // Vending
   { value: "snack", label: "Snack" },
   { value: "beverage", label: "Beverage" },
   { value: "combo", label: "Combo" },
   { value: "fresh", label: "Fresh Food" },
-  { value: "digital", label: "Digital Kiosk" },
+  { value: "coffee", label: "Coffee / Hot Drink" },
+  { value: "ice_cream", label: "Ice Cream / Frozen" },
+  { value: "healthy_snack", label: "Healthy Snack" },
+  { value: "micro_market", label: "Micro Market" },
+  { value: "ecosnack", label: "EcoVend Locker" },
+  { value: "smart_locker", label: "Smart Locker" },
+  { value: "medical_vending", label: "Medical / PPE Vending" },
+  { value: "cannabis_vending", label: "Cannabis Vending" },
+  { value: "beauty_vending", label: "Beauty Products Vending" },
+  { value: "electronics_vending", label: "Electronics Vending" },
+  // Arcade & Entertainment
+  { value: "arcade", label: "Arcade Cabinet" },
   { value: "claw", label: "Claw Machine" },
-  { value: "arcade", label: "Arcade" },
-  { value: "ecosnack", label: "EcoVend" },
+  { value: "redemption_game", label: "Redemption Game" },
+  { value: "pinball", label: "Pinball" },
+  { value: "photo_booth", label: "Photo Booth" },
+  { value: "vr_pod", label: "VR Pod" },
+  { value: "racing_simulator", label: "Racing Simulator" },
+  { value: "ticket_dispenser", label: "Ticket / Prize Dispenser" },
+  { value: "prize_kiosk", label: "Prize Redemption Kiosk" },
+  // Kiosks & Digital
+  { value: "digital", label: "Digital Kiosk" },
+  { value: "self_checkout", label: "Self-Checkout Kiosk" },
+  { value: "info_kiosk", label: "Info / Wayfinding Kiosk" },
+  { value: "ordering_kiosk", label: "Ordering Kiosk" },
+  { value: "check_in_kiosk", label: "Check-In Kiosk" },
+  { value: "ad_display", label: "Digital Ad Display" },
+  // Financial & Cash
+  { value: "atm", label: "ATM" },
+  { value: "bill_changer", label: "Bill / Coin Changer" },
+  { value: "crypto_atm", label: "Crypto ATM" },
+  { value: "gift_card_kiosk", label: "Gift Card Kiosk" },
+  // Charging & Utility
+  { value: "phone_charger", label: "Phone Charging Station" },
+  { value: "ev_charger", label: "EV Charging Station" },
+  { value: "wifi_hotspot", label: "WiFi Hotspot" },
+  { value: "battery_swap", label: "Battery Swap Station" },
+  // Laundry & Services
+  { value: "laundry", label: "Laundry Machine" },
+  { value: "car_wash", label: "Car Wash Bay" },
+  { value: "air_water", label: "Air / Water Station" },
+  { value: "vacuum", label: "Vacuum Station" },
+  // Health & Convenience
+  { value: "massage_chair", label: "Massage Chair" },
+  { value: "kiddie_ride", label: "Kiddie Ride" },
+  { value: "scale", label: "Weight / Health Scale" },
+  { value: "blood_pressure", label: "Blood Pressure Kiosk" },
+  // Other
   { value: "other", label: "Other" },
 ] as const;
 
