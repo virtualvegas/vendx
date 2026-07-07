@@ -116,6 +116,7 @@ const tabGroups: TabGroup[] = [
       { id: "franchise-orders", label: "Order History", icon: Package, requiredRoles: r("franchise-orders") },
       { id: "franchise-payouts", label: "Sales & Payouts", icon: DollarSign, requiredRoles: r("franchise-payouts") },
       { id: "franchise-territory", label: "My Territory", icon: Map, requiredRoles: r("franchise-territory") },
+      { id: "franchise-location-request", label: "Propose Location", icon: MapPin, requiredRoles: r("franchise-location-request") },
       { id: "franchise-support", label: "Support", icon: MessageCircle, requiredRoles: r("franchise-support") },
       { id: "franchise-onboarding", label: "Application / Setup", icon: Briefcase, requiredRoles: r("franchise-onboarding") },
     ],
