@@ -391,6 +391,8 @@ const GlobalLocations = () => {
         is_visible: data.is_visible,
         location_type: data.location_type,
         location_category: data.location_category,
+        business_type: data.business_type || null,
+        ownership: data.ownership || "vendx_owned",
         contact_name: data.contact_name || null,
         contact_phone: data.contact_phone || null,
         contact_email: data.contact_email || null,
