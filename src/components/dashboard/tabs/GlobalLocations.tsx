@@ -555,7 +555,7 @@ const GlobalLocations = () => {
   const resetForm = () => {
     setFormData({ 
       name: "", country: "", city: "", address: "", latitude: "", longitude: "", 
-      status: "active", is_visible: true, location_type: "office", location_category: "vending",
+      status: "active", is_visible: true, location_type: "office", location_category: "vending", business_type: "", ownership: "vendx_owned",
       contact_name: "", contact_phone: "", contact_email: "",
       snack_machine_count: 0, drink_machine_count: 0, combo_machine_count: 0, 
       specialty_machine_count: 0, arcade_machine_count: 0 
