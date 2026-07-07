@@ -271,6 +271,7 @@ const tabGroups: TabGroup[] = [
     tabs: [
       { id: "admin-settings", label: "Users & Roles", icon: Users, requiredRoles: r("admin-settings") },
       { id: "franchises-manager", label: "Franchise Program", icon: Briefcase, requiredRoles: r("franchises-manager") },
+      { id: "franchise-leaderboard", label: "Franchise Leaderboard", icon: Trophy, requiredRoles: r("franchise-leaderboard") },
       { id: "merchant-api", label: "Merchant API", icon: Globe, requiredRoles: r("merchant-api") },
       { id: "partner-api", label: "Partner API", icon: Globe, requiredRoles: r("partner-api") },
       { id: "sso-apps", label: "SSO Applications", icon: ShieldCheck, requiredRoles: r("sso-apps") },
