@@ -31,6 +31,8 @@ interface Location {
   is_visible: boolean;
   location_type: string | null;
   location_category: string | null;
+  business_type: string | null;
+  ownership: string | null;
   contact_name: string | null;
   contact_phone: string | null;
   contact_email: string | null;
@@ -238,7 +240,49 @@ const LOCATION_CATEGORIES = [
   { value: "vending", label: "Vending Only" },
   { value: "arcade", label: "Arcade Only" },
   { value: "mixed", label: "Mixed (Vending + Arcade)" },
+  { value: "kiosk", label: "Digital / Info Kiosk" },
+  { value: "atm", label: "ATM / Financial" },
+  { value: "ev_charging", label: "EV Charging" },
+  { value: "phone_charging", label: "Phone Charging" },
+  { value: "laundry", label: "Laundry" },
+  { value: "photo_booth", label: "Photo Booth" },
+  { value: "smart_locker", label: "Smart Locker / EcoVend" },
+  { value: "ad_display", label: "Digital Ad Display" },
+  { value: "self_service", label: "Self-Service / Checkout" },
+  { value: "full_service", label: "Full-Service Site (multi-machine)" },
+  { value: "other", label: "Other" },
 ];
+
+const BUSINESS_TYPES = [
+  { value: "retail", label: "Retail" },
+  { value: "hospitality", label: "Hospitality (Hotel / Resort)" },
+  { value: "food_beverage", label: "Food & Beverage" },
+  { value: "entertainment", label: "Entertainment / Arcade" },
+  { value: "fitness", label: "Fitness & Sports" },
+  { value: "healthcare", label: "Healthcare" },
+  { value: "education", label: "Education" },
+  { value: "office_corporate", label: "Office / Corporate" },
+  { value: "industrial", label: "Industrial / Manufacturing" },
+  { value: "transportation", label: "Transportation / Transit" },
+  { value: "automotive", label: "Automotive" },
+  { value: "government", label: "Government / Public" },
+  { value: "residential", label: "Residential" },
+  { value: "religious", label: "Religious / Community" },
+  { value: "events", label: "Events / Temporary" },
+  { value: "personal_services", label: "Personal Services" },
+  { value: "outdoor_recreation", label: "Outdoor / Recreation" },
+  { value: "other", label: "Other" },
+];
+
+const OWNERSHIP_TYPES = [
+  { value: "vendx_owned", label: "VendX Owned Site", color: "default" as const },
+  { value: "vendx_operated", label: "VendX Operated (Leased)", color: "default" as const },
+  { value: "host_location", label: "Host Location (Machines Only)", color: "secondary" as const },
+  { value: "partner_owned", label: "Partner Owned", color: "secondary" as const },
+  { value: "franchise_owned", label: "Franchise Owned", color: "outline" as const },
+  { value: "external_client", label: "External Client Site", color: "outline" as const },
+];
+
 
 const GlobalLocations = () => {
   const [showDialog, setShowDialog] = useState(false);
@@ -264,6 +308,8 @@ const GlobalLocations = () => {
     is_visible: true,
     location_type: "office",
     location_category: "vending",
+    business_type: "",
+    ownership: "vendx_owned",
     contact_name: "",
     contact_phone: "",
     contact_email: "",
@@ -345,6 +391,8 @@ const GlobalLocations = () => {
         is_visible: data.is_visible,
         location_type: data.location_type,
         location_category: data.location_category,
+        business_type: data.business_type || null,
+        ownership: data.ownership || "vendx_owned",
         contact_name: data.contact_name || null,
         contact_phone: data.contact_phone || null,
         contact_email: data.contact_email || null,
@@ -509,7 +557,7 @@ const GlobalLocations = () => {
   const resetForm = () => {
     setFormData({ 
       name: "", country: "", city: "", address: "", latitude: "", longitude: "", 
-      status: "active", is_visible: true, location_type: "office", location_category: "vending",
+      status: "active", is_visible: true, location_type: "office", location_category: "vending", business_type: "", ownership: "vendx_owned",
       contact_name: "", contact_phone: "", contact_email: "",
       snack_machine_count: 0, drink_machine_count: 0, combo_machine_count: 0, 
       specialty_machine_count: 0, arcade_machine_count: 0 
@@ -530,6 +578,8 @@ const GlobalLocations = () => {
       is_visible: location.is_visible,
       location_type: location.location_type || "office",
       location_category: location.location_category || "vending",
+      business_type: location.business_type || "",
+      ownership: location.ownership || "vendx_owned",
       contact_name: location.contact_name || "",
       contact_phone: location.contact_phone || "",
       contact_email: location.contact_email || "",
@@ -627,6 +677,8 @@ const GlobalLocations = () => {
                   <TableHead>Location</TableHead>
                   <TableHead>Type</TableHead>
                   <TableHead>Category</TableHead>
+                  <TableHead>Business Type</TableHead>
+                  <TableHead>Ownership</TableHead>
                   <TableHead>Business Owner</TableHead>
                   <TableHead>Machines</TableHead>
                   <TableHead>Arcade Games</TableHead>
@@ -644,6 +696,8 @@ const GlobalLocations = () => {
                     </TableCell>
                     <TableCell><Badge variant="outline">{LOCATION_TYPES.find(t => t.value === loc.location_type)?.label || loc.location_type}</Badge></TableCell>
                     <TableCell><Badge variant={loc.location_category === "mixed" ? "default" : "secondary"}>{LOCATION_CATEGORIES.find(c => c.value === loc.location_category)?.label || loc.location_category || "Vending"}</Badge></TableCell>
+                    <TableCell>{loc.business_type ? <Badge variant="outline">{BUSINESS_TYPES.find(b => b.value === loc.business_type)?.label || loc.business_type}</Badge> : <span className="text-xs text-muted-foreground">—</span>}</TableCell>
+                    <TableCell><Badge variant={OWNERSHIP_TYPES.find(o => o.value === loc.ownership)?.color || "secondary"}>{OWNERSHIP_TYPES.find(o => o.value === loc.ownership)?.label || loc.ownership || "VendX Owned"}</Badge></TableCell>
                     <TableCell>
                       {(() => {
                         const owner = getLocationOwner(loc.id);
@@ -696,6 +750,8 @@ const GlobalLocations = () => {
               <div className="col-span-2 space-y-2"><Label>Address</Label><Input value={formData.address} onChange={(e) => setFormData({ ...formData, address: e.target.value })} /></div>
               <div className="space-y-2"><Label>Type</Label><SearchableSelect options={LOCATION_TYPES.map(t => ({ value: t.value, label: t.label }))} value={formData.location_type} onValueChange={(v) => setFormData({ ...formData, location_type: v })} placeholder="Select type" searchPlaceholder="Search type..." /></div>
               <div className="space-y-2"><Label>Category</Label><SearchableSelect options={LOCATION_CATEGORIES.map(c => ({ value: c.value, label: c.label }))} value={formData.location_category} onValueChange={(v) => setFormData({ ...formData, location_category: v })} placeholder="Select category" searchPlaceholder="Search category..." /></div>
+              <div className="space-y-2"><Label>Business Type</Label><SearchableSelect options={BUSINESS_TYPES.map(b => ({ value: b.value, label: b.label }))} value={formData.business_type} onValueChange={(v) => setFormData({ ...formData, business_type: v })} placeholder="Select business type" searchPlaceholder="Search business type..." /></div>
+              <div className="space-y-2"><Label>Ownership</Label><SearchableSelect options={OWNERSHIP_TYPES.map(o => ({ value: o.value, label: o.label }))} value={formData.ownership} onValueChange={(v) => setFormData({ ...formData, ownership: v })} placeholder="Select ownership" searchPlaceholder="Search ownership..." /></div>
               <div className="space-y-2"><Label>Status</Label><SearchableSelect options={[{ value: "active", label: "Active" }, { value: "inactive", label: "Inactive" }, { value: "coming_soon", label: "Coming Soon" }, { value: "seasonal", label: "Seasonal" }]} value={formData.status} onValueChange={(v) => setFormData({ ...formData, status: v })} placeholder="Select status" searchPlaceholder="Search status..." /></div>
               <div className="space-y-2"><Label>Latitude</Label><Input value={formData.latitude} onChange={(e) => setFormData({ ...formData, latitude: e.target.value })} placeholder="e.g. 40.7128" /></div>
               <div className="space-y-2"><Label>Longitude</Label><Input value={formData.longitude} onChange={(e) => setFormData({ ...formData, longitude: e.target.value })} placeholder="e.g. -74.0060" /></div>
