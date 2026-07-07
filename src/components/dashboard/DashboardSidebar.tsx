@@ -111,7 +111,8 @@ const tabGroups: TabGroup[] = [
     tabs: [
       { id: "franchise-overview", label: "Overview", icon: LayoutDashboard, requiredRoles: r("franchise-overview") },
       { id: "franchise-route", label: "My Route", icon: Route, requiredRoles: r("franchise-route") },
-      { id: "franchise-orders", label: "Order Machines & Products", icon: Package, requiredRoles: r("franchise-orders") },
+      { id: "franchise-storefront", label: "Storefront", icon: Store, requiredRoles: r("franchise-storefront") },
+      { id: "franchise-orders", label: "Order History", icon: Package, requiredRoles: r("franchise-orders") },
       { id: "franchise-payouts", label: "Sales & Payouts", icon: DollarSign, requiredRoles: r("franchise-payouts") },
       { id: "franchise-onboarding", label: "Application / Setup", icon: Briefcase, requiredRoles: r("franchise-onboarding") },
     ],
