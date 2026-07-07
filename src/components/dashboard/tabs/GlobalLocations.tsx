@@ -240,7 +240,49 @@ const LOCATION_CATEGORIES = [
   { value: "vending", label: "Vending Only" },
   { value: "arcade", label: "Arcade Only" },
   { value: "mixed", label: "Mixed (Vending + Arcade)" },
+  { value: "kiosk", label: "Digital / Info Kiosk" },
+  { value: "atm", label: "ATM / Financial" },
+  { value: "ev_charging", label: "EV Charging" },
+  { value: "phone_charging", label: "Phone Charging" },
+  { value: "laundry", label: "Laundry" },
+  { value: "photo_booth", label: "Photo Booth" },
+  { value: "smart_locker", label: "Smart Locker / EcoVend" },
+  { value: "ad_display", label: "Digital Ad Display" },
+  { value: "self_service", label: "Self-Service / Checkout" },
+  { value: "full_service", label: "Full-Service Site (multi-machine)" },
+  { value: "other", label: "Other" },
 ];
+
+const BUSINESS_TYPES = [
+  { value: "retail", label: "Retail" },
+  { value: "hospitality", label: "Hospitality (Hotel / Resort)" },
+  { value: "food_beverage", label: "Food & Beverage" },
+  { value: "entertainment", label: "Entertainment / Arcade" },
+  { value: "fitness", label: "Fitness & Sports" },
+  { value: "healthcare", label: "Healthcare" },
+  { value: "education", label: "Education" },
+  { value: "office_corporate", label: "Office / Corporate" },
+  { value: "industrial", label: "Industrial / Manufacturing" },
+  { value: "transportation", label: "Transportation / Transit" },
+  { value: "automotive", label: "Automotive" },
+  { value: "government", label: "Government / Public" },
+  { value: "residential", label: "Residential" },
+  { value: "religious", label: "Religious / Community" },
+  { value: "events", label: "Events / Temporary" },
+  { value: "personal_services", label: "Personal Services" },
+  { value: "outdoor_recreation", label: "Outdoor / Recreation" },
+  { value: "other", label: "Other" },
+];
+
+const OWNERSHIP_TYPES = [
+  { value: "vendx_owned", label: "VendX Owned Site", color: "default" as const },
+  { value: "vendx_operated", label: "VendX Operated (Leased)", color: "default" as const },
+  { value: "host_location", label: "Host Location (Machines Only)", color: "secondary" as const },
+  { value: "partner_owned", label: "Partner Owned", color: "secondary" as const },
+  { value: "franchise_owned", label: "Franchise Owned", color: "outline" as const },
+  { value: "external_client", label: "External Client Site", color: "outline" as const },
+];
+
 
 const GlobalLocations = () => {
   const [showDialog, setShowDialog] = useState(false);
