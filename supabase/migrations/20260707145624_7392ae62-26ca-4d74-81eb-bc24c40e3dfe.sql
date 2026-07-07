@@ -1,0 +1,1 @@
+ALTER TABLE public.locations DROP CONSTRAINT IF EXISTS locations_location_category_check;
