@@ -47,6 +47,9 @@ interface Location {
   status: string;
   location_category: string | null;
   location_type: string | null;
+  additional_categories: string[] | null;
+  booking_url: string | null;
+  booking_label: string | null;
   machine_count: number;
   snack_machine_count: number | null;
   drink_machine_count: number | null;
