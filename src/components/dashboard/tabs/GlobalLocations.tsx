@@ -308,6 +308,8 @@ const GlobalLocations = () => {
     is_visible: true,
     location_type: "office",
     location_category: "vending",
+    business_type: "",
+    ownership: "vendx_owned",
     contact_name: "",
     contact_phone: "",
     contact_email: "",
