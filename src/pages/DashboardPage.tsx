@@ -87,7 +87,10 @@ import FranchisePayouts from "@/components/dashboard/tabs/franchise/FranchisePay
 import FranchiseStorefront from "@/components/dashboard/tabs/franchise/FranchiseStorefront";
 import FranchiseSupport from "@/components/dashboard/tabs/franchise/FranchiseSupport";
 import FranchiseTerritory from "@/components/dashboard/tabs/franchise/FranchiseTerritory";
+import FranchiseLocationRequest from "@/components/dashboard/tabs/franchise/FranchiseLocationRequest";
 import FranchisesManager from "@/components/dashboard/tabs/FranchisesManager";
+import FranchiseTerritoryManager from "@/components/dashboard/tabs/FranchiseTerritoryManager";
+import FranchiseCatalogManager from "@/components/dashboard/tabs/FranchiseCatalogManager";
 import FranchiseLeaderboard from "@/components/dashboard/tabs/FranchiseLeaderboard";
 import FinanceKpiDashboard from "@/components/dashboard/tabs/FinanceKpiDashboard";
 import MyBusinessCard from "@/components/dashboard/tabs/MyBusinessCard";
@@ -253,7 +256,7 @@ const DashboardPage = () => {
   const NON_ADMIN_TABS = [
     "my-orders", "my-machines", "my-wallet", "my-tickets", "my-rewards", "linked-accounts", "my-subscriptions",
     "business-overview", "business-locations", "business-machines", "business-payouts", "business-support", "business-adreach", "business-external-service",
-    "franchise-onboarding", "franchise-overview", "franchise-route", "franchise-storefront", "franchise-orders", "franchise-payouts", "franchise-territory", "franchise-support",
+    "franchise-onboarding", "franchise-overview", "franchise-route", "franchise-storefront", "franchise-orders", "franchise-payouts", "franchise-territory", "franchise-location-request", "franchise-support",
   ];
 
   const renderTabContent = () => {
@@ -303,10 +306,16 @@ const DashboardPage = () => {
         content = <FranchisePayouts />; break;
       case "franchise-territory":
         content = <FranchiseTerritory />; break;
+      case "franchise-location-request":
+        content = <FranchiseLocationRequest />; break;
       case "franchise-support":
         content = <FranchiseSupport />; break;
       case "franchises-manager":
         content = <FranchisesManager />; break;
+      case "franchise-territory-manager":
+        content = <FranchiseTerritoryManager />; break;
+      case "franchise-catalog":
+        content = <FranchiseCatalogManager />; break;
       case "franchise-leaderboard":
         content = <FranchiseLeaderboard />; break;
       case "finance-kpi":
