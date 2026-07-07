@@ -576,6 +576,8 @@ const GlobalLocations = () => {
       is_visible: location.is_visible,
       location_type: location.location_type || "office",
       location_category: location.location_category || "vending",
+      business_type: location.business_type || "",
+      ownership: location.ownership || "vendx_owned",
       contact_name: location.contact_name || "",
       contact_phone: location.contact_phone || "",
       contact_email: location.contact_email || "",
