@@ -3118,6 +3118,7 @@ export type Database = {
         Row: {
           address: string | null
           arcade_machine_count: number | null
+          business_type: string | null
           city: string
           combo_machine_count: number | null
           contact_email: string | null
@@ -3135,6 +3136,7 @@ export type Database = {
           machine_count: number
           name: string | null
           office_id: string | null
+          ownership: string
           snack_machine_count: number | null
           specialty_machine_count: number | null
           status: string
@@ -3143,6 +3145,7 @@ export type Database = {
         Insert: {
           address?: string | null
           arcade_machine_count?: number | null
+          business_type?: string | null
           city: string
           combo_machine_count?: number | null
           contact_email?: string | null
@@ -3160,6 +3163,7 @@ export type Database = {
           machine_count?: number
           name?: string | null
           office_id?: string | null
+          ownership?: string
           snack_machine_count?: number | null
           specialty_machine_count?: number | null
           status?: string
@@ -3168,6 +3172,7 @@ export type Database = {
         Update: {
           address?: string | null
           arcade_machine_count?: number | null
+          business_type?: string | null
           city?: string
           combo_machine_count?: number | null
           contact_email?: string | null
@@ -3185,6 +3190,7 @@ export type Database = {
           machine_count?: number
           name?: string | null
           office_id?: string | null
+          ownership?: string
           snack_machine_count?: number | null
           specialty_machine_count?: number | null
           status?: string
