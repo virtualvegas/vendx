@@ -293,6 +293,8 @@ const DashboardPage = () => {
         content = <FranchiseRoute />; break;
       case "franchise-orders":
         content = <FranchiseOrders />; break;
+      case "franchise-storefront":
+        content = <FranchiseStorefront />; break;
       case "franchise-payouts":
         content = <FranchisePayouts />; break;
       case "franchises-manager":
