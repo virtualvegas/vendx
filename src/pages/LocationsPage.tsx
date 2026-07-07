@@ -409,9 +409,14 @@ const LocationsPage = () => {
                           </div>
 
                           <div className="flex flex-wrap gap-2">
-                            <Badge className={categoryColors[location.location_category || "vending"]}>
-                              {categoryLabels[location.location_category || "vending"]}
+                            <Badge className={categoryColors[location.location_category || "vending"] || "bg-muted text-muted-foreground border-border"}>
+                              {categoryLabels[location.location_category || "vending"] || location.location_category}
                             </Badge>
+                            {(location.additional_categories || []).map((c) => (
+                              <Badge key={c} variant="outline" className={categoryColors[c] || ""}>
+                                {categoryLabels[c] || c}
+                              </Badge>
+                            ))}
                             {location.location_type && (
                               <Badge variant="outline" className="gap-1">
                                 {locationTypeIcons[location.location_type] || <Building2 className="w-4 h-4" />}
@@ -419,6 +424,21 @@ const LocationsPage = () => {
                               </Badge>
                             )}
                           </div>
+
+                          {location.booking_url && (
+                            <a
+                              href={location.booking_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="mt-3 block"
+                            >
+                              <Button size="sm" className="w-full gap-2">
+                                <CalendarCheck className="w-4 h-4" />
+                                {location.booking_label || "Book / Reserve"}
+                                <ExternalLink className="w-3 h-3 opacity-70" />
+                              </Button>
+                            </a>
+                          )}
 
                           <div className="flex items-center justify-between mt-4 pt-4 border-t border-border/50">
                             <div className="flex gap-4 text-sm text-muted-foreground">
