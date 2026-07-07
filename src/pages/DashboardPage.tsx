@@ -301,6 +301,10 @@ const DashboardPage = () => {
         content = <FranchisePayouts />; break;
       case "franchises-manager":
         content = <FranchisesManager />; break;
+      case "franchise-leaderboard":
+        content = <FranchiseLeaderboard />; break;
+      case "finance-kpi":
+        content = <FinanceKpiDashboard />; break;
       case "external-service":
         content = <ExternalServiceManager />; break;
       case "custom-arcade-requests":
