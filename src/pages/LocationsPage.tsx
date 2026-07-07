@@ -30,7 +30,10 @@ import {
   Factory,
   Store,
   Warehouse,
-  PartyPopper
+  PartyPopper,
+  CalendarCheck,
+  ExternalLink
+
 } from "lucide-react";
 
 interface Location {
