@@ -34,9 +34,12 @@ const FinanceManager = () => {
           <TabsTrigger value="ap" className="gap-1.5 text-xs md:text-sm"><FileMinus className="h-4 w-4" />AP Bills</TabsTrigger>
           <TabsTrigger value="ar" className="gap-1.5 text-xs md:text-sm"><FilePlus className="h-4 w-4" />AR Invoices</TabsTrigger>
           <TabsTrigger value="bank" className="gap-1.5 text-xs md:text-sm"><Landmark className="h-4 w-4" />Bank Recon</TabsTrigger>
+          <TabsTrigger value="recurring" className="gap-1.5 text-xs md:text-sm"><Calendar className="h-4 w-4" />Recurring</TabsTrigger>
           <TabsTrigger value="pending" className="gap-1.5 text-xs md:text-sm"><Clock className="h-4 w-4" />Pending</TabsTrigger>
           <TabsTrigger value="subscriptions" className="gap-1.5 text-xs md:text-sm"><Repeat className="h-4 w-4" />Subs</TabsTrigger>
-          <TabsTrigger value="tax" className="gap-1.5 text-xs md:text-sm"><PiggyBank className="h-4 w-4" />Tax</TabsTrigger>
+          <TabsTrigger value="tax" className="gap-1.5 text-xs md:text-sm"><PiggyBank className="h-4 w-4" />Tax Vault</TabsTrigger>
+          <TabsTrigger value="tax-advanced" className="gap-1.5 text-xs md:text-sm"><Scale className="h-4 w-4" />Tax Pro</TabsTrigger>
+          <TabsTrigger value="currency" className="gap-1.5 text-xs md:text-sm"><Globe className="h-4 w-4" />Currency</TabsTrigger>
           <TabsTrigger value="reinvest" className="gap-1.5 text-xs md:text-sm"><Package className="h-4 w-4" />Reinvest</TabsTrigger>
         </TabsList>
         <TabsContent value="reports"><ReportsTab /></TabsContent>
@@ -47,9 +50,12 @@ const FinanceManager = () => {
         <TabsContent value="ap"><ApBillsTab /></TabsContent>
         <TabsContent value="ar"><ArInvoicesTab /></TabsContent>
         <TabsContent value="bank"><BankReconTab /></TabsContent>
+        <TabsContent value="recurring"><RecurringBillsTab /></TabsContent>
         <TabsContent value="pending"><PendingPaymentsTab /></TabsContent>
         <TabsContent value="subscriptions"><SubscriptionsTab /></TabsContent>
         <TabsContent value="tax"><TaxVaultTab /></TabsContent>
+        <TabsContent value="tax-advanced"><TaxTab /></TabsContent>
+        <TabsContent value="currency"><CurrencyTab /></TabsContent>
         <TabsContent value="reinvest"><ReinvestmentsTab /></TabsContent>
       </Tabs>
     </div>
