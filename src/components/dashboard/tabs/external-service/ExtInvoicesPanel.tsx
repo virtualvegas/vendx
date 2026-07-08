@@ -87,6 +87,16 @@ const ExtInvoicesPanel = () => {
     if (error) toast.error(error.message); else { toast.success("Updated"); qc.invalidateQueries({ queryKey: ["ext-invoices"] }); }
   };
 
+  const deleteInvoice = async (id: string, invoiceNumber: string) => {
+    if (!confirm(`Delete invoice ${invoiceNumber}? This removes all line items and cannot be undone.`)) return;
+    await supabase.from("vendx_external_service_invoice_items" as any).delete().eq("invoice_id", id);
+    const { error } = await supabase.from("vendx_external_service_invoices" as any).delete().eq("id", id);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Invoice deleted");
+    setOpen(null);
+    qc.invalidateQueries({ queryKey: ["ext-invoices"] });
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap justify-between items-center gap-2">
@@ -155,6 +165,7 @@ const ExtInvoicesPanel = () => {
                 {ci.status === "draft" && <Button size="sm" variant="outline" onClick={() => setStatus(ci.id, "sent")}><Send className="w-4 h-4 mr-1" /> Mark Sent</Button>}
                 {ci.status === "sent" && <Button size="sm" variant="outline" onClick={() => setStatus(ci.id, "paid")}><CheckCircle className="w-4 h-4 mr-1" /> Mark Paid</Button>}
                 {ci.status !== "void" && <Button size="sm" variant="outline" onClick={() => setStatus(ci.id, "void")}>Void</Button>}
+                <Button size="sm" variant="destructive" onClick={() => deleteInvoice(ci.id, ci.invoice_number)}><Trash2 className="w-4 h-4 mr-1" /> Delete</Button>
               </div>
 
               <div className="space-y-2 mb-4">
