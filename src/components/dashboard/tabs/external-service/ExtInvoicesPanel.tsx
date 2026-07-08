@@ -87,6 +87,16 @@ const ExtInvoicesPanel = () => {
     if (error) toast.error(error.message); else { toast.success("Updated"); qc.invalidateQueries({ queryKey: ["ext-invoices"] }); }
   };
 
+  const deleteInvoice = async (id: string, invoiceNumber: string) => {
+    if (!confirm(`Delete invoice ${invoiceNumber}? This removes all line items and cannot be undone.`)) return;
+    await supabase.from("vendx_external_service_invoice_items" as any).delete().eq("invoice_id", id);
+    const { error } = await supabase.from("vendx_external_service_invoices" as any).delete().eq("id", id);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Invoice deleted");
+    setOpen(null);
+    qc.invalidateQueries({ queryKey: ["ext-invoices"] });
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap justify-between items-center gap-2">
