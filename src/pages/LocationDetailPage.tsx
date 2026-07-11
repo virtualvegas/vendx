@@ -424,7 +424,7 @@ const LocationDetailPage = () => {
             )}
 
             {/* Arcade Machines */}
-            {(location.location_category === "arcade" || location.location_category === "mixed") && (
+            {(["arcade", "mixed"].includes(location.location_category || "") || (location.additional_categories || []).some(c => ["arcade", "mixed"].includes(c)) || (location.arcade_machine_count || 0) > 0) && (
               <Card className="bg-card/50 border-border/50">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
