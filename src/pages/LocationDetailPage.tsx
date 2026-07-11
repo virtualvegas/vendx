@@ -26,7 +26,11 @@ import {
   Hospital,
   Factory,
   Store,
-  Warehouse
+  Warehouse,
+  PartyPopper,
+  CalendarCheck,
+  ExternalLink,
+  BadgeCheck
 } from "lucide-react";
 import { useSEO } from "@/hooks/useSEO";
 
