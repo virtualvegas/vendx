@@ -45,6 +45,11 @@ interface Location {
   status: string;
   location_category: string | null;
   location_type: string | null;
+  additional_categories: string[] | null;
+  ownership: string | null;
+  business_type: string | null;
+  booking_url: string | null;
+  booking_label: string | null;
   machine_count: number;
   snack_machine_count: number | null;
   drink_machine_count: number | null;
@@ -69,12 +74,48 @@ const categoryIcons: Record<string, React.ReactNode> = {
   vending: <Coffee className="w-6 h-6" />,
   arcade: <Gamepad2 className="w-6 h-6" />,
   mixed: <Combine className="w-6 h-6" />,
+  entertainment_center: <PartyPopper className="w-6 h-6" />,
+  family_entertainment_center: <PartyPopper className="w-6 h-6" />,
+  bowling_alley: <PartyPopper className="w-6 h-6" />,
+  movie_theater: <PartyPopper className="w-6 h-6" />,
+  restaurant: <Coffee className="w-6 h-6" />,
+  cafe: <Coffee className="w-6 h-6" />,
+  bar_nightclub: <PartyPopper className="w-6 h-6" />,
+  sports_bar: <PartyPopper className="w-6 h-6" />,
 };
 
 const categoryLabels: Record<string, string> = {
   vending: "Vending Only",
   arcade: "Arcade Only",
   mixed: "Vending + Arcade",
+  entertainment_center: "Entertainment Center",
+  family_entertainment_center: "Family Entertainment Center",
+  bowling_alley: "Bowling Alley",
+  movie_theater: "Movie Theater",
+  mini_golf: "Mini Golf",
+  laser_tag: "Laser Tag",
+  escape_room: "Escape Room",
+  go_karting: "Go-Karting",
+  trampoline_park: "Trampoline Park",
+  roller_rink: "Skating Rink",
+  sports_bar: "Sports Bar",
+  restaurant: "Restaurant",
+  cafe: "Café",
+  bar_nightclub: "Bar / Nightclub",
+  billiards: "Billiards",
+  vr_arena: "VR Arena",
+  event_venue: "Event Venue",
+  kiosk: "Kiosk",
+  atm: "ATM",
+  ev_charging: "EV Charging",
+  phone_charging: "Phone Charging",
+  laundry: "Laundry",
+  photo_booth: "Photo Booth",
+  smart_locker: "Smart Locker",
+  ad_display: "Ad Display",
+  self_service: "Self-Service",
+  full_service: "Full-Service",
+  other: "Other",
 };
 
 const statusColors: Record<string, string> = {
