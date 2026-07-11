@@ -26,7 +26,11 @@ import {
   Hospital,
   Factory,
   Store,
-  Warehouse
+  Warehouse,
+  PartyPopper,
+  CalendarCheck,
+  ExternalLink,
+  BadgeCheck
 } from "lucide-react";
 import { useSEO } from "@/hooks/useSEO";
 
@@ -41,6 +45,11 @@ interface Location {
   status: string;
   location_category: string | null;
   location_type: string | null;
+  additional_categories: string[] | null;
+  ownership: string | null;
+  business_type: string | null;
+  booking_url: string | null;
+  booking_label: string | null;
   machine_count: number;
   snack_machine_count: number | null;
   drink_machine_count: number | null;
@@ -65,12 +74,48 @@ const categoryIcons: Record<string, React.ReactNode> = {
   vending: <Coffee className="w-6 h-6" />,
   arcade: <Gamepad2 className="w-6 h-6" />,
   mixed: <Combine className="w-6 h-6" />,
+  entertainment_center: <PartyPopper className="w-6 h-6" />,
+  family_entertainment_center: <PartyPopper className="w-6 h-6" />,
+  bowling_alley: <PartyPopper className="w-6 h-6" />,
+  movie_theater: <PartyPopper className="w-6 h-6" />,
+  restaurant: <Coffee className="w-6 h-6" />,
+  cafe: <Coffee className="w-6 h-6" />,
+  bar_nightclub: <PartyPopper className="w-6 h-6" />,
+  sports_bar: <PartyPopper className="w-6 h-6" />,
 };
 
 const categoryLabels: Record<string, string> = {
   vending: "Vending Only",
   arcade: "Arcade Only",
   mixed: "Vending + Arcade",
+  entertainment_center: "Entertainment Center",
+  family_entertainment_center: "Family Entertainment Center",
+  bowling_alley: "Bowling Alley",
+  movie_theater: "Movie Theater",
+  mini_golf: "Mini Golf",
+  laser_tag: "Laser Tag",
+  escape_room: "Escape Room",
+  go_karting: "Go-Karting",
+  trampoline_park: "Trampoline Park",
+  roller_rink: "Skating Rink",
+  sports_bar: "Sports Bar",
+  restaurant: "Restaurant",
+  cafe: "Café",
+  bar_nightclub: "Bar / Nightclub",
+  billiards: "Billiards",
+  vr_arena: "VR Arena",
+  event_venue: "Event Venue",
+  kiosk: "Kiosk",
+  atm: "ATM",
+  ev_charging: "EV Charging",
+  phone_charging: "Phone Charging",
+  laundry: "Laundry",
+  photo_booth: "Photo Booth",
+  smart_locker: "Smart Locker",
+  ad_display: "Ad Display",
+  self_service: "Self-Service",
+  full_service: "Full-Service",
+  other: "Other",
 };
 
 const statusColors: Record<string, string> = {
@@ -283,7 +328,7 @@ const LocationDetailPage = () => {
           {/* Header */}
           <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-8">
             <div>
-              <div className="flex items-center gap-3 mb-2">
+              <div className="flex items-center gap-3 mb-2 flex-wrap">
                 {categoryIcons[location.location_category || "vending"]}
                 <h1 className="text-3xl md:text-4xl font-bold text-foreground">
                   {location.name || location.city}
@@ -291,12 +336,26 @@ const LocationDetailPage = () => {
                 <Badge className={statusColors[location.status] || statusColors.active}>
                   {statusLabels[location.status] || location.status}
                 </Badge>
+                {location.ownership === "vendx_owned" && (
+                  <Badge className="gap-1 bg-primary/20 text-primary border-primary/30">
+                    <BadgeCheck className="w-3.5 h-3.5" />
+                    VendX Owned
+                  </Badge>
+                )}
               </div>
-              <div className="flex items-center gap-2 text-muted-foreground">
+              <div className="flex items-center gap-2 text-muted-foreground flex-wrap">
                 <Globe className="w-4 h-4" />
                 <span>{location.city}, {location.country}</span>
+                <Badge variant="outline" className="ml-2">
+                  {categoryLabels[location.location_category || "vending"] || location.location_category}
+                </Badge>
+                {(location.additional_categories || []).map((c) => (
+                  <Badge key={c} variant="outline">
+                    {categoryLabels[c] || c}
+                  </Badge>
+                ))}
                 {location.location_type && (
-                  <Badge variant="outline" className="gap-1 ml-2">
+                  <Badge variant="outline" className="gap-1">
                     {locationTypeIcons[location.location_type] || <Building2 className="w-4 h-4" />}
                     {locationTypeLabels[location.location_type] || location.location_type}
                   </Badge>
@@ -307,19 +366,31 @@ const LocationDetailPage = () => {
               )}
             </div>
             
-            {directionsUrl && (
-              <a href={directionsUrl} target="_blank" rel="noopener noreferrer">
-                <Button className="gap-2">
-                  <NavIcon className="w-4 h-4" />
-                  Get Directions
-                </Button>
-              </a>
-            )}
+            <div className="flex flex-col sm:flex-row gap-2">
+              {location.ownership === "vendx_owned" && location.booking_url && (
+                <a href={location.booking_url} target="_blank" rel="noopener noreferrer">
+                  <Button className="gap-2 w-full sm:w-auto">
+                    <CalendarCheck className="w-4 h-4" />
+                    {location.booking_label || "Reserve / Book"}
+                    <ExternalLink className="w-3 h-3 opacity-70" />
+                  </Button>
+                </a>
+              )}
+              {directionsUrl && (
+                <a href={directionsUrl} target="_blank" rel="noopener noreferrer">
+                  <Button variant="outline" className="gap-2 w-full sm:w-auto">
+                    <NavIcon className="w-4 h-4" />
+                    Get Directions
+                  </Button>
+                </a>
+              )}
+            </div>
           </div>
+
 
           <div className="grid md:grid-cols-2 gap-8">
             {/* Vending Machines */}
-            {(location.location_category === "vending" || location.location_category === "mixed") && (
+            {(["vending", "mixed"].includes(location.location_category || "") || (location.additional_categories || []).some(c => ["vending", "mixed"].includes(c)) || vendingMachines.length > 0) && (
               <Card className="bg-card/50 border-border/50">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
@@ -353,7 +424,7 @@ const LocationDetailPage = () => {
             )}
 
             {/* Arcade Machines */}
-            {(location.location_category === "arcade" || location.location_category === "mixed") && (
+            {(["arcade", "mixed"].includes(location.location_category || "") || (location.additional_categories || []).some(c => ["arcade", "mixed"].includes(c)) || (location.arcade_machine_count || 0) > 0) && (
               <Card className="bg-card/50 border-border/50">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
