@@ -390,7 +390,7 @@ const LocationDetailPage = () => {
 
           <div className="grid md:grid-cols-2 gap-8">
             {/* Vending Machines */}
-            {(location.location_category === "vending" || location.location_category === "mixed") && (
+            {(["vending", "mixed"].includes(location.location_category || "") || (location.additional_categories || []).some(c => ["vending", "mixed"].includes(c)) || vendingMachines.length > 0) && (
               <Card className="bg-card/50 border-border/50">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
