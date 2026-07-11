@@ -328,7 +328,7 @@ const LocationDetailPage = () => {
           {/* Header */}
           <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-8">
             <div>
-              <div className="flex items-center gap-3 mb-2">
+              <div className="flex items-center gap-3 mb-2 flex-wrap">
                 {categoryIcons[location.location_category || "vending"]}
                 <h1 className="text-3xl md:text-4xl font-bold text-foreground">
                   {location.name || location.city}
@@ -336,12 +336,26 @@ const LocationDetailPage = () => {
                 <Badge className={statusColors[location.status] || statusColors.active}>
                   {statusLabels[location.status] || location.status}
                 </Badge>
+                {location.ownership === "vendx_owned" && (
+                  <Badge className="gap-1 bg-primary/20 text-primary border-primary/30">
+                    <BadgeCheck className="w-3.5 h-3.5" />
+                    VendX Owned
+                  </Badge>
+                )}
               </div>
-              <div className="flex items-center gap-2 text-muted-foreground">
+              <div className="flex items-center gap-2 text-muted-foreground flex-wrap">
                 <Globe className="w-4 h-4" />
                 <span>{location.city}, {location.country}</span>
+                <Badge variant="outline" className="ml-2">
+                  {categoryLabels[location.location_category || "vending"] || location.location_category}
+                </Badge>
+                {(location.additional_categories || []).map((c) => (
+                  <Badge key={c} variant="outline">
+                    {categoryLabels[c] || c}
+                  </Badge>
+                ))}
                 {location.location_type && (
-                  <Badge variant="outline" className="gap-1 ml-2">
+                  <Badge variant="outline" className="gap-1">
                     {locationTypeIcons[location.location_type] || <Building2 className="w-4 h-4" />}
                     {locationTypeLabels[location.location_type] || location.location_type}
                   </Badge>
@@ -352,15 +366,27 @@ const LocationDetailPage = () => {
               )}
             </div>
             
-            {directionsUrl && (
-              <a href={directionsUrl} target="_blank" rel="noopener noreferrer">
-                <Button className="gap-2">
-                  <NavIcon className="w-4 h-4" />
-                  Get Directions
-                </Button>
-              </a>
-            )}
+            <div className="flex flex-col sm:flex-row gap-2">
+              {location.ownership === "vendx_owned" && location.booking_url && (
+                <a href={location.booking_url} target="_blank" rel="noopener noreferrer">
+                  <Button className="gap-2 w-full sm:w-auto">
+                    <CalendarCheck className="w-4 h-4" />
+                    {location.booking_label || "Reserve / Book"}
+                    <ExternalLink className="w-3 h-3 opacity-70" />
+                  </Button>
+                </a>
+              )}
+              {directionsUrl && (
+                <a href={directionsUrl} target="_blank" rel="noopener noreferrer">
+                  <Button variant="outline" className="gap-2 w-full sm:w-auto">
+                    <NavIcon className="w-4 h-4" />
+                    Get Directions
+                  </Button>
+                </a>
+              )}
+            </div>
           </div>
+
 
           <div className="grid md:grid-cols-2 gap-8">
             {/* Vending Machines */}
