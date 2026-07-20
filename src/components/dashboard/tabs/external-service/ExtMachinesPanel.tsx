@@ -119,7 +119,7 @@ const ExtMachinesPanel = () => {
                     <Badge variant={m.status === "active" ? "default" : "outline"} className="text-[10px]">{m.status}</Badge>
                     {m.purchased_from_us && <Badge className="text-[10px] bg-primary/20 text-primary border-primary/40">VendX-built</Badge>}
                   </div>
-                  <p className="text-xs text-muted-foreground truncate">{m.client?.company_name}{m.location?.name ? ` · ${m.location.name}` : ""}</p>
+                  <p className="text-xs text-muted-foreground truncate">{m.client?.company_name || m.client?.contact_name}{m.location?.name ? ` · ${m.location.name}` : ""}</p>
                   <p className="text-[11px] text-muted-foreground truncate">{[m.machine_type, m.make, m.model, m.serial_number].filter(Boolean).join(" · ")}</p>
                   {Array.isArray(m.manual_urls) && m.manual_urls.length > 0 && (
                     <div className="flex flex-wrap gap-1 mt-1.5">

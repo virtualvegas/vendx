@@ -159,7 +159,7 @@ const ExtSchedulesPanel = () => {
                   </div>
                   <div className="font-semibold mt-1">{s.subject}</div>
                   <div className="text-xs text-muted-foreground">
-                    {s.client?.company_name || "(no client)"}
+                    {s.client?.company_name || s.client?.contact_name || "(no client)"}
                     {s.location?.name && ` · ${s.location.name}`}
                     {s.machine?.asset_label && ` · ${s.machine.asset_label}`}
                   </div>

@@ -118,7 +118,7 @@ const ExtTicketsPanel = () => {
                   </div>
                   <h3 className="font-semibold mt-1">{t.subject}</h3>
                   <p className="text-sm text-muted-foreground">
-                    {t.client?.company_name || t.intake_company_name || "(unassigned)"}
+                    {t.client?.company_name || t.client?.contact_name || t.intake_company_name || "(unassigned)"}
                     {t.location?.name && ` · ${t.location.name}`}
                     {t.machine?.asset_label && ` · ${t.machine.asset_label}`}
                   </p>

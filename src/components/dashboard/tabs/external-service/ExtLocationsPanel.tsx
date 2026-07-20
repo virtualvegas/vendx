@@ -75,7 +75,7 @@ const ExtLocationsPanel = () => {
               <div className="flex justify-between items-start gap-2">
                 <div className="min-w-0 flex-1">
                   <h3 className="font-semibold">{l.name}</h3>
-                  <p className="text-sm text-muted-foreground">{l.client?.company_name}</p>
+                  <p className="text-sm text-muted-foreground">{l.client?.company_name || l.client?.contact_name}</p>
                   <p className="text-sm">{l.address}{l.city ? `, ${l.city}` : ""}{l.state ? `, ${l.state}` : ""} {l.postal_code}</p>
                   {l.contact_name && <p className="text-xs text-muted-foreground mt-1">Contact: {l.contact_name} {l.contact_phone}</p>}
                 </div>

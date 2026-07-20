@@ -119,7 +119,7 @@ const ExtInvoicesPanel = () => {
                     <span className="font-mono text-xs">{i.invoice_number}</span>
                     <Badge>{i.status}</Badge>
                   </div>
-                  <p className="font-semibold mt-1">{i.client?.company_name}</p>
+                  <p className="font-semibold mt-1">{i.client?.company_name || i.client?.contact_name}</p>
                   <p className="text-xs text-muted-foreground">Issued: {i.issue_date} {i.due_date && `· Due: ${i.due_date}`}</p>
                 </div>
                 <div className="text-right">
@@ -158,7 +158,7 @@ const ExtInvoicesPanel = () => {
           {currentInvoice && (() => { const ci = currentInvoice as any; return (
             <>
               <DialogHeader>
-                <DialogTitle>{ci.invoice_number} — {ci.client?.company_name}</DialogTitle>
+                <DialogTitle>{ci.invoice_number} — {ci.client?.company_name || ci.client?.contact_name}</DialogTitle>
               </DialogHeader>
               <div className="flex gap-2 flex-wrap mb-3">
                 <Badge>{ci.status}</Badge>
