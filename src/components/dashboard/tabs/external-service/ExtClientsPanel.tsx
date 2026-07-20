@@ -73,8 +73,11 @@ const ExtClientsPanel = () => {
   const userById = (id: string | null) => users.find((u: any) => u.id === id);
 
   const save = async () => {
-    if (!form.company_name?.trim()) { toast.error("Company name required"); return; }
+    const isResidential = form.client_type === "residential";
+    if (!isResidential && !form.company_name?.trim()) { toast.error("Company name required for commercial clients"); return; }
+    if (isResidential && !form.contact_name?.trim()) { toast.error("Contact name required for residential clients"); return; }
     const payload = { ...form };
+    if (isResidential && !payload.company_name?.trim()) payload.company_name = null;
     delete payload.id;
     const { error } = form.id
       ? await supabase.from("vendx_external_clients" as any).update(payload).eq("id", form.id)
