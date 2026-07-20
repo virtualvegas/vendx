@@ -21,7 +21,7 @@ const ExtLocationsPanel = () => {
 
   const { data: clients = [] } = useQuery({
     queryKey: ["ext-clients-min"],
-    queryFn: async () => (await supabase.from("vendx_external_clients" as any).select("id,company_name").order("company_name")).data || [],
+    queryFn: async () => (await supabase.from("vendx_external_clients" as any).select("id,company_name,contact_name").order("company_name")).data || [],
   });
   const { data: locations = [], isLoading } = useQuery({
     queryKey: ["ext-locations", filterClient],
