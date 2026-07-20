@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card } from "@/components/ui/card";
-import { Wrench, Users, MapPin, Package, FileText, ClipboardList, DollarSign, AlertCircle } from "lucide-react";
+import { Wrench, Users, MapPin, Package, FileText, ClipboardList, DollarSign, AlertCircle, CalendarClock } from "lucide-react";
 import ExtClientsPanel from "./external-service/ExtClientsPanel";
 import ExtLocationsPanel from "./external-service/ExtLocationsPanel";
 import ExtMachinesPanel from "./external-service/ExtMachinesPanel";
@@ -11,6 +11,7 @@ import ExtTicketsPanel from "./external-service/ExtTicketsPanel";
 import ExtInvoicesPanel from "./external-service/ExtInvoicesPanel";
 import ExtPackagesPanel from "./external-service/ExtPackagesPanel";
 import ExtSoldMachinesPanel from "./external-service/ExtSoldMachinesPanel";
+import ExtSchedulesPanel from "./external-service/ExtSchedulesPanel";
 
 const ExternalServiceManager = () => {
   const [tab, setTab] = useState("tickets");
