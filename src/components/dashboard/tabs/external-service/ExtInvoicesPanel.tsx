@@ -29,7 +29,7 @@ const ExtInvoicesPanel = () => {
     queryKey: ["ext-invoices", statusFilter],
     queryFn: async () => {
       let q = supabase.from("vendx_external_service_invoices" as any)
-        .select("*, client:vendx_external_clients(company_name)")
+        .select("*, client:vendx_external_clients(company_name,contact_name)")
         .order("created_at", { ascending: false });
       if (statusFilter !== "all") q = q.eq("status", statusFilter);
       const { data, error } = await q;

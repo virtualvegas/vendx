@@ -26,7 +26,7 @@ const ExtLocationsPanel = () => {
   const { data: locations = [], isLoading } = useQuery({
     queryKey: ["ext-locations", filterClient],
     queryFn: async () => {
-      let q = supabase.from("vendx_external_locations" as any).select("*, client:vendx_external_clients(company_name)").order("name");
+      let q = supabase.from("vendx_external_locations" as any).select("*, client:vendx_external_clients(company_name,contact_name)").order("name");
       if (filterClient !== "all") q = q.eq("client_id", filterClient);
       const { data, error } = await q;
       if (error) throw error;

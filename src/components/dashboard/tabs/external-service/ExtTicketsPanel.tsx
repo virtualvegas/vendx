@@ -56,7 +56,7 @@ const ExtTicketsPanel = () => {
     queryKey: ["ext-tickets", statusFilter],
     queryFn: async () => {
       let q = supabase.from("vendx_external_service_tickets" as any)
-        .select("*, client:vendx_external_clients(company_name), location:vendx_external_locations(name), machine:vendx_external_machines(asset_label)")
+        .select("*, client:vendx_external_clients(company_name,contact_name), location:vendx_external_locations(name), machine:vendx_external_machines(asset_label)")
         .order("created_at", { ascending: false });
       if (statusFilter !== "all") q = q.eq("status", statusFilter);
       const { data, error } = await q;

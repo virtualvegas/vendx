@@ -55,7 +55,7 @@ const ExtMachinesPanel = () => {
   const { data: machines = [], isLoading } = useQuery({
     queryKey: ["ext-machines", filterClient],
     queryFn: async () => {
-      let q = supabase.from("vendx_external_machines" as any).select("*, client:vendx_external_clients(company_name), location:vendx_external_locations(name)").order("asset_label");
+      let q = supabase.from("vendx_external_machines" as any).select("*, client:vendx_external_clients(company_name,contact_name), location:vendx_external_locations(name)").order("asset_label");
       if (filterClient !== "all") q = q.eq("client_id", filterClient);
       const { data, error } = await q;
       if (error) throw error;
