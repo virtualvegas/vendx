@@ -14,6 +14,7 @@ import { toast } from "sonner";
 
 const empty = {
   id: "" as string | undefined,
+  client_type: "commercial",
   company_name: "",
   contact_name: "",
   contact_email: "",
