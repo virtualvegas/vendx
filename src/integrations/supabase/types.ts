@@ -7985,7 +7985,8 @@ export type Database = {
           billing_country: string | null
           billing_postal_code: string | null
           billing_state: string | null
-          company_name: string
+          client_type: string
+          company_name: string | null
           contact_email: string | null
           contact_name: string | null
           contact_phone: string | null
@@ -8006,7 +8007,8 @@ export type Database = {
           billing_country?: string | null
           billing_postal_code?: string | null
           billing_state?: string | null
-          company_name: string
+          client_type?: string
+          company_name?: string | null
           contact_email?: string | null
           contact_name?: string | null
           contact_phone?: string | null
@@ -8027,7 +8029,8 @@ export type Database = {
           billing_country?: string | null
           billing_postal_code?: string | null
           billing_state?: string | null
-          company_name?: string
+          client_type?: string
+          company_name?: string | null
           contact_email?: string | null
           contact_name?: string | null
           contact_phone?: string | null

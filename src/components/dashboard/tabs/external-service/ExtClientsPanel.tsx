@@ -14,6 +14,7 @@ import { toast } from "sonner";
 
 const empty = {
   id: "" as string | undefined,
+  client_type: "commercial",
   company_name: "",
   contact_name: "",
   contact_email: "",
@@ -72,8 +73,11 @@ const ExtClientsPanel = () => {
   const userById = (id: string | null) => users.find((u: any) => u.id === id);
 
   const save = async () => {
-    if (!form.company_name?.trim()) { toast.error("Company name required"); return; }
+    const isResidential = form.client_type === "residential";
+    if (!isResidential && !form.company_name?.trim()) { toast.error("Company name required for commercial clients"); return; }
+    if (isResidential && !form.contact_name?.trim()) { toast.error("Contact name required for residential clients"); return; }
     const payload = { ...form };
+    if (isResidential && !payload.company_name?.trim()) payload.company_name = null;
     delete payload.id;
     const { error } = form.id
       ? await supabase.from("vendx_external_clients" as any).update(payload).eq("id", form.id)
@@ -106,7 +110,8 @@ const ExtClientsPanel = () => {
               <div className="flex justify-between items-start gap-2">
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <h3 className="font-semibold">{c.company_name}</h3>
+                    <h3 className="font-semibold">{c.company_name || c.contact_name || "Residential Client"}</h3>
+                    <Badge variant="outline" className="capitalize">{c.client_type || "commercial"}</Badge>
                     <Badge variant={c.status === "active" ? "default" : "outline"}>{c.status}</Badge>
                     {c.linked_user_id ? (
                       <Badge variant="secondary" className="gap-1"><UserCheck className="w-3 h-3" /> {userById(c.linked_user_id)?.email || "linked user"}</Badge>
@@ -135,7 +140,27 @@ const ExtClientsPanel = () => {
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader><DialogTitle>{form.id ? "Edit" : "New"} Client</DialogTitle></DialogHeader>
           <div className="grid gap-3 md:grid-cols-2">
-            <div className="md:col-span-2"><Label>Company Name *</Label><Input value={form.company_name} onChange={e => setForm({...form, company_name: e.target.value})} /></div>
+            <div className="md:col-span-2">
+              <Label>Client Type *</Label>
+              <SearchableSelect
+                value={form.client_type || "commercial"}
+                onValueChange={v => setForm({ ...form, client_type: v })}
+                options={[
+                  { value: "commercial", label: "Commercial / Business" },
+                  { value: "residential", label: "Residential / Home Service" },
+                ]}
+                placeholder="Select type"
+                searchPlaceholder="Search..."
+              />
+            </div>
+            <div className="md:col-span-2">
+              <Label>Company Name {form.client_type !== "residential" && "*"}</Label>
+              <Input
+                value={form.company_name || ""}
+                onChange={e => setForm({...form, company_name: e.target.value})}
+                placeholder={form.client_type === "residential" ? "Optional for home service" : ""}
+              />
+            </div>
             <div><Label>Contact Name</Label><Input value={form.contact_name || ""} onChange={e => setForm({...form, contact_name: e.target.value})} /></div>
             <div><Label>Contact Email</Label><Input type="email" value={form.contact_email || ""} onChange={e => setForm({...form, contact_email: e.target.value})} /></div>
             <div><Label>Contact Phone</Label><Input value={form.contact_phone || ""} onChange={e => setForm({...form, contact_phone: e.target.value})} /></div>
