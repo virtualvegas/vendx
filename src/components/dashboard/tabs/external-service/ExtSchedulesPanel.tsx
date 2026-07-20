@@ -43,7 +43,7 @@ const ExtSchedulesPanel = () => {
 
   const { data: clients = [] } = useQuery({
     queryKey: ["ext-clients-min-sched"],
-    queryFn: async () => (await supabase.from("vendx_external_clients" as any).select("id,company_name").order("company_name")).data || [],
+    queryFn: async () => (await supabase.from("vendx_external_clients" as any).select("id,company_name,contact_name").order("company_name")).data || [],
   });
   const { data: locations = [] } = useQuery({
     queryKey: ["ext-locations-sched", form.client_id],
@@ -66,7 +66,7 @@ const ExtSchedulesPanel = () => {
     queryKey: ["ext-schedules", showInactive],
     queryFn: async () => {
       let q = supabase.from("vendx_external_service_schedules" as any)
-        .select("*, client:vendx_external_clients(company_name), location:vendx_external_locations(name), machine:vendx_external_machines(asset_label)")
+        .select("*, client:vendx_external_clients(company_name,contact_name), location:vendx_external_locations(name), machine:vendx_external_machines(asset_label)")
         .order("next_run_date", { ascending: true });
       if (!showInactive) q = q.eq("active", true);
       const { data, error } = await q;
@@ -159,7 +159,7 @@ const ExtSchedulesPanel = () => {
                   </div>
                   <div className="font-semibold mt-1">{s.subject}</div>
                   <div className="text-xs text-muted-foreground">
-                    {s.client?.company_name || "(no client)"}
+                    {s.client?.company_name || s.client?.contact_name || "(no client)"}
                     {s.location?.name && ` · ${s.location.name}`}
                     {s.machine?.asset_label && ` · ${s.machine.asset_label}`}
                   </div>
@@ -193,7 +193,7 @@ const ExtSchedulesPanel = () => {
             <div>
               <Label>Client</Label>
               <SearchableSelect value={form.client_id || ""} onValueChange={v => setForm({ ...form, client_id: v, location_id: "", machine_id: "" })}
-                options={[{ value: "", label: "—" }, ...clients.map((c: any) => ({ value: c.id, label: c.company_name }))]}
+                options={[{ value: "", label: "—" }, ...clients.map((c: any) => ({ value: c.id, label: c.company_name || c.contact_name || "Residential Client" }))]}
                 placeholder="Select client" searchPlaceholder="Search..." />
             </div>
             <div>

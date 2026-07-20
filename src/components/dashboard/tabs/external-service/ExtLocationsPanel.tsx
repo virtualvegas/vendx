@@ -21,12 +21,12 @@ const ExtLocationsPanel = () => {
 
   const { data: clients = [] } = useQuery({
     queryKey: ["ext-clients-min"],
-    queryFn: async () => (await supabase.from("vendx_external_clients" as any).select("id,company_name").order("company_name")).data || [],
+    queryFn: async () => (await supabase.from("vendx_external_clients" as any).select("id,company_name,contact_name").order("company_name")).data || [],
   });
   const { data: locations = [], isLoading } = useQuery({
     queryKey: ["ext-locations", filterClient],
     queryFn: async () => {
-      let q = supabase.from("vendx_external_locations" as any).select("*, client:vendx_external_clients(company_name)").order("name");
+      let q = supabase.from("vendx_external_locations" as any).select("*, client:vendx_external_clients(company_name,contact_name)").order("name");
       if (filterClient !== "all") q = q.eq("client_id", filterClient);
       const { data, error } = await q;
       if (error) throw error;
@@ -58,7 +58,7 @@ const ExtLocationsPanel = () => {
           <SearchableSelect
             value={filterClient}
             onValueChange={setFilterClient}
-            options={[{ value: "all", label: "All clients" }, ...clients.map((c: any) => ({ value: c.id, label: c.company_name }))]}
+            options={[{ value: "all", label: "All clients" }, ...clients.map((c: any) => ({ value: c.id, label: c.company_name || c.contact_name || "Residential Client" }))]}
             placeholder="Filter by client"
             searchPlaceholder="Search clients..."
           />
@@ -75,7 +75,7 @@ const ExtLocationsPanel = () => {
               <div className="flex justify-between items-start gap-2">
                 <div className="min-w-0 flex-1">
                   <h3 className="font-semibold">{l.name}</h3>
-                  <p className="text-sm text-muted-foreground">{l.client?.company_name}</p>
+                  <p className="text-sm text-muted-foreground">{l.client?.company_name || l.client?.contact_name}</p>
                   <p className="text-sm">{l.address}{l.city ? `, ${l.city}` : ""}{l.state ? `, ${l.state}` : ""} {l.postal_code}</p>
                   {l.contact_name && <p className="text-xs text-muted-foreground mt-1">Contact: {l.contact_name} {l.contact_phone}</p>}
                 </div>
@@ -97,7 +97,7 @@ const ExtLocationsPanel = () => {
               <SearchableSelect
                 value={form.client_id}
                 onValueChange={v => setForm({ ...form, client_id: v })}
-                options={clients.map((c: any) => ({ value: c.id, label: c.company_name }))}
+                options={clients.map((c: any) => ({ value: c.id, label: c.company_name || c.contact_name || "Residential Client" }))}
                 placeholder="Select client"
                 searchPlaceholder="Search..."
               />

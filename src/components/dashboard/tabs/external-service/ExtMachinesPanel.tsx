@@ -32,7 +32,7 @@ const ExtMachinesPanel = () => {
 
   const { data: clients = [] } = useQuery({
     queryKey: ["ext-clients-min"],
-    queryFn: async () => (await supabase.from("vendx_external_clients" as any).select("id,company_name").order("company_name")).data || [],
+    queryFn: async () => (await supabase.from("vendx_external_clients" as any).select("id,company_name,contact_name").order("company_name")).data || [],
   });
   const { data: locations = [] } = useQuery({
     queryKey: ["ext-locations-min", form.client_id],
@@ -55,7 +55,7 @@ const ExtMachinesPanel = () => {
   const { data: machines = [], isLoading } = useQuery({
     queryKey: ["ext-machines", filterClient],
     queryFn: async () => {
-      let q = supabase.from("vendx_external_machines" as any).select("*, client:vendx_external_clients(company_name), location:vendx_external_locations(name)").order("asset_label");
+      let q = supabase.from("vendx_external_machines" as any).select("*, client:vendx_external_clients(company_name,contact_name), location:vendx_external_locations(name)").order("asset_label");
       if (filterClient !== "all") q = q.eq("client_id", filterClient);
       const { data, error } = await q;
       if (error) throw error;
@@ -100,7 +100,7 @@ const ExtMachinesPanel = () => {
       <div className="flex flex-wrap justify-between items-center gap-2">
         <div className="w-64">
           <SearchableSelect value={filterClient} onValueChange={setFilterClient}
-            options={[{ value: "all", label: "All clients" }, ...clients.map((c: any) => ({ value: c.id, label: c.company_name }))]}
+            options={[{ value: "all", label: "All clients" }, ...clients.map((c: any) => ({ value: c.id, label: c.company_name || c.contact_name || "Residential Client" }))]}
             placeholder="Filter by client" searchPlaceholder="Search clients..." />
         </div>
         <Button onClick={() => { setForm({ ...empty, client_id: filterClient !== "all" ? filterClient : "" }); setOpen(true); }}>
@@ -119,7 +119,7 @@ const ExtMachinesPanel = () => {
                     <Badge variant={m.status === "active" ? "default" : "outline"} className="text-[10px]">{m.status}</Badge>
                     {m.purchased_from_us && <Badge className="text-[10px] bg-primary/20 text-primary border-primary/40">VendX-built</Badge>}
                   </div>
-                  <p className="text-xs text-muted-foreground truncate">{m.client?.company_name}{m.location?.name ? ` · ${m.location.name}` : ""}</p>
+                  <p className="text-xs text-muted-foreground truncate">{m.client?.company_name || m.client?.contact_name}{m.location?.name ? ` · ${m.location.name}` : ""}</p>
                   <p className="text-[11px] text-muted-foreground truncate">{[m.machine_type, m.make, m.model, m.serial_number].filter(Boolean).join(" · ")}</p>
                   {Array.isArray(m.manual_urls) && m.manual_urls.length > 0 && (
                     <div className="flex flex-wrap gap-1 mt-1.5">
@@ -167,7 +167,7 @@ const ExtMachinesPanel = () => {
             <div>
               <Label>Client *</Label>
               <SearchableSelect value={form.client_id} onValueChange={v => setForm({ ...form, client_id: v, location_id: "" })}
-                options={clients.map((c: any) => ({ value: c.id, label: c.company_name }))} placeholder="Select client" searchPlaceholder="Search..." />
+                options={clients.map((c: any) => ({ value: c.id, label: c.company_name || c.contact_name || "Residential Client" }))} placeholder="Select client" searchPlaceholder="Search..." />
             </div>
             <div>
               <Label>Site</Label>

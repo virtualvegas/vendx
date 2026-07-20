@@ -22,14 +22,14 @@ const ExtInvoicesPanel = () => {
 
   const { data: clients = [] } = useQuery({
     queryKey: ["ext-clients-min"],
-    queryFn: async () => (await supabase.from("vendx_external_clients" as any).select("id,company_name,default_hourly_rate").order("company_name")).data || [],
+    queryFn: async () => (await supabase.from("vendx_external_clients" as any).select("id,company_name,contact_name,default_hourly_rate").order("company_name")).data || [],
   });
 
   const { data: invoices = [], isLoading } = useQuery({
     queryKey: ["ext-invoices", statusFilter],
     queryFn: async () => {
       let q = supabase.from("vendx_external_service_invoices" as any)
-        .select("*, client:vendx_external_clients(company_name)")
+        .select("*, client:vendx_external_clients(company_name,contact_name)")
         .order("created_at", { ascending: false });
       if (statusFilter !== "all") q = q.eq("status", statusFilter);
       const { data, error } = await q;
@@ -119,7 +119,7 @@ const ExtInvoicesPanel = () => {
                     <span className="font-mono text-xs">{i.invoice_number}</span>
                     <Badge>{i.status}</Badge>
                   </div>
-                  <p className="font-semibold mt-1">{i.client?.company_name}</p>
+                  <p className="font-semibold mt-1">{i.client?.company_name || i.client?.contact_name}</p>
                   <p className="text-xs text-muted-foreground">Issued: {i.issue_date} {i.due_date && `· Due: ${i.due_date}`}</p>
                 </div>
                 <div className="text-right">
@@ -140,7 +140,7 @@ const ExtInvoicesPanel = () => {
             <div>
               <Label>Client *</Label>
               <SearchableSelect value={newForm.client_id} onValueChange={v => setNewForm({ ...newForm, client_id: v })}
-                options={clients.map((c: any) => ({ value: c.id, label: c.company_name }))} placeholder="Select client" searchPlaceholder="Search..." />
+                options={clients.map((c: any) => ({ value: c.id, label: c.company_name || c.contact_name || "Residential Client" }))} placeholder="Select client" searchPlaceholder="Search..." />
             </div>
             <div><Label>Due Date</Label><Input type="date" value={newForm.due_date} onChange={e => setNewForm({ ...newForm, due_date: e.target.value })} /></div>
             <div><Label>Notes</Label><Textarea value={newForm.notes} onChange={e => setNewForm({ ...newForm, notes: e.target.value })} /></div>
@@ -158,7 +158,7 @@ const ExtInvoicesPanel = () => {
           {currentInvoice && (() => { const ci = currentInvoice as any; return (
             <>
               <DialogHeader>
-                <DialogTitle>{ci.invoice_number} — {ci.client?.company_name}</DialogTitle>
+                <DialogTitle>{ci.invoice_number} — {ci.client?.company_name || ci.client?.contact_name}</DialogTitle>
               </DialogHeader>
               <div className="flex gap-2 flex-wrap mb-3">
                 <Badge>{ci.status}</Badge>

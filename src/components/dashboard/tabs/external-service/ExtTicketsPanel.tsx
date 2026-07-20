@@ -33,7 +33,7 @@ const ExtTicketsPanel = () => {
 
   const { data: clients = [] } = useQuery({
     queryKey: ["ext-clients-min"],
-    queryFn: async () => (await supabase.from("vendx_external_clients" as any).select("id,company_name").order("company_name")).data || [],
+    queryFn: async () => (await supabase.from("vendx_external_clients" as any).select("id,company_name,contact_name").order("company_name")).data || [],
   });
   const { data: locations = [] } = useQuery({
     queryKey: ["ext-locations-for-ticket", form.client_id],
@@ -56,7 +56,7 @@ const ExtTicketsPanel = () => {
     queryKey: ["ext-tickets", statusFilter],
     queryFn: async () => {
       let q = supabase.from("vendx_external_service_tickets" as any)
-        .select("*, client:vendx_external_clients(company_name), location:vendx_external_locations(name), machine:vendx_external_machines(asset_label)")
+        .select("*, client:vendx_external_clients(company_name,contact_name), location:vendx_external_locations(name), machine:vendx_external_machines(asset_label)")
         .order("created_at", { ascending: false });
       if (statusFilter !== "all") q = q.eq("status", statusFilter);
       const { data, error } = await q;
@@ -118,7 +118,7 @@ const ExtTicketsPanel = () => {
                   </div>
                   <h3 className="font-semibold mt-1">{t.subject}</h3>
                   <p className="text-sm text-muted-foreground">
-                    {t.client?.company_name || t.intake_company_name || "(unassigned)"}
+                    {t.client?.company_name || t.client?.contact_name || t.intake_company_name || "(unassigned)"}
                     {t.location?.name && ` · ${t.location.name}`}
                     {t.machine?.asset_label && ` · ${t.machine.asset_label}`}
                   </p>
@@ -148,7 +148,7 @@ const ExtTicketsPanel = () => {
             <div>
               <Label>Client</Label>
               <SearchableSelect value={form.client_id || ""} onValueChange={v => setForm({ ...form, client_id: v, location_id: "", machine_id: "" })}
-                options={[{ value: "", label: "— (intake / unassigned)" }, ...clients.map((c: any) => ({ value: c.id, label: c.company_name }))]}
+                options={[{ value: "", label: "— (intake / unassigned)" }, ...clients.map((c: any) => ({ value: c.id, label: c.company_name || c.contact_name || "Residential Client" }))]}
                 placeholder="Select client" searchPlaceholder="Search..." />
             </div>
             <div>
