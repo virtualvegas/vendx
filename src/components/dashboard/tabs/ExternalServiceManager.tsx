@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card } from "@/components/ui/card";
-import { Wrench, Users, MapPin, Package, FileText, ClipboardList, DollarSign, AlertCircle } from "lucide-react";
+import { Wrench, Users, MapPin, Package, FileText, ClipboardList, DollarSign, AlertCircle, CalendarClock } from "lucide-react";
 import ExtClientsPanel from "./external-service/ExtClientsPanel";
 import ExtLocationsPanel from "./external-service/ExtLocationsPanel";
 import ExtMachinesPanel from "./external-service/ExtMachinesPanel";
@@ -11,6 +11,7 @@ import ExtTicketsPanel from "./external-service/ExtTicketsPanel";
 import ExtInvoicesPanel from "./external-service/ExtInvoicesPanel";
 import ExtPackagesPanel from "./external-service/ExtPackagesPanel";
 import ExtSoldMachinesPanel from "./external-service/ExtSoldMachinesPanel";
+import ExtSchedulesPanel from "./external-service/ExtSchedulesPanel";
 
 const ExternalServiceManager = () => {
   const [tab, setTab] = useState("tickets");
@@ -65,6 +66,7 @@ const ExternalServiceManager = () => {
         <div className="overflow-x-auto">
           <TabsList className="bg-muted/40 p-1">
             <TabsTrigger value="tickets" className="gap-1.5"><ClipboardList className="w-3.5 h-3.5" /> Tickets</TabsTrigger>
+            <TabsTrigger value="schedules" className="gap-1.5"><CalendarClock className="w-3.5 h-3.5" /> Schedules</TabsTrigger>
             <TabsTrigger value="sold" className="gap-1.5"><Package className="w-3.5 h-3.5" /> Sold / Built</TabsTrigger>
             <TabsTrigger value="machines" className="gap-1.5"><Wrench className="w-3.5 h-3.5" /> All Machines</TabsTrigger>
             <TabsTrigger value="clients" className="gap-1.5"><Users className="w-3.5 h-3.5" /> Clients</TabsTrigger>
@@ -74,6 +76,7 @@ const ExternalServiceManager = () => {
           </TabsList>
         </div>
         <TabsContent value="tickets" className="mt-4"><ExtTicketsPanel /></TabsContent>
+        <TabsContent value="schedules" className="mt-4"><ExtSchedulesPanel /></TabsContent>
         <TabsContent value="sold" className="mt-4"><ExtSoldMachinesPanel /></TabsContent>
         <TabsContent value="machines" className="mt-4"><ExtMachinesPanel /></TabsContent>
         <TabsContent value="clients" className="mt-4"><ExtClientsPanel /></TabsContent>

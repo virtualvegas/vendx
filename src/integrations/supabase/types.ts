@@ -8376,6 +8376,103 @@ export type Database = {
         }
         Relationships: []
       }
+      vendx_external_service_schedules: {
+        Row: {
+          access_notes: string | null
+          active: boolean
+          client_id: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          end_date: string | null
+          generated_count: number
+          id: string
+          interval_count: number
+          last_generated_at: string | null
+          last_generated_ticket_id: string | null
+          location_id: string | null
+          machine_id: string | null
+          next_run_date: string
+          notes: string | null
+          priority: string
+          recurrence: string
+          service_location_type: string | null
+          service_package: string | null
+          subject: string
+          updated_at: string
+        }
+        Insert: {
+          access_notes?: string | null
+          active?: boolean
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          end_date?: string | null
+          generated_count?: number
+          id?: string
+          interval_count?: number
+          last_generated_at?: string | null
+          last_generated_ticket_id?: string | null
+          location_id?: string | null
+          machine_id?: string | null
+          next_run_date: string
+          notes?: string | null
+          priority?: string
+          recurrence?: string
+          service_location_type?: string | null
+          service_package?: string | null
+          subject: string
+          updated_at?: string
+        }
+        Update: {
+          access_notes?: string | null
+          active?: boolean
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          end_date?: string | null
+          generated_count?: number
+          id?: string
+          interval_count?: number
+          last_generated_at?: string | null
+          last_generated_ticket_id?: string | null
+          location_id?: string | null
+          machine_id?: string | null
+          next_run_date?: string
+          notes?: string | null
+          priority?: string
+          recurrence?: string
+          service_location_type?: string | null
+          service_package?: string | null
+          subject?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendx_external_service_schedules_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "vendx_external_clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendx_external_service_schedules_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "vendx_external_locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendx_external_service_schedules_machine_id_fkey"
+            columns: ["machine_id"]
+            isOneToOne: false
+            referencedRelation: "vendx_external_machines"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vendx_external_service_ticket_updates: {
         Row: {
           author_id: string | null
@@ -10922,6 +11019,7 @@ export type Database = {
           client_secret: string
         }[]
       }
+      generate_due_external_service_tickets: { Args: never; Returns: number }
       generate_external_stream_api_key: {
         Args: never
         Returns: {
