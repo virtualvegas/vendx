@@ -58,7 +58,7 @@ const ExtLocationsPanel = () => {
           <SearchableSelect
             value={filterClient}
             onValueChange={setFilterClient}
-            options={[{ value: "all", label: "All clients" }, ...clients.map((c: any) => ({ value: c.id, label: c.company_name }))]}
+            options={[{ value: "all", label: "All clients" }, ...clients.map((c: any) => ({ value: c.id, label: c.company_name || c.contact_name || "Residential Client" }))]}
             placeholder="Filter by client"
             searchPlaceholder="Search clients..."
           />
@@ -97,7 +97,7 @@ const ExtLocationsPanel = () => {
               <SearchableSelect
                 value={form.client_id}
                 onValueChange={v => setForm({ ...form, client_id: v })}
-                options={clients.map((c: any) => ({ value: c.id, label: c.company_name }))}
+                options={clients.map((c: any) => ({ value: c.id, label: c.company_name || c.contact_name || "Residential Client" }))}
                 placeholder="Select client"
                 searchPlaceholder="Search..."
               />

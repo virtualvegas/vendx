@@ -148,7 +148,7 @@ const ExtTicketsPanel = () => {
             <div>
               <Label>Client</Label>
               <SearchableSelect value={form.client_id || ""} onValueChange={v => setForm({ ...form, client_id: v, location_id: "", machine_id: "" })}
-                options={[{ value: "", label: "— (intake / unassigned)" }, ...clients.map((c: any) => ({ value: c.id, label: c.company_name }))]}
+                options={[{ value: "", label: "— (intake / unassigned)" }, ...clients.map((c: any) => ({ value: c.id, label: c.company_name || c.contact_name || "Residential Client" }))]}
                 placeholder="Select client" searchPlaceholder="Search..." />
             </div>
             <div>

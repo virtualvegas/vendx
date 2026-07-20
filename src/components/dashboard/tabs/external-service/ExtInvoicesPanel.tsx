@@ -140,7 +140,7 @@ const ExtInvoicesPanel = () => {
             <div>
               <Label>Client *</Label>
               <SearchableSelect value={newForm.client_id} onValueChange={v => setNewForm({ ...newForm, client_id: v })}
-                options={clients.map((c: any) => ({ value: c.id, label: c.company_name }))} placeholder="Select client" searchPlaceholder="Search..." />
+                options={clients.map((c: any) => ({ value: c.id, label: c.company_name || c.contact_name || "Residential Client" }))} placeholder="Select client" searchPlaceholder="Search..." />
             </div>
             <div><Label>Due Date</Label><Input type="date" value={newForm.due_date} onChange={e => setNewForm({ ...newForm, due_date: e.target.value })} /></div>
             <div><Label>Notes</Label><Textarea value={newForm.notes} onChange={e => setNewForm({ ...newForm, notes: e.target.value })} /></div>

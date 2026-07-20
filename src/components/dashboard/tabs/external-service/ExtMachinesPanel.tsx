@@ -100,7 +100,7 @@ const ExtMachinesPanel = () => {
       <div className="flex flex-wrap justify-between items-center gap-2">
         <div className="w-64">
           <SearchableSelect value={filterClient} onValueChange={setFilterClient}
-            options={[{ value: "all", label: "All clients" }, ...clients.map((c: any) => ({ value: c.id, label: c.company_name }))]}
+            options={[{ value: "all", label: "All clients" }, ...clients.map((c: any) => ({ value: c.id, label: c.company_name || c.contact_name || "Residential Client" }))]}
             placeholder="Filter by client" searchPlaceholder="Search clients..." />
         </div>
         <Button onClick={() => { setForm({ ...empty, client_id: filterClient !== "all" ? filterClient : "" }); setOpen(true); }}>
@@ -167,7 +167,7 @@ const ExtMachinesPanel = () => {
             <div>
               <Label>Client *</Label>
               <SearchableSelect value={form.client_id} onValueChange={v => setForm({ ...form, client_id: v, location_id: "" })}
-                options={clients.map((c: any) => ({ value: c.id, label: c.company_name }))} placeholder="Select client" searchPlaceholder="Search..." />
+                options={clients.map((c: any) => ({ value: c.id, label: c.company_name || c.contact_name || "Residential Client" }))} placeholder="Select client" searchPlaceholder="Search..." />
             </div>
             <div>
               <Label>Site</Label>
