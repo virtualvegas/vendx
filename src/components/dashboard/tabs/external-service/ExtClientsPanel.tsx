@@ -110,7 +110,8 @@ const ExtClientsPanel = () => {
               <div className="flex justify-between items-start gap-2">
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <h3 className="font-semibold">{c.company_name}</h3>
+                    <h3 className="font-semibold">{c.company_name || c.contact_name || "Residential Client"}</h3>
+                    <Badge variant="outline" className="capitalize">{c.client_type || "commercial"}</Badge>
                     <Badge variant={c.status === "active" ? "default" : "outline"}>{c.status}</Badge>
                     {c.linked_user_id ? (
                       <Badge variant="secondary" className="gap-1"><UserCheck className="w-3 h-3" /> {userById(c.linked_user_id)?.email || "linked user"}</Badge>
