@@ -140,7 +140,27 @@ const ExtClientsPanel = () => {
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader><DialogTitle>{form.id ? "Edit" : "New"} Client</DialogTitle></DialogHeader>
           <div className="grid gap-3 md:grid-cols-2">
-            <div className="md:col-span-2"><Label>Company Name *</Label><Input value={form.company_name} onChange={e => setForm({...form, company_name: e.target.value})} /></div>
+            <div className="md:col-span-2">
+              <Label>Client Type *</Label>
+              <SearchableSelect
+                value={form.client_type || "commercial"}
+                onValueChange={v => setForm({ ...form, client_type: v })}
+                options={[
+                  { value: "commercial", label: "Commercial / Business" },
+                  { value: "residential", label: "Residential / Home Service" },
+                ]}
+                placeholder="Select type"
+                searchPlaceholder="Search..."
+              />
+            </div>
+            <div className="md:col-span-2">
+              <Label>Company Name {form.client_type !== "residential" && "*"}</Label>
+              <Input
+                value={form.company_name || ""}
+                onChange={e => setForm({...form, company_name: e.target.value})}
+                placeholder={form.client_type === "residential" ? "Optional for home service" : ""}
+              />
+            </div>
             <div><Label>Contact Name</Label><Input value={form.contact_name || ""} onChange={e => setForm({...form, contact_name: e.target.value})} /></div>
             <div><Label>Contact Email</Label><Input type="email" value={form.contact_email || ""} onChange={e => setForm({...form, contact_email: e.target.value})} /></div>
             <div><Label>Contact Phone</Label><Input value={form.contact_phone || ""} onChange={e => setForm({...form, contact_phone: e.target.value})} /></div>
