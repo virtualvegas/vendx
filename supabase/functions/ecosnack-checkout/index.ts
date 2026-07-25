@@ -175,8 +175,8 @@ serve(async (req) => {
         }
       }
 
-      // Create pending purchase with 5-minute expiry
-      const expiresAt = new Date(Date.now() + 5 * 60 * 1000).toISOString();
+      // Create pending purchase with 10-minute expiry
+      const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();
 
       const { data: purchase } = await supabaseAdmin.from("ecosnack_locker_purchases").insert({
         machine_code,
