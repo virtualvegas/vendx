@@ -254,7 +254,7 @@ const EcoSnackLockersManager = () => {
       return <Badge variant="outline" className="border-muted-foreground/40 text-muted-foreground"><XCircle className="h-3 w-3 mr-1" />Canceled</Badge>;
     }
     if (status === "pending") {
-      // Only pending purchases can expire (5-minute Stripe checkout window)
+      // Only pending purchases can expire (10-minute Stripe checkout window)
       if (expiresAt && new Date(expiresAt) < new Date()) {
         return <Badge variant="destructive"><XCircle className="h-3 w-3 mr-1" />Expired</Badge>;
       }
