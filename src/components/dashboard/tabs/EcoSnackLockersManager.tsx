@@ -102,6 +102,25 @@ const EcoSnackLockersManager = () => {
     onError: (err: any) => toast.error(err.message),
   });
 
+  // Restock a single slot: regenerate its locker code + set quantity back to 1
+  const restockSlot = useMutation({
+    mutationFn: async ({ slotId, regenerate }: { slotId: string; regenerate: boolean }) => {
+      const payload: any = { quantity: 1, last_restocked: new Date().toISOString() };
+      if (regenerate) payload.locker_code = String(Math.floor(100 + Math.random() * 900));
+      const { error } = await supabase
+        .from("machine_inventory")
+        .update(payload)
+        .eq("id", slotId);
+      if (error) throw error;
+      return payload.locker_code as string | undefined;
+    },
+    onSuccess: (newCode) => {
+      toast.success(newCode ? `Restocked — new code ${newCode}` : "Restocked");
+      queryClient.invalidateQueries({ queryKey: ["ecosnack-inventory-slots"] });
+    },
+    onError: (err: any) => toast.error(err.message),
+  });
+
   // Bulk set all codes for a machine
   const bulkSetCodes = useMutation({
     mutationFn: async (machineId: string) => {
@@ -227,19 +246,28 @@ const EcoSnackLockersManager = () => {
     );
   });
 
-  const getStatusBadge = (status: string, redeemedAt: string | null, expiresAt: string) => {
+  const getStatusBadge = (status: string, redeemedAt: string | null, expiresAt: string | null) => {
+    // Confirmed purchases stay Active regardless of the payment-window expires_at
     if (redeemedAt) return <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30"><CheckCircle className="h-3 w-3 mr-1" />Redeemed</Badge>;
-    if (new Date(expiresAt) < new Date()) return <Badge variant="destructive"><XCircle className="h-3 w-3 mr-1" />Expired</Badge>;
-    if (status === "failed") return <Badge variant="destructive"><XCircle className="h-3 w-3 mr-1" />Failed</Badge>;
-    if (status === "completed") return <Badge className="bg-accent/20 text-accent border-accent/30"><Clock className="h-3 w-3 mr-1" />Active</Badge>;
-    if (status === "pending") return <Badge variant="secondary"><Loader2 className="h-3 w-3 mr-1 animate-spin" />Pending</Badge>;
+    if (status === "completed") return <Badge className="bg-accent/20 text-accent border-accent/30"><CheckCircle className="h-3 w-3 mr-1" />Active</Badge>;
+    if (status === "failed" || status === "canceled" || status === "cancelled") {
+      return <Badge variant="outline" className="border-muted-foreground/40 text-muted-foreground"><XCircle className="h-3 w-3 mr-1" />Canceled</Badge>;
+    }
+    if (status === "pending") {
+      // Only pending purchases can expire (5-minute Stripe checkout window)
+      if (expiresAt && new Date(expiresAt) < new Date()) {
+        return <Badge variant="destructive"><XCircle className="h-3 w-3 mr-1" />Expired</Badge>;
+      }
+      return <Badge variant="secondary"><Loader2 className="h-3 w-3 mr-1 animate-spin" />Pending</Badge>;
+    }
     return <Badge variant="outline">{status}</Badge>;
   };
 
   // Stats
-  const totalActive = (purchases || []).filter(p => p.payment_status === "completed" && !p.redeemed_at && new Date(p.expires_at) > new Date()).length;
+  const now = new Date();
+  const totalActive = (purchases || []).filter(p => p.payment_status === "completed" && !p.redeemed_at).length;
   const totalRedeemed = (purchases || []).filter(p => p.redeemed_at).length;
-  const totalExpired = (purchases || []).filter(p => !p.redeemed_at && new Date(p.expires_at) < new Date()).length;
+  const totalExpired = (purchases || []).filter(p => p.payment_status === "pending" && p.expires_at && new Date(p.expires_at) < now).length;
 
   return (
     <div className="space-y-6">
@@ -255,12 +283,12 @@ const EcoSnackLockersManager = () => {
           </div>
         </div>
         <Button
-          onClick={() => setRestockDialog(true)}
+          onClick={() => setActiveTab("locker-codes")}
           variant="outline"
           className="border-orange-500/50 text-orange-400 hover:bg-orange-500/10"
         >
           <RefreshCw className="h-4 w-4 mr-2" />
-          Restock Machine
+          Restock Lockers
         </Button>
       </div>
 
@@ -538,14 +566,27 @@ const EcoSnackLockersManager = () => {
                                 </Button>
                               </div>
                             ) : (
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                onClick={() => setEditingSlot({ id: slot.id, code: slot.locker_code || "" })}
-                              >
-                                <KeyRound className="h-3.5 w-3.5 mr-1" />
-                                {slot.locker_code ? "Edit" : "Set Code"}
-                              </Button>
+                              <div className="flex gap-1">
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => setEditingSlot({ id: slot.id, code: slot.locker_code || "" })}
+                                >
+                                  <KeyRound className="h-3.5 w-3.5 mr-1" />
+                                  {slot.locker_code ? "Edit" : "Set Code"}
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="text-orange-400 hover:text-orange-300 hover:bg-orange-500/10"
+                                  onClick={() => restockSlot.mutate({ slotId: slot.id, regenerate: true })}
+                                  disabled={restockSlot.isPending}
+                                  title="Regenerate code & mark as restocked"
+                                >
+                                  <RefreshCw className="h-3.5 w-3.5 mr-1" />
+                                  Restock
+                                </Button>
+                              </div>
                             )}
                           </TableCell>
                         </TableRow>
