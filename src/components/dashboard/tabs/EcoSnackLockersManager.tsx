@@ -67,21 +67,39 @@ const EcoSnackLockersManager = () => {
     },
   });
 
-  // Fetch inventory slots with locker codes for selected machine
+  // Fetch inventory slots + their latest purchase (for payment status)
   const { data: inventorySlots, isLoading: slotsLoading } = useQuery({
     queryKey: ["ecosnack-inventory-slots", selectedCodeMachine],
     queryFn: async () => {
       if (!selectedCodeMachine) return [];
-      const { data, error } = await supabase
+      const { data: slots, error } = await supabase
         .from("machine_inventory")
         .select("id, slot_number, product_name, quantity, locker_code")
         .eq("machine_id", selectedCodeMachine)
         .order("slot_number");
       if (error) throw error;
-      return data || [];
+
+      const machine = (ecosnackMachines || []).find((m: any) => m.id === selectedCodeMachine);
+      const machineCode = machine?.machine_code;
+      if (!machineCode || !slots?.length) return (slots || []).map(s => ({ ...s, latest_purchase: null }));
+
+      const { data: purchases } = await supabase
+        .from("ecosnack_locker_purchases")
+        .select("id, locker_number, locker_code, payment_status, payment_method, amount, redeemed_at, expires_at, created_at")
+        .eq("machine_code", machineCode)
+        .order("created_at", { ascending: false })
+        .limit(500);
+
+      const latestBySlot = new Map<string, any>();
+      for (const p of purchases || []) {
+        const key = String(p.locker_number);
+        if (!latestBySlot.has(key)) latestBySlot.set(key, p);
+      }
+      return slots.map(s => ({ ...s, latest_purchase: latestBySlot.get(String(s.slot_number)) || null }));
     },
-    enabled: !!selectedCodeMachine,
+    enabled: !!selectedCodeMachine && !!ecosnackMachines,
   });
+
 
   // Update locker code on inventory slot
   const updateSlotCode = useMutation({
@@ -514,6 +532,7 @@ const EcoSnackLockersManager = () => {
                         <TableHead>Slot</TableHead>
                         <TableHead>Product</TableHead>
                         <TableHead>Stock</TableHead>
+                        <TableHead>Payment</TableHead>
                         <TableHead>Locker Code</TableHead>
                         <TableHead>Actions</TableHead>
                       </TableRow>
@@ -529,6 +548,20 @@ const EcoSnackLockersManager = () => {
                             <Badge variant={slot.quantity > 0 ? "default" : "destructive"}>
                               {slot.quantity > 0 ? "In Stock" : "Sold"}
                             </Badge>
+                          </TableCell>
+                          <TableCell>
+                            {(() => {
+                              const p = slot.latest_purchase;
+                              if (!p) return <span className="text-xs text-muted-foreground italic">No purchases</span>;
+                              return (
+                                <div className="flex flex-col gap-1">
+                                  {getStatusBadge(p.payment_status, p.redeemed_at, p.expires_at)}
+                                  <span className="text-[10px] text-muted-foreground">
+                                    ${Number(p.amount || 0).toFixed(2)} · {p.payment_method || "—"} · {format(new Date(p.created_at), "MMM d, h:mma")}
+                                  </span>
+                                </div>
+                              );
+                            })()}
                           </TableCell>
                           <TableCell>
                             {editingSlot?.id === slot.id ? (
