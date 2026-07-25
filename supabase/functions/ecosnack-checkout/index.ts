@@ -274,7 +274,7 @@ serve(async (req) => {
         });
       }
 
-      // Check if pending purchase has expired (5-minute window)
+      // Check if pending purchase has expired (10-minute window)
       if (purchase.payment_status === "pending" && purchase.expires_at) {
         const expiresAt = new Date(purchase.expires_at).getTime();
         if (Date.now() > expiresAt) {
