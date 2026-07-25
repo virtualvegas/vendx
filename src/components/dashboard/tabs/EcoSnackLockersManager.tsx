@@ -283,12 +283,12 @@ const EcoSnackLockersManager = () => {
           </div>
         </div>
         <Button
-          onClick={() => setRestockDialog(true)}
+          onClick={() => setActiveTab("locker-codes")}
           variant="outline"
           className="border-orange-500/50 text-orange-400 hover:bg-orange-500/10"
         >
           <RefreshCw className="h-4 w-4 mr-2" />
-          Restock Machine
+          Restock Lockers
         </Button>
       </div>
 
