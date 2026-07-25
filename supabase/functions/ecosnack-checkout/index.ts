@@ -175,8 +175,8 @@ serve(async (req) => {
         }
       }
 
-      // Create pending purchase with 5-minute expiry
-      const expiresAt = new Date(Date.now() + 5 * 60 * 1000).toISOString();
+      // Create pending purchase with 10-minute expiry
+      const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();
 
       const { data: purchase } = await supabaseAdmin.from("ecosnack_locker_purchases").insert({
         machine_code,
@@ -274,7 +274,7 @@ serve(async (req) => {
         });
       }
 
-      // Check if pending purchase has expired (5-minute window)
+      // Check if pending purchase has expired (10-minute window)
       if (purchase.payment_status === "pending" && purchase.expires_at) {
         const expiresAt = new Date(purchase.expires_at).getTime();
         if (Date.now() > expiresAt) {
