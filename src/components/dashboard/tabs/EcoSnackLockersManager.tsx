@@ -102,6 +102,25 @@ const EcoSnackLockersManager = () => {
     onError: (err: any) => toast.error(err.message),
   });
 
+  // Restock a single slot: regenerate its locker code + set quantity back to 1
+  const restockSlot = useMutation({
+    mutationFn: async ({ slotId, regenerate }: { slotId: string; regenerate: boolean }) => {
+      const payload: any = { quantity: 1, last_restocked: new Date().toISOString() };
+      if (regenerate) payload.locker_code = String(Math.floor(100 + Math.random() * 900));
+      const { error } = await supabase
+        .from("machine_inventory")
+        .update(payload)
+        .eq("id", slotId);
+      if (error) throw error;
+      return payload.locker_code as string | undefined;
+    },
+    onSuccess: (newCode) => {
+      toast.success(newCode ? `Restocked — new code ${newCode}` : "Restocked");
+      queryClient.invalidateQueries({ queryKey: ["ecosnack-inventory-slots"] });
+    },
+    onError: (err: any) => toast.error(err.message),
+  });
+
   // Bulk set all codes for a machine
   const bulkSetCodes = useMutation({
     mutationFn: async (machineId: string) => {
