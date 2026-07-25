@@ -227,19 +227,28 @@ const EcoSnackLockersManager = () => {
     );
   });
 
-  const getStatusBadge = (status: string, redeemedAt: string | null, expiresAt: string) => {
+  const getStatusBadge = (status: string, redeemedAt: string | null, expiresAt: string | null) => {
+    // Confirmed purchases stay Active regardless of the payment-window expires_at
     if (redeemedAt) return <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30"><CheckCircle className="h-3 w-3 mr-1" />Redeemed</Badge>;
-    if (new Date(expiresAt) < new Date()) return <Badge variant="destructive"><XCircle className="h-3 w-3 mr-1" />Expired</Badge>;
-    if (status === "failed") return <Badge variant="destructive"><XCircle className="h-3 w-3 mr-1" />Failed</Badge>;
-    if (status === "completed") return <Badge className="bg-accent/20 text-accent border-accent/30"><Clock className="h-3 w-3 mr-1" />Active</Badge>;
-    if (status === "pending") return <Badge variant="secondary"><Loader2 className="h-3 w-3 mr-1 animate-spin" />Pending</Badge>;
+    if (status === "completed") return <Badge className="bg-accent/20 text-accent border-accent/30"><CheckCircle className="h-3 w-3 mr-1" />Active</Badge>;
+    if (status === "failed" || status === "canceled" || status === "cancelled") {
+      return <Badge variant="outline" className="border-muted-foreground/40 text-muted-foreground"><XCircle className="h-3 w-3 mr-1" />Canceled</Badge>;
+    }
+    if (status === "pending") {
+      // Only pending purchases can expire (5-minute Stripe checkout window)
+      if (expiresAt && new Date(expiresAt) < new Date()) {
+        return <Badge variant="destructive"><XCircle className="h-3 w-3 mr-1" />Expired</Badge>;
+      }
+      return <Badge variant="secondary"><Loader2 className="h-3 w-3 mr-1 animate-spin" />Pending</Badge>;
+    }
     return <Badge variant="outline">{status}</Badge>;
   };
 
   // Stats
-  const totalActive = (purchases || []).filter(p => p.payment_status === "completed" && !p.redeemed_at && new Date(p.expires_at) > new Date()).length;
+  const now = new Date();
+  const totalActive = (purchases || []).filter(p => p.payment_status === "completed" && !p.redeemed_at).length;
   const totalRedeemed = (purchases || []).filter(p => p.redeemed_at).length;
-  const totalExpired = (purchases || []).filter(p => !p.redeemed_at && new Date(p.expires_at) < new Date()).length;
+  const totalExpired = (purchases || []).filter(p => p.payment_status === "pending" && p.expires_at && new Date(p.expires_at) < now).length;
 
   return (
     <div className="space-y-6">
