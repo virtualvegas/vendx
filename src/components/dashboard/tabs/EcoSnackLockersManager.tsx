@@ -566,14 +566,27 @@ const EcoSnackLockersManager = () => {
                                 </Button>
                               </div>
                             ) : (
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                onClick={() => setEditingSlot({ id: slot.id, code: slot.locker_code || "" })}
-                              >
-                                <KeyRound className="h-3.5 w-3.5 mr-1" />
-                                {slot.locker_code ? "Edit" : "Set Code"}
-                              </Button>
+                              <div className="flex gap-1">
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => setEditingSlot({ id: slot.id, code: slot.locker_code || "" })}
+                                >
+                                  <KeyRound className="h-3.5 w-3.5 mr-1" />
+                                  {slot.locker_code ? "Edit" : "Set Code"}
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="text-orange-400 hover:text-orange-300 hover:bg-orange-500/10"
+                                  onClick={() => restockSlot.mutate({ slotId: slot.id, regenerate: true })}
+                                  disabled={restockSlot.isPending}
+                                  title="Regenerate code & mark as restocked"
+                                >
+                                  <RefreshCw className="h-3.5 w-3.5 mr-1" />
+                                  Restock
+                                </Button>
+                              </div>
                             )}
                           </TableCell>
                         </TableRow>
