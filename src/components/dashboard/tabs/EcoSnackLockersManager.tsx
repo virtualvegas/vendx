@@ -532,6 +532,7 @@ const EcoSnackLockersManager = () => {
                         <TableHead>Slot</TableHead>
                         <TableHead>Product</TableHead>
                         <TableHead>Stock</TableHead>
+                        <TableHead>Payment</TableHead>
                         <TableHead>Locker Code</TableHead>
                         <TableHead>Actions</TableHead>
                       </TableRow>
@@ -547,6 +548,20 @@ const EcoSnackLockersManager = () => {
                             <Badge variant={slot.quantity > 0 ? "default" : "destructive"}>
                               {slot.quantity > 0 ? "In Stock" : "Sold"}
                             </Badge>
+                          </TableCell>
+                          <TableCell>
+                            {(() => {
+                              const p = slot.latest_purchase;
+                              if (!p) return <span className="text-xs text-muted-foreground italic">No purchases</span>;
+                              return (
+                                <div className="flex flex-col gap-1">
+                                  {getStatusBadge(p.payment_status, p.redeemed_at, p.expires_at)}
+                                  <span className="text-[10px] text-muted-foreground">
+                                    ${Number(p.amount || 0).toFixed(2)} · {p.payment_method || "—"} · {format(new Date(p.created_at), "MMM d, h:mma")}
+                                  </span>
+                                </div>
+                              );
+                            })()}
                           </TableCell>
                           <TableCell>
                             {editingSlot?.id === slot.id ? (
