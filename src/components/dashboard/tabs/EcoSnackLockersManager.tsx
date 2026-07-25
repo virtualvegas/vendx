@@ -67,21 +67,39 @@ const EcoSnackLockersManager = () => {
     },
   });
 
-  // Fetch inventory slots with locker codes for selected machine
+  // Fetch inventory slots + their latest purchase (for payment status)
   const { data: inventorySlots, isLoading: slotsLoading } = useQuery({
     queryKey: ["ecosnack-inventory-slots", selectedCodeMachine],
     queryFn: async () => {
       if (!selectedCodeMachine) return [];
-      const { data, error } = await supabase
+      const { data: slots, error } = await supabase
         .from("machine_inventory")
         .select("id, slot_number, product_name, quantity, locker_code")
         .eq("machine_id", selectedCodeMachine)
         .order("slot_number");
       if (error) throw error;
-      return data || [];
+
+      const machine = (ecosnackMachines || []).find((m: any) => m.id === selectedCodeMachine);
+      const machineCode = machine?.machine_code;
+      if (!machineCode || !slots?.length) return (slots || []).map(s => ({ ...s, latest_purchase: null }));
+
+      const { data: purchases } = await supabase
+        .from("ecosnack_locker_purchases")
+        .select("id, locker_number, locker_code, payment_status, payment_method, amount, redeemed_at, expires_at, created_at")
+        .eq("machine_code", machineCode)
+        .order("created_at", { ascending: false })
+        .limit(500);
+
+      const latestBySlot = new Map<string, any>();
+      for (const p of purchases || []) {
+        const key = String(p.locker_number);
+        if (!latestBySlot.has(key)) latestBySlot.set(key, p);
+      }
+      return slots.map(s => ({ ...s, latest_purchase: latestBySlot.get(String(s.slot_number)) || null }));
     },
-    enabled: !!selectedCodeMachine,
+    enabled: !!selectedCodeMachine && !!ecosnackMachines,
   });
+
 
   // Update locker code on inventory slot
   const updateSlotCode = useMutation({
