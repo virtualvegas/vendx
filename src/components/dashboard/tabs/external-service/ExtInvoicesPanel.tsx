@@ -54,11 +54,19 @@ const ExtInvoicesPanel = () => {
   const createInvoice = async () => {
     if (!newForm.client_id) { toast.error("Client required"); return; }
     const { data, error } = await supabase.from("vendx_external_service_invoices" as any).insert({
-      client_id: newForm.client_id, notes: newForm.notes, due_date: newForm.due_date || null, status: "draft",
+      client_id: newForm.client_id, notes: newForm.notes, due_date: newForm.due_date || null,
+      paypal_invoice_url: newForm.paypal_invoice_url || null, status: "draft",
     }).select().single();
     if (error) { toast.error(error.message); return; }
     toast.success(`Invoice ${(data as any).invoice_number} created`);
-    setNewOpen(false); setNewForm({ client_id: "", notes: "", due_date: "" });
+    setNewOpen(false); setNewForm({ client_id: "", notes: "", due_date: "", paypal_invoice_url: "" });
+    qc.invalidateQueries({ queryKey: ["ext-invoices"] });
+  };
+
+  const savePaypalUrl = async (id: string) => {
+    const { error } = await supabase.from("vendx_external_service_invoices" as any).update({ paypal_invoice_url: paypalUrl || null }).eq("id", id);
+    if (error) { toast.error(error.message); return; }
+    toast.success("PayPal link saved");
     qc.invalidateQueries({ queryKey: ["ext-invoices"] });
   };
 
