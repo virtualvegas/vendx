@@ -31,7 +31,7 @@ export const ExpensesTab = () => {
     expense_date: format(new Date(), "yyyy-MM-dd"), vendor: "", category: "inventory", subcategory: "", description: "",
     amount: 0, tax_amount: 0, is_tax_deductible: true, is_inventory_reinvestment: false,
     payment_method: "bank", paid_from_account_id: "", receipt_url: null, receipt_filename: null, status: "recorded", notes: "",
-    external_reference: "",
+    external_reference: "", ap_bill_id: "",
   });
   const [splits, setSplits] = useState<Split[]>([]);
   const [filter, setFilter] = useState({ category: "all", status: "all", search: "" });
@@ -40,6 +40,23 @@ export const ExpensesTab = () => {
     queryKey: ["finance-accounts"],
     queryFn: async () => (await supabase.from("finance_accounts" as any).select("id, name, account_type")).data || [],
   });
+
+  const { data: apBills } = useQuery({
+    queryKey: ["finance-ap-bills-lite"],
+    queryFn: async (): Promise<any[]> => {
+      const { data } = await supabase
+        .from("finance_ap_bills" as any)
+        .select("id, bill_number, vendor, amount, status")
+        .order("bill_date", { ascending: false })
+        .limit(500);
+      return (data as any) || [];
+    },
+  });
+  const billMap = useMemo(() => {
+    const m = new Map<string, any>();
+    (apBills || []).forEach((b: any) => m.set(b.id, b));
+    return m;
+  }, [apBills]);
 
   const { data: machines } = useQuery({
     queryKey: ["fm-machines"],
@@ -83,14 +100,14 @@ export const ExpensesTab = () => {
   }, [filtered]);
 
   const resetForm = () => {
-    setForm({ expense_date: format(new Date(), "yyyy-MM-dd"), vendor: "", category: "inventory", subcategory: "", description: "", amount: 0, tax_amount: 0, is_tax_deductible: true, is_inventory_reinvestment: false, payment_method: "bank", paid_from_account_id: "", receipt_url: null, receipt_filename: null, status: "recorded", notes: "", external_reference: "" });
+    setForm({ expense_date: format(new Date(), "yyyy-MM-dd"), vendor: "", category: "inventory", subcategory: "", description: "", amount: 0, tax_amount: 0, is_tax_deductible: true, is_inventory_reinvestment: false, payment_method: "bank", paid_from_account_id: "", receipt_url: null, receipt_filename: null, status: "recorded", notes: "", external_reference: "", ap_bill_id: "" });
     setSplits([]);
     setEditing(null);
   };
 
   const saveMut = useMutation({
     mutationFn: async () => {
-      const payload = { ...form, paid_from_account_id: form.paid_from_account_id || null };
+      const payload = { ...form, paid_from_account_id: form.paid_from_account_id || null, ap_bill_id: form.ap_bill_id || null };
       let expenseId = editing?.id;
       if (editing) {
         const { error } = await supabase.from("finance_expenses" as any).update(payload).eq("id", editing.id);
@@ -203,6 +220,20 @@ export const ExpensesTab = () => {
                 <div><Label>Transaction # / Invoice / Receipt #</Label>
                   <Input placeholder="Used to detect duplicates per vendor" value={form.external_reference} onChange={(e) => setForm({ ...form, external_reference: e.target.value })} />
                 </div>
+                <div><Label>Link to AP Bill <span className="text-xs text-muted-foreground font-normal">(optional)</span></Label>
+                  <Select value={form.ap_bill_id || "none"} onValueChange={(v) => setForm({ ...form, ap_bill_id: v === "none" ? "" : v })}>
+                    <SelectTrigger><SelectValue placeholder="Not linked" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Not linked</SelectItem>
+                      {(apBills || []).map((b: any) => (
+                        <SelectItem key={b.id} value={b.id}>
+                          {b.bill_number || b.id.slice(0, 8)} — {b.vendor || "—"} (${Number(b.amount).toFixed(2)})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground mt-1">Links this expense to a vendor bill so it counts toward that bill's paid total.</p>
+                </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div><Label>Payment Method</Label>
                     <Select value={form.payment_method} onValueChange={(v) => setForm({ ...form, payment_method: v })}>
@@ -283,13 +314,20 @@ export const ExpensesTab = () => {
             </Select>
           </div>
           <Table>
-            <TableHeader><TableRow><TableHead>Date</TableHead><TableHead>Vendor</TableHead><TableHead>Txn #</TableHead><TableHead>Category</TableHead><TableHead>Amount</TableHead><TableHead>Status</TableHead><TableHead>Tags</TableHead><TableHead className="w-24"></TableHead></TableRow></TableHeader>
+            <TableHeader><TableRow><TableHead>Date</TableHead><TableHead>Vendor</TableHead><TableHead>Txn #</TableHead><TableHead>Bill</TableHead><TableHead>Category</TableHead><TableHead>Amount</TableHead><TableHead>Status</TableHead><TableHead>Tags</TableHead><TableHead className="w-24"></TableHead></TableRow></TableHeader>
             <TableBody>
               {filtered.map((e: any) => (
                 <TableRow key={e.id}>
                   <TableCell>{format(new Date(e.expense_date), "MMM d, yy")}</TableCell>
                   <TableCell>{e.vendor || "—"}</TableCell>
                   <TableCell className="font-mono text-xs text-muted-foreground max-w-[120px] truncate" title={e.external_reference}>{e.external_reference || "—"}</TableCell>
+                  <TableCell className="text-xs">
+                    {e.ap_bill_id && billMap.get(e.ap_bill_id) ? (
+                      <Badge variant="outline" className="font-mono text-[10px]" title={billMap.get(e.ap_bill_id).vendor || ""}>
+                        {billMap.get(e.ap_bill_id).bill_number || billMap.get(e.ap_bill_id).id.slice(0, 8)}
+                      </Badge>
+                    ) : <span className="text-muted-foreground">—</span>}
+                  </TableCell>
                   <TableCell><Badge variant="outline">{e.category}</Badge></TableCell>
                   <TableCell className="font-mono">${Number(e.amount).toFixed(2)}</TableCell>
                   <TableCell><Badge variant={STATUS_COLORS[e.status] as any}>{e.status}</Badge></TableCell>
@@ -299,12 +337,12 @@ export const ExpensesTab = () => {
                     {e.receipt_url && <FileText className="h-3 w-3 inline" />}
                   </TableCell>
                   <TableCell>
-                    <Button variant="ghost" size="icon" onClick={() => { setEditing(e); setForm({ ...e, paid_from_account_id: e.paid_from_account_id || "" }); setSplits((existingSplits as any) || []); setOpen(true); }}><Pencil className="h-3 w-3" /></Button>
+                    <Button variant="ghost" size="icon" onClick={() => { setEditing(e); setForm({ ...e, paid_from_account_id: e.paid_from_account_id || "", ap_bill_id: e.ap_bill_id || "" }); setSplits((existingSplits as any) || []); setOpen(true); }}><Pencil className="h-3 w-3" /></Button>
                     <Button variant="ghost" size="icon" onClick={() => { if (confirm("Delete?")) deleteMut.mutate(e.id); }}><Trash2 className="h-3 w-3" /></Button>
                   </TableCell>
                 </TableRow>
               ))}
-              {filtered.length === 0 && <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-8">No expenses</TableCell></TableRow>}
+              {filtered.length === 0 && <TableRow><TableCell colSpan={9} className="text-center text-muted-foreground py-8">No expenses</TableCell></TableRow>}
             </TableBody>
           </Table>
         </CardContent>

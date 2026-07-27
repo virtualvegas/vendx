@@ -35,7 +35,7 @@ export const IncomeTab = () => {
     amount: 0, tax_collected: 0, is_taxable: true,
     payment_method: "bank", deposited_to_account_id: "",
     receipt_url: null, receipt_filename: null, status: "recorded", notes: "",
-    external_reference: "",
+    external_reference: "", ar_invoice_id: "",
   });
   const [importForm, setImportForm] = useState({
     from_date: format(subDays(new Date(), 30), "yyyy-MM-dd"),
@@ -47,6 +47,23 @@ export const IncomeTab = () => {
     queryKey: ["finance-accounts"],
     queryFn: async (): Promise<any[]> => ((await supabase.from("finance_accounts" as any).select("id, name, account_type")).data as any) || [],
   });
+
+  const { data: arInvoices } = useQuery({
+    queryKey: ["finance-ar-invoices-lite"],
+    queryFn: async (): Promise<any[]> => {
+      const { data } = await supabase
+        .from("finance_ar_invoices" as any)
+        .select("id, invoice_number, customer_name, total, status")
+        .order("invoice_date", { ascending: false })
+        .limit(500);
+      return (data as any) || [];
+    },
+  });
+  const invoiceMap = useMemo(() => {
+    const m = new Map<string, any>();
+    (arInvoices || []).forEach((i: any) => m.set(i.id, i));
+    return m;
+  }, [arInvoices]);
 
   const { data: income } = useQuery({
     queryKey: ["finance-income"],
@@ -117,13 +134,18 @@ export const IncomeTab = () => {
     income_date: format(new Date(), "yyyy-MM-dd"), source: "", category: "deposit", subcategory: "",
     description: "", amount: 0, tax_collected: 0, is_taxable: true, payment_method: "bank",
     deposited_to_account_id: "", receipt_url: null, receipt_filename: null, status: "recorded", notes: "",
-    external_reference: "",
+    external_reference: "", ar_invoice_id: "",
   });
 
   const saveMut = useMutation({
     mutationFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      const payload = { ...form, deposited_to_account_id: form.deposited_to_account_id || null, created_by: user?.id };
+      const payload = {
+        ...form,
+        deposited_to_account_id: form.deposited_to_account_id || null,
+        ar_invoice_id: form.ar_invoice_id || null,
+        created_by: user?.id,
+      };
       const { data, error } = await supabase.from("finance_income" as any).insert(payload).select().single();
       if (error) throw error;
       await logAuditEvent({ action: "create", entity_type: "finance_income", entity_id: (data as any).id, details: { amount: form.amount, category: form.category } });
@@ -231,6 +253,20 @@ export const IncomeTab = () => {
                   <div><Label>Reference # <span className="text-xs text-muted-foreground font-normal">(optional)</span></Label>
                     <Input placeholder="Check #, confirmation, invoice — reference only, duplicates allowed" value={form.external_reference} onChange={(e) => setForm({ ...form, external_reference: e.target.value })} />
                   </div>
+                  <div><Label>Link to AR Invoice <span className="text-xs text-muted-foreground font-normal">(optional)</span></Label>
+                    <Select value={form.ar_invoice_id || "none"} onValueChange={(v) => setForm({ ...form, ar_invoice_id: v === "none" ? "" : v })}>
+                      <SelectTrigger><SelectValue placeholder="Not linked" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">Not linked</SelectItem>
+                        {(arInvoices || []).map((inv: any) => (
+                          <SelectItem key={inv.id} value={inv.id}>
+                            {inv.invoice_number} — {inv.customer_name || "—"} (${Number(inv.total).toFixed(2)})
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-muted-foreground mt-1">Links this income entry to a customer invoice so it counts toward that invoice's total received.</p>
+                  </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div><Label>Payment Method</Label>
                       <Select value={form.payment_method} onValueChange={(v) => setForm({ ...form, payment_method: v })}>
@@ -274,7 +310,7 @@ export const IncomeTab = () => {
             </Select>
           </div>
           <Table>
-            <TableHeader><TableRow><TableHead>Date</TableHead><TableHead>Source</TableHead><TableHead>Txn #</TableHead><TableHead>Category</TableHead><TableHead className="text-right">Amount</TableHead><TableHead className="text-right">Tax</TableHead><TableHead>Method</TableHead><TableHead className="w-12"></TableHead></TableRow></TableHeader>
+            <TableHeader><TableRow><TableHead>Date</TableHead><TableHead>Source</TableHead><TableHead>Txn #</TableHead><TableHead>Invoice</TableHead><TableHead>Category</TableHead><TableHead className="text-right">Amount</TableHead><TableHead className="text-right">Tax</TableHead><TableHead>Method</TableHead><TableHead className="w-12"></TableHead></TableRow></TableHeader>
             <TableBody>
               {filtered.map((e: any) => (
                 <TableRow key={e.id}>
@@ -295,6 +331,13 @@ export const IncomeTab = () => {
                     </div>
                   </TableCell>
                   <TableCell className="font-mono text-xs text-muted-foreground max-w-[120px] truncate" title={e.external_reference}>{e.external_reference || "—"}</TableCell>
+                  <TableCell className="text-xs">
+                    {e.ar_invoice_id && invoiceMap.get(e.ar_invoice_id) ? (
+                      <Badge variant="outline" className="font-mono text-[10px]" title={invoiceMap.get(e.ar_invoice_id).customer_name || ""}>
+                        {invoiceMap.get(e.ar_invoice_id).invoice_number}
+                      </Badge>
+                    ) : <span className="text-muted-foreground">—</span>}
+                  </TableCell>
                   <TableCell><Badge variant="outline" className="text-xs">{e.category.replace(/_/g, " ")}</Badge></TableCell>
                   <TableCell className="font-mono text-right text-green-600">+${Number(e.amount).toFixed(2)}</TableCell>
                   <TableCell className="font-mono text-right text-muted-foreground">{Number(e.tax_collected || 0) > 0 ? `$${Number(e.tax_collected).toFixed(2)}` : "—"}</TableCell>
@@ -308,7 +351,7 @@ export const IncomeTab = () => {
                   </TableCell>
                 </TableRow>
               ))}
-              {filtered.length === 0 && <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-8">No income recorded</TableCell></TableRow>}
+              {filtered.length === 0 && <TableRow><TableCell colSpan={9} className="text-center text-muted-foreground py-8">No income recorded</TableCell></TableRow>}
             </TableBody>
           </Table>
         </CardContent>
