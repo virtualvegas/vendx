@@ -81,6 +81,11 @@ export const ArInvoicesTab = () => {
               </div>
               <div><Label>Description</Label><Input value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} /></div>
               <div><Label>Amount *</Label><Input type="number" step="0.01" value={form.amount} onChange={e => setForm({ ...form, amount: Number(e.target.value) })} /></div>
+              <div>
+                <Label>PayPal Invoice Link (optional)</Label>
+                <Input placeholder="https://www.paypal.com/invoice/..." value={form.paypal_invoice_url} onChange={e => setForm({ ...form, paypal_invoice_url: e.target.value })} />
+                <p className="text-[11px] text-muted-foreground mt-1">Paste a hosted PayPal invoice URL so the customer can pay online.</p>
+              </div>
               <Button onClick={create} className="w-full">Create</Button>
             </div>
           </DialogContent>
