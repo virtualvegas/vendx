@@ -253,6 +253,20 @@ export const IncomeTab = () => {
                   <div><Label>Reference # <span className="text-xs text-muted-foreground font-normal">(optional)</span></Label>
                     <Input placeholder="Check #, confirmation, invoice — reference only, duplicates allowed" value={form.external_reference} onChange={(e) => setForm({ ...form, external_reference: e.target.value })} />
                   </div>
+                  <div><Label>Link to AR Invoice <span className="text-xs text-muted-foreground font-normal">(optional)</span></Label>
+                    <Select value={form.ar_invoice_id || "none"} onValueChange={(v) => setForm({ ...form, ar_invoice_id: v === "none" ? "" : v })}>
+                      <SelectTrigger><SelectValue placeholder="Not linked" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">Not linked</SelectItem>
+                        {(arInvoices || []).map((inv: any) => (
+                          <SelectItem key={inv.id} value={inv.id}>
+                            {inv.invoice_number} — {inv.customer_name || "—"} (${Number(inv.total).toFixed(2)})
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-muted-foreground mt-1">Links this income entry to a customer invoice so it counts toward that invoice's total received.</p>
+                  </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div><Label>Payment Method</Label>
                       <Select value={form.payment_method} onValueChange={(v) => setForm({ ...form, payment_method: v })}>
