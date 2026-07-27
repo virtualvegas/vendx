@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { SearchableSelect } from "@/components/ui/searchable-select";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Trash2, Send, CheckCircle, ExternalLink, Save } from "lucide-react";
+import { Plus, Trash2, Send, CheckCircle, ExternalLink, Save, DollarSign } from "lucide-react";
 import { toast } from "sonner";
 
 const ExtInvoicesPanel = () => {
@@ -20,6 +20,8 @@ const ExtInvoicesPanel = () => {
   const [newForm, setNewForm] = useState<any>({ client_id: "", notes: "", due_date: "", paypal_invoice_url: "" });
   const [itemForm, setItemForm] = useState<any>({ item_type: "labor", description: "", quantity: 1, unit_price: 0 });
   const [paypalUrl, setPaypalUrl] = useState("");
+  const [payOpen, setPayOpen] = useState(false);
+  const [payAmt, setPayAmt] = useState<number>(0);
 
   const { data: clients = [] } = useQuery({
     queryKey: ["ext-clients-min"],
@@ -94,6 +96,27 @@ const ExtInvoicesPanel = () => {
     if (status === "paid") { patch.paid_at = new Date().toISOString(); patch.amount_paid = (currentInvoice as any)?.total; }
     const { error } = await supabase.from("vendx_external_service_invoices" as any).update(patch).eq("id", id);
     if (error) toast.error(error.message); else { toast.success("Updated"); qc.invalidateQueries({ queryKey: ["ext-invoices"] }); }
+  };
+
+  const recordPartialPayment = async () => {
+    if (!open || payAmt <= 0) { toast.error("Enter a valid amount"); return; }
+    const ci = currentInvoice as any;
+    const total = Number(ci?.total || 0);
+    const prevPaid = Number(ci?.amount_paid || 0);
+    const newPaid = Math.min(total, prevPaid + payAmt);
+    const patch: any = { amount_paid: newPaid };
+    if (newPaid >= total && total > 0) {
+      patch.status = "paid";
+      patch.paid_at = new Date().toISOString();
+    } else if (ci.status === "draft") {
+      patch.status = "sent";
+      patch.sent_at = new Date().toISOString();
+    }
+    const { error } = await supabase.from("vendx_external_service_invoices" as any).update(patch).eq("id", open);
+    if (error) { toast.error(error.message); return; }
+    toast.success(newPaid >= total ? "Invoice fully paid" : `Partial payment of $${payAmt.toFixed(2)} recorded`);
+    setPayOpen(false); setPayAmt(0);
+    qc.invalidateQueries({ queryKey: ["ext-invoices"] });
   };
 
   const deleteInvoice = async (id: string, invoiceNumber: string) => {
@@ -183,10 +206,25 @@ const ExtInvoicesPanel = () => {
               <div className="flex gap-2 flex-wrap mb-3">
                 <Badge>{ci.status}</Badge>
                 {ci.status === "draft" && <Button size="sm" variant="outline" onClick={() => setStatus(ci.id, "sent")}><Send className="w-4 h-4 mr-1" /> Mark Sent</Button>}
-                {ci.status === "sent" && <Button size="sm" variant="outline" onClick={() => setStatus(ci.id, "paid")}><CheckCircle className="w-4 h-4 mr-1" /> Mark Paid</Button>}
+                {(ci.status === "sent" || ci.status === "draft") && (
+                  <>
+                    <Button size="sm" variant="outline" onClick={() => { setPayAmt(Number(ci.total) - Number(ci.amount_paid || 0)); setPayOpen(true); }}>
+                      <DollarSign className="w-4 h-4 mr-1" /> Record Payment
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => setStatus(ci.id, "paid")}><CheckCircle className="w-4 h-4 mr-1" /> Mark Fully Paid</Button>
+                  </>
+                )}
                 {ci.status !== "void" && <Button size="sm" variant="outline" onClick={() => setStatus(ci.id, "void")}>Void</Button>}
                 <Button size="sm" variant="destructive" onClick={() => deleteInvoice(ci.id, ci.invoice_number)}><Trash2 className="w-4 h-4 mr-1" /> Delete</Button>
               </div>
+
+              {(Number(ci.amount_paid) > 0 || ci.status === "paid") && (
+                <div className="border rounded p-3 mb-3 bg-muted/30 text-sm flex flex-wrap gap-4">
+                  <div><span className="text-muted-foreground">Total:</span> <span className="font-semibold">${Number(ci.total).toFixed(2)}</span></div>
+                  <div><span className="text-muted-foreground">Paid:</span> <span className="font-semibold text-green-500">${Number(ci.amount_paid || 0).toFixed(2)}</span></div>
+                  <div><span className="text-muted-foreground">Balance:</span> <span className="font-semibold">${(Number(ci.total) - Number(ci.amount_paid || 0)).toFixed(2)}</span></div>
+                </div>
+              )}
 
               <div className="border rounded p-3 mb-4 space-y-2">
                 <Label className="text-xs font-semibold">PayPal Invoice Link</Label>
@@ -242,6 +280,34 @@ const ExtInvoicesPanel = () => {
               )}
             </>
           ); })()}
+        </DialogContent>
+      </Dialog>
+
+      {/* Partial payment dialog */}
+      <Dialog open={payOpen} onOpenChange={setPayOpen}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Record Payment</DialogTitle></DialogHeader>
+          {currentInvoice && (() => { const ci = currentInvoice as any; const bal = Number(ci.total) - Number(ci.amount_paid || 0); return (
+            <div className="space-y-3">
+              <div className="text-sm text-muted-foreground">
+                Invoice total: <span className="font-semibold text-foreground">${Number(ci.total).toFixed(2)}</span> ·
+                Already paid: <span className="font-semibold text-foreground">${Number(ci.amount_paid || 0).toFixed(2)}</span> ·
+                Balance: <span className="font-semibold text-foreground">${bal.toFixed(2)}</span>
+              </div>
+              <div>
+                <Label>Amount received</Label>
+                <Input type="number" step="0.01" min="0" max={bal} value={payAmt} onChange={e => setPayAmt(Number(e.target.value))} />
+                <div className="flex gap-2 mt-2">
+                  <Button size="sm" variant="outline" onClick={() => setPayAmt(bal / 2)}>Half</Button>
+                  <Button size="sm" variant="outline" onClick={() => setPayAmt(bal)}>Full balance</Button>
+                </div>
+              </div>
+            </div>
+          ); })()}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPayOpen(false)}>Cancel</Button>
+            <Button onClick={recordPartialPayment}>Record</Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
