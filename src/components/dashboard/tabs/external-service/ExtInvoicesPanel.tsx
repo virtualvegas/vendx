@@ -282,6 +282,34 @@ const ExtInvoicesPanel = () => {
           ); })()}
         </DialogContent>
       </Dialog>
+
+      {/* Partial payment dialog */}
+      <Dialog open={payOpen} onOpenChange={setPayOpen}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Record Payment</DialogTitle></DialogHeader>
+          {currentInvoice && (() => { const ci = currentInvoice as any; const bal = Number(ci.total) - Number(ci.amount_paid || 0); return (
+            <div className="space-y-3">
+              <div className="text-sm text-muted-foreground">
+                Invoice total: <span className="font-semibold text-foreground">${Number(ci.total).toFixed(2)}</span> ·
+                Already paid: <span className="font-semibold text-foreground">${Number(ci.amount_paid || 0).toFixed(2)}</span> ·
+                Balance: <span className="font-semibold text-foreground">${bal.toFixed(2)}</span>
+              </div>
+              <div>
+                <Label>Amount received</Label>
+                <Input type="number" step="0.01" min="0" max={bal} value={payAmt} onChange={e => setPayAmt(Number(e.target.value))} />
+                <div className="flex gap-2 mt-2">
+                  <Button size="sm" variant="outline" onClick={() => setPayAmt(bal / 2)}>Half</Button>
+                  <Button size="sm" variant="outline" onClick={() => setPayAmt(bal)}>Full balance</Button>
+                </div>
+              </div>
+            </div>
+          ); })()}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPayOpen(false)}>Cancel</Button>
+            <Button onClick={recordPartialPayment}>Record</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
