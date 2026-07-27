@@ -256,7 +256,7 @@ const KioskCategoriesManager = () => {
 
       const { error } = await supabase
         .from("vendx_machines")
-        .update(updateData)
+        .update(updateData as any)
         .eq("id", editingMachinePricing.id);
       if (error) throw error;
 

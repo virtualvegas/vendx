@@ -311,7 +311,7 @@ export default function FunnelManager() {
     };
     
     if (editingProduct) {
-      const { error } = await supabase.from('store_funnel_products').update(productData).eq('id', editingProduct.id);
+      const { error } = await supabase.from('store_funnel_products').update(productData as any).eq('id', editingProduct.id);
       error ? toast.error('Failed to update product') : toast.success('Product updated');
     } else {
       const insertData = { ...productData, funnel_step_id: selectedStep.id, display_order: stepProducts.length };

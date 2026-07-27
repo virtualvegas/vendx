@@ -183,7 +183,7 @@ const TicketPrizesManager = () => {
 
       const { error } = await supabase
         .from("ticket_redemptions")
-        .update(updates)
+        .update(updates as any)
         .eq("id", id);
       if (error) throw error;
     },
