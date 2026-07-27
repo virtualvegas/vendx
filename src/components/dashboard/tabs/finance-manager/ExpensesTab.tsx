@@ -41,6 +41,23 @@ export const ExpensesTab = () => {
     queryFn: async () => (await supabase.from("finance_accounts" as any).select("id, name, account_type")).data || [],
   });
 
+  const { data: apBills } = useQuery({
+    queryKey: ["finance-ap-bills-lite"],
+    queryFn: async (): Promise<any[]> => {
+      const { data } = await supabase
+        .from("finance_ap_bills" as any)
+        .select("id, bill_number, vendor, amount, status")
+        .order("bill_date", { ascending: false })
+        .limit(500);
+      return (data as any) || [];
+    },
+  });
+  const billMap = useMemo(() => {
+    const m = new Map<string, any>();
+    (apBills || []).forEach((b: any) => m.set(b.id, b));
+    return m;
+  }, [apBills]);
+
   const { data: machines } = useQuery({
     queryKey: ["fm-machines"],
     queryFn: async () => (await supabase.from("vendx_machines").select("id, name, machine_code").order("name")).data || [],
