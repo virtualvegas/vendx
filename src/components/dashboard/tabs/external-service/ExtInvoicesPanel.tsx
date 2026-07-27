@@ -188,6 +188,20 @@ const ExtInvoicesPanel = () => {
                 <Button size="sm" variant="destructive" onClick={() => deleteInvoice(ci.id, ci.invoice_number)}><Trash2 className="w-4 h-4 mr-1" /> Delete</Button>
               </div>
 
+              <div className="border rounded p-3 mb-4 space-y-2">
+                <Label className="text-xs font-semibold">PayPal Invoice Link</Label>
+                <div className="flex gap-2 flex-wrap">
+                  <Input className="flex-1 min-w-[240px]" placeholder="https://www.paypal.com/invoice/..." value={paypalUrl} onChange={e => setPaypalUrl(e.target.value)} />
+                  <Button size="sm" variant="outline" onClick={() => savePaypalUrl(ci.id)}><Save className="w-4 h-4 mr-1" /> Save</Button>
+                  {ci.paypal_invoice_url && (
+                    <Button size="sm" variant="outline" onClick={() => window.open(ci.paypal_invoice_url, "_blank")}><ExternalLink className="w-4 h-4 mr-1" /> Open</Button>
+                  )}
+                </div>
+                <p className="text-[11px] text-muted-foreground">Customers will see a "Pay via PayPal" button on their copy of this invoice.</p>
+              </div>
+
+
+
               <div className="space-y-2 mb-4">
                 <h4 className="font-semibold text-sm">Line Items</h4>
                 {items.length === 0 ? <p className="text-sm text-muted-foreground">No items yet.</p> :
