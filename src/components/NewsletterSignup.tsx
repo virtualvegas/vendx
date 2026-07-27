@@ -63,7 +63,11 @@ const NewsletterSignup = ({ source = "footer", compact = false }: Props) => {
         </p>
       )}
       <div className="flex flex-col sm:flex-row gap-2">
+        <label htmlFor={`newsletter-email-${source}`} className="sr-only">
+          Email address
+        </label>
         <Input
+          id={`newsletter-email-${source}`}
           type="email"
           required
           placeholder="you@email.com"
@@ -71,6 +75,7 @@ const NewsletterSignup = ({ source = "footer", compact = false }: Props) => {
           onChange={(e) => setEmail(e.target.value)}
           className="flex-1 bg-background/60 border-primary/30"
           maxLength={255}
+          aria-label="Email address"
         />
         <Select value={audience} onValueChange={(v) => setAudience(v as "customer" | "business")}>
           <SelectTrigger className="w-full sm:w-36 bg-background/60 border-primary/30">
