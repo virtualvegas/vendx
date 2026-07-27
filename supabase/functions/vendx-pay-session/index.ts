@@ -231,26 +231,19 @@ serve(async (req) => {
     // Verify TOTP code at machine
     if (action === "verify_totp") {
       const apiKey = req.headers.get("x-machine-api-key");
-      
-      // Support both api_key header (machine-to-machine) and machine_id in body (kiosk UI)
-      let machineRecord: { id: string } | null = null;
-
-      if (apiKey) {
-        const { data } = await supabase
-          .from("vendx_machines")
-          .select("id")
-          .eq("api_key", apiKey)
-          .maybeSingle();
-        machineRecord = data;
-      } else if (machine_id && typeof machine_id === "string") {
-        const { data } = await supabase
-          .from("vendx_machines")
-          .select("id")
-          .eq("id", machine_id)
-          .eq("status", "active")
-          .maybeSingle();
-        machineRecord = data;
+      if (!apiKey) {
+        return new Response(JSON.stringify({ error: "Machine API key required" }), {
+          status: 401,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
       }
+
+      const { data: machineRecord } = await supabase
+        .from("vendx_machines")
+        .select("id")
+        .eq("api_key", apiKey)
+        .eq("status", "active")
+        .maybeSingle();
 
       if (!machineRecord) {
         return new Response(JSON.stringify({ error: "Invalid machine" }), {
@@ -267,7 +260,7 @@ serve(async (req) => {
       }
 
       // Rate limiting
-      const rateLimitKey = apiKey || machineRecord.id;
+      const rateLimitKey = apiKey;
       const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
       
       const { data: recentAttempts, error: attemptError } = await supabase
