@@ -121,19 +121,25 @@ const ExtInvoicesPanel = () => {
         invoices.length === 0 ? <p className="text-muted-foreground">No invoices.</p> :
         <div className="grid gap-3">
           {invoices.map((i: any) => (
-            <Card key={i.id} className="p-4 cursor-pointer hover:bg-muted/40" onClick={() => setOpen(i.id)}>
+            <Card key={i.id} className="p-4 cursor-pointer hover:bg-muted/40" onClick={() => { setOpen(i.id); setPaypalUrl(i.paypal_invoice_url || ""); }}>
               <div className="flex justify-between items-start gap-2 flex-wrap">
                 <div>
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="font-mono text-xs">{i.invoice_number}</span>
                     <Badge>{i.status}</Badge>
+                    {i.paypal_invoice_url && <Badge variant="outline" className="text-[10px]">PayPal link</Badge>}
                   </div>
                   <p className="font-semibold mt-1">{i.client?.company_name || i.client?.contact_name}</p>
                   <p className="text-xs text-muted-foreground">Issued: {i.issue_date} {i.due_date && `· Due: ${i.due_date}`}</p>
                 </div>
-                <div className="text-right">
+                <div className="text-right space-y-1">
                   <p className="text-lg font-bold">${Number(i.total).toFixed(2)}</p>
                   {Number(i.amount_paid) > 0 && <p className="text-xs text-green-500">Paid: ${Number(i.amount_paid).toFixed(2)}</p>}
+                  {i.paypal_invoice_url && i.status !== "paid" && i.status !== "void" && (
+                    <Button size="sm" variant="outline" onClick={(e) => { e.stopPropagation(); window.open(i.paypal_invoice_url, "_blank"); }}>
+                      <ExternalLink className="w-3 h-3 mr-1" /> Pay via PayPal
+                    </Button>
+                  )}
                 </div>
               </div>
             </Card>
