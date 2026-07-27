@@ -32,6 +32,7 @@ export const ArInvoicesTab = () => {
     const { data: inv, error } = await supabase.from("finance_ar_invoices" as any).insert({
       customer_name: form.customer_name, customer_email: form.customer_email || null,
       invoice_date: form.invoice_date, due_date: form.due_date, status: "sent",
+      paypal_invoice_url: form.paypal_invoice_url || null,
     }).select().single();
     if (error) return toast({ title: "Failed", description: error.message, variant: "destructive" });
     await supabase.from("finance_ar_invoice_items" as any).insert({
@@ -39,7 +40,7 @@ export const ArInvoicesTab = () => {
     });
     toast({ title: "Invoice created" });
     setOpen(false);
-    setForm({ customer_name: "", customer_email: "", invoice_date: format(new Date(), "yyyy-MM-dd"), due_date: format(new Date(Date.now() + 30 * 864e5), "yyyy-MM-dd"), description: "", amount: 0 });
+    setForm({ customer_name: "", customer_email: "", invoice_date: format(new Date(), "yyyy-MM-dd"), due_date: format(new Date(Date.now() + 30 * 864e5), "yyyy-MM-dd"), description: "", amount: 0, paypal_invoice_url: "" });
     qc.invalidateQueries({ queryKey: ["ar-invoices"] });
   };
 
