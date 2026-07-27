@@ -48,6 +48,23 @@ export const IncomeTab = () => {
     queryFn: async (): Promise<any[]> => ((await supabase.from("finance_accounts" as any).select("id, name, account_type")).data as any) || [],
   });
 
+  const { data: arInvoices } = useQuery({
+    queryKey: ["finance-ar-invoices-lite"],
+    queryFn: async (): Promise<any[]> => {
+      const { data } = await supabase
+        .from("finance_ar_invoices" as any)
+        .select("id, invoice_number, customer_name, total, status")
+        .order("invoice_date", { ascending: false })
+        .limit(500);
+      return (data as any) || [];
+    },
+  });
+  const invoiceMap = useMemo(() => {
+    const m = new Map<string, any>();
+    (arInvoices || []).forEach((i: any) => m.set(i.id, i));
+    return m;
+  }, [arInvoices]);
+
   const { data: income } = useQuery({
     queryKey: ["finance-income"],
     queryFn: async (): Promise<any[]> => {
