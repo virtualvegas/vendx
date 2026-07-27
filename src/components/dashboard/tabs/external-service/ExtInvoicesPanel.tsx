@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { SearchableSelect } from "@/components/ui/searchable-select";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Trash2, Send, CheckCircle, ExternalLink, Save } from "lucide-react";
+import { Plus, Trash2, Send, CheckCircle, ExternalLink, Save, DollarSign } from "lucide-react";
 import { toast } from "sonner";
 
 const ExtInvoicesPanel = () => {
