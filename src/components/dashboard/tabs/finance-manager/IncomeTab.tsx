@@ -351,7 +351,7 @@ export const IncomeTab = () => {
                   </TableCell>
                 </TableRow>
               ))}
-              {filtered.length === 0 && <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-8">No income recorded</TableCell></TableRow>}
+              {filtered.length === 0 && <TableRow><TableCell colSpan={9} className="text-center text-muted-foreground py-8">No income recorded</TableCell></TableRow>}
             </TableBody>
           </Table>
         </CardContent>
