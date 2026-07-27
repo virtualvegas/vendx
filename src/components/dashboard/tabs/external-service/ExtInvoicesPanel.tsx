@@ -206,10 +206,25 @@ const ExtInvoicesPanel = () => {
               <div className="flex gap-2 flex-wrap mb-3">
                 <Badge>{ci.status}</Badge>
                 {ci.status === "draft" && <Button size="sm" variant="outline" onClick={() => setStatus(ci.id, "sent")}><Send className="w-4 h-4 mr-1" /> Mark Sent</Button>}
-                {ci.status === "sent" && <Button size="sm" variant="outline" onClick={() => setStatus(ci.id, "paid")}><CheckCircle className="w-4 h-4 mr-1" /> Mark Paid</Button>}
+                {(ci.status === "sent" || ci.status === "draft") && (
+                  <>
+                    <Button size="sm" variant="outline" onClick={() => { setPayAmt(Number(ci.total) - Number(ci.amount_paid || 0)); setPayOpen(true); }}>
+                      <DollarSign className="w-4 h-4 mr-1" /> Record Payment
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => setStatus(ci.id, "paid")}><CheckCircle className="w-4 h-4 mr-1" /> Mark Fully Paid</Button>
+                  </>
+                )}
                 {ci.status !== "void" && <Button size="sm" variant="outline" onClick={() => setStatus(ci.id, "void")}>Void</Button>}
                 <Button size="sm" variant="destructive" onClick={() => deleteInvoice(ci.id, ci.invoice_number)}><Trash2 className="w-4 h-4 mr-1" /> Delete</Button>
               </div>
+
+              {(Number(ci.amount_paid) > 0 || ci.status === "paid") && (
+                <div className="border rounded p-3 mb-3 bg-muted/30 text-sm flex flex-wrap gap-4">
+                  <div><span className="text-muted-foreground">Total:</span> <span className="font-semibold">${Number(ci.total).toFixed(2)}</span></div>
+                  <div><span className="text-muted-foreground">Paid:</span> <span className="font-semibold text-green-500">${Number(ci.amount_paid || 0).toFixed(2)}</span></div>
+                  <div><span className="text-muted-foreground">Balance:</span> <span className="font-semibold">${(Number(ci.total) - Number(ci.amount_paid || 0)).toFixed(2)}</span></div>
+                </div>
+              )}
 
               <div className="border rounded p-3 mb-4 space-y-2">
                 <Label className="text-xs font-semibold">PayPal Invoice Link</Label>
