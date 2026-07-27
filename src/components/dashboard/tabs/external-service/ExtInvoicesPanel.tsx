@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { SearchableSelect } from "@/components/ui/searchable-select";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Trash2, Send, CheckCircle } from "lucide-react";
+import { Plus, Trash2, Send, CheckCircle, ExternalLink, Save } from "lucide-react";
 import { toast } from "sonner";
 
 const ExtInvoicesPanel = () => {
@@ -17,8 +17,9 @@ const ExtInvoicesPanel = () => {
   const [statusFilter, setStatusFilter] = useState("all");
   const [open, setOpen] = useState<string | null>(null);
   const [newOpen, setNewOpen] = useState(false);
-  const [newForm, setNewForm] = useState<any>({ client_id: "", notes: "", due_date: "" });
+  const [newForm, setNewForm] = useState<any>({ client_id: "", notes: "", due_date: "", paypal_invoice_url: "" });
   const [itemForm, setItemForm] = useState<any>({ item_type: "labor", description: "", quantity: 1, unit_price: 0 });
+  const [paypalUrl, setPaypalUrl] = useState("");
 
   const { data: clients = [] } = useQuery({
     queryKey: ["ext-clients-min"],
@@ -53,11 +54,19 @@ const ExtInvoicesPanel = () => {
   const createInvoice = async () => {
     if (!newForm.client_id) { toast.error("Client required"); return; }
     const { data, error } = await supabase.from("vendx_external_service_invoices" as any).insert({
-      client_id: newForm.client_id, notes: newForm.notes, due_date: newForm.due_date || null, status: "draft",
+      client_id: newForm.client_id, notes: newForm.notes, due_date: newForm.due_date || null,
+      paypal_invoice_url: newForm.paypal_invoice_url || null, status: "draft",
     }).select().single();
     if (error) { toast.error(error.message); return; }
     toast.success(`Invoice ${(data as any).invoice_number} created`);
-    setNewOpen(false); setNewForm({ client_id: "", notes: "", due_date: "" });
+    setNewOpen(false); setNewForm({ client_id: "", notes: "", due_date: "", paypal_invoice_url: "" });
+    qc.invalidateQueries({ queryKey: ["ext-invoices"] });
+  };
+
+  const savePaypalUrl = async (id: string) => {
+    const { error } = await supabase.from("vendx_external_service_invoices" as any).update({ paypal_invoice_url: paypalUrl || null }).eq("id", id);
+    if (error) { toast.error(error.message); return; }
+    toast.success("PayPal link saved");
     qc.invalidateQueries({ queryKey: ["ext-invoices"] });
   };
 
@@ -112,19 +121,25 @@ const ExtInvoicesPanel = () => {
         invoices.length === 0 ? <p className="text-muted-foreground">No invoices.</p> :
         <div className="grid gap-3">
           {invoices.map((i: any) => (
-            <Card key={i.id} className="p-4 cursor-pointer hover:bg-muted/40" onClick={() => setOpen(i.id)}>
+            <Card key={i.id} className="p-4 cursor-pointer hover:bg-muted/40" onClick={() => { setOpen(i.id); setPaypalUrl(i.paypal_invoice_url || ""); }}>
               <div className="flex justify-between items-start gap-2 flex-wrap">
                 <div>
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="font-mono text-xs">{i.invoice_number}</span>
                     <Badge>{i.status}</Badge>
+                    {i.paypal_invoice_url && <Badge variant="outline" className="text-[10px]">PayPal link</Badge>}
                   </div>
                   <p className="font-semibold mt-1">{i.client?.company_name || i.client?.contact_name}</p>
                   <p className="text-xs text-muted-foreground">Issued: {i.issue_date} {i.due_date && `· Due: ${i.due_date}`}</p>
                 </div>
-                <div className="text-right">
+                <div className="text-right space-y-1">
                   <p className="text-lg font-bold">${Number(i.total).toFixed(2)}</p>
                   {Number(i.amount_paid) > 0 && <p className="text-xs text-green-500">Paid: ${Number(i.amount_paid).toFixed(2)}</p>}
+                  {i.paypal_invoice_url && i.status !== "paid" && i.status !== "void" && (
+                    <Button size="sm" variant="outline" onClick={(e) => { e.stopPropagation(); window.open(i.paypal_invoice_url, "_blank"); }}>
+                      <ExternalLink className="w-3 h-3 mr-1" /> Pay via PayPal
+                    </Button>
+                  )}
                 </div>
               </div>
             </Card>
@@ -143,6 +158,11 @@ const ExtInvoicesPanel = () => {
                 options={clients.map((c: any) => ({ value: c.id, label: c.company_name || c.contact_name || "Residential Client" }))} placeholder="Select client" searchPlaceholder="Search..." />
             </div>
             <div><Label>Due Date</Label><Input type="date" value={newForm.due_date} onChange={e => setNewForm({ ...newForm, due_date: e.target.value })} /></div>
+            <div>
+              <Label>PayPal Invoice Link (optional)</Label>
+              <Input placeholder="https://www.paypal.com/invoice/..." value={newForm.paypal_invoice_url} onChange={e => setNewForm({ ...newForm, paypal_invoice_url: e.target.value })} />
+              <p className="text-[11px] text-muted-foreground mt-1">Paste the hosted PayPal invoice URL so the customer can pay online.</p>
+            </div>
             <div><Label>Notes</Label><Textarea value={newForm.notes} onChange={e => setNewForm({ ...newForm, notes: e.target.value })} /></div>
           </div>
           <DialogFooter>
@@ -167,6 +187,20 @@ const ExtInvoicesPanel = () => {
                 {ci.status !== "void" && <Button size="sm" variant="outline" onClick={() => setStatus(ci.id, "void")}>Void</Button>}
                 <Button size="sm" variant="destructive" onClick={() => deleteInvoice(ci.id, ci.invoice_number)}><Trash2 className="w-4 h-4 mr-1" /> Delete</Button>
               </div>
+
+              <div className="border rounded p-3 mb-4 space-y-2">
+                <Label className="text-xs font-semibold">PayPal Invoice Link</Label>
+                <div className="flex gap-2 flex-wrap">
+                  <Input className="flex-1 min-w-[240px]" placeholder="https://www.paypal.com/invoice/..." value={paypalUrl} onChange={e => setPaypalUrl(e.target.value)} />
+                  <Button size="sm" variant="outline" onClick={() => savePaypalUrl(ci.id)}><Save className="w-4 h-4 mr-1" /> Save</Button>
+                  {ci.paypal_invoice_url && (
+                    <Button size="sm" variant="outline" onClick={() => window.open(ci.paypal_invoice_url, "_blank")}><ExternalLink className="w-4 h-4 mr-1" /> Open</Button>
+                  )}
+                </div>
+                <p className="text-[11px] text-muted-foreground">Customers will see a "Pay via PayPal" button on their copy of this invoice.</p>
+              </div>
+
+
 
               <div className="space-y-2 mb-4">
                 <h4 className="font-semibold text-sm">Line Items</h4>

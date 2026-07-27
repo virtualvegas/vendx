@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { SearchableSelect } from "@/components/ui/searchable-select";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Wrench, FileText } from "lucide-react";
+import { Plus, Wrench, FileText, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 
 const BusinessExternalService = () => {
@@ -133,12 +133,19 @@ const BusinessExternalService = () => {
         {invoices.length === 0 ? <p className="text-sm text-muted-foreground">No invoices.</p> :
           <div className="grid gap-2">
             {invoices.map((i: any) => (
-              <Card key={i.id} className="p-3 flex justify-between items-center">
+              <Card key={i.id} className="p-3 flex justify-between items-center gap-3 flex-wrap">
                 <div>
                   <p className="font-mono text-xs">{i.invoice_number}</p>
                   <p className="text-xs text-muted-foreground">{i.issue_date} · {i.status}</p>
                 </div>
-                <p className="font-bold">${Number(i.total).toFixed(2)}</p>
+                <div className="flex items-center gap-3">
+                  <p className="font-bold">${Number(i.total).toFixed(2)}</p>
+                  {i.paypal_invoice_url && i.status !== "paid" && i.status !== "void" && (
+                    <Button size="sm" onClick={() => window.open(i.paypal_invoice_url, "_blank")}>
+                      <ExternalLink className="w-3 h-3 mr-1" /> Pay via PayPal
+                    </Button>
+                  )}
+                </div>
               </Card>
             ))}
           </div>

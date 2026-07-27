@@ -1779,6 +1779,7 @@ export type Database = {
           invoice_date: string
           invoice_number: string | null
           notes: string | null
+          paypal_invoice_url: string | null
           status: string
           subtotal: number
           tax_amount: number
@@ -1800,6 +1801,7 @@ export type Database = {
           invoice_date?: string
           invoice_number?: string | null
           notes?: string | null
+          paypal_invoice_url?: string | null
           status?: string
           subtotal?: number
           tax_amount?: number
@@ -1821,6 +1823,7 @@ export type Database = {
           invoice_date?: string
           invoice_number?: string | null
           notes?: string | null
+          paypal_invoice_url?: string | null
           status?: string
           subtotal?: number
           tax_amount?: number
@@ -8265,6 +8268,7 @@ export type Database = {
           issue_date: string
           notes: string | null
           paid_at: string | null
+          paypal_invoice_url: string | null
           sent_at: string | null
           status: string
           subtotal: number
@@ -8284,6 +8288,7 @@ export type Database = {
           issue_date?: string
           notes?: string | null
           paid_at?: string | null
+          paypal_invoice_url?: string | null
           sent_at?: string | null
           status?: string
           subtotal?: number
@@ -8303,6 +8308,7 @@ export type Database = {
           issue_date?: string
           notes?: string | null
           paid_at?: string | null
+          paypal_invoice_url?: string | null
           sent_at?: string | null
           status?: string
           subtotal?: number

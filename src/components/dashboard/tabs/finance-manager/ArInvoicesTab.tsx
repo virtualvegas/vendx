@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Loader2, Plus, DollarSign } from "lucide-react";
+import { Loader2, Plus, DollarSign, ExternalLink } from "lucide-react";
 import { format, differenceInDays } from "date-fns";
 
 export const ArInvoicesTab = () => {
@@ -16,7 +16,7 @@ export const ArInvoicesTab = () => {
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
   const [payOpen, setPayOpen] = useState<any>(null);
-  const [form, setForm] = useState({ customer_name: "", customer_email: "", invoice_date: format(new Date(), "yyyy-MM-dd"), due_date: format(new Date(Date.now() + 30 * 864e5), "yyyy-MM-dd"), description: "", amount: 0 });
+  const [form, setForm] = useState({ customer_name: "", customer_email: "", invoice_date: format(new Date(), "yyyy-MM-dd"), due_date: format(new Date(Date.now() + 30 * 864e5), "yyyy-MM-dd"), description: "", amount: 0, paypal_invoice_url: "" });
   const [payAmt, setPayAmt] = useState(0);
 
   const invoices = useQuery({
@@ -32,6 +32,7 @@ export const ArInvoicesTab = () => {
     const { data: inv, error } = await supabase.from("finance_ar_invoices" as any).insert({
       customer_name: form.customer_name, customer_email: form.customer_email || null,
       invoice_date: form.invoice_date, due_date: form.due_date, status: "sent",
+      paypal_invoice_url: form.paypal_invoice_url || null,
     }).select().single();
     if (error) return toast({ title: "Failed", description: error.message, variant: "destructive" });
     await supabase.from("finance_ar_invoice_items" as any).insert({
@@ -39,7 +40,7 @@ export const ArInvoicesTab = () => {
     });
     toast({ title: "Invoice created" });
     setOpen(false);
-    setForm({ customer_name: "", customer_email: "", invoice_date: format(new Date(), "yyyy-MM-dd"), due_date: format(new Date(Date.now() + 30 * 864e5), "yyyy-MM-dd"), description: "", amount: 0 });
+    setForm({ customer_name: "", customer_email: "", invoice_date: format(new Date(), "yyyy-MM-dd"), due_date: format(new Date(Date.now() + 30 * 864e5), "yyyy-MM-dd"), description: "", amount: 0, paypal_invoice_url: "" });
     qc.invalidateQueries({ queryKey: ["ar-invoices"] });
   };
 
@@ -80,6 +81,11 @@ export const ArInvoicesTab = () => {
               </div>
               <div><Label>Description</Label><Input value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} /></div>
               <div><Label>Amount *</Label><Input type="number" step="0.01" value={form.amount} onChange={e => setForm({ ...form, amount: Number(e.target.value) })} /></div>
+              <div>
+                <Label>PayPal Invoice Link (optional)</Label>
+                <Input placeholder="https://www.paypal.com/invoice/..." value={form.paypal_invoice_url} onChange={e => setForm({ ...form, paypal_invoice_url: e.target.value })} />
+                <p className="text-[11px] text-muted-foreground mt-1">Paste a hosted PayPal invoice URL so the customer can pay online.</p>
+              </div>
               <Button onClick={create} className="w-full">Create</Button>
             </div>
           </DialogContent>
@@ -105,7 +111,12 @@ export const ArInvoicesTab = () => {
                         <td className="text-right">${Number(inv.total).toLocaleString()}</td>
                         <td className="text-right">${Number(inv.amount_paid || 0).toLocaleString()}</td>
                         <td className="text-center"><Badge variant={inv.status === "paid" ? "default" : "secondary"}>{inv.status}</Badge></td>
-                        <td>{remaining > 0 && <Button size="sm" variant="ghost" onClick={() => { setPayOpen(inv); setPayAmt(remaining); }}><DollarSign className="h-4 w-4" /></Button>}</td>
+                        <td className="flex items-center gap-1 justify-end py-1">
+                          {inv.paypal_invoice_url && (
+                            <Button size="sm" variant="ghost" title="Open PayPal invoice" onClick={() => window.open(inv.paypal_invoice_url, "_blank")}><ExternalLink className="h-4 w-4" /></Button>
+                          )}
+                          {remaining > 0 && <Button size="sm" variant="ghost" onClick={() => { setPayOpen(inv); setPayAmt(remaining); }}><DollarSign className="h-4 w-4" /></Button>}
+                        </td>
                       </tr>
                     );
                   })}
