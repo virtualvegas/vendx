@@ -146,11 +146,6 @@ export const IncomeTab = () => {
         ar_invoice_id: form.ar_invoice_id || null,
         created_by: user?.id,
       };
-
-  const saveMut = useMutation({
-    mutationFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      const payload = { ...form, deposited_to_account_id: form.deposited_to_account_id || null, created_by: user?.id };
       const { data, error } = await supabase.from("finance_income" as any).insert(payload).select().single();
       if (error) throw error;
       await logAuditEvent({ action: "create", entity_type: "finance_income", entity_id: (data as any).id, details: { amount: form.amount, category: form.category } });
