@@ -107,7 +107,7 @@ export const ExpensesTab = () => {
 
   const saveMut = useMutation({
     mutationFn: async () => {
-      const payload = { ...form, paid_from_account_id: form.paid_from_account_id || null };
+      const payload = { ...form, paid_from_account_id: form.paid_from_account_id || null, ap_bill_id: form.ap_bill_id || null };
       let expenseId = editing?.id;
       if (editing) {
         const { error } = await supabase.from("finance_expenses" as any).update(payload).eq("id", editing.id);
