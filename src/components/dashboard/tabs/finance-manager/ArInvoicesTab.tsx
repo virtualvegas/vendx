@@ -111,7 +111,12 @@ export const ArInvoicesTab = () => {
                         <td className="text-right">${Number(inv.total).toLocaleString()}</td>
                         <td className="text-right">${Number(inv.amount_paid || 0).toLocaleString()}</td>
                         <td className="text-center"><Badge variant={inv.status === "paid" ? "default" : "secondary"}>{inv.status}</Badge></td>
-                        <td>{remaining > 0 && <Button size="sm" variant="ghost" onClick={() => { setPayOpen(inv); setPayAmt(remaining); }}><DollarSign className="h-4 w-4" /></Button>}</td>
+                        <td className="flex items-center gap-1 justify-end py-1">
+                          {inv.paypal_invoice_url && (
+                            <Button size="sm" variant="ghost" title="Open PayPal invoice" onClick={() => window.open(inv.paypal_invoice_url, "_blank")}><ExternalLink className="h-4 w-4" /></Button>
+                          )}
+                          {remaining > 0 && <Button size="sm" variant="ghost" onClick={() => { setPayOpen(inv); setPayAmt(remaining); }}><DollarSign className="h-4 w-4" /></Button>}
+                        </td>
                       </tr>
                     );
                   })}
