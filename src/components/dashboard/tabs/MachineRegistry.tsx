@@ -356,7 +356,7 @@ const MachineRegistry = () => {
       const newApiKey = generateApiKey();
       const { error } = await supabase
         .from("vendx_machines")
-        .update({ api_key: newApiKey })
+        .update({ api_key: newApiKey } as any)
         .eq("id", selectedMachine.id);
 
       if (error) throw error;
@@ -775,7 +775,11 @@ const MachineRegistry = () => {
                                 <DropdownMenuItem onClick={() => openInventoryDialog(machine)}>
                                   <Package className="w-4 h-4 mr-2" /> Inventory
                                 </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => { setSelectedMachine(machine); setShowApiKeyDialog(true); }}>
+                                <DropdownMenuItem onClick={async () => {
+                                  const { data } = await (supabase as any).rpc("get_machine_api_key", { p_machine_id: machine.id });
+                                  setSelectedMachine({ ...machine, api_key: (data as string) || "" });
+                                  setShowApiKeyDialog(true);
+                                }}>
                                   <Key className="w-4 h-4 mr-2" /> API Key
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator />
