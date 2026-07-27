@@ -55,6 +55,15 @@ export const useSEO = ({
     // Basic meta tags
     setMetaTag("description", metaDescription, true);
 
+    // Canonical link
+    let canonical = document.querySelector('link[rel="canonical"]');
+    if (!canonical) {
+      canonical = document.createElement("link");
+      canonical.setAttribute("rel", "canonical");
+      document.head.appendChild(canonical);
+    }
+    canonical.setAttribute("href", metaUrl);
+
     // Open Graph tags
     setMetaTag("og:title", fullTitle);
     setMetaTag("og:description", metaDescription);

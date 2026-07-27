@@ -148,8 +148,8 @@ const ServicesOverview = () => {
                 </p>
                 
                 <div className="flex items-center text-sm font-medium text-muted-foreground group-hover:text-foreground transition-colors">
-                  Learn more
-                  <ArrowRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
+                  <span>Explore {service.title}</span>
+                  <ArrowRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" aria-hidden="true" />
                 </div>
               </Link>
             );
