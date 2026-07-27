@@ -286,7 +286,7 @@ const MachineRegistry = () => {
             notes: machineForm.notes || null,
             api_key: apiKey,
             installed_at: new Date().toISOString(),
-          })
+          } as any)
           .select("id")
           .single();
 
