@@ -134,8 +134,18 @@ export const IncomeTab = () => {
     income_date: format(new Date(), "yyyy-MM-dd"), source: "", category: "deposit", subcategory: "",
     description: "", amount: 0, tax_collected: 0, is_taxable: true, payment_method: "bank",
     deposited_to_account_id: "", receipt_url: null, receipt_filename: null, status: "recorded", notes: "",
-    external_reference: "",
+    external_reference: "", ar_invoice_id: "",
   });
+
+  const saveMut = useMutation({
+    mutationFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      const payload = {
+        ...form,
+        deposited_to_account_id: form.deposited_to_account_id || null,
+        ar_invoice_id: form.ar_invoice_id || null,
+        created_by: user?.id,
+      };
 
   const saveMut = useMutation({
     mutationFn: async () => {
