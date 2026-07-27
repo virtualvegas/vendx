@@ -2116,6 +2116,7 @@ export type Database = {
       finance_expenses: {
         Row: {
           amount: number
+          ap_bill_id: string | null
           approved_at: string | null
           approved_by: string | null
           category: string
@@ -2140,6 +2141,7 @@ export type Database = {
         }
         Insert: {
           amount: number
+          ap_bill_id?: string | null
           approved_at?: string | null
           approved_by?: string | null
           category: string
@@ -2164,6 +2166,7 @@ export type Database = {
         }
         Update: {
           amount?: number
+          ap_bill_id?: string | null
           approved_at?: string | null
           approved_by?: string | null
           category?: string
@@ -2187,6 +2190,13 @@ export type Database = {
           vendor?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "finance_expenses_ap_bill_id_fkey"
+            columns: ["ap_bill_id"]
+            isOneToOne: false
+            referencedRelation: "finance_ap_bills"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "finance_expenses_paid_from_account_id_fkey"
             columns: ["paid_from_account_id"]
@@ -2244,6 +2254,7 @@ export type Database = {
       finance_income: {
         Row: {
           amount: number
+          ar_invoice_id: string | null
           category: string
           created_at: string
           created_by: string | null
@@ -2270,6 +2281,7 @@ export type Database = {
         }
         Insert: {
           amount: number
+          ar_invoice_id?: string | null
           category?: string
           created_at?: string
           created_by?: string | null
@@ -2296,6 +2308,7 @@ export type Database = {
         }
         Update: {
           amount?: number
+          ar_invoice_id?: string | null
           category?: string
           created_at?: string
           created_by?: string | null
@@ -2321,6 +2334,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "finance_income_ar_invoice_id_fkey"
+            columns: ["ar_invoice_id"]
+            isOneToOne: false
+            referencedRelation: "finance_ar_invoices"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "finance_income_deposited_to_account_id_fkey"
             columns: ["deposited_to_account_id"]
