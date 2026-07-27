@@ -220,6 +220,20 @@ export const ExpensesTab = () => {
                 <div><Label>Transaction # / Invoice / Receipt #</Label>
                   <Input placeholder="Used to detect duplicates per vendor" value={form.external_reference} onChange={(e) => setForm({ ...form, external_reference: e.target.value })} />
                 </div>
+                <div><Label>Link to AP Bill <span className="text-xs text-muted-foreground font-normal">(optional)</span></Label>
+                  <Select value={form.ap_bill_id || "none"} onValueChange={(v) => setForm({ ...form, ap_bill_id: v === "none" ? "" : v })}>
+                    <SelectTrigger><SelectValue placeholder="Not linked" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Not linked</SelectItem>
+                      {(apBills || []).map((b: any) => (
+                        <SelectItem key={b.id} value={b.id}>
+                          {b.bill_number || b.id.slice(0, 8)} — {b.vendor || "—"} (${Number(b.amount).toFixed(2)})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground mt-1">Links this expense to a vendor bill so it counts toward that bill's paid total.</p>
+                </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div><Label>Payment Method</Label>
                     <Select value={form.payment_method} onValueChange={(v) => setForm({ ...form, payment_method: v })}>
