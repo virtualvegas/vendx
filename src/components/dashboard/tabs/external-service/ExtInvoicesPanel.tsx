@@ -98,6 +98,27 @@ const ExtInvoicesPanel = () => {
     if (error) toast.error(error.message); else { toast.success("Updated"); qc.invalidateQueries({ queryKey: ["ext-invoices"] }); }
   };
 
+  const recordPartialPayment = async () => {
+    if (!open || payAmt <= 0) { toast.error("Enter a valid amount"); return; }
+    const ci = currentInvoice as any;
+    const total = Number(ci?.total || 0);
+    const prevPaid = Number(ci?.amount_paid || 0);
+    const newPaid = Math.min(total, prevPaid + payAmt);
+    const patch: any = { amount_paid: newPaid };
+    if (newPaid >= total && total > 0) {
+      patch.status = "paid";
+      patch.paid_at = new Date().toISOString();
+    } else if (ci.status === "draft") {
+      patch.status = "sent";
+      patch.sent_at = new Date().toISOString();
+    }
+    const { error } = await supabase.from("vendx_external_service_invoices" as any).update(patch).eq("id", open);
+    if (error) { toast.error(error.message); return; }
+    toast.success(newPaid >= total ? "Invoice fully paid" : `Partial payment of $${payAmt.toFixed(2)} recorded`);
+    setPayOpen(false); setPayAmt(0);
+    qc.invalidateQueries({ queryKey: ["ext-invoices"] });
+  };
+
   const deleteInvoice = async (id: string, invoiceNumber: string) => {
     if (!confirm(`Delete invoice ${invoiceNumber}? This removes all line items and cannot be undone.`)) return;
     await supabase.from("vendx_external_service_invoice_items" as any).delete().eq("invoice_id", id);
