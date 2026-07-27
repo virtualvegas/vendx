@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { SearchableSelect } from "@/components/ui/searchable-select";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Wrench, FileText } from "lucide-react";
+import { Plus, Wrench, FileText, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 
 const BusinessExternalService = () => {
