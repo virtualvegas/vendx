@@ -42,13 +42,32 @@ serve(async (req) => {
   }
 
   try {
+    // Require authenticated user before processing PayPal capture
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const supabaseAuth = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_ANON_KEY") ?? ""
+    );
+    const { data: userData, error: userErr } = await supabaseAuth.auth.getUser(authHeader.replace("Bearer ", ""));
+    if (userErr || !userData.user) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const authedUserId = userData.user.id;
+
     const { orderId, type } = await req.json();
-    
+
     if (!orderId) {
       throw new Error("Order ID is required");
     }
 
-    console.log("Capturing PayPal order:", orderId, "type:", type);
+    console.log("Capturing PayPal order:", orderId, "type:", type, "user:", authedUserId);
 
     const supabaseClient = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
@@ -87,6 +106,11 @@ serve(async (req) => {
     if (type === "wallet_load" || customData.type === "wallet_load") {
       // Handle wallet load
       const userId = customData.user_id;
+      if (userId !== authedUserId) {
+        return new Response(JSON.stringify({ error: "Forbidden" }), {
+          status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
       const amount = parseFloat(customData.amount);
 
       console.log("Processing wallet load for user:", userId, "amount:", amount);
@@ -177,6 +201,11 @@ serve(async (req) => {
     } else {
       // Handle store order
       const userId = customData.supabase_user_id;
+      if (userId && userId !== authedUserId) {
+        return new Response(JSON.stringify({ error: "Forbidden" }), {
+          status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
       const cartItems = customData.cart_items || [];
       const capture = purchaseUnit.payments.captures[0];
       const totalAmount = parseFloat(capture.amount.value);

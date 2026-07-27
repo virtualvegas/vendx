@@ -1,5 +1,6 @@
 import { useParams, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
+import DOMPurify from "dompurify";
 import { supabase } from "@/integrations/supabase/client";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
@@ -34,10 +35,10 @@ const PolicyPage = () => {
       if (trimmed.startsWith("# "))
         return <h1 key={i} className="text-2xl font-bold mt-6 mb-4 text-foreground">{trimmed.slice(2)}</h1>;
       if (trimmed.startsWith("- ")) {
-        const text = trimmed.slice(2).replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
+        const text = DOMPurify.sanitize(trimmed.slice(2).replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>"), { ALLOWED_TAGS: ["strong"] });
         return <li key={i} className="ml-6 text-muted-foreground list-disc" dangerouslySetInnerHTML={{ __html: text }} />;
       }
-      const text = trimmed.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
+      const text = DOMPurify.sanitize(trimmed.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>"), { ALLOWED_TAGS: ["strong"] });
       return <p key={i} className="text-muted-foreground mb-2" dangerouslySetInnerHTML={{ __html: text }} />;
     });
   };

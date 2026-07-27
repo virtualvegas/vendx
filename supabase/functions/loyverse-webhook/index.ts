@@ -27,16 +27,20 @@ serve(async (req) => {
   try {
     const raw = await req.text();
 
-    // Optional shared-secret verification
+    // Mandatory shared-secret verification
     const expectedSecret = Deno.env.get("LOYVERSE_WEBHOOK_SECRET");
-    if (expectedSecret) {
-      const provided = req.headers.get("x-loyverse-signature") || req.headers.get("authorization")?.replace("Bearer ", "");
-      if (provided !== expectedSecret) {
-        console.warn("Loyverse webhook: invalid signature");
-        return new Response(JSON.stringify({ error: "Invalid signature" }), {
-          status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
+    if (!expectedSecret) {
+      console.error("Loyverse webhook: LOYVERSE_WEBHOOK_SECRET not configured");
+      return new Response(JSON.stringify({ error: "Webhook not configured" }), {
+        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const provided = req.headers.get("x-loyverse-signature") || req.headers.get("authorization")?.replace("Bearer ", "");
+    if (provided !== expectedSecret) {
+      console.warn("Loyverse webhook: invalid signature");
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     const body = JSON.parse(raw || "{}");

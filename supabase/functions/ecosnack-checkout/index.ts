@@ -22,7 +22,7 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
 
-    const { action, machine_code, locker_number, item_name, amount, payment_method, session_code, purchase_id } = await req.json();
+    const { action, machine_code, locker_number, item_name, amount, payment_method, session_code, purchase_id, session_id: bodySessionId } = await req.json();
 
     // Action: Pay with wallet
     if (action === "wallet_purchase") {
@@ -254,6 +254,35 @@ serve(async (req) => {
           status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
+
+      // Auth check: owned purchases require matching authenticated user;
+      // guest purchases require the Stripe session_id as proof of purchase.
+      const authHeader = req.headers.get("Authorization");
+      let callerId: string | null = null;
+      if (authHeader) {
+        const supabaseClient = createClient(
+          Deno.env.get("SUPABASE_URL") ?? "",
+          Deno.env.get("SUPABASE_ANON_KEY") ?? ""
+        );
+        const { data: userData } = await supabaseClient.auth.getUser(authHeader.replace("Bearer ", ""));
+        callerId = userData.user?.id || null;
+      }
+      if (purchase.user_id) {
+        if (!callerId || callerId !== purchase.user_id) {
+          return new Response(JSON.stringify({ error: "Unauthorized" }), {
+            status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+      } else {
+        const sessionProof = bodySessionId || req.headers.get("x-stripe-session-id");
+        if (!purchase.stripe_session_id || !sessionProof || sessionProof !== purchase.stripe_session_id) {
+          return new Response(JSON.stringify({ error: "Unauthorized" }), {
+            status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+      }
+
+
 
       // If already failed, return error
       if (purchase.payment_status === "failed") {

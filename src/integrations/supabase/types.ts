@@ -11078,6 +11078,7 @@ export type Database = {
           total_tickets: number
         }[]
       }
+      get_machine_api_key: { Args: { p_machine_id: string }; Returns: string }
       get_my_franchise_id: { Args: never; Returns: string }
       get_my_office_id: { Args: never; Returns: string }
       get_my_warehouse_id: { Args: never; Returns: string }

@@ -122,12 +122,13 @@ const TicketConfigManager = () => {
           .eq("id", editingConfig.id);
         if (error) throw error;
       } else {
+        const { machine: _m, ...rest } = data as any;
         const { error } = await supabase
           .from("machine_ticket_config")
           .insert({
             machine_id: selectedMachine,
-            ...data,
-          });
+            ...rest,
+          } as any);
         if (error) throw error;
       }
     },

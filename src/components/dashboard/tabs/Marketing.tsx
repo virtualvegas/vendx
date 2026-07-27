@@ -87,10 +87,10 @@ const Marketing = () => {
         conversions: Number(form.conversions) || 0,
       };
       if (editing) {
-        const { error } = await supabase.from("marketing_campaigns").update(payload).eq("id", editing.id);
+        const { error } = await supabase.from("marketing_campaigns").update(payload as any).eq("id", editing.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("marketing_campaigns").insert([payload]);
+        const { error } = await supabase.from("marketing_campaigns").insert([payload as any]);
         if (error) throw error;
       }
     },
@@ -104,7 +104,7 @@ const Marketing = () => {
 
   const patchMutation = useMutation({
     mutationFn: async ({ id, patch }: { id: string; patch: Partial<Campaign> }) => {
-      const { error } = await supabase.from("marketing_campaigns").update(patch).eq("id", id);
+      const { error } = await supabase.from("marketing_campaigns").update(patch as any).eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["marketing-campaigns"] }),
