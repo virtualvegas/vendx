@@ -22,7 +22,7 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
 
-    const { action, machine_code, locker_number, item_name, amount, payment_method, session_code, purchase_id } = await req.json();
+    const { action, machine_code, locker_number, item_name, amount, payment_method, session_code, purchase_id, session_id: bodySessionId } = await req.json();
 
     // Action: Pay with wallet
     if (action === "wallet_purchase") {
@@ -255,8 +255,8 @@ serve(async (req) => {
         });
       }
 
-      // Auth check: caller must be the purchase owner (or staff). Guest purchases
-      // require the Stripe session_id as a bearer-equivalent proof.
+      // Auth check: owned purchases require matching authenticated user;
+      // guest purchases require the Stripe session_id as proof of purchase.
       const authHeader = req.headers.get("Authorization");
       let callerId: string | null = null;
       if (authHeader) {
@@ -267,28 +267,21 @@ serve(async (req) => {
         const { data: userData } = await supabaseClient.auth.getUser(authHeader.replace("Bearer ", ""));
         callerId = userData.user?.id || null;
       }
-
       if (purchase.user_id) {
-        // Owned purchase: require matching authenticated user
         if (!callerId || callerId !== purchase.user_id) {
           return new Response(JSON.stringify({ error: "Unauthorized" }), {
             status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
           });
         }
       } else {
-        // Guest purchase: require the Stripe session_id to be provided as proof of purchase
-        const { session_id } = { session_id: (typeof (globalThis as any).__body === 'object' ? undefined : undefined) };
-        // Read the session_id from the incoming body (already parsed above)
-        const providedSession = (arguments as any)?.[0]?.session_id;
-        // fallback: re-read from headers
-        const headerSession = req.headers.get("x-stripe-session-id");
-        const sessionProof = providedSession || headerSession;
+        const sessionProof = bodySessionId || req.headers.get("x-stripe-session-id");
         if (!purchase.stripe_session_id || !sessionProof || sessionProof !== purchase.stripe_session_id) {
           return new Response(JSON.stringify({ error: "Unauthorized" }), {
             status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
           });
         }
       }
+
 
 
       // If already failed, return error

@@ -26,6 +26,31 @@ serve(async (req) => {
     );
 
     const body = await req.text();
+
+    // Mandatory HMAC-SHA256 signature verification
+    const secret = Deno.env.get("SHOPIFY_WEBHOOK_SECRET");
+    if (!secret) {
+      logStep("SHOPIFY_WEBHOOK_SECRET missing");
+      return new Response("Webhook not configured", { status: 500, headers: corsHeaders });
+    }
+    const hmacHeader = req.headers.get("x-shopify-hmac-sha256");
+    if (!hmacHeader) {
+      return new Response("Missing signature", { status: 401, headers: corsHeaders });
+    }
+    const key = await crypto.subtle.importKey(
+      "raw",
+      new TextEncoder().encode(secret),
+      { name: "HMAC", hash: "SHA-256" },
+      false,
+      ["sign"]
+    );
+    const digest = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(body));
+    const expected = btoa(String.fromCharCode(...new Uint8Array(digest)));
+    if (hmacHeader !== expected) {
+      logStep("HMAC mismatch");
+      return new Response("Unauthorized", { status: 401, headers: corsHeaders });
+    }
+
     const topic = req.headers.get("x-shopify-topic");
     logStep("Topic", { topic });
 
