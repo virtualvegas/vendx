@@ -17,8 +17,9 @@ const ExtInvoicesPanel = () => {
   const [statusFilter, setStatusFilter] = useState("all");
   const [open, setOpen] = useState<string | null>(null);
   const [newOpen, setNewOpen] = useState(false);
-  const [newForm, setNewForm] = useState<any>({ client_id: "", notes: "", due_date: "" });
+  const [newForm, setNewForm] = useState<any>({ client_id: "", notes: "", due_date: "", paypal_invoice_url: "" });
   const [itemForm, setItemForm] = useState<any>({ item_type: "labor", description: "", quantity: 1, unit_price: 0 });
+  const [paypalUrl, setPaypalUrl] = useState("");
 
   const { data: clients = [] } = useQuery({
     queryKey: ["ext-clients-min"],
