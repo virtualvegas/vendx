@@ -13,8 +13,14 @@ import Divisions from "@/components/Divisions";
 import QuickLinks from "@/components/home/QuickLinks";
 import Contact from "@/components/Contact";
 import Footer from "@/components/Footer";
+import { useSEO } from "@/hooks/useSEO";
 
 const Index = () => {
+  useSEO({
+    title: "VendX Global — Future of Entertainment & Automated Retail",
+    description: "VendX operates smart vending, arcades, media, retail and event experiences — one ecosystem for automated retail and entertainment.",
+    url: "https://vendxglobal.net/",
+  });
   return (
     <div className="relative min-h-screen bg-background">
       <StarField />

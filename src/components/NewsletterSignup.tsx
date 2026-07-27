@@ -78,7 +78,10 @@ const NewsletterSignup = ({ source = "footer", compact = false }: Props) => {
           aria-label="Email address"
         />
         <Select value={audience} onValueChange={(v) => setAudience(v as "customer" | "business")}>
-          <SelectTrigger className="w-full sm:w-36 bg-background/60 border-primary/30">
+          <SelectTrigger
+            className="w-full sm:w-36 bg-background/60 border-primary/30"
+            aria-label="Subscriber audience"
+          >
             <SelectValue />
           </SelectTrigger>
           <SelectContent>

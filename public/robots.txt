@@ -12,3 +12,12 @@ Allow: /
 
 User-agent: *
 Allow: /
+Disallow: /dashboard
+Disallow: /auth
+Disallow: /kiosk
+Disallow: /arcade-pay
+Disallow: /pay/
+Disallow: /sso/
+Disallow: /team-links
+
+Sitemap: https://vendxglobal.net/sitemap.xml
