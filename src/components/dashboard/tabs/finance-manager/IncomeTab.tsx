@@ -331,6 +331,13 @@ export const IncomeTab = () => {
                     </div>
                   </TableCell>
                   <TableCell className="font-mono text-xs text-muted-foreground max-w-[120px] truncate" title={e.external_reference}>{e.external_reference || "—"}</TableCell>
+                  <TableCell className="text-xs">
+                    {e.ar_invoice_id && invoiceMap.get(e.ar_invoice_id) ? (
+                      <Badge variant="outline" className="font-mono text-[10px]" title={invoiceMap.get(e.ar_invoice_id).customer_name || ""}>
+                        {invoiceMap.get(e.ar_invoice_id).invoice_number}
+                      </Badge>
+                    ) : <span className="text-muted-foreground">—</span>}
+                  </TableCell>
                   <TableCell><Badge variant="outline" className="text-xs">{e.category.replace(/_/g, " ")}</Badge></TableCell>
                   <TableCell className="font-mono text-right text-green-600">+${Number(e.amount).toFixed(2)}</TableCell>
                   <TableCell className="font-mono text-right text-muted-foreground">{Number(e.tax_collected || 0) > 0 ? `$${Number(e.tax_collected).toFixed(2)}` : "—"}</TableCell>
