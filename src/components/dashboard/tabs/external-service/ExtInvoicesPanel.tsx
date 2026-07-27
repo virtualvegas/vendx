@@ -158,6 +158,11 @@ const ExtInvoicesPanel = () => {
                 options={clients.map((c: any) => ({ value: c.id, label: c.company_name || c.contact_name || "Residential Client" }))} placeholder="Select client" searchPlaceholder="Search..." />
             </div>
             <div><Label>Due Date</Label><Input type="date" value={newForm.due_date} onChange={e => setNewForm({ ...newForm, due_date: e.target.value })} /></div>
+            <div>
+              <Label>PayPal Invoice Link (optional)</Label>
+              <Input placeholder="https://www.paypal.com/invoice/..." value={newForm.paypal_invoice_url} onChange={e => setNewForm({ ...newForm, paypal_invoice_url: e.target.value })} />
+              <p className="text-[11px] text-muted-foreground mt-1">Paste the hosted PayPal invoice URL so the customer can pay online.</p>
+            </div>
             <div><Label>Notes</Label><Textarea value={newForm.notes} onChange={e => setNewForm({ ...newForm, notes: e.target.value })} /></div>
           </div>
           <DialogFooter>
