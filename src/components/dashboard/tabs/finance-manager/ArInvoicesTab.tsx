@@ -16,7 +16,7 @@ export const ArInvoicesTab = () => {
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
   const [payOpen, setPayOpen] = useState<any>(null);
-  const [form, setForm] = useState({ customer_name: "", customer_email: "", invoice_date: format(new Date(), "yyyy-MM-dd"), due_date: format(new Date(Date.now() + 30 * 864e5), "yyyy-MM-dd"), description: "", amount: 0 });
+  const [form, setForm] = useState({ customer_name: "", customer_email: "", invoice_date: format(new Date(), "yyyy-MM-dd"), due_date: format(new Date(Date.now() + 30 * 864e5), "yyyy-MM-dd"), description: "", amount: 0, paypal_invoice_url: "" });
   const [payAmt, setPayAmt] = useState(0);
 
   const invoices = useQuery({
