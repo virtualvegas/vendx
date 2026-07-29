@@ -9,8 +9,10 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { SearchableSelect } from "@/components/ui/searchable-select";
 import { Badge } from "@/components/ui/badge";
-import { Plus, ExternalLink, FileText } from "lucide-react";
+import { Plus, ExternalLink, FileText, Calendar, User } from "lucide-react";
 import { toast } from "sonner";
+import ExtTicketDetailDialog from "./ExtTicketDetailDialog";
+import { formatDisplayDate } from "@/lib/dateUtils";
 
 const statusColors: Record<string, string> = {
   new: "default", scheduled: "secondary", in_progress: "secondary",
