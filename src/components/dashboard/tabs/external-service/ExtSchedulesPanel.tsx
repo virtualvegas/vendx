@@ -86,6 +86,9 @@ const ExtSchedulesPanel = () => {
       const { data } = await supabase.from("vendx_external_machines" as any).select("id,asset_label").eq("client_id", form.client_id);
       return data || [];
     },
+  });
+
+
 
   const { data: techs = [] } = useQuery({
     queryKey: ["ext-techs-sched"],
