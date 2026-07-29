@@ -108,7 +108,6 @@ const ExtTicketsPanel = () => {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap justify-between items-center gap-2">
       <div className="flex flex-wrap justify-between items-end gap-2">
         <div className="flex flex-wrap gap-2 items-end">
           <div className="w-44">
