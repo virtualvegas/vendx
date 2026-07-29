@@ -184,6 +184,42 @@ const ExtTicketDetailDialog = ({ ticketId, open, onOpenChange }: Props) => {
     qc.invalidateQueries({ queryKey: ["ext-ticket-updates", ticketId] });
   };
 
+  const linkSchedule = async (scheduleId: string) => {
+    const { error } = await supabase.from("vendx_external_service_tickets" as any)
+      .update({ schedule_id: scheduleId || null }).eq("id", t.id);
+    if (error) return toast.error(error.message);
+    toast.success(scheduleId ? "Linked to schedule" : "Unlinked from schedule");
+    invalidate();
+  };
+
+  const createFollowUp = async () => {
+    if (!fuSubject.trim()) { toast.error("Subject required"); return; }
+    const { data: { user } } = await supabase.auth.getUser();
+    const payload: any = {
+      parent_ticket_id: t.id,
+      client_id: t.client_id, location_id: t.location_id, machine_id: t.machine_id,
+      subject: fuSubject.trim(),
+      description: fuNotes.trim() || `Follow-up to ${t.ticket_number}`,
+      priority: t.priority, status: fuDate ? "scheduled" : "new", source: "admin",
+      scheduled_date: fuDate || null, scheduled_time: fuTime || null,
+      assigned_technician_id: t.assigned_technician_id,
+      service_package: t.service_package, service_location_type: t.service_location_type,
+      access_notes: t.access_notes, has_stairs: t.has_stairs,
+      created_by: user?.id,
+    };
+    const { error } = await supabase.from("vendx_external_service_tickets" as any).insert(payload);
+    if (error) return toast.error(error.message);
+    await supabase.from("vendx_external_service_ticket_updates" as any).insert({
+      ticket_id: t.id, message: `Follow-up visit scheduled${fuDate ? ` for ${fuDate}` : ""}: ${fuSubject}`,
+      is_internal: true, status_change: "follow_up_created", author_id: user?.id,
+    });
+    toast.success("Follow-up created");
+    setFuDate(""); setFuTime(""); setFuSubject(""); setFuNotes("");
+    qc.invalidateQueries({ queryKey: ["ext-ticket-followups", ticketId] });
+    qc.invalidateQueries({ queryKey: ["ext-tickets"] });
+    invalidate();
+  };
+
   const totalCost = (Number(t.labor_cost || 0) + Number(t.parts_cost || 0)).toFixed(2);
 
   return (
