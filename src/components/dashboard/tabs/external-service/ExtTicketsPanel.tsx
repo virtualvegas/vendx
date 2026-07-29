@@ -278,6 +278,7 @@ const ExtTicketsPanel = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      <ExtTicketDetailDialog ticketId={detailId} open={!!detailId} onOpenChange={(v) => !v && setDetailId(null)} />
     </div>
   );
 };
