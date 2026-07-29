@@ -247,10 +247,11 @@ const ExtTicketDetailDialog = ({ ticketId, open, onOpenChange }: Props) => {
         </div>
 
         <Tabs value={tab} onValueChange={setTab}>
-          <TabsList className="w-full grid grid-cols-4">
+          <TabsList className="w-full grid grid-cols-5">
             <TabsTrigger value="overview"><Calendar className="w-3.5 h-3.5 mr-1" /> Overview</TabsTrigger>
             <TabsTrigger value="reschedule"><RotateCcw className="w-3.5 h-3.5 mr-1" /> Reschedule</TabsTrigger>
             <TabsTrigger value="resolve"><CheckCircle2 className="w-3.5 h-3.5 mr-1" /> Resolve</TabsTrigger>
+            <TabsTrigger value="followups"><CalendarPlus className="w-3.5 h-3.5 mr-1" /> Follow-ups ({followUps.length})</TabsTrigger>
             <TabsTrigger value="activity"><MessageSquare className="w-3.5 h-3.5 mr-1" /> Activity ({updates.length})</TabsTrigger>
           </TabsList>
 
