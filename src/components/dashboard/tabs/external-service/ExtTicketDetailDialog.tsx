@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { SearchableSelect } from "@/components/ui/searchable-select";
 import { Switch } from "@/components/ui/switch";
-import { Calendar, CheckCircle2, MessageSquare, RotateCcw, DollarSign, Clock, User } from "lucide-react";
+import { Calendar, CheckCircle2, MessageSquare, RotateCcw, DollarSign, Clock, User, CalendarPlus, Link2, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import { formatDisplayDate } from "@/lib/dateUtils";
 
