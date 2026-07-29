@@ -113,10 +113,12 @@ const ExtSchedulesPanel = () => {
     if (!form.next_run_date) { toast.error("Next run date required"); return; }
     const payload: any = { ...form };
     delete payload.client; delete payload.location; delete payload.machine;
-    ["client_id","location_id","machine_id","service_package","service_location_type","end_date"].forEach(k => {
+    ["client_id","location_id","machine_id","service_package","service_location_type","end_date","assigned_technician_id","preferred_time"].forEach(k => {
       if (!payload[k]) payload[k] = null;
     });
     payload.interval_count = Math.max(1, parseInt(payload.interval_count || 1, 10));
+    payload.advance_notice_days = Math.max(0, parseInt(payload.advance_notice_days || 0, 10));
+    payload.estimated_duration_minutes = payload.estimated_duration_minutes ? parseInt(payload.estimated_duration_minutes, 10) : null;
     const id = payload.id; delete payload.id;
     const { error } = id
       ? await supabase.from("vendx_external_service_schedules" as any).update(payload).eq("id", id)
