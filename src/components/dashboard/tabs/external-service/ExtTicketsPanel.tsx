@@ -64,12 +64,16 @@ const ExtTicketsPanel = () => {
   });
 
   const { data: tickets = [], isLoading } = useQuery({
-    queryKey: ["ext-tickets", statusFilter],
+    queryKey: ["ext-tickets", statusFilter, techFilter, fromDate, toDate],
     queryFn: async () => {
       let q = supabase.from("vendx_external_service_tickets" as any)
-        .select("*, client:vendx_external_clients(company_name,contact_name), location:vendx_external_locations(name), machine:vendx_external_machines(asset_label)")
+        .select("*, client:vendx_external_clients(company_name,contact_name), location:vendx_external_locations(name), machine:vendx_external_machines(asset_label), technician:profiles!vendx_external_service_tickets_assigned_technician_id_fkey(full_name,email)")
+        .order("scheduled_date", { ascending: true, nullsFirst: false })
         .order("created_at", { ascending: false });
       if (statusFilter !== "all") q = q.eq("status", statusFilter);
+      if (techFilter !== "all") q = techFilter === "unassigned" ? q.is("assigned_technician_id", null) : q.eq("assigned_technician_id", techFilter);
+      if (fromDate) q = q.gte("scheduled_date", fromDate);
+      if (toDate) q = q.lte("scheduled_date", toDate);
       const { data, error } = await q;
       if (error) throw error;
       return data || [];
