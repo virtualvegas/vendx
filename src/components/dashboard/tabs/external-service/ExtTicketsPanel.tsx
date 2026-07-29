@@ -63,11 +63,11 @@ const ExtTicketsPanel = () => {
     },
   });
 
-  const { data: tickets = [], isLoading } = useQuery({
-    queryKey: ["ext-tickets", statusFilter, techFilter, fromDate, toDate],
+  const { data: tickets = [], isLoading, error: ticketsError } = useQuery({
+    queryKey: ["ext-tickets", statusFilter, techFilter, fromDate, toDate, techs],
     queryFn: async () => {
       let q = supabase.from("vendx_external_service_tickets" as any)
-        .select("*, client:vendx_external_clients(company_name,contact_name), location:vendx_external_locations(name), machine:vendx_external_machines(asset_label), technician:profiles!vendx_external_service_tickets_assigned_technician_id_fkey(full_name,email)")
+        .select("*, client:vendx_external_clients(company_name,contact_name), location:vendx_external_locations(name), machine:vendx_external_machines(asset_label)")
         .order("scheduled_date", { ascending: true, nullsFirst: false })
         .order("created_at", { ascending: false });
       if (statusFilter !== "all") q = q.eq("status", statusFilter);
@@ -76,9 +76,11 @@ const ExtTicketsPanel = () => {
       if (toDate) q = q.lte("scheduled_date", toDate);
       const { data, error } = await q;
       if (error) throw error;
-      return data || [];
+      const techMap = new Map((techs as any[]).map((u: any) => [u.id, u]));
+      return (data || []).map((t: any) => ({ ...t, technician: t.assigned_technician_id ? techMap.get(t.assigned_technician_id) || null : null }));
     },
   });
+  if (ticketsError) console.error("ext-tickets query error:", ticketsError);
 
   const save = async () => {
     if (!form.subject) { toast.error("Subject required"); return; }
