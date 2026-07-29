@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { SearchableSelect } from "@/components/ui/searchable-select";
 import { Switch } from "@/components/ui/switch";
-import { Calendar, CheckCircle2, MessageSquare, RotateCcw, DollarSign, Clock, User } from "lucide-react";
+import { Calendar, CheckCircle2, MessageSquare, RotateCcw, DollarSign, Clock, User, CalendarPlus, Link2, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import { formatDisplayDate } from "@/lib/dateUtils";
 
@@ -37,6 +37,10 @@ const ExtTicketDetailDialog = ({ ticketId, open, onOpenChange }: Props) => {
   const [actualDur, setActualDur] = useState<string>("");
   const [newComment, setNewComment] = useState("");
   const [commentInternal, setCommentInternal] = useState(true);
+  const [fuDate, setFuDate] = useState("");
+  const [fuTime, setFuTime] = useState("");
+  const [fuSubject, setFuSubject] = useState("");
+  const [fuNotes, setFuNotes] = useState("");
 
   const { data: t } = useQuery({
     queryKey: ["ext-ticket-detail", ticketId],
@@ -67,6 +71,39 @@ const ExtTicketDetailDialog = ({ ticketId, open, onOpenChange }: Props) => {
       return data || [];
     },
     enabled: open,
+  });
+
+  const { data: schedules = [] } = useQuery({
+    queryKey: ["ext-schedules-for-ticket", t?.client_id],
+    queryFn: async () => {
+      let q = supabase.from("vendx_external_service_schedules" as any).select("id,title,frequency,next_run_date,client_id").order("next_run_date", { ascending: true, nullsFirst: false });
+      if (t?.client_id) q = q.eq("client_id", t.client_id);
+      const { data } = await q;
+      return data || [];
+    },
+    enabled: !!t && open,
+  });
+
+  const { data: followUps = [] } = useQuery({
+    queryKey: ["ext-ticket-followups", ticketId],
+    queryFn: async () => {
+      const { data } = await supabase.from("vendx_external_service_tickets" as any)
+        .select("id,ticket_number,subject,status,scheduled_date,scheduled_time")
+        .eq("parent_ticket_id", ticketId).order("scheduled_date", { ascending: true, nullsFirst: false });
+      return data || [];
+    },
+    enabled: !!ticketId && open,
+  });
+
+  const { data: parent } = useQuery({
+    queryKey: ["ext-ticket-parent", t?.parent_ticket_id],
+    queryFn: async () => {
+      if (!t?.parent_ticket_id) return null;
+      const { data } = await supabase.from("vendx_external_service_tickets" as any)
+        .select("id,ticket_number,subject").eq("id", t.parent_ticket_id).maybeSingle();
+      return data as any;
+    },
+    enabled: !!t?.parent_ticket_id && open,
   });
 
   useEffect(() => {
@@ -147,6 +184,42 @@ const ExtTicketDetailDialog = ({ ticketId, open, onOpenChange }: Props) => {
     qc.invalidateQueries({ queryKey: ["ext-ticket-updates", ticketId] });
   };
 
+  const linkSchedule = async (scheduleId: string) => {
+    const { error } = await supabase.from("vendx_external_service_tickets" as any)
+      .update({ schedule_id: scheduleId || null }).eq("id", t.id);
+    if (error) return toast.error(error.message);
+    toast.success(scheduleId ? "Linked to schedule" : "Unlinked from schedule");
+    invalidate();
+  };
+
+  const createFollowUp = async () => {
+    if (!fuSubject.trim()) { toast.error("Subject required"); return; }
+    const { data: { user } } = await supabase.auth.getUser();
+    const payload: any = {
+      parent_ticket_id: t.id,
+      client_id: t.client_id, location_id: t.location_id, machine_id: t.machine_id,
+      subject: fuSubject.trim(),
+      description: fuNotes.trim() || `Follow-up to ${t.ticket_number}`,
+      priority: t.priority, status: fuDate ? "scheduled" : "new", source: "admin",
+      scheduled_date: fuDate || null, scheduled_time: fuTime || null,
+      assigned_technician_id: t.assigned_technician_id,
+      service_package: t.service_package, service_location_type: t.service_location_type,
+      access_notes: t.access_notes, has_stairs: t.has_stairs,
+      created_by: user?.id,
+    };
+    const { error } = await supabase.from("vendx_external_service_tickets" as any).insert(payload);
+    if (error) return toast.error(error.message);
+    await supabase.from("vendx_external_service_ticket_updates" as any).insert({
+      ticket_id: t.id, message: `Follow-up visit scheduled${fuDate ? ` for ${fuDate}` : ""}: ${fuSubject}`,
+      is_internal: true, status_change: "follow_up_created", author_id: user?.id,
+    });
+    toast.success("Follow-up created");
+    setFuDate(""); setFuTime(""); setFuSubject(""); setFuNotes("");
+    qc.invalidateQueries({ queryKey: ["ext-ticket-followups", ticketId] });
+    qc.invalidateQueries({ queryKey: ["ext-tickets"] });
+    invalidate();
+  };
+
   const totalCost = (Number(t.labor_cost || 0) + Number(t.parts_cost || 0)).toFixed(2);
 
   return (
@@ -174,10 +247,11 @@ const ExtTicketDetailDialog = ({ ticketId, open, onOpenChange }: Props) => {
         </div>
 
         <Tabs value={tab} onValueChange={setTab}>
-          <TabsList className="w-full grid grid-cols-4">
+          <TabsList className="w-full grid grid-cols-5">
             <TabsTrigger value="overview"><Calendar className="w-3.5 h-3.5 mr-1" /> Overview</TabsTrigger>
             <TabsTrigger value="reschedule"><RotateCcw className="w-3.5 h-3.5 mr-1" /> Reschedule</TabsTrigger>
             <TabsTrigger value="resolve"><CheckCircle2 className="w-3.5 h-3.5 mr-1" /> Resolve</TabsTrigger>
+            <TabsTrigger value="followups"><CalendarPlus className="w-3.5 h-3.5 mr-1" /> Follow-ups ({followUps.length})</TabsTrigger>
             <TabsTrigger value="activity"><MessageSquare className="w-3.5 h-3.5 mr-1" /> Activity ({updates.length})</TabsTrigger>
           </TabsList>
 
@@ -197,9 +271,53 @@ const ExtTicketDetailDialog = ({ ticketId, open, onOpenChange }: Props) => {
                 options={[{ value: "", label: "Unassigned" }, ...techs.map((u: any) => ({ value: u.id, label: u.full_name || u.email }))]}
                 placeholder="Assign" searchPlaceholder="Search staff..." />
             </div>
+            <div>
+              <Label className="text-xs flex items-center gap-1"><Link2 className="w-3 h-3" /> Linked recurring schedule</Label>
+              <SearchableSelect value={t.schedule_id || ""} onValueChange={linkSchedule}
+                options={[{ value: "", label: "— Not linked" }, ...schedules.map((s: any) => ({ value: s.id, label: `${s.title} (${s.frequency}${s.next_run_date ? ` · next ${formatDisplayDate(s.next_run_date)}` : ""})` }))]}
+                placeholder="Link to a schedule" searchPlaceholder="Search schedules..." />
+              {schedules.length === 0 && <p className="text-[10px] text-muted-foreground mt-1">No schedules for this client yet.</p>}
+            </div>
+            {parent && (
+              <div className="text-xs bg-muted/40 rounded p-2 flex items-center justify-between gap-2">
+                <span>Follow-up of <span className="font-mono">{parent.ticket_number}</span> — {parent.subject}</span>
+                <Button size="sm" variant="ghost" onClick={() => { onOpenChange(false); setTimeout(() => window.dispatchEvent(new CustomEvent("open-ext-ticket", { detail: parent.id })), 100); }}>
+                  <ExternalLink className="w-3 h-3" />
+                </Button>
+              </div>
+            )}
             {t.description && <div><Label className="text-xs">Description</Label><p className="text-sm whitespace-pre-wrap">{t.description}</p></div>}
             {t.access_notes && <div><Label className="text-xs">Access notes</Label><p className="text-sm whitespace-pre-wrap">{t.access_notes}</p></div>}
             {t.resolution && <div><Label className="text-xs">Resolution</Label><p className="text-sm whitespace-pre-wrap">{t.resolution}</p></div>}
+          </TabsContent>
+
+          <TabsContent value="followups" className="space-y-3 pt-3">
+            <Card className="p-3 space-y-3">
+              <p className="text-xs font-semibold flex items-center gap-1"><CalendarPlus className="w-3.5 h-3.5" /> Schedule a follow-up visit</p>
+              <div className="grid grid-cols-2 gap-2">
+                <div><Label className="text-xs">Date</Label><Input type="date" value={fuDate} onChange={e => setFuDate(e.target.value)} /></div>
+                <div><Label className="text-xs">Time</Label><Input type="time" value={fuTime} onChange={e => setFuTime(e.target.value)} /></div>
+              </div>
+              <div><Label className="text-xs">Subject *</Label><Input value={fuSubject} onChange={e => setFuSubject(e.target.value)} placeholder="Return visit — replace part" /></div>
+              <div><Label className="text-xs">Notes</Label><Textarea rows={2} value={fuNotes} onChange={e => setFuNotes(e.target.value)} placeholder="What needs to happen on the follow-up" /></div>
+              <Button size="sm" onClick={createFollowUp}><CalendarPlus className="w-4 h-4 mr-1" /> Create follow-up ticket</Button>
+            </Card>
+            <div className="space-y-1.5">
+              <p className="text-xs text-muted-foreground">Existing follow-ups</p>
+              {followUps.length === 0 && <p className="text-sm text-muted-foreground">No follow-up visits yet.</p>}
+              {followUps.map((f: any) => (
+                <Card key={f.id} className="p-2.5 flex items-center justify-between gap-2">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-mono text-xs">{f.ticket_number}</span>
+                      <Badge variant="outline" className="text-[10px]">{f.status}</Badge>
+                      {f.scheduled_date && <span className="text-[11px] text-muted-foreground">{formatDisplayDate(f.scheduled_date)}{f.scheduled_time ? ` @ ${f.scheduled_time.slice(0,5)}` : ""}</span>}
+                    </div>
+                    <p className="text-sm truncate">{f.subject}</p>
+                  </div>
+                </Card>
+              ))}
+            </div>
           </TabsContent>
 
           <TabsContent value="reschedule" className="space-y-3 pt-3">

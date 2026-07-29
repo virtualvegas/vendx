@@ -8595,6 +8595,7 @@ export type Database = {
           location_id: string | null
           machine_id: string | null
           original_scheduled_date: string | null
+          parent_ticket_id: string | null
           parts_cost: number | null
           preferred_contact_time: string | null
           priority: string
@@ -8644,6 +8645,7 @@ export type Database = {
           location_id?: string | null
           machine_id?: string | null
           original_scheduled_date?: string | null
+          parent_ticket_id?: string | null
           parts_cost?: number | null
           preferred_contact_time?: string | null
           priority?: string
@@ -8693,6 +8695,7 @@ export type Database = {
           location_id?: string | null
           machine_id?: string | null
           original_scheduled_date?: string | null
+          parent_ticket_id?: string | null
           parts_cost?: number | null
           preferred_contact_time?: string | null
           priority?: string
@@ -8732,6 +8735,13 @@ export type Database = {
             columns: ["machine_id"]
             isOneToOne: false
             referencedRelation: "vendx_external_machines"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendx_external_service_tickets_parent_ticket_id_fkey"
+            columns: ["parent_ticket_id"]
+            isOneToOne: false
+            referencedRelation: "vendx_external_service_tickets"
             referencedColumns: ["id"]
           },
           {
