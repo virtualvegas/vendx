@@ -277,6 +277,25 @@ const ExtSchedulesPanel = () => {
             <div><Label>End date (optional)</Label>
               <Input type="date" value={form.end_date || ""} disabled={form.recurrence === "none"}
                 onChange={e => setForm({...form, end_date: e.target.value})} /></div>
+            <div><Label>Preferred time</Label>
+              <Input type="time" value={form.preferred_time || ""} onChange={e => setForm({...form, preferred_time: e.target.value})} /></div>
+            <div><Label>Estimated duration (min)</Label>
+              <Input type="number" value={form.estimated_duration_minutes || ""} onChange={e => setForm({...form, estimated_duration_minutes: e.target.value})} /></div>
+            <div><Label>Create tickets N days early</Label>
+              <Input type="number" min={0} value={form.advance_notice_days ?? 0} onChange={e => setForm({...form, advance_notice_days: e.target.value})} /></div>
+            <div>
+              <Label>Assigned technician</Label>
+              <SearchableSelect value={form.assigned_technician_id || ""} onValueChange={v => setForm({...form, assigned_technician_id: v})}
+                options={[{ value: "", label: "Unassigned" }, ...techs.map((u: any) => ({ value: u.id, label: u.full_name || u.email }))]}
+                placeholder="Optional" searchPlaceholder="Search staff..." />
+            </div>
+            {form.recurrence !== "none" && form.next_run_date && (
+              <div className="md:col-span-2 rounded border border-dashed p-2 bg-muted/20">
+                <p className="text-[10px] font-semibold text-muted-foreground mb-1">Next 5 runs preview</p>
+                <p className="text-xs">{previewNextRuns(form, 5).map(d => formatDisplayDate(d, { month: "short", day: "numeric", year: "numeric" })).join("  →  ")}</p>
+              </div>
+            )}
+
 
             <div className="md:col-span-2 pt-2 border-t"><p className="text-xs font-semibold text-muted-foreground">Service details</p></div>
             <div>
