@@ -200,9 +200,17 @@ const ExtSchedulesPanel = () => {
                   </div>
                   <div className="text-xs mt-1">
                     <span className="font-medium">Next run:</span> {formatDisplayDate(s.next_run_date)}
+                    {s.preferred_time && <span className="text-muted-foreground"> @ {String(s.preferred_time).slice(0,5)}</span>}
+                    {s.estimated_duration_minutes && <span className="text-muted-foreground"> · {s.estimated_duration_minutes} min</span>}
                     {s.end_date && <span className="text-muted-foreground"> · Ends {formatDisplayDate(s.end_date)}</span>}
                     {s.generated_count > 0 && <span className="text-muted-foreground"> · {s.generated_count} generated</span>}
+                    {s.advance_notice_days > 0 && <span className="text-muted-foreground"> · creates {s.advance_notice_days}d ahead</span>}
                   </div>
+                  {s.recurrence !== "none" && (
+                    <div className="text-[10px] text-muted-foreground mt-1">
+                      Upcoming: {previewNextRuns(s, 4).map(d => formatDisplayDate(d, { month: "short", day: "numeric" })).join(" → ")}
+                    </div>
+                  )}
                 </div>
                 <div className="flex flex-col gap-1 shrink-0">
                   <Button size="sm" variant="ghost" onClick={() => { setForm({ ...s, end_date: s.end_date || "" }); setOpen(true); }}>
