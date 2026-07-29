@@ -8409,20 +8409,27 @@ export type Database = {
         Row: {
           access_notes: string | null
           active: boolean
+          advance_notice_days: number
+          assigned_technician_id: string | null
           client_id: string | null
           created_at: string
           created_by: string | null
+          day_of_month: number | null
+          day_of_week: number | null
           description: string | null
           end_date: string | null
+          estimated_duration_minutes: number | null
           generated_count: number
           id: string
           interval_count: number
+          last_completed_at: string | null
           last_generated_at: string | null
           last_generated_ticket_id: string | null
           location_id: string | null
           machine_id: string | null
           next_run_date: string
           notes: string | null
+          preferred_time: string | null
           priority: string
           recurrence: string
           service_location_type: string | null
@@ -8433,20 +8440,27 @@ export type Database = {
         Insert: {
           access_notes?: string | null
           active?: boolean
+          advance_notice_days?: number
+          assigned_technician_id?: string | null
           client_id?: string | null
           created_at?: string
           created_by?: string | null
+          day_of_month?: number | null
+          day_of_week?: number | null
           description?: string | null
           end_date?: string | null
+          estimated_duration_minutes?: number | null
           generated_count?: number
           id?: string
           interval_count?: number
+          last_completed_at?: string | null
           last_generated_at?: string | null
           last_generated_ticket_id?: string | null
           location_id?: string | null
           machine_id?: string | null
           next_run_date: string
           notes?: string | null
+          preferred_time?: string | null
           priority?: string
           recurrence?: string
           service_location_type?: string | null
@@ -8457,20 +8471,27 @@ export type Database = {
         Update: {
           access_notes?: string | null
           active?: boolean
+          advance_notice_days?: number
+          assigned_technician_id?: string | null
           client_id?: string | null
           created_at?: string
           created_by?: string | null
+          day_of_month?: number | null
+          day_of_week?: number | null
           description?: string | null
           end_date?: string | null
+          estimated_duration_minutes?: number | null
           generated_count?: number
           id?: string
           interval_count?: number
+          last_completed_at?: string | null
           last_generated_at?: string | null
           last_generated_ticket_id?: string | null
           location_id?: string | null
           machine_id?: string | null
           next_run_date?: string
           notes?: string | null
+          preferred_time?: string | null
           priority?: string
           recurrence?: string
           service_location_type?: string | null
@@ -8546,6 +8567,7 @@ export type Database = {
       vendx_external_service_tickets: {
         Row: {
           access_notes: string | null
+          actual_duration_minutes: number | null
           arcade_cabinet_brand: string | null
           arcade_cabinet_model: string | null
           arcade_control_type: string | null
@@ -8558,6 +8580,7 @@ export type Database = {
           created_at: string
           created_by: string | null
           description: string | null
+          estimated_duration_minutes: number | null
           has_stairs: boolean | null
           id: string
           intake_address: string | null
@@ -8567,24 +8590,33 @@ export type Database = {
           intake_contact_phone: string | null
           intake_machine_description: string | null
           intake_machine_type: string | null
+          labor_cost: number | null
+          labor_hours: number | null
           location_id: string | null
           machine_id: string | null
+          original_scheduled_date: string | null
+          parts_cost: number | null
           preferred_contact_time: string | null
           priority: string
+          reschedule_count: number
           resolution: string | null
           resolved_at: string | null
           route_stop_id: string | null
+          schedule_id: string | null
           scheduled_date: string | null
+          scheduled_time: string | null
           service_location_type: string | null
           service_package: string | null
           source: string
           status: string
           subject: string
+          technician_notes: string | null
           ticket_number: string | null
           updated_at: string
         }
         Insert: {
           access_notes?: string | null
+          actual_duration_minutes?: number | null
           arcade_cabinet_brand?: string | null
           arcade_cabinet_model?: string | null
           arcade_control_type?: string | null
@@ -8597,6 +8629,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           description?: string | null
+          estimated_duration_minutes?: number | null
           has_stairs?: boolean | null
           id?: string
           intake_address?: string | null
@@ -8606,24 +8639,33 @@ export type Database = {
           intake_contact_phone?: string | null
           intake_machine_description?: string | null
           intake_machine_type?: string | null
+          labor_cost?: number | null
+          labor_hours?: number | null
           location_id?: string | null
           machine_id?: string | null
+          original_scheduled_date?: string | null
+          parts_cost?: number | null
           preferred_contact_time?: string | null
           priority?: string
+          reschedule_count?: number
           resolution?: string | null
           resolved_at?: string | null
           route_stop_id?: string | null
+          schedule_id?: string | null
           scheduled_date?: string | null
+          scheduled_time?: string | null
           service_location_type?: string | null
           service_package?: string | null
           source?: string
           status?: string
           subject: string
+          technician_notes?: string | null
           ticket_number?: string | null
           updated_at?: string
         }
         Update: {
           access_notes?: string | null
+          actual_duration_minutes?: number | null
           arcade_cabinet_brand?: string | null
           arcade_cabinet_model?: string | null
           arcade_control_type?: string | null
@@ -8636,6 +8678,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           description?: string | null
+          estimated_duration_minutes?: number | null
           has_stairs?: boolean | null
           id?: string
           intake_address?: string | null
@@ -8645,19 +8688,27 @@ export type Database = {
           intake_contact_phone?: string | null
           intake_machine_description?: string | null
           intake_machine_type?: string | null
+          labor_cost?: number | null
+          labor_hours?: number | null
           location_id?: string | null
           machine_id?: string | null
+          original_scheduled_date?: string | null
+          parts_cost?: number | null
           preferred_contact_time?: string | null
           priority?: string
+          reschedule_count?: number
           resolution?: string | null
           resolved_at?: string | null
           route_stop_id?: string | null
+          schedule_id?: string | null
           scheduled_date?: string | null
+          scheduled_time?: string | null
           service_location_type?: string | null
           service_package?: string | null
           source?: string
           status?: string
           subject?: string
+          technician_notes?: string | null
           ticket_number?: string | null
           updated_at?: string
         }
@@ -8688,6 +8739,13 @@ export type Database = {
             columns: ["route_stop_id"]
             isOneToOne: false
             referencedRelation: "route_stops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendx_external_service_tickets_schedule_id_fkey"
+            columns: ["schedule_id"]
+            isOneToOne: false
+            referencedRelation: "vendx_external_service_schedules"
             referencedColumns: ["id"]
           },
         ]

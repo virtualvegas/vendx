@@ -33,6 +33,32 @@ const empty: any = {
   next_run_date: new Date().toISOString().slice(0, 10),
   end_date: "",
   active: true,
+  preferred_time: "",
+  estimated_duration_minutes: "",
+  assigned_technician_id: "",
+  advance_notice_days: 0,
+};
+
+const previewNextRuns = (s: any, count = 5): string[] => {
+  if (s.recurrence === "none" || !s.next_run_date) return s.next_run_date ? [s.next_run_date] : [];
+  const out: string[] = [];
+  let d = new Date(s.next_run_date + "T00:00:00");
+  const end = s.end_date ? new Date(s.end_date + "T00:00:00") : null;
+  const n = Math.max(1, parseInt(s.interval_count || 1, 10));
+  for (let i = 0; i < count; i++) {
+    if (end && d > end) break;
+    out.push(d.toISOString().slice(0, 10));
+    const nd = new Date(d);
+    switch (s.recurrence) {
+      case "daily": nd.setDate(nd.getDate() + n); break;
+      case "weekly": nd.setDate(nd.getDate() + n * 7); break;
+      case "monthly": nd.setMonth(nd.getMonth() + n); break;
+      case "quarterly": nd.setMonth(nd.getMonth() + n * 3); break;
+      case "yearly": nd.setFullYear(nd.getFullYear() + n); break;
+    }
+    d = nd;
+  }
+  return out;
 };
 
 const ExtSchedulesPanel = () => {
@@ -62,6 +88,13 @@ const ExtSchedulesPanel = () => {
     },
   });
 
+
+
+  const { data: techs = [] } = useQuery({
+    queryKey: ["ext-techs-sched"],
+    queryFn: async () => (await supabase.from("profiles").select("id,full_name,email").order("full_name")).data || [],
+  });
+
   const { data: schedules = [], isLoading } = useQuery({
     queryKey: ["ext-schedules", showInactive],
     queryFn: async () => {
@@ -80,10 +113,12 @@ const ExtSchedulesPanel = () => {
     if (!form.next_run_date) { toast.error("Next run date required"); return; }
     const payload: any = { ...form };
     delete payload.client; delete payload.location; delete payload.machine;
-    ["client_id","location_id","machine_id","service_package","service_location_type","end_date"].forEach(k => {
+    ["client_id","location_id","machine_id","service_package","service_location_type","end_date","assigned_technician_id","preferred_time"].forEach(k => {
       if (!payload[k]) payload[k] = null;
     });
     payload.interval_count = Math.max(1, parseInt(payload.interval_count || 1, 10));
+    payload.advance_notice_days = Math.max(0, parseInt(payload.advance_notice_days || 0, 10));
+    payload.estimated_duration_minutes = payload.estimated_duration_minutes ? parseInt(payload.estimated_duration_minutes, 10) : null;
     const id = payload.id; delete payload.id;
     const { error } = id
       ? await supabase.from("vendx_external_service_schedules" as any).update(payload).eq("id", id)
@@ -165,9 +200,17 @@ const ExtSchedulesPanel = () => {
                   </div>
                   <div className="text-xs mt-1">
                     <span className="font-medium">Next run:</span> {formatDisplayDate(s.next_run_date)}
+                    {s.preferred_time && <span className="text-muted-foreground"> @ {String(s.preferred_time).slice(0,5)}</span>}
+                    {s.estimated_duration_minutes && <span className="text-muted-foreground"> · {s.estimated_duration_minutes} min</span>}
                     {s.end_date && <span className="text-muted-foreground"> · Ends {formatDisplayDate(s.end_date)}</span>}
                     {s.generated_count > 0 && <span className="text-muted-foreground"> · {s.generated_count} generated</span>}
+                    {s.advance_notice_days > 0 && <span className="text-muted-foreground"> · creates {s.advance_notice_days}d ahead</span>}
                   </div>
+                  {s.recurrence !== "none" && (
+                    <div className="text-[10px] text-muted-foreground mt-1">
+                      Upcoming: {previewNextRuns(s, 4).map(d => formatDisplayDate(d, { month: "short", day: "numeric" })).join(" → ")}
+                    </div>
+                  )}
                 </div>
                 <div className="flex flex-col gap-1 shrink-0">
                   <Button size="sm" variant="ghost" onClick={() => { setForm({ ...s, end_date: s.end_date || "" }); setOpen(true); }}>
@@ -234,6 +277,25 @@ const ExtSchedulesPanel = () => {
             <div><Label>End date (optional)</Label>
               <Input type="date" value={form.end_date || ""} disabled={form.recurrence === "none"}
                 onChange={e => setForm({...form, end_date: e.target.value})} /></div>
+            <div><Label>Preferred time</Label>
+              <Input type="time" value={form.preferred_time || ""} onChange={e => setForm({...form, preferred_time: e.target.value})} /></div>
+            <div><Label>Estimated duration (min)</Label>
+              <Input type="number" value={form.estimated_duration_minutes || ""} onChange={e => setForm({...form, estimated_duration_minutes: e.target.value})} /></div>
+            <div><Label>Create tickets N days early</Label>
+              <Input type="number" min={0} value={form.advance_notice_days ?? 0} onChange={e => setForm({...form, advance_notice_days: e.target.value})} /></div>
+            <div>
+              <Label>Assigned technician</Label>
+              <SearchableSelect value={form.assigned_technician_id || ""} onValueChange={v => setForm({...form, assigned_technician_id: v})}
+                options={[{ value: "", label: "Unassigned" }, ...techs.map((u: any) => ({ value: u.id, label: u.full_name || u.email }))]}
+                placeholder="Optional" searchPlaceholder="Search staff..." />
+            </div>
+            {form.recurrence !== "none" && form.next_run_date && (
+              <div className="md:col-span-2 rounded border border-dashed p-2 bg-muted/20">
+                <p className="text-[10px] font-semibold text-muted-foreground mb-1">Next 5 runs preview</p>
+                <p className="text-xs">{previewNextRuns(form, 5).map(d => formatDisplayDate(d, { month: "short", day: "numeric", year: "numeric" })).join("  →  ")}</p>
+              </div>
+            )}
+
 
             <div className="md:col-span-2 pt-2 border-t"><p className="text-xs font-semibold text-muted-foreground">Service details</p></div>
             <div>
