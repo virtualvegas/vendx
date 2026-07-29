@@ -33,6 +33,32 @@ const empty: any = {
   next_run_date: new Date().toISOString().slice(0, 10),
   end_date: "",
   active: true,
+  preferred_time: "",
+  estimated_duration_minutes: "",
+  assigned_technician_id: "",
+  advance_notice_days: 0,
+};
+
+const previewNextRuns = (s: any, count = 5): string[] => {
+  if (s.recurrence === "none" || !s.next_run_date) return s.next_run_date ? [s.next_run_date] : [];
+  const out: string[] = [];
+  let d = new Date(s.next_run_date + "T00:00:00");
+  const end = s.end_date ? new Date(s.end_date + "T00:00:00") : null;
+  const n = Math.max(1, parseInt(s.interval_count || 1, 10));
+  for (let i = 0; i < count; i++) {
+    if (end && d > end) break;
+    out.push(d.toISOString().slice(0, 10));
+    const nd = new Date(d);
+    switch (s.recurrence) {
+      case "daily": nd.setDate(nd.getDate() + n); break;
+      case "weekly": nd.setDate(nd.getDate() + n * 7); break;
+      case "monthly": nd.setMonth(nd.getMonth() + n); break;
+      case "quarterly": nd.setMonth(nd.getMonth() + n * 3); break;
+      case "yearly": nd.setFullYear(nd.getFullYear() + n); break;
+    }
+    d = nd;
+  }
+  return out;
 };
 
 const ExtSchedulesPanel = () => {
