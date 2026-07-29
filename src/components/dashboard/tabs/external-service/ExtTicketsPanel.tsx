@@ -32,8 +32,15 @@ const ExtTicketsPanel = () => {
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState<any>(empty);
   const [statusFilter, setStatusFilter] = useState("all");
+  const [techFilter, setTechFilter] = useState("all");
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
+  const [detailId, setDetailId] = useState<string | null>(null);
 
-  const { data: clients = [] } = useQuery({
+  const { data: techs = [] } = useQuery({
+    queryKey: ["ext-tech-filter"],
+    queryFn: async () => (await supabase.from("profiles").select("id,full_name,email").order("full_name")).data || [],
+  });
     queryKey: ["ext-clients-min"],
     queryFn: async () => (await supabase.from("vendx_external_clients" as any).select("id,company_name,contact_name").order("company_name")).data || [],
   });
