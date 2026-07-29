@@ -73,6 +73,39 @@ const ExtTicketDetailDialog = ({ ticketId, open, onOpenChange }: Props) => {
     enabled: open,
   });
 
+  const { data: schedules = [] } = useQuery({
+    queryKey: ["ext-schedules-for-ticket", t?.client_id],
+    queryFn: async () => {
+      let q = supabase.from("vendx_external_service_schedules" as any).select("id,title,frequency,next_run_date,client_id").order("next_run_date", { ascending: true, nullsFirst: false });
+      if (t?.client_id) q = q.eq("client_id", t.client_id);
+      const { data } = await q;
+      return data || [];
+    },
+    enabled: !!t && open,
+  });
+
+  const { data: followUps = [] } = useQuery({
+    queryKey: ["ext-ticket-followups", ticketId],
+    queryFn: async () => {
+      const { data } = await supabase.from("vendx_external_service_tickets" as any)
+        .select("id,ticket_number,subject,status,scheduled_date,scheduled_time")
+        .eq("parent_ticket_id", ticketId).order("scheduled_date", { ascending: true, nullsFirst: false });
+      return data || [];
+    },
+    enabled: !!ticketId && open,
+  });
+
+  const { data: parent } = useQuery({
+    queryKey: ["ext-ticket-parent", t?.parent_ticket_id],
+    queryFn: async () => {
+      if (!t?.parent_ticket_id) return null;
+      const { data } = await supabase.from("vendx_external_service_tickets" as any)
+        .select("id,ticket_number,subject").eq("id", t.parent_ticket_id).maybeSingle();
+      return data as any;
+    },
+    enabled: !!t?.parent_ticket_id && open,
+  });
+
   useEffect(() => {
     if (t) {
       setResolution(t.resolution || "");
