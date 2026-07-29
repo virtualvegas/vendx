@@ -109,20 +109,35 @@ const ExtTicketsPanel = () => {
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap justify-between items-center gap-2">
-        <div className="w-56">
-          <SearchableSelect value={statusFilter} onValueChange={setStatusFilter}
-            options={["all","new","scheduled","in_progress","completed","invoiced","cancelled"].map(s => ({ value: s, label: s }))}
-            placeholder="Filter status" searchPlaceholder="Search..." />
+      <div className="flex flex-wrap justify-between items-end gap-2">
+        <div className="flex flex-wrap gap-2 items-end">
+          <div className="w-44">
+            <Label className="text-xs">Status</Label>
+            <SearchableSelect value={statusFilter} onValueChange={setStatusFilter}
+              options={["all","new","scheduled","in_progress","on_hold","completed","invoiced","cancelled"].map(s => ({ value: s, label: s }))}
+              placeholder="Status" searchPlaceholder="Search..." />
+          </div>
+          <div className="w-56">
+            <Label className="text-xs">Technician</Label>
+            <SearchableSelect value={techFilter} onValueChange={setTechFilter}
+              options={[{ value: "all", label: "All" }, { value: "unassigned", label: "Unassigned" }, ...techs.map((u: any) => ({ value: u.id, label: u.full_name || u.email }))]}
+              placeholder="Technician" searchPlaceholder="Search..." />
+          </div>
+          <div><Label className="text-xs">From</Label><Input type="date" className="w-36" value={fromDate} onChange={e => setFromDate(e.target.value)} /></div>
+          <div><Label className="text-xs">To</Label><Input type="date" className="w-36" value={toDate} onChange={e => setToDate(e.target.value)} /></div>
+          {(fromDate || toDate || techFilter !== "all" || statusFilter !== "all") && (
+            <Button size="sm" variant="ghost" onClick={() => { setFromDate(""); setToDate(""); setTechFilter("all"); setStatusFilter("all"); }}>Reset</Button>
+          )}
         </div>
         <Button onClick={() => { setForm(empty); setOpen(true); }}>
           <Plus className="w-4 h-4 mr-2" /> New Ticket
         </Button>
       </div>
       {isLoading ? <p className="text-muted-foreground">Loading...</p> :
-        tickets.length === 0 ? <p className="text-muted-foreground">No tickets.</p> :
+        tickets.length === 0 ? <p className="text-muted-foreground">No tickets match filters.</p> :
         <div className="grid gap-3">
           {tickets.map((t: any) => (
-            <Card key={t.id} className="p-4">
+            <Card key={t.id} className="p-4 hover:border-primary/40 transition cursor-pointer" onClick={() => setDetailId(t.id)}>
               <div className="flex justify-between items-start gap-2 flex-wrap">
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2 flex-wrap">
@@ -130,6 +145,7 @@ const ExtTicketsPanel = () => {
                     <Badge variant={(statusColors[t.status] as any) || "outline"}>{t.status}</Badge>
                     <Badge variant="outline">{t.priority}</Badge>
                     <Badge variant="outline">{t.source}</Badge>
+                    {t.reschedule_count > 0 && <Badge variant="secondary" className="text-[10px]">{t.reschedule_count}× resched</Badge>}
                   </div>
                   <h3 className="font-semibold mt-1">{t.subject}</h3>
                   <p className="text-sm text-muted-foreground">
@@ -137,12 +153,19 @@ const ExtTicketsPanel = () => {
                     {t.location?.name && ` · ${t.location.name}`}
                     {t.machine?.asset_label && ` · ${t.machine.asset_label}`}
                   </p>
-                  {t.scheduled_date && <p className="text-xs text-muted-foreground">Scheduled: {t.scheduled_date}</p>}
+                  <div className="flex flex-wrap gap-3 mt-1 text-xs text-muted-foreground">
+                    {t.scheduled_date && <span className="flex items-center gap-1"><Calendar className="w-3 h-3" /> {formatDisplayDate(t.scheduled_date)}{t.scheduled_time ? ` @ ${t.scheduled_time.slice(0,5)}` : ""}</span>}
+                    {t.technician && <span className="flex items-center gap-1"><User className="w-3 h-3" /> {t.technician.full_name || t.technician.email}</span>}
+                    {(t.labor_cost || t.parts_cost) && <span>${(Number(t.labor_cost||0) + Number(t.parts_cost||0)).toFixed(2)}</span>}
+                  </div>
                   {t.description && <p className="text-sm mt-2 line-clamp-2">{t.description}</p>}
                 </div>
-                <div className="flex flex-col gap-1 shrink-0">
-                  <Button size="sm" variant="ghost" onClick={() => { setForm({ ...t, scheduled_date: t.scheduled_date || "" }); setOpen(true); }}>
+                <div className="flex flex-col gap-1 shrink-0" onClick={e => e.stopPropagation()}>
+                  <Button size="sm" variant="ghost" onClick={() => setDetailId(t.id)}>
                     <ExternalLink className="w-4 h-4 mr-1" /> Open
+                  </Button>
+                  <Button size="sm" variant="ghost" onClick={() => { setForm({ ...t, scheduled_date: t.scheduled_date || "" }); setOpen(true); }}>
+                    Edit
                   </Button>
                   {t.status !== "invoiced" && t.client_id && (
                     <Button size="sm" variant="ghost" onClick={() => convertToInvoice(t)}>
