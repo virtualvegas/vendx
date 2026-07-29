@@ -271,9 +271,53 @@ const ExtTicketDetailDialog = ({ ticketId, open, onOpenChange }: Props) => {
                 options={[{ value: "", label: "Unassigned" }, ...techs.map((u: any) => ({ value: u.id, label: u.full_name || u.email }))]}
                 placeholder="Assign" searchPlaceholder="Search staff..." />
             </div>
+            <div>
+              <Label className="text-xs flex items-center gap-1"><Link2 className="w-3 h-3" /> Linked recurring schedule</Label>
+              <SearchableSelect value={t.schedule_id || ""} onValueChange={linkSchedule}
+                options={[{ value: "", label: "— Not linked" }, ...schedules.map((s: any) => ({ value: s.id, label: `${s.title} (${s.frequency}${s.next_run_date ? ` · next ${formatDisplayDate(s.next_run_date)}` : ""})` }))]}
+                placeholder="Link to a schedule" searchPlaceholder="Search schedules..." />
+              {schedules.length === 0 && <p className="text-[10px] text-muted-foreground mt-1">No schedules for this client yet.</p>}
+            </div>
+            {parent && (
+              <div className="text-xs bg-muted/40 rounded p-2 flex items-center justify-between gap-2">
+                <span>Follow-up of <span className="font-mono">{parent.ticket_number}</span> — {parent.subject}</span>
+                <Button size="sm" variant="ghost" onClick={() => { onOpenChange(false); setTimeout(() => window.dispatchEvent(new CustomEvent("open-ext-ticket", { detail: parent.id })), 100); }}>
+                  <ExternalLink className="w-3 h-3" />
+                </Button>
+              </div>
+            )}
             {t.description && <div><Label className="text-xs">Description</Label><p className="text-sm whitespace-pre-wrap">{t.description}</p></div>}
             {t.access_notes && <div><Label className="text-xs">Access notes</Label><p className="text-sm whitespace-pre-wrap">{t.access_notes}</p></div>}
             {t.resolution && <div><Label className="text-xs">Resolution</Label><p className="text-sm whitespace-pre-wrap">{t.resolution}</p></div>}
+          </TabsContent>
+
+          <TabsContent value="followups" className="space-y-3 pt-3">
+            <Card className="p-3 space-y-3">
+              <p className="text-xs font-semibold flex items-center gap-1"><CalendarPlus className="w-3.5 h-3.5" /> Schedule a follow-up visit</p>
+              <div className="grid grid-cols-2 gap-2">
+                <div><Label className="text-xs">Date</Label><Input type="date" value={fuDate} onChange={e => setFuDate(e.target.value)} /></div>
+                <div><Label className="text-xs">Time</Label><Input type="time" value={fuTime} onChange={e => setFuTime(e.target.value)} /></div>
+              </div>
+              <div><Label className="text-xs">Subject *</Label><Input value={fuSubject} onChange={e => setFuSubject(e.target.value)} placeholder="Return visit — replace part" /></div>
+              <div><Label className="text-xs">Notes</Label><Textarea rows={2} value={fuNotes} onChange={e => setFuNotes(e.target.value)} placeholder="What needs to happen on the follow-up" /></div>
+              <Button size="sm" onClick={createFollowUp}><CalendarPlus className="w-4 h-4 mr-1" /> Create follow-up ticket</Button>
+            </Card>
+            <div className="space-y-1.5">
+              <p className="text-xs text-muted-foreground">Existing follow-ups</p>
+              {followUps.length === 0 && <p className="text-sm text-muted-foreground">No follow-up visits yet.</p>}
+              {followUps.map((f: any) => (
+                <Card key={f.id} className="p-2.5 flex items-center justify-between gap-2">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-mono text-xs">{f.ticket_number}</span>
+                      <Badge variant="outline" className="text-[10px]">{f.status}</Badge>
+                      {f.scheduled_date && <span className="text-[11px] text-muted-foreground">{formatDisplayDate(f.scheduled_date)}{f.scheduled_time ? ` @ ${f.scheduled_time.slice(0,5)}` : ""}</span>}
+                    </div>
+                    <p className="text-sm truncate">{f.subject}</p>
+                  </div>
+                </Card>
+              ))}
+            </div>
           </TabsContent>
 
           <TabsContent value="reschedule" className="space-y-3 pt-3">
