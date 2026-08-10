@@ -30,13 +30,8 @@ const EcoVendSuggestions = ({ machineId, machineCode }: EcoVendSuggestionsProps)
   const { data: suggestions = [] } = useQuery({
     queryKey: ["ecovend-suggestions", machineCode],
     queryFn: async () => {
-      const { data } = await supabase
-        .from("ecovend_suggestions")
-        .select("*")
-        .eq("machine_code", machineCode)
-        .order("upvotes", { ascending: false })
-        .limit(20);
-      return data || [];
+      const { data } = await supabase.rpc("list_ecovend_suggestions" as any, { _machine_code: machineCode });
+      return (data as any[]) || [];
     },
   });
 
@@ -76,14 +71,11 @@ const EcoVendSuggestions = ({ machineId, machineCode }: EcoVendSuggestionsProps)
   const handleUpvote = async (suggestionId: string) => {
     if (myVotes.includes(suggestionId)) return;
     try {
-      await supabase.from("ecovend_suggestion_votes").insert({
-        suggestion_id: suggestionId,
-        session_id: sessionId,
+      const { error } = await supabase.rpc("upvote_ecovend_suggestion" as any, {
+        _suggestion_id: suggestionId,
+        _session_id: sessionId,
       });
-      await supabase
-        .from("ecovend_suggestions")
-        .update({ upvotes: suggestions.find((s: any) => s.id === suggestionId)?.upvotes + 1 })
-        .eq("id", suggestionId);
+      if (error) throw error;
       queryClient.invalidateQueries({ queryKey: ["ecovend-suggestions", machineCode] });
       queryClient.invalidateQueries({ queryKey: ["ecovend-my-votes", sessionId] });
     } catch {

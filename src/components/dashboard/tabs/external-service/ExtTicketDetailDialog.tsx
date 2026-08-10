@@ -41,6 +41,7 @@ const ExtTicketDetailDialog = ({ ticketId, open, onOpenChange }: Props) => {
   const [fuTime, setFuTime] = useState("");
   const [fuSubject, setFuSubject] = useState("");
   const [fuNotes, setFuNotes] = useState("");
+  const [editFu, setEditFu] = useState<string | null>(null);
 
   const { data: t } = useQuery({
     queryKey: ["ext-ticket-detail", ticketId],
@@ -306,15 +307,24 @@ const ExtTicketDetailDialog = ({ ticketId, open, onOpenChange }: Props) => {
               <p className="text-xs text-muted-foreground">Existing follow-ups</p>
               {followUps.length === 0 && <p className="text-sm text-muted-foreground">No follow-up visits yet.</p>}
               {followUps.map((f: any) => (
-                <Card key={f.id} className="p-2.5 flex items-center justify-between gap-2">
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-mono text-xs">{f.ticket_number}</span>
-                      <Badge variant="outline" className="text-[10px]">{f.status}</Badge>
-                      {f.scheduled_date && <span className="text-[11px] text-muted-foreground">{formatDisplayDate(f.scheduled_date)}{f.scheduled_time ? ` @ ${f.scheduled_time.slice(0,5)}` : ""}</span>}
+                <Card key={f.id} className="p-2.5 space-y-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-mono text-xs">{f.ticket_number}</span>
+                        <Badge variant="outline" className="text-[10px]">{f.status}</Badge>
+                        {f.scheduled_date && <span className="text-[11px] text-muted-foreground">{formatDisplayDate(f.scheduled_date)}{f.scheduled_time ? ` @ ${f.scheduled_time.slice(0,5)}` : ""}</span>}
+                      </div>
+                      <p className="text-sm truncate">{f.subject}</p>
                     </div>
-                    <p className="text-sm truncate">{f.subject}</p>
+                    <Button size="sm" variant="ghost" className="shrink-0"
+                      onClick={() => setEditFu(editFu === f.id ? null : f.id)}>
+                      <RotateCcw className="w-3.5 h-3.5 mr-1" /> {editFu === f.id ? "Cancel" : "Reschedule"}
+                    </Button>
                   </div>
+                  {editFu === f.id && (
+                    <FollowUpReschedule followUp={f} onDone={() => { setEditFu(null); qc.invalidateQueries({ queryKey: ["ext-ticket-followups", ticketId] }); qc.invalidateQueries({ queryKey: ["ext-tickets"] }); }} parentId={t.id} />
+                  )}
                 </Card>
               ))}
             </div>
@@ -388,5 +398,40 @@ const StatBox = ({ icon, label, value, sub }: any) => (
     {sub && <div className="text-[10px] text-muted-foreground">{sub}</div>}
   </Card>
 );
+
+const FollowUpReschedule = ({ followUp, parentId, onDone }: { followUp: any; parentId: string; onDone: () => void }) => {
+  const [date, setDate] = useState(followUp.scheduled_date || "");
+  const [time, setTime] = useState(followUp.scheduled_time || "");
+  const [reason, setReason] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  const save = async () => {
+    if (!date) { toast.error("Pick a date"); return; }
+    setSaving(true);
+    const { data: { user } } = await supabase.auth.getUser();
+    const { error } = await supabase.from("vendx_external_service_tickets" as any)
+      .update({ scheduled_date: date, scheduled_time: time || null, status: followUp.status === "new" ? "scheduled" : followUp.status })
+      .eq("id", followUp.id);
+    if (error) { setSaving(false); return toast.error(error.message); }
+    await supabase.from("vendx_external_service_ticket_updates" as any).insert([
+      { ticket_id: followUp.id, message: `Rescheduled to ${date}${time ? ` @ ${time}` : ""}${reason ? ` — ${reason}` : ""}`, is_internal: true, status_change: "rescheduled", author_id: user?.id },
+      { ticket_id: parentId, message: `Follow-up ${followUp.ticket_number} rescheduled to ${date}${time ? ` @ ${time}` : ""}${reason ? ` — ${reason}` : ""}`, is_internal: true, status_change: "follow_up_rescheduled", author_id: user?.id },
+    ]);
+    setSaving(false);
+    toast.success("Follow-up rescheduled");
+    onDone();
+  };
+
+  return (
+    <div className="space-y-2 border-t pt-2">
+      <div className="grid grid-cols-2 gap-2">
+        <div><Label className="text-xs">New date</Label><Input type="date" value={date} onChange={e => setDate(e.target.value)} /></div>
+        <div><Label className="text-xs">Time</Label><Input type="time" value={time} onChange={e => setTime(e.target.value)} /></div>
+      </div>
+      <div><Label className="text-xs">Reason (logged)</Label><Input value={reason} onChange={e => setReason(e.target.value)} placeholder="Customer requested / parts delayed..." /></div>
+      <Button size="sm" disabled={saving} onClick={save}><RotateCcw className="w-3.5 h-3.5 mr-1" /> {saving ? "Saving..." : "Save new date"}</Button>
+    </div>
+  );
+};
 
 export default ExtTicketDetailDialog;
