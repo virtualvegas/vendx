@@ -11,7 +11,9 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { Gamepad2, Eye, Trash2, Plus, Wrench, CheckCircle2 } from "lucide-react";
+import { Gamepad2, Eye, Trash2, Plus, Wrench, CheckCircle2, UserCheck } from "lucide-react";
+import { SearchableSelect } from "@/components/ui/searchable-select";
+import CustomBuildInvoices from "./custom-arcade/CustomBuildInvoices";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { formatDisplayDate } from "@/lib/dateUtils";
@@ -48,8 +50,14 @@ const CustomArcadeRequestsPanel = () => {
 
   const { data: extClients = [] } = useQuery({
     queryKey: ["ext-clients-min-for-convert"],
-    queryFn: async () => (await supabase.from("vendx_external_clients" as any).select("id,company_name").order("company_name")).data || [],
+    queryFn: async () => (await supabase.from("vendx_external_clients" as any).select("id,company_name,contact_name").order("company_name")).data || [],
   });
+
+  const { data: siteUsers = [] } = useQuery({
+    queryKey: ["profiles-min-for-custom-arcade"],
+    queryFn: async () => (await supabase.from("profiles").select("id,email,full_name").order("email")).data || [],
+  });
+
 
   const { data: existingServiceMachines = [] } = useQuery({
     queryKey: ["ext-machines-by-custom-req"],
@@ -133,7 +141,9 @@ const CustomArcadeRequestsPanel = () => {
           payment_status: editing.payment_status || "unpaid",
           paid_at: editing.payment_status === "paid" ? (editing.paid_at || new Date().toISOString()) : null,
           invoice_due_date: editing.invoice_due_date || null,
-        })
+          client_id: editing.client_id || null,
+          user_id: editing.user_id || null,
+        } as any)
         .eq("id", editing.id);
       if (error) return toast.error(error.message);
       toast.success("Saved");
@@ -399,6 +409,41 @@ const CustomArcadeRequestsPanel = () => {
                   <Label className="mb-1.5 block">Admin notes</Label>
                   <Textarea rows={4} value={editing.admin_notes ?? ""} onChange={e => setEditing({ ...editing, admin_notes: e.target.value })} />
                 </div>
+              </div>
+
+              <div className="border-t pt-4 space-y-3">
+                <h4 className="font-semibold text-sm flex items-center gap-2"><UserCheck className="w-4 h-4" /> Client & account linking</h4>
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <Label className="mb-1.5 block">External service client</Label>
+                    <SearchableSelect
+                      value={editing.client_id || ""}
+                      onValueChange={(v) => setEditing({ ...editing, client_id: v || null })}
+                      options={extClients.map((c: any) => ({ value: c.id, label: c.company_name || c.contact_name || "Residential Client" }))}
+                      placeholder="Link a client account" searchPlaceholder="Search clients..."
+                    />
+                    <p className="text-[11px] text-muted-foreground mt-1">Required before invoicing this build.</p>
+                  </div>
+                  <div>
+                    <Label className="mb-1.5 block">Site user account</Label>
+                    <SearchableSelect
+                      value={editing.user_id || ""}
+                      onValueChange={(v) => setEditing({ ...editing, user_id: v || null })}
+                      options={siteUsers.map((u: any) => ({ value: u.id, label: u.email || u.full_name || u.id }))}
+                      placeholder="Link a customer login" searchPlaceholder="Search users..."
+                    />
+                    <p className="text-[11px] text-muted-foreground mt-1">Lets the customer see this build in their dashboard.</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="border-t pt-4">
+                <CustomBuildInvoices
+                  requestId={editing.id}
+                  clientId={editing.client_id}
+                  quotedPrice={editing.quoted_price}
+                  requestNumber={editing.request_number}
+                />
               </div>
             </div>
           )}
