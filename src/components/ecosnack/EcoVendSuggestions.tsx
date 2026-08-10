@@ -30,13 +30,8 @@ const EcoVendSuggestions = ({ machineId, machineCode }: EcoVendSuggestionsProps)
   const { data: suggestions = [] } = useQuery({
     queryKey: ["ecovend-suggestions", machineCode],
     queryFn: async () => {
-      const { data } = await supabase
-        .from("ecovend_suggestions")
-        .select("*")
-        .eq("machine_code", machineCode)
-        .order("upvotes", { ascending: false })
-        .limit(20);
-      return data || [];
+      const { data } = await supabase.rpc("list_ecovend_suggestions" as any, { _machine_code: machineCode });
+      return (data as any[]) || [];
     },
   });
 
