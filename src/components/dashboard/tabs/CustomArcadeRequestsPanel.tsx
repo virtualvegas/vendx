@@ -410,6 +410,41 @@ const CustomArcadeRequestsPanel = () => {
                   <Textarea rows={4} value={editing.admin_notes ?? ""} onChange={e => setEditing({ ...editing, admin_notes: e.target.value })} />
                 </div>
               </div>
+
+              <div className="border-t pt-4 space-y-3">
+                <h4 className="font-semibold text-sm flex items-center gap-2"><UserCheck className="w-4 h-4" /> Client & account linking</h4>
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <Label className="mb-1.5 block">External service client</Label>
+                    <SearchableSelect
+                      value={editing.client_id || ""}
+                      onValueChange={(v) => setEditing({ ...editing, client_id: v || null })}
+                      options={extClients.map((c: any) => ({ value: c.id, label: c.company_name || c.contact_name || "Residential Client" }))}
+                      placeholder="Link a client account" searchPlaceholder="Search clients..."
+                    />
+                    <p className="text-[11px] text-muted-foreground mt-1">Required before invoicing this build.</p>
+                  </div>
+                  <div>
+                    <Label className="mb-1.5 block">Site user account</Label>
+                    <SearchableSelect
+                      value={editing.user_id || ""}
+                      onValueChange={(v) => setEditing({ ...editing, user_id: v || null })}
+                      options={siteUsers.map((u: any) => ({ value: u.id, label: u.email || u.full_name || u.id }))}
+                      placeholder="Link a customer login" searchPlaceholder="Search users..."
+                    />
+                    <p className="text-[11px] text-muted-foreground mt-1">Lets the customer see this build in their dashboard.</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="border-t pt-4">
+                <CustomBuildInvoices
+                  requestId={editing.id}
+                  clientId={editing.client_id}
+                  quotedPrice={editing.quoted_price}
+                  requestNumber={editing.request_number}
+                />
+              </div>
             </div>
           )}
           <DialogFooter>
