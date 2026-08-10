@@ -7838,6 +7838,7 @@ export type Database = {
           cabinet_size: string | null
           cabinet_style: string | null
           city: string | null
+          client_id: string | null
           control_layout: string | null
           country: string | null
           created_at: string
@@ -7881,6 +7882,7 @@ export type Database = {
           cabinet_size?: string | null
           cabinet_style?: string | null
           city?: string | null
+          client_id?: string | null
           control_layout?: string | null
           country?: string | null
           created_at?: string
@@ -7924,6 +7926,7 @@ export type Database = {
           cabinet_size?: string | null
           cabinet_style?: string | null
           city?: string | null
+          client_id?: string | null
           control_layout?: string | null
           country?: string | null
           created_at?: string
@@ -7956,6 +7959,13 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "vendx_custom_arcade_requests_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "vendx_external_clients"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "vendx_custom_arcade_requests_reference_product_id_fkey"
             columns: ["reference_product_id"]
@@ -8282,6 +8292,7 @@ export type Database = {
           client_id: string
           created_at: string
           created_by: string | null
+          custom_arcade_request_id: string | null
           due_date: string | null
           id: string
           invoice_number: string | null
@@ -8302,6 +8313,7 @@ export type Database = {
           client_id: string
           created_at?: string
           created_by?: string | null
+          custom_arcade_request_id?: string | null
           due_date?: string | null
           id?: string
           invoice_number?: string | null
@@ -8322,6 +8334,7 @@ export type Database = {
           client_id?: string
           created_at?: string
           created_by?: string | null
+          custom_arcade_request_id?: string | null
           due_date?: string | null
           id?: string
           invoice_number?: string | null
@@ -8343,6 +8356,13 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "vendx_external_clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendx_external_service_invoices_custom_arcade_request_id_fkey"
+            columns: ["custom_arcade_request_id"]
+            isOneToOne: false
+            referencedRelation: "vendx_custom_arcade_requests"
             referencedColumns: ["id"]
           },
           {
