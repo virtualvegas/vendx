@@ -41,6 +41,7 @@ const ExtTicketDetailDialog = ({ ticketId, open, onOpenChange }: Props) => {
   const [fuTime, setFuTime] = useState("");
   const [fuSubject, setFuSubject] = useState("");
   const [fuNotes, setFuNotes] = useState("");
+  const [editFu, setEditFu] = useState<string | null>(null);
 
   const { data: t } = useQuery({
     queryKey: ["ext-ticket-detail", ticketId],
