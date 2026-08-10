@@ -11275,6 +11275,7 @@ export type Database = {
         }[]
       }
       is_ext_service_staff: { Args: { _user_id: string }; Returns: boolean }
+      is_privileged_actor: { Args: never; Returns: boolean }
       is_super_admin: { Args: { _user_id: string }; Returns: boolean }
       list_business_cards: {
         Args: never
