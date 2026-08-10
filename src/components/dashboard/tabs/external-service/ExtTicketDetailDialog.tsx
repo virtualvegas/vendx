@@ -399,4 +399,39 @@ const StatBox = ({ icon, label, value, sub }: any) => (
   </Card>
 );
 
+const FollowUpReschedule = ({ followUp, parentId, onDone }: { followUp: any; parentId: string; onDone: () => void }) => {
+  const [date, setDate] = useState(followUp.scheduled_date || "");
+  const [time, setTime] = useState(followUp.scheduled_time || "");
+  const [reason, setReason] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  const save = async () => {
+    if (!date) { toast.error("Pick a date"); return; }
+    setSaving(true);
+    const { data: { user } } = await supabase.auth.getUser();
+    const { error } = await supabase.from("vendx_external_service_tickets" as any)
+      .update({ scheduled_date: date, scheduled_time: time || null, status: followUp.status === "new" ? "scheduled" : followUp.status })
+      .eq("id", followUp.id);
+    if (error) { setSaving(false); return toast.error(error.message); }
+    await supabase.from("vendx_external_service_ticket_updates" as any).insert([
+      { ticket_id: followUp.id, message: `Rescheduled to ${date}${time ? ` @ ${time}` : ""}${reason ? ` — ${reason}` : ""}`, is_internal: true, status_change: "rescheduled", author_id: user?.id },
+      { ticket_id: parentId, message: `Follow-up ${followUp.ticket_number} rescheduled to ${date}${time ? ` @ ${time}` : ""}${reason ? ` — ${reason}` : ""}`, is_internal: true, status_change: "follow_up_rescheduled", author_id: user?.id },
+    ]);
+    setSaving(false);
+    toast.success("Follow-up rescheduled");
+    onDone();
+  };
+
+  return (
+    <div className="space-y-2 border-t pt-2">
+      <div className="grid grid-cols-2 gap-2">
+        <div><Label className="text-xs">New date</Label><Input type="date" value={date} onChange={e => setDate(e.target.value)} /></div>
+        <div><Label className="text-xs">Time</Label><Input type="time" value={time} onChange={e => setTime(e.target.value)} /></div>
+      </div>
+      <div><Label className="text-xs">Reason (logged)</Label><Input value={reason} onChange={e => setReason(e.target.value)} placeholder="Customer requested / parts delayed..." /></div>
+      <Button size="sm" disabled={saving} onClick={save}><RotateCcw className="w-3.5 h-3.5 mr-1" /> {saving ? "Saving..." : "Save new date"}</Button>
+    </div>
+  );
+};
+
 export default ExtTicketDetailDialog;
