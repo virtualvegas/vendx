@@ -141,7 +141,9 @@ const CustomArcadeRequestsPanel = () => {
           payment_status: editing.payment_status || "unpaid",
           paid_at: editing.payment_status === "paid" ? (editing.paid_at || new Date().toISOString()) : null,
           invoice_due_date: editing.invoice_due_date || null,
-        })
+          client_id: editing.client_id || null,
+          user_id: editing.user_id || null,
+        } as any)
         .eq("id", editing.id);
       if (error) return toast.error(error.message);
       toast.success("Saved");
