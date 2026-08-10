@@ -11290,6 +11290,16 @@ export type Database = {
           roles: string[]
         }[]
       }
+      list_ecovend_suggestions: {
+        Args: { _machine_code: string }
+        Returns: {
+          category: string
+          created_at: string
+          id: string
+          suggestion_text: string
+          upvotes: number
+        }[]
+      }
       list_sold_machines_with_stats: {
         Args: never
         Returns: {
@@ -11395,6 +11405,10 @@ export type Database = {
       rotate_vendx_sso_app_secret: {
         Args: { p_app_id: string }
         Returns: string
+      }
+      upvote_ecovend_suggestion: {
+        Args: { _session_id: string; _suggestion_id: string }
+        Returns: number
       }
     }
     Enums: {
