@@ -306,15 +306,24 @@ const ExtTicketDetailDialog = ({ ticketId, open, onOpenChange }: Props) => {
               <p className="text-xs text-muted-foreground">Existing follow-ups</p>
               {followUps.length === 0 && <p className="text-sm text-muted-foreground">No follow-up visits yet.</p>}
               {followUps.map((f: any) => (
-                <Card key={f.id} className="p-2.5 flex items-center justify-between gap-2">
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-mono text-xs">{f.ticket_number}</span>
-                      <Badge variant="outline" className="text-[10px]">{f.status}</Badge>
-                      {f.scheduled_date && <span className="text-[11px] text-muted-foreground">{formatDisplayDate(f.scheduled_date)}{f.scheduled_time ? ` @ ${f.scheduled_time.slice(0,5)}` : ""}</span>}
+                <Card key={f.id} className="p-2.5 space-y-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-mono text-xs">{f.ticket_number}</span>
+                        <Badge variant="outline" className="text-[10px]">{f.status}</Badge>
+                        {f.scheduled_date && <span className="text-[11px] text-muted-foreground">{formatDisplayDate(f.scheduled_date)}{f.scheduled_time ? ` @ ${f.scheduled_time.slice(0,5)}` : ""}</span>}
+                      </div>
+                      <p className="text-sm truncate">{f.subject}</p>
                     </div>
-                    <p className="text-sm truncate">{f.subject}</p>
+                    <Button size="sm" variant="ghost" className="shrink-0"
+                      onClick={() => setEditFu(editFu === f.id ? null : f.id)}>
+                      <RotateCcw className="w-3.5 h-3.5 mr-1" /> {editFu === f.id ? "Cancel" : "Reschedule"}
+                    </Button>
                   </div>
+                  {editFu === f.id && (
+                    <FollowUpReschedule followUp={f} onDone={() => { setEditFu(null); qc.invalidateQueries({ queryKey: ["ext-ticket-followups", ticketId] }); qc.invalidateQueries({ queryKey: ["ext-tickets"] }); }} parentId={t.id} />
+                  )}
                 </Card>
               ))}
             </div>
