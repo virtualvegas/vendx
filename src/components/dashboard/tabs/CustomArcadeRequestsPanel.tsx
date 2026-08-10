@@ -11,7 +11,9 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { Gamepad2, Eye, Trash2, Plus, Wrench, CheckCircle2 } from "lucide-react";
+import { Gamepad2, Eye, Trash2, Plus, Wrench, CheckCircle2, UserCheck } from "lucide-react";
+import { SearchableSelect } from "@/components/ui/searchable-select";
+import CustomBuildInvoices from "./custom-arcade/CustomBuildInvoices";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { formatDisplayDate } from "@/lib/dateUtils";
