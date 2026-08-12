@@ -491,7 +491,7 @@ const DashboardOverview = () => {
                 <p className="text-sm text-muted-foreground">External Service</p>
                 <p className="text-xl font-bold">${(extInvoices?.reduce((s, i) => s + Number(i.amount_paid || 0), 0) || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
                 <p className="text-[10px] text-muted-foreground mt-0.5">
-                  {extTickets?.filter(t => !["resolved","closed","cancelled"].includes(t.status)).length || 0} open tickets
+                  {extTickets?.filter(t => !["completed","invoiced","resolved","closed","cancelled"].includes(t.status)).length || 0} open tickets
                 </p>
               </div>
               <Wrench className="w-6 h-6 text-purple-500 opacity-70" />
@@ -593,7 +593,7 @@ const DashboardOverview = () => {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-4 gap-3">
-              {(["new","in_progress","scheduled","resolved"] as const).map(s => {
+              {(["new","in_progress","scheduled","completed"] as const).map(s => {
                 const count = extTickets?.filter(t => t.status === s).length || 0;
                 return (
                   <div key={s} className="text-center p-3 rounded-lg bg-muted/40">
@@ -606,7 +606,7 @@ const DashboardOverview = () => {
             <div className="mt-4 flex justify-between text-sm">
               <span className="text-muted-foreground">High priority open:</span>
               <span className="font-semibold">
-                {extTickets?.filter(t => ["high","urgent","critical"].includes((t.priority || "").toLowerCase()) && !["resolved","closed","cancelled"].includes(t.status)).length || 0}
+                {extTickets?.filter(t => ["high","urgent","critical"].includes((t.priority || "").toLowerCase()) && !["completed","invoiced","resolved","closed","cancelled"].includes(t.status)).length || 0}
               </span>
             </div>
             <div className="mt-1 flex justify-between text-sm">
