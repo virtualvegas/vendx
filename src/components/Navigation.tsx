@@ -257,6 +257,21 @@ const Navigation = () => {
         )}
       >
         <div className="container mx-auto px-4 pb-6 bg-background border-t border-border/50 overflow-y-auto max-h-[calc(85vh-64px)]">
+          <div className="py-3 border-b border-border/30">
+            <Link
+              to="/"
+              onClick={() => setIsOpen(false)}
+              className={cn(
+                "flex items-center gap-3 py-3 px-3 text-base font-medium rounded-lg transition-colors",
+                isActive("/")
+                  ? "text-primary bg-primary/10"
+                  : "text-foreground hover:text-primary hover:bg-primary/5"
+              )}
+            >
+              <Home className="w-5 h-5" />
+              Home
+            </Link>
+          </div>
           {mobileNavGroups.map((group) => (
             <div key={group.title} className="py-3 border-b border-border/30 last:border-b-0">
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 px-2">
@@ -269,6 +284,7 @@ const Navigation = () => {
                     href={link.path}
                     target="_blank"
                     rel="noopener noreferrer"
+                    onClick={() => setIsOpen(false)}
                     className="flex items-center gap-3 py-3 px-3 text-base font-medium rounded-lg transition-colors text-foreground hover:text-primary hover:bg-primary/5"
                   >
                     <link.icon className="w-5 h-5" />
@@ -278,6 +294,7 @@ const Navigation = () => {
                   <Link
                     key={link.path}
                     to={link.path}
+                    onClick={() => setIsOpen(false)}
                     className={cn(
                       "flex items-center gap-3 py-3 px-3 text-base font-medium rounded-lg transition-colors",
                       isActive(link.path)
@@ -290,6 +307,9 @@ const Navigation = () => {
                   </Link>
                 )
               )}
+            </div>
+          ))}
+
             </div>
           ))}
 
