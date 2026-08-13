@@ -310,8 +310,7 @@ const Navigation = () => {
             </div>
           ))}
 
-            </div>
-          ))}
+
 
           {/* Mobile Social Links */}
           <div className="flex items-center gap-3 py-4 px-3">
