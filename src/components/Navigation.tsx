@@ -39,25 +39,24 @@ const Navigation = () => {
     { href: "https://x.com/VendXglobal", icon: SiX, label: "X" },
   ];
 
-  // Mobile navigation structure
+  // Mobile navigation structure (mirrors desktop menu)
   const mobileNavGroups = [
     {
       title: "Products & Services",
       links: [
-        { name: "Store", path: "/store", icon: ShoppingBag },
+        { name: "Online Store", path: "/store", icon: ShoppingBag },
         { name: "Custom Machine Request", path: "/store/custom-arcade", icon: Gamepad2 },
-
-        { name: "Interactive", path: "/games", icon: Gamepad2 },
+        { name: "VendX Interactive", path: "/games", icon: Gamepad2 },
+        { name: "VendX Ecosystem", path: "/links", icon: Link2 },
+        { name: "Rewards Program", path: "/rewards", icon: Users },
         { name: "VendX Pay", path: "/wallet", icon: Wallet },
         { name: "Prize Shop", path: "/tickets/redeem", icon: Ticket },
-        { name: "VendX Ecosystem", path: "/links", icon: Link2 },
       ],
     },
     {
       title: "Locations",
       links: [
         { name: "Find Locations", path: "/locations", icon: MapPin },
-        { name: "Events", path: "/locations/events", icon: Gamepad2 },
         { name: "Event Rentals", path: "/event-rentals", icon: Briefcase },
       ],
     },
@@ -65,14 +64,18 @@ const Navigation = () => {
       title: "More VendX",
       links: [
         { name: "Partner With Us", path: "/business", icon: Briefcase },
+        { name: "Machine Service", path: "/external-service", icon: Wrench },
         { name: "Our Divisions", path: "/divisions", icon: Briefcase },
         { name: "About VendX", path: "/about", icon: Info },
-        { name: "News", path: "/news", icon: Newspaper },
+        { name: "Events", path: "/locations/events", icon: Gamepad2 },
+        { name: "News & Updates", path: "/news", icon: Newspaper },
         { name: "Careers", path: "/careers", icon: Users },
-        { name: "Contact", path: "/contact", icon: Phone },
+        { name: "Contact Us", path: "/contact", icon: Phone },
+        { name: "Party & Event Rentals", path: "/event-rentals", icon: Gamepad2 },
       ],
     },
   ];
+
 
   return (
     <nav
