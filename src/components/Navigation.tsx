@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Menu, X, Facebook, Instagram, ChevronDown, ShoppingBag, Gamepad2, MapPin, Briefcase, Info, Phone, Newspaper, Users, Link2, Ticket, Wallet, Wrench } from "lucide-react";
+import { Menu, X, Facebook, Instagram, ChevronDown, ShoppingBag, Gamepad2, MapPin, Briefcase, Info, Phone, Newspaper, Users, Link2, Ticket, Wallet, Wrench, Home } from "lucide-react";
 import vendxLogoAsset from "@/assets/vendx-logo.png.asset.json";
 const vendxLogo = vendxLogoAsset.url;
 import { SiTiktok, SiX } from "react-icons/si";
