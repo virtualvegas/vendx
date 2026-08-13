@@ -46,6 +46,7 @@ const Navigation = () => {
       links: [
         { name: "Online Store", path: "/store", icon: ShoppingBag },
         { name: "Custom Machine Request", path: "/store/custom-arcade", icon: Gamepad2 },
+        { name: "Machine Service", path: "/external-service", icon: Wrench },
         { name: "VendX Interactive", path: "/games", icon: Gamepad2 },
         { name: "VendX Ecosystem", path: "/links", icon: Link2 },
         { name: "Rewards Program", path: "/rewards", icon: Users },
@@ -64,7 +65,6 @@ const Navigation = () => {
       title: "More VendX",
       links: [
         { name: "Partner With Us", path: "/business", icon: Briefcase },
-        { name: "Machine Service", path: "/external-service", icon: Wrench },
         { name: "Our Divisions", path: "/divisions", icon: Briefcase },
         { name: "About VendX", path: "/about", icon: Info },
         { name: "Events", path: "/locations/events", icon: Gamepad2 },
@@ -141,6 +141,9 @@ const Navigation = () => {
                       <NavListItem to="/tickets/redeem" title="Prize Shop" icon={Ticket}>
                         Redeem tickets for awesome prizes
                       </NavListItem>
+                      <NavListItem to="/external-service" title="Machine Service" icon={Wrench}>
+                        Repair service for vending, arcade & coin-op machines
+                      </NavListItem>
                     </ul>
                   </NavigationMenuContent>
                 </NavigationMenuItem>
@@ -179,9 +182,6 @@ const Navigation = () => {
                     <ul className="grid gap-3 p-4 w-[400px] md:w-[500px] md:grid-cols-2 bg-popover">
                       <NavListItem to="/business" title="Partner With Us" icon={Briefcase}>
                         Host VendX machines at your location
-                      </NavListItem>
-                      <NavListItem to="/external-service" title="Machine Service" icon={Wrench}>
-                        Repair service for vending, arcade & coin-op machines
                       </NavListItem>
                       <NavListItem to="/divisions" title="Our Divisions" icon={Briefcase}>
                         Explore VendX Mini, Max, Fresh, Digital & more
