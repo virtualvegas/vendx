@@ -45,6 +45,8 @@ const Navigation = () => {
       title: "Products & Services",
       links: [
         { name: "Store", path: "/store", icon: ShoppingBag },
+        { name: "Custom Machine Request", path: "/store/custom-arcade", icon: Gamepad2 },
+
         { name: "Interactive", path: "/games", icon: Gamepad2 },
         { name: "VendX Pay", path: "/wallet", icon: Wallet },
         { name: "Prize Shop", path: "/tickets/redeem", icon: Ticket },
@@ -117,6 +119,10 @@ const Navigation = () => {
                       <NavListItem to="/store" title="Online Store" icon={ShoppingBag}>
                         Shop vending machines and equipment
                       </NavListItem>
+                      <NavListItem to="/store/custom-arcade" title="Custom Machine Request" icon={Gamepad2}>
+                        Build a custom arcade or vending machine
+                      </NavListItem>
+
                       <NavListItem to="/games" title="VendX Interactive" icon={Gamepad2}>
                         Gaming, entertainment & digital experiences
                       </NavListItem>

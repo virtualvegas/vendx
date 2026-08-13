@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, Link as RouterLink } from "react-router-dom";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { Input } from "@/components/ui/input";
@@ -482,7 +482,39 @@ const StorePage = () => {
         </section>
       )}
 
+      {/* Custom Machine Request CTA */}
+      <section className="py-14 px-4 border-t border-border/50">
+        <div className="container mx-auto">
+          <div className="relative overflow-hidden rounded-2xl border border-primary/30 bg-card/40 backdrop-blur-sm p-8 md:p-12">
+            <div className="flex flex-col md:flex-row md:items-center gap-6">
+              <div className="flex-1">
+                <Badge variant="outline" className="mb-3 border-accent/40 text-accent">
+                  Built to order
+                </Badge>
+                <h2 className="text-3xl font-bold mb-3">
+                  Request a <span className="text-primary">Custom Machine</span>
+                </h2>
+                <p className="text-muted-foreground max-w-2xl">
+                  Design your own arcade cabinet or vending unit — pick the style, size, monitor,
+                  controls, artwork and add-ons. Our team builds, tests and ships it, with service
+                  and support included.
+                </p>
+              </div>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <Button asChild size="lg">
+                  <RouterLink to="/store/custom-arcade">Start your build</RouterLink>
+                </Button>
+                <Button asChild variant="outline" size="lg">
+                  <RouterLink to="/contact">Talk to our team</RouterLink>
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <Footer />
+
     </div>
   );
 };
