@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Menu, X, Facebook, Instagram, ChevronDown, ShoppingBag, Gamepad2, MapPin, Briefcase, Info, Phone, Newspaper, Users, Link2, Ticket, Wallet, Wrench } from "lucide-react";
+import { Menu, X, Facebook, Instagram, ChevronDown, ShoppingBag, Gamepad2, MapPin, Briefcase, Info, Phone, Newspaper, Users, Link2, Ticket, Wallet, Wrench, Home } from "lucide-react";
 import vendxLogoAsset from "@/assets/vendx-logo.png.asset.json";
 const vendxLogo = vendxLogoAsset.url;
 import { SiTiktok, SiX } from "react-icons/si";
@@ -39,25 +39,24 @@ const Navigation = () => {
     { href: "https://x.com/VendXglobal", icon: SiX, label: "X" },
   ];
 
-  // Mobile navigation structure
+  // Mobile navigation structure (mirrors desktop menu)
   const mobileNavGroups = [
     {
       title: "Products & Services",
       links: [
-        { name: "Store", path: "/store", icon: ShoppingBag },
+        { name: "Online Store", path: "/store", icon: ShoppingBag },
         { name: "Custom Machine Request", path: "/store/custom-arcade", icon: Gamepad2 },
-
-        { name: "Interactive", path: "/games", icon: Gamepad2 },
+        { name: "VendX Interactive", path: "/games", icon: Gamepad2 },
+        { name: "VendX Ecosystem", path: "/links", icon: Link2 },
+        { name: "Rewards Program", path: "/rewards", icon: Users },
         { name: "VendX Pay", path: "/wallet", icon: Wallet },
         { name: "Prize Shop", path: "/tickets/redeem", icon: Ticket },
-        { name: "VendX Ecosystem", path: "/links", icon: Link2 },
       ],
     },
     {
       title: "Locations",
       links: [
         { name: "Find Locations", path: "/locations", icon: MapPin },
-        { name: "Events", path: "/locations/events", icon: Gamepad2 },
         { name: "Event Rentals", path: "/event-rentals", icon: Briefcase },
       ],
     },
@@ -65,14 +64,18 @@ const Navigation = () => {
       title: "More VendX",
       links: [
         { name: "Partner With Us", path: "/business", icon: Briefcase },
+        { name: "Machine Service", path: "/external-service", icon: Wrench },
         { name: "Our Divisions", path: "/divisions", icon: Briefcase },
         { name: "About VendX", path: "/about", icon: Info },
-        { name: "News", path: "/news", icon: Newspaper },
+        { name: "Events", path: "/locations/events", icon: Gamepad2 },
+        { name: "News & Updates", path: "/news", icon: Newspaper },
         { name: "Careers", path: "/careers", icon: Users },
-        { name: "Contact", path: "/contact", icon: Phone },
+        { name: "Contact Us", path: "/contact", icon: Phone },
+        { name: "Party & Event Rentals", path: "/event-rentals", icon: Gamepad2 },
       ],
     },
   ];
+
 
   return (
     <nav
@@ -254,6 +257,21 @@ const Navigation = () => {
         )}
       >
         <div className="container mx-auto px-4 pb-6 bg-background border-t border-border/50 overflow-y-auto max-h-[calc(85vh-64px)]">
+          <div className="py-3 border-b border-border/30">
+            <Link
+              to="/"
+              onClick={() => setIsOpen(false)}
+              className={cn(
+                "flex items-center gap-3 py-3 px-3 text-base font-medium rounded-lg transition-colors",
+                isActive("/")
+                  ? "text-primary bg-primary/10"
+                  : "text-foreground hover:text-primary hover:bg-primary/5"
+              )}
+            >
+              <Home className="w-5 h-5" />
+              Home
+            </Link>
+          </div>
           {mobileNavGroups.map((group) => (
             <div key={group.title} className="py-3 border-b border-border/30 last:border-b-0">
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 px-2">
@@ -266,6 +284,7 @@ const Navigation = () => {
                     href={link.path}
                     target="_blank"
                     rel="noopener noreferrer"
+                    onClick={() => setIsOpen(false)}
                     className="flex items-center gap-3 py-3 px-3 text-base font-medium rounded-lg transition-colors text-foreground hover:text-primary hover:bg-primary/5"
                   >
                     <link.icon className="w-5 h-5" />
@@ -275,6 +294,7 @@ const Navigation = () => {
                   <Link
                     key={link.path}
                     to={link.path}
+                    onClick={() => setIsOpen(false)}
                     className={cn(
                       "flex items-center gap-3 py-3 px-3 text-base font-medium rounded-lg transition-colors",
                       isActive(link.path)
@@ -289,6 +309,8 @@ const Navigation = () => {
               )}
             </div>
           ))}
+
+
 
           {/* Mobile Social Links */}
           <div className="flex items-center gap-3 py-4 px-3">
