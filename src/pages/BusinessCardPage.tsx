@@ -9,11 +9,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { QRCodeSVG } from "qrcode.react";
 import {
   Mail, Phone, Globe, Linkedin, UserPlus, Share2, Building2,
-  MessageSquare, Copy, Check, QrCode,
+  MessageSquare, Copy, Check, QrCode, Nfc,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useSEO } from "@/hooks/useSEO";
-import { saveContact } from "@/lib/vcard";
+import { saveContact, hostedVCardUrl, nfcSupported, writeNfcTag } from "@/lib/vcard";
 
 interface CardData {
   id: string;
