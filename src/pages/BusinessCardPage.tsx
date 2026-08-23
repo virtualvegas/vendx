@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { useSEO } from "@/hooks/useSEO";
-import { saveContact, hostedVCardUrl, nfcSupported, writeNfcTag } from "@/lib/vcard";
+import { saveContact, nfcSupported, writeNfcTag } from "@/lib/vcard";
 
 interface CardData {
   id: string;
