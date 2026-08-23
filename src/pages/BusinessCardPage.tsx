@@ -5,11 +5,15 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { QRCodeSVG } from "qrcode.react";
 import {
-  Mail, Phone, Globe, Linkedin, Download, Share2, Building2,
+  Mail, Phone, Globe, Linkedin, UserPlus, Share2, Building2,
+  MessageSquare, Copy, Check, QrCode,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useSEO } from "@/hooks/useSEO";
+import { saveContact } from "@/lib/vcard";
 
 interface CardData {
   id: string;
@@ -30,34 +34,13 @@ interface CardData {
   divisions?: { id: string; name: string; slug: string }[] | null;
 }
 
-
-function buildVCard(c: CardData): string {
-  const company = c.company_name || "VendX Global Corporation";
-  const divNames = (c.divisions || []).map((d) => d.name).join(", ");
-  const orgParts = [company];
-  if (c.department) orgParts.push(c.department);
-  else if (divNames) orgParts.push(divNames);
-  const lines = [
-    "BEGIN:VCARD",
-    "VERSION:3.0",
-    `FN:${c.full_name || ""}`,
-    c.job_title ? `TITLE:${c.job_title}` : "",
-    `ORG:${orgParts.join(";")}`,
-    divNames ? `CATEGORIES:${divNames}` : "",
-    c.email ? `EMAIL;TYPE=WORK:${c.email}` : "",
-    c.phone ? `TEL;TYPE=WORK,VOICE:${c.phone}` : "",
-    c.website_url ? `URL:${c.website_url}` : "",
-    c.linkedin_url ? `URL;TYPE=LinkedIn:${c.linkedin_url}` : "",
-    c.bio ? `NOTE:${c.bio.replace(/\n/g, " ")}` : "",
-    "END:VCARD",
-  ].filter(Boolean);
-  return lines.join("\n");
-}
-
 const BusinessCardPage = () => {
   const { slug } = useParams<{ slug: string }>();
   const [card, setCard] = useState<CardData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [copiedKey, setCopiedKey] = useState<string | null>(null);
+  const [qrOpen, setQrOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   useSEO({
     title: card?.full_name
@@ -80,18 +63,27 @@ const BusinessCardPage = () => {
 
   const shareUrl = `https://vendxglobal.net/card/${card?.card_slug || card?.id || slug}`;
 
-  const downloadVCard = () => {
-    if (!card) return;
-    const blob = new Blob([buildVCard(card)], { type: "text/vcard;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `${(card.full_name || "contact").replace(/\s+/g, "_")}.vcf`;
-    a.click();
-    URL.revokeObjectURL(url);
+  const copy = async (key: string, value: string) => {
+    await navigator.clipboard.writeText(value);
+    setCopiedKey(key);
+    setTimeout(() => setCopiedKey((k) => (k === key ? null : k)), 1800);
   };
 
-  const openNativeShare = async () => {
+  const handleSaveContact = async () => {
+    if (!card) return;
+    setSaving(true);
+    try {
+      const result = await saveContact(card, card.avatar_url || undefined);
+      if (result === "shared") toast.success("Contact ready to add");
+      else toast.success("Contact card opened — add it to your contacts");
+    } catch {
+      toast.error("Couldn't save contact");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const share = async () => {
     if (!card) return;
     if (navigator.share) {
       try {
@@ -100,22 +92,14 @@ const BusinessCardPage = () => {
           text: `${card.full_name}${card.job_title ? `, ${card.job_title}` : ""}`,
           url: shareUrl,
         });
-        return true;
-      } catch {
-        return false;
+        return;
+      } catch (err) {
+        if ((err as DOMException)?.name === "AbortError") return;
       }
     }
-    return false;
+    await navigator.clipboard.writeText(shareUrl);
+    toast.success("Link copied to clipboard");
   };
-
-  const share = async () => {
-    const shared = await openNativeShare();
-    if (!shared) {
-      await navigator.clipboard.writeText(shareUrl);
-      toast.success("Link copied to clipboard");
-    }
-  };
-
 
   if (loading) {
     return (
@@ -146,6 +130,20 @@ const BusinessCardPage = () => {
     .slice(0, 2)
     .toUpperCase();
 
+  const quickActions = [
+    card.phone && { key: "call", icon: Phone, label: "Call", href: `tel:${card.phone}` },
+    card.phone && { key: "text", icon: MessageSquare, label: "Text", href: `sms:${card.phone}` },
+    card.email && { key: "email", icon: Mail, label: "Email", href: `mailto:${card.email}` },
+    card.website_url && { key: "web", icon: Globe, label: "Website", href: card.website_url },
+  ].filter(Boolean) as { key: string; icon: typeof Phone; label: string; href: string }[];
+
+  const contactRows = [
+    card.email && { key: "email", icon: Mail, text: card.email, href: `mailto:${card.email}`, copyValue: card.email },
+    card.phone && { key: "phone", icon: Phone, text: card.phone, href: `tel:${card.phone}`, copyValue: card.phone },
+    card.website_url && { key: "web", icon: Globe, text: card.website_url, href: card.website_url, copyValue: card.website_url },
+    card.linkedin_url && { key: "li", icon: Linkedin, text: "LinkedIn Profile", href: card.linkedin_url, copyValue: card.linkedin_url },
+  ].filter(Boolean) as { key: string; icon: typeof Mail; text: string; href: string; copyValue: string }[];
+
   return (
     <div
       className="min-h-screen flex items-center justify-center p-4 sm:p-6 bg-background"
@@ -153,7 +151,7 @@ const BusinessCardPage = () => {
         backgroundImage: `radial-gradient(circle at 20% 0%, ${accent}22, transparent 40%), radial-gradient(circle at 80% 100%, ${accent}33, transparent 50%)`,
       }}
     >
-      <div className="w-full max-w-md">
+      <div className="w-full max-w-md animate-fade-in">
         <Card className="overflow-hidden border-2 backdrop-blur-sm bg-card/80 shadow-2xl">
           <div
             className="h-32 relative overflow-hidden"
@@ -172,6 +170,16 @@ const BusinessCardPage = () => {
             ) : (
               <div className="absolute inset-0 opacity-30 [background-image:linear-gradient(transparent_98%,rgba(255,255,255,.5)_98%),linear-gradient(90deg,transparent_98%,rgba(255,255,255,.5)_98%)] [background-size:24px_24px]" />
             )}
+            <Button
+              type="button"
+              size="icon"
+              variant="secondary"
+              className="absolute top-3 right-3 h-9 w-9 rounded-full bg-card/80 backdrop-blur"
+              onClick={() => setQrOpen(true)}
+              aria-label="Show QR code"
+            >
+              <QrCode className="h-4 w-4" />
+            </Button>
           </div>
 
           <CardContent className="pt-0 pb-6 px-6 -mt-14 relative">
@@ -179,7 +187,7 @@ const BusinessCardPage = () => {
               <Avatar className="h-28 w-28 ring-4 ring-card shadow-xl">
                 {card.avatar_url && <AvatarImage src={card.avatar_url} alt={card.full_name || ""} />}
                 <AvatarFallback
-                  className="text-2xl font-bold text-white"
+                  className="text-2xl font-bold text-primary-foreground"
                   style={{ background: accent }}
                 >
                   {initials}
@@ -217,53 +225,62 @@ const BusinessCardPage = () => {
               </p>
             )}
 
+            {quickActions.length > 0 && (
+              <div
+                className="grid gap-2 mb-4"
+                style={{ gridTemplateColumns: `repeat(${quickActions.length}, minmax(0, 1fr))` }}
+              >
+                {quickActions.map(({ key, icon: Icon, label, href }) => (
+                  <a
+                    key={key}
+                    href={href}
+                    target={key === "web" ? "_blank" : undefined}
+                    rel={key === "web" ? "noreferrer" : undefined}
+                    className="flex flex-col items-center gap-1 py-3 rounded-xl bg-muted/40 hover:bg-muted active:scale-95 transition-all"
+                  >
+                    <Icon className="h-5 w-5" style={{ color: accent }} />
+                    <span className="text-[11px] font-medium text-muted-foreground">{label}</span>
+                  </a>
+                ))}
+              </div>
+            )}
+
             <div className="space-y-2 mb-4">
-              {card.email && (
-                <a
-                  href={`mailto:${card.email}`}
+              {contactRows.map(({ key, icon: Icon, text, href, copyValue }) => (
+                <div
+                  key={key}
                   className="flex items-center gap-3 p-3 rounded-lg bg-muted/40 hover:bg-muted transition-colors"
                 >
-                  <Mail className="h-4 w-4 shrink-0" style={{ color: accent }} />
-                  <span className="text-sm truncate">{card.email}</span>
-                </a>
-              )}
-              {card.phone && (
-                <a
-                  href={`tel:${card.phone}`}
-                  className="flex items-center gap-3 p-3 rounded-lg bg-muted/40 hover:bg-muted transition-colors"
-                >
-                  <Phone className="h-4 w-4 shrink-0" style={{ color: accent }} />
-                  <span className="text-sm truncate">{card.phone}</span>
-                </a>
-              )}
-              {card.website_url && (
-                <a
-                  href={card.website_url}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="flex items-center gap-3 p-3 rounded-lg bg-muted/40 hover:bg-muted transition-colors"
-                >
-                  <Globe className="h-4 w-4 shrink-0" style={{ color: accent }} />
-                  <span className="text-sm truncate">{card.website_url}</span>
-                </a>
-              )}
-              {card.linkedin_url && (
-                <a
-                  href={card.linkedin_url}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="flex items-center gap-3 p-3 rounded-lg bg-muted/40 hover:bg-muted transition-colors"
-                >
-                  <Linkedin className="h-4 w-4 shrink-0" style={{ color: accent }} />
-                  <span className="text-sm truncate">LinkedIn Profile</span>
-                </a>
-              )}
+                  <Icon className="h-4 w-4 shrink-0" style={{ color: accent }} />
+                  <a
+                    href={href}
+                    target={href.startsWith("http") ? "_blank" : undefined}
+                    rel={href.startsWith("http") ? "noreferrer" : undefined}
+                    className="text-sm truncate flex-1"
+                  >
+                    {text}
+                  </a>
+                  <button
+                    type="button"
+                    onClick={() => copy(key, copyValue)}
+                    className="shrink-0 text-muted-foreground hover:text-foreground transition-colors"
+                    aria-label={`Copy ${text}`}
+                  >
+                    {copiedKey === key ? <Check className="h-4 w-4 text-primary" /> : <Copy className="h-4 w-4" />}
+                  </button>
+                </div>
+              ))}
             </div>
 
             <div className="grid grid-cols-2 gap-3">
-              <Button onClick={downloadVCard} className="gap-2" style={{ background: accent }}>
-                <Download className="h-4 w-4" />
-                Save Contact
+              <Button
+                onClick={handleSaveContact}
+                disabled={saving}
+                className="gap-2 text-primary-foreground"
+                style={{ background: accent }}
+              >
+                <UserPlus className="h-4 w-4" />
+                {saving ? "Saving…" : "Add Contact"}
               </Button>
               <Button onClick={share} variant="outline" className="gap-2">
                 <Share2 className="h-4 w-4" />
@@ -277,6 +294,23 @@ const BusinessCardPage = () => {
           Powered by <span className="font-semibold">VendX</span> · Digital Business Cards
         </p>
       </div>
+
+      <Dialog open={qrOpen} onOpenChange={setQrOpen}>
+        <DialogContent className="max-w-xs">
+          <DialogHeader>
+            <DialogTitle className="text-center text-base">Scan to open this card</DialogTitle>
+          </DialogHeader>
+          <div className="flex flex-col items-center gap-4 pb-2">
+            <div className="p-4 rounded-xl bg-white">
+              <QRCodeSVG value={shareUrl} size={196} level="M" />
+            </div>
+            <Button variant="outline" size="sm" className="gap-2" onClick={() => copy("share", shareUrl)}>
+              {copiedKey === "share" ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+              Copy link
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
