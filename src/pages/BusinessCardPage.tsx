@@ -298,19 +298,49 @@ const BusinessCardPage = () => {
       <Dialog open={qrOpen} onOpenChange={setQrOpen}>
         <DialogContent className="max-w-xs">
           <DialogHeader>
-            <DialogTitle className="text-center text-base">Scan to open this card</DialogTitle>
+            <DialogTitle className="text-center text-base">
+              {qrMode === "card" ? "Scan to open this card" : "Scan to save contact"}
+            </DialogTitle>
           </DialogHeader>
           <div className="flex flex-col items-center gap-4 pb-2">
-            <div className="p-4 rounded-xl bg-white">
-              <QRCodeSVG value={shareUrl} size={196} level="M" />
+            <div className="grid grid-cols-2 gap-1 p-1 rounded-lg bg-muted w-full">
+              {(["card", "contact"] as const).map((m) => (
+                <button
+                  key={m}
+                  type="button"
+                  onClick={() => setQrMode(m)}
+                  className={`text-xs py-1.5 rounded-md transition-colors ${
+                    qrMode === m ? "bg-card shadow font-medium" : "text-muted-foreground"
+                  }`}
+                >
+                  {m === "card" ? "Card link" : "Contact"}
+                </button>
+              ))}
             </div>
-            <Button variant="outline" size="sm" className="gap-2" onClick={() => copy("share", shareUrl)}>
-              {copiedKey === "share" ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-              Copy link
-            </Button>
+            <div className="p-4 rounded-xl bg-white">
+              <QRCodeSVG value={qrValue} size={196} level="M" />
+            </div>
+            <div className="flex flex-wrap justify-center gap-2">
+              <Button variant="outline" size="sm" className="gap-2" onClick={() => copy("share", qrValue)}>
+                {copiedKey === "share" ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                Copy link
+              </Button>
+              {nfcSupported() && (
+                <Button variant="outline" size="sm" className="gap-2" onClick={writeTag} disabled={nfcWriting}>
+                  <Nfc className="h-4 w-4" />
+                  {nfcWriting ? "Tap a tag…" : "Write NFC tag"}
+                </Button>
+              )}
+            </div>
+            <p className="text-[11px] text-center text-muted-foreground">
+              {qrMode === "card"
+                ? "Opens the full card in any phone camera."
+                : "Scanning adds the contact straight to the phone — no file to download."}
+            </p>
           </div>
         </DialogContent>
       </Dialog>
+
     </div>
   );
 };
