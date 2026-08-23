@@ -104,6 +104,16 @@ const BusinessCardPage = () => {
     }
   };
 
+  // Tapped link / NFC tag / QR with ?save=1 → open the native contact sheet instantly.
+  useEffect(() => {
+    if (!card || autoSaved.current) return;
+    if (searchParams.get("save") !== "1" && searchParams.get("contact") !== "1") return;
+    autoSaved.current = true;
+    void handleSaveContact();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [card, searchParams]);
+
+
   const share = async () => {
     if (!card) return;
     if (navigator.share) {
