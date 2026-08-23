@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
+import { useParams, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { useSEO } from "@/hooks/useSEO";
-import { saveContact, hostedVCardUrl, nfcSupported, writeNfcTag } from "@/lib/vcard";
+import { saveContact, nfcSupported, writeNfcTag } from "@/lib/vcard";
 
 interface CardData {
   id: string;
@@ -36,6 +36,7 @@ interface CardData {
 
 const BusinessCardPage = () => {
   const { slug } = useParams<{ slug: string }>();
+  const [searchParams] = useSearchParams();
   const [card, setCard] = useState<CardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
@@ -43,6 +44,7 @@ const BusinessCardPage = () => {
   const [qrMode, setQrMode] = useState<"card" | "contact">("card");
   const [nfcWriting, setNfcWriting] = useState(false);
   const [saving, setSaving] = useState(false);
+  const autoSaved = useRef(false);
 
   useSEO({
     title: card?.full_name
@@ -64,8 +66,9 @@ const BusinessCardPage = () => {
   }, [slug]);
 
   const shareUrl = `https://vendxglobal.net/card/${card?.card_slug || card?.id || slug}`;
-  const contactUrl = hostedVCardUrl(card?.card_slug || card?.id || slug || "");
-  const qrValue = qrMode === "card" ? shareUrl : contactUrl;
+  const tapSaveUrl = `${shareUrl}?save=1`;
+  
+  const qrValue = qrMode === "card" ? shareUrl : tapSaveUrl;
 
   const copy = async (key: string, value: string) => {
     await navigator.clipboard.writeText(value);
@@ -100,6 +103,16 @@ const BusinessCardPage = () => {
       setSaving(false);
     }
   };
+
+  // Tapped link / NFC tag / QR with ?save=1 → open the native contact sheet instantly.
+  useEffect(() => {
+    if (!card || autoSaved.current) return;
+    if (searchParams.get("save") !== "1" && searchParams.get("contact") !== "1") return;
+    autoSaved.current = true;
+    void handleSaveContact();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [card, searchParams]);
+
 
   const share = async () => {
     if (!card) return;

@@ -149,6 +149,7 @@ const App = () => (
              <Route path="/external-service/in-home-arcade" element={<InHomeArcadeServicePage />} />
               <Route path="/team" element={<StaffDirectoryPage />} />
               <Route path="/card/:slug" element={<BusinessCardPage />} />
+              <Route path="/c/:slug" element={<BusinessCardPage />} />
               <Route path="/sso/authorize" element={<SsoAuthorizePage />} />
               <Route path="/developers/sso" element={<SsoDocsPage />} />
               <Route path="/api/partners" element={<PartnerApiDocsPage />} />
