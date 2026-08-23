@@ -65,11 +65,29 @@ const BusinessCardPage = () => {
 
   const shareUrl = `https://vendxglobal.net/card/${card?.card_slug || card?.id || slug}`;
 
+  const shareUrl = `https://vendxglobal.net/card/${card?.card_slug || card?.id || slug}`;
+  const contactUrl = hostedVCardUrl(card?.card_slug || card?.id || slug || "");
+  const qrValue = qrMode === "card" ? shareUrl : contactUrl;
+
   const copy = async (key: string, value: string) => {
     await navigator.clipboard.writeText(value);
     setCopiedKey(key);
     setTimeout(() => setCopiedKey((k) => (k === key ? null : k)), 1800);
   };
+
+  const writeTag = async () => {
+    setNfcWriting(true);
+    try {
+      await writeNfcTag(qrValue);
+      toast.success("NFC tag written — tap a phone to share");
+    } catch {
+      toast.error("Could not write the NFC tag");
+    } finally {
+      setNfcWriting(false);
+    }
+  };
+
+
 
   const handleSaveContact = async () => {
     if (!card) return;
