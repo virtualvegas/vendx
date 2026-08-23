@@ -93,3 +93,6 @@ verify_jwt = true
 
 [functions.subscription-retry-cron]
 verify_jwt = false
+
+[functions.business-card-vcard]
+verify_jwt = false
