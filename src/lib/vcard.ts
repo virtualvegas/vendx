@@ -52,12 +52,33 @@ export function vcardFileName(c: VCardInput) {
 }
 
 /**
+ * Public, always-fresh vCard URL served by the backend with `Content-Disposition: inline`.
+ * Opening it on a phone shows the native "Add to Contacts" sheet — no file download.
+ */
+export function hostedVCardUrl(slugOrId: string) {
+  return `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/business-card-vcard?slug=${encodeURIComponent(slugOrId)}`;
+}
+
+const isMobile = () =>
+  typeof navigator !== "undefined" && /iphone|ipad|ipod|android/i.test(navigator.userAgent);
+
+/**
  * Saves a contact with the smoothest path available:
- * 1. Native share sheet with the vCard file (iOS/Android → "Add to Contacts", no download)
- * 2. Same-tab navigation to a blob URL (mobile browsers open the contact card directly)
+ * 1. Mobile → open the hosted vCard URL, which the OS renders as a contact card
+ * 2. Native share sheet with the vCard file (Android → "Add to Contacts")
  * 3. Classic download fallback (desktop)
  */
-export async function saveContact(c: VCardInput, photoUrl?: string): Promise<"shared" | "opened" | "downloaded"> {
+export async function saveContact(
+  c: VCardInput,
+  photoUrl?: string,
+): Promise<"opened" | "shared" | "downloaded"> {
+  const slugOrId = c.card_slug || c.id;
+
+  if (slugOrId && isMobile()) {
+    window.location.href = hostedVCardUrl(slugOrId);
+    return "opened";
+  }
+
   const vcf = buildVCard(c, photoUrl);
   const fileName = vcardFileName(c);
   const file =
@@ -85,3 +106,16 @@ export async function saveContact(c: VCardInput, photoUrl?: string): Promise<"sh
   setTimeout(() => URL.revokeObjectURL(url), 10000);
   return "downloaded";
 }
+
+/** Web NFC (Android Chrome): write the card link to a blank NFC tag for tap-to-share. */
+export function nfcSupported() {
+  return typeof window !== "undefined" && "NDEFReader" in window;
+}
+
+export async function writeNfcTag(url: string) {
+  const Reader = (window as any).NDEFReader;
+  if (!Reader) throw new Error("NFC not supported on this device");
+  const reader = new Reader();
+  await reader.write({ records: [{ recordType: "url", data: url }] });
+}
+
