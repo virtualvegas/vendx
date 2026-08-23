@@ -66,8 +66,9 @@ const BusinessCardPage = () => {
   }, [slug]);
 
   const shareUrl = `https://vendxglobal.net/card/${card?.card_slug || card?.id || slug}`;
+  const tapSaveUrl = `${shareUrl}?save=1`;
   const contactUrl = hostedVCardUrl(card?.card_slug || card?.id || slug || "");
-  const qrValue = qrMode === "card" ? shareUrl : contactUrl;
+  const qrValue = qrMode === "card" ? shareUrl : tapSaveUrl;
 
   const copy = async (key: string, value: string) => {
     await navigator.clipboard.writeText(value);
