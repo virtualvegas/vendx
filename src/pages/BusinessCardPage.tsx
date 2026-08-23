@@ -40,6 +40,8 @@ const BusinessCardPage = () => {
   const [loading, setLoading] = useState(true);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const [qrOpen, setQrOpen] = useState(false);
+  const [qrMode, setQrMode] = useState<"card" | "contact">("card");
+  const [nfcWriting, setNfcWriting] = useState(false);
   const [saving, setSaving] = useState(false);
 
   useSEO({
