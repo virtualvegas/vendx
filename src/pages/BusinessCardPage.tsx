@@ -36,6 +36,7 @@ interface CardData {
 
 const BusinessCardPage = () => {
   const { slug } = useParams<{ slug: string }>();
+  const [searchParams] = useSearchParams();
   const [card, setCard] = useState<CardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
@@ -43,6 +44,7 @@ const BusinessCardPage = () => {
   const [qrMode, setQrMode] = useState<"card" | "contact">("card");
   const [nfcWriting, setNfcWriting] = useState(false);
   const [saving, setSaving] = useState(false);
+  const autoSaved = useRef(false);
 
   useSEO({
     title: card?.full_name
