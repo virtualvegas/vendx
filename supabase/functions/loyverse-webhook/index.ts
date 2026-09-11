@@ -102,16 +102,19 @@ serve(async (req) => {
         // Insert receipt
         const { data: receipt, error: insErr } = await supabase
           .from("vendx_pos_receipts").insert({
-            user_id: userId,
+            user_id: null,
             external_id: String(externalId),
             receipt_number: r.receipt_number || null,
-            source: "loyverse",
+            source: "paypal_zettle",
             store_name: r.store_name || r.store_id || null,
+            pos_store_id: posStoreId ? String(posStoreId) : null,
+            location_id: locationId,
+            stand_id: standId,
             pos_customer_id: r.customer?.id || r.customer_id || null,
             pos_customer_email: email,
             pos_customer_phone: phoneRaw,
             pos_customer_name: r.customer?.name || r.customer_name || null,
-            matched_by: matchedBy,
+            matched_by: null,
             subtotal, tax_total: taxTotal, discount_total: discountTotal, tip_total: tipTotal,
             total_amount: totalAmount,
             currency: r.currency || "USD",
