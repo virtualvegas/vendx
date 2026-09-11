@@ -337,10 +337,45 @@ const POSReceiptsPanel = () => {
                   <div className="flex justify-between text-primary font-medium"><span>Points earned</span><span>+{selected.points_earned} pts</span></div>
                 )}
               </div>
+
+              <div className="border-t pt-3 space-y-2">
+                <Label className="flex items-center gap-2">
+                  <UserCheck className="w-4 h-4" />
+                  {selected.user_id ? "Linked customer" : "Link this sale to a customer"}
+                </Label>
+                {selected.user_id ? (
+                  <p className="text-sm text-muted-foreground">
+                    Matched by {selected.matched_by || "manual"}. Points are only awarded once per receipt.
+                  </p>
+                ) : (
+                  <>
+                    <Input
+                      placeholder="Search by name, email or phone..."
+                      value={linkQuery}
+                      onChange={(e) => searchCustomers(e.target.value)}
+                    />
+                    <div className="space-y-1">
+                      {linkResults.map((p) => (
+                        <div key={p.id} className="flex items-center justify-between gap-3 rounded-md border p-2">
+                          <div className="text-sm min-w-0">
+                            <div className="truncate">{p.full_name || "Unnamed"}</div>
+                            <div className="text-xs text-muted-foreground truncate">{p.email || p.phone || "—"}</div>
+                          </div>
+                          <Button size="sm" disabled={linking} onClick={() => linkCustomer(p.id)}>Link</Button>
+                        </div>
+                      ))}
+                      {linkQuery.length >= 2 && linkResults.length === 0 && (
+                        <p className="text-xs text-muted-foreground">No matching customers.</p>
+                      )}
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
           )}
         </DialogContent>
       </Dialog>
+
 
       <Dialog open={configOpen} onOpenChange={setConfigOpen}>
         <DialogContent className="max-w-lg">
