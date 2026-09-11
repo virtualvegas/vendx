@@ -107,21 +107,10 @@ serve(async (req) => {
             } catch { /* ignore */ }
           }
 
-          // Match customer
-          const phoneNorm = normalizePhone(phoneRaw);
-          let userId: string | null = null;
-          let matchedBy: string | null = null;
+          // Customer matching happens server-side after insert (email + phone, idempotent points)
+          const userId: string | null = null;
+          const matchedBy: string | null = null;
 
-          if (email) {
-            const { data: byEmail } = await supabase
-              .from("profiles").select("id").ilike("email", email).maybeSingle();
-            if (byEmail?.id) { userId = byEmail.id; matchedBy = "email"; }
-          }
-          if (!userId && phoneNorm) {
-            const { data: profs } = await supabase.from("profiles").select("id, phone");
-            const match = profs?.find((p: any) => normalizePhone(p.phone) === phoneNorm);
-            if (match) { userId = match.id; matchedBy = "phone"; }
-          }
 
           // Totals — Loyverse fields
           const subtotal = Number(r.total_money ?? 0) - Number(r.total_tax ?? 0);
