@@ -71,10 +71,10 @@ const POSReceiptsPanel = () => {
   const loadConfig = async () => {
     const [{ data: accs }, { data: cfg }] = await Promise.all([
       supabase.from("finance_accounts").select("id,name").eq("is_active", true).order("name"),
-      supabase.from("vendx_pos_revenue_config").select("*").eq("source", "loyverse").maybeSingle(),
+      supabase.from("vendx_pos_revenue_config").select("*").eq("source", "paypal_zettle").maybeSingle(),
     ]);
     setAccounts((accs as any) || []);
-    setConfig(cfg || { source: "loyverse", display_name: "Loyverse POS", revenue_category: "pos_revenue", expense_category: "cogs", payment_method: "pos", cogs_payment_method: "internal" });
+    setConfig(cfg || { source: "paypal_zettle", display_name: "PayPal Zettle POS", revenue_category: "pos_revenue", expense_category: "cogs", payment_method: "pos", cogs_payment_method: "internal" });
   };
 
   const saveConfig = async () => {
