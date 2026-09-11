@@ -161,9 +161,10 @@ const POSStoresPanel = () => {
       <CardHeader>
         <div className="flex items-start justify-between gap-3 flex-wrap">
           <div>
-            <CardTitle className="flex items-center gap-2"><Store className="w-5 h-5" /> POS Store Assignments</CardTitle>
+            <CardTitle className="flex items-center gap-2"><Store className="w-5 h-5" /> PayPal Zettle Registers</CardTitle>
             <p className="text-sm text-muted-foreground mt-1">
-              Map each external POS store (e.g. a Loyverse register) to a location and/or stand. Daily revenue will still post as POS revenue, but attribution and per-store accounts will follow this mapping.
+              Map each PayPal Zettle register to a location and/or stand. Sales still post once as POS revenue, but
+              attribution and per-register accounts follow this mapping.
             </p>
           </div>
           <div className="flex gap-2">
