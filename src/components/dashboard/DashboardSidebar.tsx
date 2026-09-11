@@ -191,6 +191,7 @@ const tabGroups: TabGroup[] = [
     label: "Finance & Payouts",
     tabs: [
       { id: "finance", label: "Finance Overview", icon: DollarSign, requiredRoles: r("finance") },
+      { id: "pos-manager", label: "Point of Sale", icon: CreditCard, requiredRoles: r("pos-manager") },
       { id: "finance-kpi", label: "KPI Dashboard", icon: BarChart3, requiredRoles: r("finance-kpi") },
       { id: "finance-manager", label: "Finance Manager", icon: Wallet, requiredRoles: r("finance-manager") },
       { id: "vendx-pay", label: "VendX Pay", icon: Wallet, requiredRoles: r("vendx-pay") },

@@ -21,6 +21,7 @@ import CareersManager from "@/components/dashboard/tabs/CareersManager";
 import GlobalLocations from "@/components/dashboard/tabs/GlobalLocations";
 import VendXPayManager from "@/components/dashboard/tabs/VendXPayManager";
 import RewardsManager from "@/components/dashboard/tabs/RewardsManager";
+import POSManager from "@/components/dashboard/tabs/POSManager";
 import MachineRegistry from "@/components/dashboard/tabs/MachineRegistry";
 import PartnerOffersManager from "@/components/dashboard/tabs/PartnerOffersManager";
 import CustomerOrders from "@/components/dashboard/tabs/CustomerOrders";
@@ -386,6 +387,8 @@ const DashboardPage = () => {
         content = <BrandLinksManager />; break;
       case "gift-cards":
         content = <GiftCardManager />; break;
+      case "pos-manager":
+        content = <POSManager />; break;
       case "rewards-manager":
         content = <RewardsManager />; break;
       case "machine-registry":
