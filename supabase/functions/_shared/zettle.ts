@@ -7,6 +7,9 @@ export type ZettlePurchase = Record<string, unknown> & {
   vatAmount?: number;
   currency?: string;
   source?: string;
+  userUuid?: string;
+  userDisplayName?: string;
+  udid?: string;
   products?: Array<Record<string, unknown>>;
   payments?: Array<Record<string, unknown>>;
 };
@@ -81,5 +84,13 @@ export function purchaseId(purchase: ZettlePurchase): string | null {
 }
 
 export function purchaseRegisterId(purchase: ZettlePurchase): string | null {
-  return typeof purchase.source === "string" && purchase.source.trim() ? purchase.source.trim() : null;
+  if (typeof purchase.udid === "string" && purchase.udid.trim()) return purchase.udid.trim();
+  if (typeof purchase.userUuid === "string" && purchase.userUuid.trim()) return purchase.userUuid.trim();
+  return null;
+}
+
+export function purchaseRegisterName(purchase: ZettlePurchase): string | null {
+  return typeof purchase.userDisplayName === "string" && purchase.userDisplayName.trim()
+    ? purchase.userDisplayName.trim()
+    : null;
 }

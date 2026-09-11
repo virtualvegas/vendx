@@ -3,7 +3,7 @@
 // otherwise falls back to the connected register feed API token.
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
-import { fetchZettlePurchases, purchaseRegisterId } from "../_shared/zettle.ts";
+import { fetchZettlePurchases, purchaseRegisterId, purchaseRegisterName } from "../_shared/zettle.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -141,12 +141,13 @@ serve(async (req) => {
       endDate: new Date().toISOString(),
       limit: 1000,
     });
-    const discovered = new Map<string, { count: number; last: string | null }>();
+    const discovered = new Map<string, { count: number; last: string | null; name: string | null }>();
     for (const purchase of page.purchases) {
       const id = purchaseRegisterId(purchase);
       if (!id) continue;
-      const current = discovered.get(id) || { count: 0, last: null };
+      const current = discovered.get(id) || { count: 0, last: null, name: purchaseRegisterName(purchase) };
       current.count += 1;
+      current.name = current.name || purchaseRegisterName(purchase);
       if (typeof purchase.timestamp === "string" && (!current.last || purchase.timestamp > current.last)) {
         current.last = purchase.timestamp;
       }
@@ -157,7 +158,7 @@ serve(async (req) => {
       decorate({
         kind: "register",
         id,
-        name: linkedMap.get(id) || `Zettle source ${id}`,
+        name: linkedMap.get(id) || activity.name || `Zettle register ${id.slice(0, 8)}`,
         store_id: null,
         store_name: null,
         address: activity.last ? `Last Zettle sale ${new Date(activity.last).toLocaleDateString()}` : null,

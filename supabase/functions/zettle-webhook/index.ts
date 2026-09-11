@@ -1,167 +1,42 @@
-// PayPal Zettle POS webhook receiver
-// Configure in PayPal Zettle: Settings → Integrations → Webhooks
-// URL: https://<project>.supabase.co/functions/v1/zettle-webhook
-// Events: receipts.update
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { fetchZettlePurchase } from "../_shared/zettle.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-zettle-signature",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
-
-function normalizePhone(p?: string | null) {
-  if (!p) return null;
-  const digits = p.replace(/\D/g, "");
-  return digits.length >= 7 ? digits.slice(-10) : null;
-}
+const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), {
+  status,
+  headers: { ...corsHeaders, "Content-Type": "application/json" },
+});
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
-
-  const supabase = createClient(
-    Deno.env.get("SUPABASE_URL")!,
-    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-  );
+  if (req.method !== "POST") return json({ error: "Method not allowed" }, 405);
 
   try {
-    const raw = await req.text();
+    const body = await req.json();
+    if (body?.eventName !== "PurchaseCreated") return json({ ok: true, ignored: true });
+    const payload = typeof body.payload === "string" ? JSON.parse(body.payload) : body.payload;
+    const purchaseUuid = payload?.purchaseUuid;
+    if (typeof purchaseUuid !== "string" || !purchaseUuid) return json({ error: "Missing Zettle purchase UUID" }, 400);
 
-    // Mandatory shared-secret verification
-    const expectedSecret = (Deno.env.get("PAYPAL_ZETTLE_WEBHOOK_SECRET") || Deno.env.get("LOYVERSE_WEBHOOK_SECRET"));
-    if (!expectedSecret) {
-      console.error("PayPal Zettle webhook: PAYPAL_ZETTLE_WEBHOOK_SECRET not configured");
-      return new Response(JSON.stringify({ error: "Webhook not configured" }), {
-        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-    const provided = req.headers.get("x-zettle-signature") || req.headers.get("x-loyverse-signature") || req.headers.get("authorization")?.replace("Bearer ", "");
-    if (provided !== expectedSecret) {
-      console.warn("PayPal Zettle webhook: invalid signature");
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    const body = JSON.parse(raw || "{}");
-    // PayPal Zettle sends { type, receipts: [...] } OR a single receipt
-    const receipts: any[] = Array.isArray(body?.receipts)
-      ? body.receipts
-      : Array.isArray(body) ? body : [body];
-
-    const results = [];
-    for (const r of receipts) {
-      try {
-        const externalId = r.receipt_number || r.id || r.receipt_id;
-        if (!externalId) { results.push({ skipped: "no id" }); continue; }
-
-        // Skip refunds / voids
-        if (r.receipt_type && String(r.receipt_type).toLowerCase() !== "sale") {
-          results.push({ external_id: externalId, skipped: r.receipt_type });
-          continue;
-        }
-
-        // Idempotency
-        const { data: existing } = await supabase
-          .from("vendx_pos_receipts")
-          .select("id")
-          .eq("external_id", String(externalId))
-          .maybeSingle();
-        if (existing) { results.push({ external_id: externalId, duplicate: true }); continue; }
-
-        // Customer details — matching happens server-side after insert
-        const email = r.customer?.email || r.customer_email || null;
-        const phoneRaw = r.customer?.phone_number || r.customer_phone || null;
-
-        // Register mapping (matched on register/store ID regardless of feed source)
-        const posStoreId: string | null = r.store_id || r.pos_store_id || null;
-        let locationId: string | null = null;
-        let standId: string | null = null;
-        if (posStoreId) {
-          const { data: storeMap } = await supabase
-            .from("vendx_pos_stores")
-            .select("location_id, stand_id")
-            .eq("pos_store_id", String(posStoreId))
-            .eq("is_active", true)
-            .limit(1)
-            .maybeSingle();
-          locationId = storeMap?.location_id || null;
-          standId = storeMap?.stand_id || null;
-        }
-
-
-        // Totals
-        const subtotal = Number(r.total_money ?? r.subtotal ?? 0) - Number(r.total_tax ?? 0);
-        const taxTotal = Number(r.total_tax ?? 0);
-        const discountTotal = Number(r.total_discount ?? 0);
-        const tipTotal = Number(r.tip ?? 0);
-        const totalAmount = Number(r.total_money ?? r.total ?? (subtotal + taxTotal + tipTotal - discountTotal));
-        const paymentMethod = Array.isArray(r.payments) && r.payments[0]?.payment_type_id
-          ? (r.payments[0].name || r.payments[0].payment_type_id) : (r.payment_method || null);
-
-        // Insert receipt
-        const { data: receipt, error: insErr } = await supabase
-          .from("vendx_pos_receipts").insert({
-            user_id: null,
-            external_id: String(externalId),
-            receipt_number: r.receipt_number || null,
-            source: "paypal_zettle",
-            store_name: r.store_name || r.store_id || null,
-            pos_store_id: posStoreId ? String(posStoreId) : null,
-            location_id: locationId,
-            stand_id: standId,
-            pos_customer_id: r.customer?.id || r.customer_id || null,
-            pos_customer_email: email,
-            pos_customer_phone: phoneRaw,
-            pos_customer_name: r.customer?.name || r.customer_name || null,
-            matched_by: null,
-            subtotal, tax_total: taxTotal, discount_total: discountTotal, tip_total: tipTotal,
-            total_amount: totalAmount,
-            currency: r.currency || "USD",
-            payment_method: paymentMethod,
-            receipt_date: r.receipt_date || r.created_at || new Date().toISOString(),
-            raw_payload: r,
-          }).select().single();
-        if (insErr) throw insErr;
-
-        // Line items
-        const items = Array.isArray(r.line_items) ? r.line_items : Array.isArray(r.items) ? r.items : [];
-        if (items.length) {
-          await supabase.from("vendx_pos_receipt_items").insert(
-            items.map((it: any) => ({
-              receipt_id: receipt.id,
-              item_name: it.item_name || it.name || "Item",
-              sku: it.sku || it.variant_sku || null,
-              quantity: Number(it.quantity ?? 1),
-              unit_price: Number(it.price ?? it.unit_price ?? 0),
-              line_total: Number(it.total_money ?? it.line_total ?? (Number(it.price ?? 0) * Number(it.quantity ?? 1))),
-            }))
-          );
-        }
-
-        // Match customer (email/phone) + award points — idempotent per receipt
-        const { data: matchRes } = await supabase.rpc("match_and_award_pos_receipt", {
-          p_receipt_id: receipt.id,
-        });
-
-        results.push({
-          external_id: externalId,
-          matched: Boolean((matchRes as any)?.matched),
-          points: Number((matchRes as any)?.points ?? 0),
-        });
-      } catch (e: any) {
-        console.error("receipt error", e);
-        results.push({ error: e?.message ?? String(e) });
-      }
-    }
-
-    return new Response(JSON.stringify({ ok: true, processed: results.length, results }), {
-      status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    // Never trust event-supplied sale details. Validate the notification by retrieving
+    // the purchase from Zettle with this app's native credentials, then run the normal importer.
+    await fetchZettlePurchase(purchaseUuid);
+    const projectUrl = Deno.env.get("SUPABASE_URL");
+    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    if (!projectUrl || !serviceKey) throw new Error("Backend configuration is unavailable");
+    const response = await fetch(`${projectUrl}/functions/v1/zettle-sync`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${serviceKey}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ since: payload.created || new Date(Date.now() - 5 * 60000).toISOString(), limit: 100 }),
     });
-  } catch (err: any) {
-    console.error("zettle-webhook error", err);
-    return new Response(JSON.stringify({ error: err?.message ?? "Webhook error" }), {
-      status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    if (!response.ok) throw new Error(`Zettle sync failed after event (${response.status}): ${(await response.text()).slice(0, 300)}`);
+    return json({ ok: true, purchase_uuid: purchaseUuid });
+  } catch (error: any) {
+    console.error("zettle-webhook error", error);
+    return json({ error: error?.message || "Zettle event failed" }, 500);
   }
 });
