@@ -55,13 +55,17 @@ const POSStoresPanel = () => {
   const [editing, setEditing] = useState<Partial<PosStore>>(blank);
   const [saving, setSaving] = useState(false);
 
-  // Live registers pulled straight from the POS account with the API key
+  // Live registers pulled straight from the PayPal Zettle account
   const [remoteOpen, setRemoteOpen] = useState(false);
   const [remoteLoading, setRemoteLoading] = useState(false);
   const [remoteError, setRemoteError] = useState<string | null>(null);
+  const [remoteSearch, setRemoteSearch] = useState("");
+  const [remoteNames, setRemoteNames] = useState<Record<string, string>>({});
   const [remote, setRemote] = useState<Array<{
     kind: string; id: string; name: string; store_name: string | null;
-    address: string | null; activated: boolean; linked: boolean; receipts: number;
+    address: string | null; activated: boolean; linked: boolean; linked_name: string | null;
+    receipts: number; total: number; last_sale_at: string | null;
+    last_receipt_number: string | null; sample_items: string[];
   }>>([]);
 
   const fetchRemote = async () => {
@@ -71,12 +75,14 @@ const POSStoresPanel = () => {
       const { data, error } = await supabase.functions.invoke("pos-registers-list", { body: {} });
       if (error) throw error;
       if ((data as any)?.error) throw new Error((data as any).error);
-      setRemote(((data as any)?.registers || []).map((r: any) => ({
+      const list = ((data as any)?.registers || []).map((r: any) => ({
         ...r,
         linked: r.linked || stores.some((s) => s.pos_store_id === r.id),
-      })));
+      }));
+      setRemote(list);
+      setRemoteNames(Object.fromEntries(list.map((r: any) => [r.id, r.linked_name || r.name])));
     } catch (e: any) {
-      setRemoteError(e?.message || "Could not reach the POS account");
+      setRemoteError(e?.message || "Could not reach your PayPal Zettle account");
     } finally {
       setRemoteLoading(false);
     }
@@ -88,24 +94,26 @@ const POSStoresPanel = () => {
   };
 
   const linkRemote = async (r: { id: string; name: string; store_name: string | null }) => {
+    const chosen = (remoteNames[r.id] || r.name || r.store_name || `Register ${r.id.slice(0, 8)}`).trim();
     try {
       const { error } = await supabase.from("vendx_pos_stores").upsert(
         {
           source: "paypal_zettle",
           pos_store_id: r.id,
-          display_name: r.name || r.store_name || `Register ${r.id.slice(0, 8)}`,
+          display_name: chosen,
           is_active: true,
         },
         { onConflict: "source,pos_store_id" }
       );
       if (error) throw error;
-      toast.success(`Linked ${r.name}`);
-      setRemote((prev) => prev.map((x) => (x.id === r.id ? { ...x, linked: true } : x)));
+      toast.success(`Linked ${chosen}`);
+      setRemote((prev) => prev.map((x) => (x.id === r.id ? { ...x, linked: true, linked_name: chosen } : x)));
       await load();
     } catch (e: any) {
       toast.error(e?.message || "Link failed");
     }
   };
+
 
   const load = async () => {
     setLoading(true);
