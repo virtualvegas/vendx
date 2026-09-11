@@ -87,6 +87,7 @@ export const TAB_ACCESS: Record<string, AppRole[]> = {
   "marketing": ["super_admin", "marketing_sales"],
   "email-subscribers": ["super_admin", "marketing_sales"],
   "adreach-manager": ["super_admin"],
+  "pos-manager": ["super_admin", "finance_accounting", "global_operations_manager"],
   "rewards-manager": ["super_admin", "marketing_sales"],
   "partner-offers": ["super_admin", "marketing_sales"],
   "brand-links": ["super_admin", "marketing_sales"],
