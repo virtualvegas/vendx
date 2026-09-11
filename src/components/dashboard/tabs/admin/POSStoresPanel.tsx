@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Store, Plus, RefreshCw, Pencil, Trash2, Link as LinkIcon } from "lucide-react";
+import { Store, Plus, RefreshCw, Pencil, Trash2, Link as LinkIcon, Cloud, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 
 interface PosStore {
@@ -54,6 +54,58 @@ const POSStoresPanel = () => {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Partial<PosStore>>(blank);
   const [saving, setSaving] = useState(false);
+
+  // Live registers pulled straight from the POS account with the API key
+  const [remoteOpen, setRemoteOpen] = useState(false);
+  const [remoteLoading, setRemoteLoading] = useState(false);
+  const [remoteError, setRemoteError] = useState<string | null>(null);
+  const [remote, setRemote] = useState<Array<{
+    kind: string; id: string; name: string; store_name: string | null;
+    address: string | null; activated: boolean; linked: boolean; receipts: number;
+  }>>([]);
+
+  const fetchRemote = async () => {
+    setRemoteLoading(true);
+    setRemoteError(null);
+    try {
+      const { data, error } = await supabase.functions.invoke("pos-registers-list", { body: {} });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+      setRemote(((data as any)?.registers || []).map((r: any) => ({
+        ...r,
+        linked: r.linked || stores.some((s) => s.pos_store_id === r.id),
+      })));
+    } catch (e: any) {
+      setRemoteError(e?.message || "Could not reach the POS account");
+    } finally {
+      setRemoteLoading(false);
+    }
+  };
+
+  const openRemote = async () => {
+    setRemoteOpen(true);
+    await fetchRemote();
+  };
+
+  const linkRemote = async (r: { id: string; name: string; store_name: string | null }) => {
+    try {
+      const { error } = await supabase.from("vendx_pos_stores").upsert(
+        {
+          source: "paypal_zettle",
+          pos_store_id: r.id,
+          display_name: r.name || r.store_name || `Register ${r.id.slice(0, 8)}`,
+          is_active: true,
+        },
+        { onConflict: "source,pos_store_id" }
+      );
+      if (error) throw error;
+      toast.success(`Linked ${r.name}`);
+      setRemote((prev) => prev.map((x) => (x.id === r.id ? { ...x, linked: true } : x)));
+      await load();
+    } catch (e: any) {
+      toast.error(e?.message || "Link failed");
+    }
+  };
 
   const load = async () => {
     setLoading(true);
@@ -165,6 +217,7 @@ const POSStoresPanel = () => {
           </div>
           <div className="flex gap-2">
             <Button variant="outline" size="sm" onClick={load}><RefreshCw className="w-4 h-4 mr-2" /> Refresh</Button>
+            <Button variant="secondary" size="sm" onClick={openRemote}><Cloud className="w-4 h-4 mr-2" /> Import from PayPal Zettle</Button>
             <Button size="sm" onClick={() => openNew()}><Plus className="w-4 h-4 mr-2" /> Add Register</Button>
           </div>
         </div>
@@ -304,6 +357,50 @@ const POSStoresPanel = () => {
           <DialogFooter>
             <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
             <Button onClick={save} disabled={saving}>{saving ? "Saving..." : "Save"}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={remoteOpen} onOpenChange={setRemoteOpen}>
+        <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
+          <DialogHeader><DialogTitle>Registers in your PayPal Zettle account</DialogTitle></DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            Pulled live from your POS account. Link each register you want tracked here.
+          </p>
+          {remoteLoading ? (
+            <p className="text-muted-foreground py-6 text-center">Loading registers...</p>
+          ) : remoteError ? (
+            <div className="space-y-3 py-4">
+              <p className="text-sm text-destructive">{remoteError}</p>
+              <Button size="sm" variant="outline" onClick={fetchRemote}>Try again</Button>
+            </div>
+          ) : remote.length === 0 ? (
+            <p className="text-muted-foreground py-6 text-center">No registers found on the account.</p>
+          ) : (
+            <div className="space-y-2">
+              {remote.map((r) => (
+                <div key={`${r.kind}-${r.id}`} className="flex items-center justify-between gap-3 rounded-md border p-3">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium truncate">{r.name}</span>
+                      <Badge variant="outline" className="text-xs">{r.kind === "device" ? "Register" : "Store"}</Badge>
+                      {!r.activated && <Badge variant="secondary" className="text-xs">Inactive</Badge>}
+                    </div>
+                    <div className="text-xs text-muted-foreground truncate">
+                      {[r.store_name, r.address, r.receipts ? `${r.receipts} sales here` : null].filter(Boolean).join(" · ") || "No sales yet"}
+                    </div>
+                  </div>
+                  {r.linked ? (
+                    <Badge className="shrink-0 gap-1"><CheckCircle2 className="w-3 h-3" /> Linked</Badge>
+                  ) : (
+                    <Button size="sm" className="shrink-0" onClick={() => linkRemote(r)}>Link</Button>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRemoteOpen(false)}>Done</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
