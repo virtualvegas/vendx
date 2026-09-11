@@ -13,8 +13,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Gift, Plus, Package, Truck, CheckCircle, Clock, RefreshCw, Settings, Receipt, Store } from "lucide-react";
 import RewardsConfigPanel from "./admin/RewardsConfigPanel";
-import POSReceiptsPanel from "./admin/POSReceiptsPanel";
-import POSStoresPanel from "./admin/POSStoresPanel";
 
 interface RewardItem {
   id: string;
