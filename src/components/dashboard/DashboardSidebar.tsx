@@ -11,6 +11,7 @@ import {
   Briefcase,
   Map,
   Wallet,
+  CreditCard,
   Gift,
   Monitor,
   Percent,
