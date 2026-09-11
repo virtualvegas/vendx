@@ -69,24 +69,26 @@ serve(async (req) => {
           .maybeSingle();
         if (existing) { results.push({ external_id: externalId, duplicate: true }); continue; }
 
-        // Customer match
+        // Customer details — matching happens server-side after insert
         const email = r.customer?.email || r.customer_email || null;
         const phoneRaw = r.customer?.phone_number || r.customer_phone || null;
-        const phoneNorm = normalizePhone(phoneRaw);
-        let userId: string | null = null;
-        let matchedBy: string | null = null;
 
-        if (email) {
-          const { data: byEmail } = await supabase
-            .from("profiles").select("id").ilike("email", email).maybeSingle();
-          if (byEmail?.id) { userId = byEmail.id; matchedBy = "email"; }
+        // Register mapping (matched on register/store ID regardless of feed source)
+        const posStoreId: string | null = r.store_id || r.pos_store_id || null;
+        let locationId: string | null = null;
+        let standId: string | null = null;
+        if (posStoreId) {
+          const { data: storeMap } = await supabase
+            .from("vendx_pos_stores")
+            .select("location_id, stand_id")
+            .eq("pos_store_id", String(posStoreId))
+            .eq("is_active", true)
+            .limit(1)
+            .maybeSingle();
+          locationId = storeMap?.location_id || null;
+          standId = storeMap?.stand_id || null;
         }
-        if (!userId && phoneNorm) {
-          const { data: profs } = await supabase
-            .from("profiles").select("id, phone");
-          const match = profs?.find((p: any) => normalizePhone(p.phone) === phoneNorm);
-          if (match) { userId = match.id; matchedBy = "phone"; }
-        }
+
 
         // Totals
         const subtotal = Number(r.total_money ?? r.subtotal ?? 0) - Number(r.total_tax ?? 0);
