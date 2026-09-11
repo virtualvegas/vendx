@@ -217,6 +217,7 @@ const POSStoresPanel = () => {
           </div>
           <div className="flex gap-2">
             <Button variant="outline" size="sm" onClick={load}><RefreshCw className="w-4 h-4 mr-2" /> Refresh</Button>
+            <Button variant="secondary" size="sm" onClick={openRemote}><Cloud className="w-4 h-4 mr-2" /> Import from PayPal Zettle</Button>
             <Button size="sm" onClick={() => openNew()}><Plus className="w-4 h-4 mr-2" /> Add Register</Button>
           </div>
         </div>
