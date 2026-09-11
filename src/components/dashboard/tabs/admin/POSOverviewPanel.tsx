@@ -38,6 +38,7 @@ const POSOverviewPanel = () => {
   const [syncing, setSyncing] = useState(false);
   const [lastSync, setLastSync] = useState<string | null>(null);
   const [storeNames, setStoreNames] = useState<Record<string, string>>({});
+  const [postedTotal, setPostedTotal] = useState(0);
 
   const load = async () => {
     setLoading(true);
