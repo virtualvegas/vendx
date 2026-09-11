@@ -222,16 +222,21 @@ const POSReceiptsPanel = () => {
         <div className="flex items-start justify-between gap-3 flex-wrap">
           <div>
             <CardTitle className="flex items-center gap-2">
-              <Receipt className="w-5 h-5" /> POS Receipts (Loyverse)
+              <Receipt className="w-5 h-5" /> POS Receipts (PayPal Zettle)
             </CardTitle>
             <p className="text-sm text-muted-foreground mt-1">
               Auto-syncs every 5 min. Daily revenue + COGS posts to Finance at 2am UTC (or trigger manually for any date).
+              Receipts match to customers by email or phone — open a receipt to link one manually.
             </p>
           </div>
           <div className="flex flex-col gap-2 items-end">
             <div className="flex items-center gap-2">
               <Button onClick={() => setConfigOpen(true)} size="sm" variant="outline">
                 <Settings className="w-4 h-4 mr-2" /> Configure
+              </Button>
+              <Button onClick={handleRematch} disabled={rematching} size="sm" variant="outline">
+                <UserCheck className={`w-4 h-4 mr-2 ${rematching ? "animate-pulse" : ""}`} />
+                {rematching ? "Matching..." : "Re-match Customers"}
               </Button>
               <Button onClick={handleSyncNow} disabled={syncing} size="sm">
                 <RefreshCw className={`w-4 h-4 mr-2 ${syncing ? "animate-spin" : ""}`} />
