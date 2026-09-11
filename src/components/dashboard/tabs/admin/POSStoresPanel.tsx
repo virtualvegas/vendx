@@ -28,10 +28,6 @@ interface PosStore {
   notes: string | null;
 }
 
-const SOURCES = [
-  { value: "paypal_zettle", label: "PayPal Zettle" },
-];
-
 const blank: Partial<PosStore> = {
   source: "paypal_zettle",
   pos_store_id: "",
@@ -96,21 +92,23 @@ const POSStoresPanel = () => {
   const unassigned = discovered.filter((d) => !assignedIds.has(d.pos_store_id));
 
   const openNew = (presetId?: string) => {
-    setEditing({ ...blank, pos_store_id: presetId || "", display_name: presetId ? `Store ${presetId}` : "" });
+    setEditing({ ...blank, pos_store_id: presetId || "", display_name: presetId ? `Register ${presetId}` : "" });
     setOpen(true);
   };
   const openEdit = (s: PosStore) => { setEditing({ ...s }); setOpen(true); };
 
   const save = async () => {
-    if (!editing.pos_store_id || !editing.display_name) {
-      toast.error("POS store ID and display name are required");
+    if (!editing.display_name) {
+      toast.error("Register name is required");
       return;
     }
+    const registerId = (editing.pos_store_id || "").trim()
+      || editing.display_name.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
     setSaving(true);
     try {
       const payload: any = {
         source: editing.source || "paypal_zettle",
-        pos_store_id: editing.pos_store_id,
+        pos_store_id: registerId,
         display_name: editing.display_name,
         location_id: editing.location_id || null,
         stand_id: editing.stand_id || null,
@@ -132,9 +130,9 @@ const POSStoresPanel = () => {
       await supabase
         .from("vendx_pos_receipts")
         .update({ location_id: payload.location_id, stand_id: payload.stand_id })
-        .eq("pos_store_id", payload.pos_store_id);
+        .eq("pos_store_id", registerId);
 
-      toast.success("POS store saved");
+      toast.success("Register saved");
       setOpen(false);
       await load();
     } catch (e: any) {
@@ -145,7 +143,7 @@ const POSStoresPanel = () => {
   };
 
   const remove = async (id: string) => {
-    if (!confirm("Remove this POS store mapping?")) return;
+    if (!confirm("Remove this register link?")) return;
     const { error } = await supabase.from("vendx_pos_stores").delete().eq("id", id);
     if (error) toast.error(error.message);
     else { toast.success("Removed"); await load(); }
@@ -167,7 +165,7 @@ const POSStoresPanel = () => {
           </div>
           <div className="flex gap-2">
             <Button variant="outline" size="sm" onClick={load}><RefreshCw className="w-4 h-4 mr-2" /> Refresh</Button>
-            <Button size="sm" onClick={() => openNew()}><Plus className="w-4 h-4 mr-2" /> Add Store</Button>
+            <Button size="sm" onClick={() => openNew()}><Plus className="w-4 h-4 mr-2" /> Add Register</Button>
           </div>
         </div>
       </CardHeader>
@@ -175,7 +173,7 @@ const POSStoresPanel = () => {
         {unassigned.length > 0 && (
           <div className="rounded-md border border-dashed p-3">
             <div className="flex items-center gap-2 mb-2 text-sm font-medium">
-              <LinkIcon className="w-4 h-4" /> Unassigned POS stores detected
+              <LinkIcon className="w-4 h-4" /> Unlinked PayPal Zettle registers detected
             </div>
             <div className="flex flex-wrap gap-2">
               {unassigned.map((u) => (
@@ -188,13 +186,12 @@ const POSStoresPanel = () => {
         )}
 
         {loading ? <p className="text-muted-foreground">Loading...</p> : stores.length === 0 ? (
-          <p className="text-center py-8 text-muted-foreground">No POS stores mapped yet.</p>
+          <p className="text-center py-8 text-muted-foreground">No PayPal Zettle registers linked yet.</p>
         ) : (
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Display Name</TableHead>
-                <TableHead>POS Store ID</TableHead>
+                <TableHead>Register</TableHead>
                 <TableHead>Location</TableHead>
                 <TableHead>Stand</TableHead>
                 <TableHead>Deposit Account</TableHead>
@@ -206,7 +203,6 @@ const POSStoresPanel = () => {
               {stores.map((s) => (
                 <TableRow key={s.id}>
                   <TableCell className="font-medium">{s.display_name}</TableCell>
-                  <TableCell className="font-mono text-xs">{s.pos_store_id}</TableCell>
                   <TableCell className="text-sm">{nameOf(locations, s.location_id)}</TableCell>
                   <TableCell className="text-sm">{nameOf(stands, s.stand_id)}</TableCell>
                   <TableCell className="text-sm">{nameOf(accounts, s.deposit_account_id)}</TableCell>
@@ -224,26 +220,21 @@ const POSStoresPanel = () => {
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
-          <DialogHeader><DialogTitle>{editing.id ? "Edit POS Store" : "Add POS Store"}</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{editing.id ? "Edit PayPal Zettle Register" : "Add PayPal Zettle Register"}</DialogTitle></DialogHeader>
           <div className="space-y-3">
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <Label>Source</Label>
-                <Select value={editing.source || "paypal_zettle"} onValueChange={(v) => setEditing({ ...editing, source: v })}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {SOURCES.map((s) => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-1.5">
-                <Label>POS Store ID *</Label>
-                <Input value={editing.pos_store_id || ""} onChange={(e) => setEditing({ ...editing, pos_store_id: e.target.value })} placeholder="Register / store ID from PayPal Zettle" />
-              </div>
+            <div className="rounded-md border bg-muted/40 px-3 py-2 text-sm text-muted-foreground">
+              Connected to <span className="font-medium text-foreground">PayPal Zettle</span>
             </div>
             <div className="space-y-1.5">
-              <Label>Display Name *</Label>
-              <Input value={editing.display_name || ""} onChange={(e) => setEditing({ ...editing, display_name: e.target.value })} />
+              <Label>Register Name *</Label>
+              <Input value={editing.display_name || ""} onChange={(e) => setEditing({ ...editing, display_name: e.target.value })} placeholder="e.g. Main Counter" />
+            </div>
+            <div className="space-y-1.5">
+              <Label>PayPal Zettle Register ID</Label>
+              <Input value={editing.pos_store_id || ""} onChange={(e) => setEditing({ ...editing, pos_store_id: e.target.value })} placeholder="Leave blank unless matching an existing register" />
+              <p className="text-xs text-muted-foreground">
+                Only needed to attach sales already coming in from a specific Zettle register. Otherwise we create it for you.
+              </p>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
