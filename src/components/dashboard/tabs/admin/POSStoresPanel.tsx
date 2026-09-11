@@ -263,7 +263,11 @@ const POSStoresPanel = () => {
             <TableBody>
               {stores.map((s) => (
                 <TableRow key={s.id}>
-                  <TableCell className="font-medium">{s.display_name}</TableCell>
+                  <TableCell className="font-medium">
+                    {s.display_name}
+                    <div className="text-[11px] font-mono text-muted-foreground/70">{s.pos_store_id}</div>
+                  </TableCell>
+
                   <TableCell className="text-sm">{nameOf(locations, s.location_id)}</TableCell>
                   <TableCell className="text-sm">{nameOf(stands, s.stand_id)}</TableCell>
                   <TableCell className="text-sm">{nameOf(accounts, s.deposit_account_id)}</TableCell>
