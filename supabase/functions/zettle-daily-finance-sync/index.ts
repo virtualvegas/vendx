@@ -1,4 +1,4 @@
-// Loyverse Daily Finance Sync — aggregates POS receipts for a given day,
+// PayPal Zettle Daily Finance Sync — aggregates POS receipts for a given day,
 // grouped per POS store, and posts one revenue + one COGS entry per store
 // (attributed to the store's mapped location / stand when configured).
 // Idempotent: re-running for the same day replaces existing entries for that store.
@@ -45,15 +45,15 @@ serve(async (req) => {
     const { data: cfg } = await supabase
       .from("vendx_pos_revenue_config")
       .select("*")
-      .in("source", ["paypal_zettle", "loyverse"])
+      .in("source", ["paypal_zettle", "zettle"])
       .maybeSingle();
 
     const gDeposit: string | null = cfg?.deposit_account_id ?? null;
     const gExpense: string | null = cfg?.expense_account_id ?? null;
     const gRevCat: string = cfg?.revenue_category ?? "pos_revenue";
-    const gRevSub: string = cfg?.revenue_subcategory ?? "loyverse";
+    const gRevSub: string = cfg?.revenue_subcategory ?? "zettle";
     const gExpCat: string = cfg?.expense_category ?? "cogs";
-    const gExpSub: string = cfg?.expense_subcategory ?? "loyverse";
+    const gExpSub: string = cfg?.expense_subcategory ?? "zettle";
     const gPay: string = cfg?.payment_method ?? "pos";
     const gCogsPay: string = cfg?.cogs_payment_method ?? "internal";
 
@@ -61,7 +61,7 @@ serve(async (req) => {
     const { data: storeRows } = await supabase
       .from("vendx_pos_stores")
       .select("*")
-      .in("source", ["paypal_zettle", "loyverse"]);
+      .in("source", ["paypal_zettle", "zettle"]);
     const storeMap = new Map<string, any>();
     (storeRows || []).forEach((s: any) => storeMap.set(String(s.pos_store_id), s));
 
@@ -74,7 +74,7 @@ serve(async (req) => {
       const { data: receipts, error: rErr } = await supabase
         .from("vendx_pos_receipts")
         .select("id, total_amount, tax_total, discount_total, tip_total, raw_payload, pos_store_id, location_id, stand_id, store_name")
-        .in("source", ["paypal_zettle", "loyverse"])
+        .in("source", ["paypal_zettle", "zettle"])
         .gte("receipt_date", dayStart)
         .lte("receipt_date", dayEnd);
       if (rErr) throw rErr;
@@ -88,13 +88,13 @@ serve(async (req) => {
       }
 
       // Wipe all existing daily entries for this date (across all stores) then reinsert per group
-      const incomePrefix = `loyverse_daily_${date}`;
-      const expensePrefix = `loyverse_cogs_${date}`;
+      const incomePrefix = `zettle_daily_${date}`;
+      const expensePrefix = `zettle_cogs_${date}`;
 
       const { data: existingIncome } = await supabase
         .from("finance_income")
         .select("id, external_reference")
-        .eq("reference_type", "loyverse_daily_revenue")
+        .eq("reference_type", "zettle_daily_revenue")
         .like("external_reference", `${incomePrefix}%`);
       if (existingIncome?.length) {
         const ids = existingIncome.map((x: any) => x.id);
@@ -140,7 +140,7 @@ serve(async (req) => {
         const cogsPay = m?.cogs_payment_method || gCogsPay;
         const locationId = list.find((x: any) => x.location_id)?.location_id || m?.location_id || null;
         const standId = list.find((x: any) => x.stand_id)?.stand_id || m?.stand_id || null;
-        const displayName = m?.display_name || (storeKey !== "__none__" ? `POS Store ${storeKey}` : "Loyverse POS (unassigned)");
+        const displayName = m?.display_name || (storeKey !== "__none__" ? `POS Store ${storeKey}` : "PayPal Zettle POS (unassigned)");
         const suffix = storeKey === "__none__" ? "_unassigned" : `_${storeKey}`;
         const incomeRef = `${incomePrefix}${suffix}`;
         const expenseRef = `${expensePrefix}${suffix}`;
@@ -154,7 +154,7 @@ serve(async (req) => {
               source: displayName,
               category: gRevCat,
               subcategory: revSub,
-              description: `Loyverse POS daily sales — ${list.length} receipt(s)`,
+              description: `PayPal Zettle POS daily sales — ${list.length} receipt(s)`,
               amount: netRevenue,
               tax_collected: tax,
               payment_method: payMethod,
@@ -162,7 +162,7 @@ serve(async (req) => {
               location_id: locationId,
               stand_id: standId,
               external_reference: incomeRef,
-              reference_type: "loyverse_daily_revenue",
+              reference_type: "zettle_daily_revenue",
               reference_id: null,
               notes: `Store: ${storeKey} | Gross: $${gross.toFixed(2)} | Tax: $${tax.toFixed(2)} | Discounts: $${discount.toFixed(2)} | Tips: $${tips.toFixed(2)}`,
             })
@@ -217,7 +217,7 @@ serve(async (req) => {
       status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (err: any) {
-    console.error("loyverse-daily-finance-sync error", err);
+    console.error("zettle-daily-finance-sync error", err);
     return new Response(JSON.stringify({ error: err?.message ?? "Sync error" }), {
       status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

@@ -1,13 +1,13 @@
-// Loyverse POS webhook receiver
-// Configure in Loyverse: Settings → Integrations → Webhooks
-// URL: https://<project>.supabase.co/functions/v1/loyverse-webhook
+// PayPal Zettle POS webhook receiver
+// Configure in PayPal Zettle: Settings → Integrations → Webhooks
+// URL: https://<project>.supabase.co/functions/v1/zettle-webhook
 // Events: receipts.update
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-loyverse-signature",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-zettle-signature",
 };
 
 function normalizePhone(p?: string | null) {
@@ -28,23 +28,23 @@ serve(async (req) => {
     const raw = await req.text();
 
     // Mandatory shared-secret verification
-    const expectedSecret = Deno.env.get("LOYVERSE_WEBHOOK_SECRET");
+    const expectedSecret = Deno.env.get("PAYPAL_ZETTLE_WEBHOOK_SECRET");
     if (!expectedSecret) {
-      console.error("Loyverse webhook: LOYVERSE_WEBHOOK_SECRET not configured");
+      console.error("PayPal Zettle webhook: PAYPAL_ZETTLE_WEBHOOK_SECRET not configured");
       return new Response(JSON.stringify({ error: "Webhook not configured" }), {
         status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    const provided = req.headers.get("x-loyverse-signature") || req.headers.get("authorization")?.replace("Bearer ", "");
+    const provided = req.headers.get("x-zettle-signature") || req.headers.get("authorization")?.replace("Bearer ", "");
     if (provided !== expectedSecret) {
-      console.warn("Loyverse webhook: invalid signature");
+      console.warn("PayPal Zettle webhook: invalid signature");
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
     const body = JSON.parse(raw || "{}");
-    // Loyverse sends { type, receipts: [...] } OR a single receipt
+    // PayPal Zettle sends { type, receipts: [...] } OR a single receipt
     const receipts: any[] = Array.isArray(body?.receipts)
       ? body.receipts
       : Array.isArray(body) ? body : [body];
@@ -159,7 +159,7 @@ serve(async (req) => {
       status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (err: any) {
-    console.error("loyverse-webhook error", err);
+    console.error("zettle-webhook error", err);
     return new Response(JSON.stringify({ error: err?.message ?? "Webhook error" }), {
       status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
