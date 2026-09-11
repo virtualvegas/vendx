@@ -50,8 +50,14 @@ const POSOverviewPanel = () => {
         .order("receipt_date", { ascending: false }),
       supabase.from("vendx_integration_state").select("value").eq("key", "loyverse_last_sync").maybeSingle(),
       supabase.from("vendx_pos_stores").select("pos_store_id,display_name"),
+      supabase
+        .from("finance_income")
+        .select("amount")
+        .eq("reference_type", "loyverse_daily_revenue")
+        .gte("income_date", since.slice(0, 10)),
     ]);
     setRows((data as Row[]) || []);
+    setPostedTotal(((incomeRows as any[]) || []).reduce((s, r) => s + Number(r.amount || 0), 0));
     setLastSync((state as any)?.value ?? null);
     const map: Record<string, string> = {};
     (stores || []).forEach((s: any) => { map[String(s.pos_store_id)] = s.display_name; });
