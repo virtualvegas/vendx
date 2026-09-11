@@ -42,7 +42,7 @@ const POSOverviewPanel = () => {
   const load = async () => {
     setLoading(true);
     const since = new Date(Date.now() - Number(range) * 24 * 60 * 60 * 1000).toISOString();
-    const [{ data }, { data: state }, { data: stores }] = await Promise.all([
+    const [{ data }, { data: state }, { data: stores }, { data: incomeRows }] = await Promise.all([
       supabase
         .from("vendx_pos_receipts")
         .select("id,total_amount,tax_total,tip_total,discount_total,payment_method,store_name,pos_store_id,user_id,points_earned,receipt_date")
