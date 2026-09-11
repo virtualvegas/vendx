@@ -81,8 +81,8 @@ const POSReceiptsPanel = () => {
     setSavingConfig(true);
     try {
       const payload = {
-        source: "loyverse",
-        display_name: config.display_name || "Loyverse POS",
+        source: "paypal_zettle",
+        display_name: config.display_name || "PayPal Zettle POS",
         deposit_account_id: config.deposit_account_id || null,
         expense_account_id: config.expense_account_id || null,
         revenue_category: config.revenue_category || "pos_revenue",
