@@ -1,8 +1,9 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CreditCard, Receipt, Store } from "lucide-react";
+import { Banknote, CreditCard, Receipt, Store } from "lucide-react";
 import POSOverviewPanel from "./admin/POSOverviewPanel";
 import POSReceiptsPanel from "./admin/POSReceiptsPanel";
 import POSStoresPanel from "./admin/POSStoresPanel";
+import POSFinancePanel from "./admin/POSFinancePanel";
 
 const POSManager = () => {
   return (
