@@ -49,7 +49,7 @@ const POSOverviewPanel = () => {
         .select("id,total_amount,tax_total,tip_total,discount_total,payment_method,store_name,pos_store_id,user_id,points_earned,receipt_date")
         .gte("receipt_date", since)
         .order("receipt_date", { ascending: false }),
-      supabase.from("vendx_integration_state").select("value").in("key", ["zettle_last_sync", "loyverse_last_sync"]).order("key").maybeSingle(),
+      supabase.from("vendx_integration_state").select("value").in("key", ["zettle_last_sync", "loyverse_last_sync"]).order("value", { ascending: false }).limit(1).maybeSingle(),
       supabase.from("vendx_pos_stores").select("pos_store_id,display_name"),
       supabase
         .from("finance_income")
