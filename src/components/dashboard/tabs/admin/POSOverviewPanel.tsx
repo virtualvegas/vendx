@@ -49,12 +49,12 @@ const POSOverviewPanel = () => {
         .select("id,total_amount,tax_total,tip_total,discount_total,payment_method,store_name,pos_store_id,user_id,points_earned,receipt_date")
         .gte("receipt_date", since)
         .order("receipt_date", { ascending: false }),
-      supabase.from("vendx_integration_state").select("value").eq("key", "loyverse_last_sync").maybeSingle(),
+      supabase.from("vendx_integration_state").select("value").in("key", ["zettle_last_sync", "loyverse_last_sync"]).order("key").maybeSingle(),
       supabase.from("vendx_pos_stores").select("pos_store_id,display_name"),
       supabase
         .from("finance_income")
         .select("amount")
-        .eq("reference_type", "loyverse_daily_revenue")
+        .in("reference_type", ["zettle_daily_revenue", "loyverse_daily_revenue"])
         .gte("income_date", since.slice(0, 10)),
     ]);
     setRows((data as Row[]) || []);
@@ -71,7 +71,7 @@ const POSOverviewPanel = () => {
   const syncNow = async () => {
     setSyncing(true);
     try {
-      const { data, error } = await supabase.functions.invoke("loyverse-sync", { body: {} });
+      const { data, error } = await supabase.functions.invoke("zettle-sync", { body: {} });
       if (error) throw error;
       toast.success(`Synced ${data?.processed ?? 0} receipt(s)`);
       await load();

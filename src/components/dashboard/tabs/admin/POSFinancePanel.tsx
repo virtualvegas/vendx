@@ -61,13 +61,13 @@ const POSFinancePanel = () => {
       supabase
         .from("finance_income")
         .select("id,income_date,source,amount,tax_collected,external_reference,notes,location_id")
-        .eq("reference_type", "loyverse_daily_revenue")
+        .in("reference_type", ["zettle_daily_revenue", "loyverse_daily_revenue"])
         .order("income_date", { ascending: false })
         .limit(200),
       supabase
         .from("finance_expenses")
         .select("id,expense_date,vendor,amount,external_reference")
-        .like("external_reference", "loyverse_cogs_%")
+        .or("external_reference.like.zettle_cogs_%,external_reference.like.loyverse_cogs_%")
         .order("expense_date", { ascending: false })
         .limit(200),
     ]);
@@ -100,7 +100,7 @@ const POSFinancePanel = () => {
   const postRange = async () => {
     setPosting(true);
     try {
-      const { data, error } = await supabase.functions.invoke("loyverse-daily-finance-sync", { body: { from, to } });
+      const { data, error } = await supabase.functions.invoke("zettle-daily-finance-sync", { body: { from, to } });
       if (error) throw error;
       toast.success(`Posted sales for ${data?.days?.length ?? 0} day(s) to finance`);
       await load();

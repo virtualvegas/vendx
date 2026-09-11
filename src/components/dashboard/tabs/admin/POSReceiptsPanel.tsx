@@ -116,7 +116,7 @@ const POSReceiptsPanel = () => {
   const handleSyncNow = async () => {
     setSyncing(true);
     try {
-      const { data, error } = await supabase.functions.invoke("loyverse-sync", { body: {} });
+      const { data, error } = await supabase.functions.invoke("zettle-sync", { body: {} });
       if (error) throw error;
       toast.success(`Synced ${data?.processed ?? 0} receipt(s)`);
       await loadReceipts();
@@ -130,7 +130,7 @@ const POSReceiptsPanel = () => {
   const handleFinanceSync = async () => {
     setFinanceSyncing(true);
     try {
-      const { data, error } = await supabase.functions.invoke("loyverse-daily-finance-sync", {
+      const { data, error } = await supabase.functions.invoke("zettle-daily-finance-sync", {
         body: { date: financeDate },
       });
       if (error) throw error;
