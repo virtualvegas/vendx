@@ -1,4 +1,4 @@
-// Loyverse POS sync — polls receipts via API token every few minutes
+// PayPal Zettle POS sync — polls receipts via API token every few minutes
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
@@ -21,9 +21,9 @@ serve(async (req) => {
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
   );
 
-  const token = Deno.env.get("LOYVERSE_ACCESS_TOKEN");
+  const token = (Deno.env.get("PAYPAL_ZETTLE_ACCESS_TOKEN") || Deno.env.get("LOYVERSE_ACCESS_TOKEN"));
   if (!token) {
-    return new Response(JSON.stringify({ error: "LOYVERSE_ACCESS_TOKEN not set" }), {
+    return new Response(JSON.stringify({ error: "PAYPAL_ZETTLE_ACCESS_TOKEN not set" }), {
       status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
@@ -33,7 +33,8 @@ serve(async (req) => {
     const { data: cursorRow } = await supabase
       .from("vendx_integration_state")
       .select("value")
-      .eq("key", "loyverse_last_sync")
+      .in("key", ["zettle_last_sync", "loyverse_last_sync"])
+      .limit(1)
       .maybeSingle();
 
     const since = cursorRow?.value
@@ -61,7 +62,7 @@ serve(async (req) => {
       });
       if (!resp.ok) {
         const txt = await resp.text();
-        throw new Error(`Loyverse API ${resp.status}: ${txt}`);
+        throw new Error(`PayPal Zettle API ${resp.status}: ${txt}`);
       }
       const data = await resp.json();
       const receipts: any[] = data.receipts || [];
@@ -89,7 +90,7 @@ serve(async (req) => {
             .eq("external_id", String(externalId)).maybeSingle();
           if (existing) { results.push({ external_id: externalId, duplicate: true }); continue; }
 
-          // Customer lookup — Loyverse returns customer_id; fetch details if present
+          // Customer lookup — PayPal Zettle returns customer_id; fetch details if present
           let email: string | null = null;
           let phoneRaw: string | null = null;
           let customerName: string | null = null;
@@ -112,7 +113,7 @@ serve(async (req) => {
           const matchedBy: string | null = null;
 
 
-          // Totals — Loyverse fields
+          // Totals — PayPal Zettle fields
           const subtotal = Number(r.total_money ?? 0) - Number(r.total_tax ?? 0);
           const taxTotal = Number(r.total_tax ?? 0);
           const discountTotal = Number(r.total_discount ?? 0);
@@ -198,7 +199,7 @@ serve(async (req) => {
     // Advance cursor (bump 1ms to avoid re-fetching the same boundary record)
     const nextSince = new Date(new Date(newestDate).getTime() + 1).toISOString();
     await supabase.from("vendx_integration_state").upsert({
-      key: "loyverse_last_sync",
+      key: "zettle_last_sync",
       value: nextSince,
       updated_at: new Date().toISOString(),
     });
@@ -207,7 +208,7 @@ serve(async (req) => {
       ok: true, processed: results.length, pages, since: sinceParam, next_since: nextSince, results,
     }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   } catch (err: any) {
-    console.error("loyverse-sync error", err);
+    console.error("zettle-sync error", err);
     return new Response(JSON.stringify({ error: err?.message ?? "Sync error" }), {
       status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

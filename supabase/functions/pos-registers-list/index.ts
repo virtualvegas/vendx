@@ -43,7 +43,7 @@ serve(async (req) => {
     return json({ error: "Forbidden" }, 403);
   }
 
-  const token = Deno.env.get("LOYVERSE_ACCESS_TOKEN");
+  const token = (Deno.env.get("PAYPAL_ZETTLE_ACCESS_TOKEN") || Deno.env.get("LOYVERSE_ACCESS_TOKEN"));
   if (!token) return json({ error: "POS API key is not configured" }, 500);
 
   try {
