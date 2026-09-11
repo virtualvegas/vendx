@@ -28,6 +28,11 @@ interface PosStore {
   notes: string | null;
 }
 
+const SOURCES = [
+  { value: "loyverse", label: "PayPal Zettle (connected register feed)" },
+  { value: "paypal_zettle", label: "PayPal Zettle (direct)" },
+];
+
 const blank: Partial<PosStore> = {
   source: "loyverse",
   pos_store_id: "",
