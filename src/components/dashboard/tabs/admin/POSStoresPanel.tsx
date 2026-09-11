@@ -230,11 +230,16 @@ const POSStoresPanel = () => {
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <Label>Source</Label>
-                <Input value={editing.source || "loyverse"} onChange={(e) => setEditing({ ...editing, source: e.target.value })} />
+                <Select value={editing.source || "loyverse"} onValueChange={(v) => setEditing({ ...editing, source: v })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {SOURCES.map((s) => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-y-1.5">
                 <Label>POS Store ID *</Label>
-                <Input value={editing.pos_store_id || ""} onChange={(e) => setEditing({ ...editing, pos_store_id: e.target.value })} placeholder="e.g. Loyverse store_id" />
+                <Input value={editing.pos_store_id || ""} onChange={(e) => setEditing({ ...editing, pos_store_id: e.target.value })} placeholder="Register / store ID from PayPal Zettle" />
               </div>
             </div>
             <div className="space-y-1.5">
