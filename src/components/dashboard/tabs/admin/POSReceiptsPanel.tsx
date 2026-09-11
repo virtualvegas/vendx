@@ -144,8 +144,59 @@ const POSReceiptsPanel = () => {
     }
   };
 
+  const handleRematch = async () => {
+    setRematching(true);
+    try {
+      const { data, error } = await supabase.rpc("rematch_pos_receipts", { p_limit: 500 });
+      if (error) throw error;
+      const res = data as any;
+      toast.success(`Checked ${res?.scanned ?? 0} receipt(s) · matched ${res?.matched ?? 0} · ${res?.points ?? 0} points awarded`);
+      await loadReceipts();
+    } catch (e: any) {
+      toast.error(e?.message || "Re-match failed");
+    } finally {
+      setRematching(false);
+    }
+  };
+
+  const searchCustomers = async (q: string) => {
+    setLinkQuery(q);
+    if (q.trim().length < 2) { setLinkResults([]); return; }
+    const { data } = await supabase
+      .from("profiles")
+      .select("id, full_name, email, phone")
+      .or(`email.ilike.%${q}%,full_name.ilike.%${q}%,phone.ilike.%${q}%`)
+      .limit(8);
+    setLinkResults((data as any) || []);
+  };
+
+  const linkCustomer = async (userId: string) => {
+    if (!selected) return;
+    setLinking(true);
+    try {
+      const { data, error } = await supabase.rpc("match_and_award_pos_receipt", {
+        p_receipt_id: selected.id,
+        p_user_id: userId,
+        p_matched_by: "manual",
+      });
+      if (error) throw error;
+      const res = data as any;
+      toast.success(res?.points > 0 ? `Linked · +${res.points} points awarded` : "Linked to customer");
+      setLinkQuery("");
+      setLinkResults([]);
+      setSelected(null);
+      await loadReceipts();
+    } catch (e: any) {
+      toast.error(e?.message || "Link failed");
+    } finally {
+      setLinking(false);
+    }
+  };
+
   const openReceipt = async (r: POSReceipt) => {
     setSelected(r);
+    setLinkQuery("");
+    setLinkResults([]);
     const { data } = await supabase
       .from("vendx_pos_receipt_items")
       .select("*")
