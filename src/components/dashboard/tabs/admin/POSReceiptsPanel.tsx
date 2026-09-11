@@ -53,6 +53,11 @@ const POSReceiptsPanel = () => {
     return y.toISOString().slice(0, 10);
   });
 
+  const [rematching, setRematching] = useState(false);
+  const [linkQuery, setLinkQuery] = useState("");
+  const [linkResults, setLinkResults] = useState<Array<{ id: string; full_name: string | null; email: string | null; phone: string | null }>>([]);
+  const [linking, setLinking] = useState(false);
+
   const [configOpen, setConfigOpen] = useState(false);
   const [accounts, setAccounts] = useState<Array<{ id: string; name: string }>>([]);
   const [config, setConfig] = useState<any>(null);
