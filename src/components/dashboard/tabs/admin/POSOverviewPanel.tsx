@@ -115,6 +115,7 @@ const POSOverviewPanel = () => {
     { label: "Net Revenue", value: money(stats.net), icon: TrendingUp, sub: `${money(stats.tax)} tax collected` },
     { label: "Average Ticket", value: money(stats.avg), icon: Receipt, sub: `${money(stats.tips)} tips` },
     { label: "Matched Customers", value: `${stats.matched}/${stats.count}`, icon: Users, sub: `${stats.points} points awarded` },
+    { label: "Posted to Finance", value: money(postedTotal), icon: DollarSign, sub: "shown on the financial tabs" },
   ];
 
   return (
