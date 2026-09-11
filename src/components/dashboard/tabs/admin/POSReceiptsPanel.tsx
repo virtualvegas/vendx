@@ -264,7 +264,7 @@ const POSReceiptsPanel = () => {
       </CardHeader>
       <CardContent className="overflow-x-auto">
         {loading ? <p className="text-muted-foreground">Loading...</p> : filtered.length === 0 ? (
-          <p className="text-center py-8 text-muted-foreground">No POS receipts yet. Click "Sync Now" to pull from Loyverse.</p>
+          <p className="text-center py-8 text-muted-foreground">No POS receipts yet. Click "Sync Now" to pull from PayPal Zettle.</p>
         ) : (
           <Table>
             <TableHeader>
@@ -385,7 +385,7 @@ const POSReceiptsPanel = () => {
           {config && (
             <div className="space-y-3">
               <p className="text-xs text-muted-foreground">
-                Controls where Loyverse daily revenue is deposited and where COGS is paid from when posted to Finance.
+                Controls where PayPal Zettle daily revenue is deposited and where COGS is paid from when posted to Finance.
               </p>
               <div className="space-y-1.5">
                 <Label>Deposit Account (revenue)</Label>
