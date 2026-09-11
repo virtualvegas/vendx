@@ -139,23 +139,16 @@ serve(async (req) => {
           );
         }
 
-        // Award points (uses pos config + tier multiplier)
-        let pointsEarned = 0;
-        if (userId && totalAmount > 0) {
-          const { data: pts } = await supabase.rpc("award_pos_points", {
-            p_user_id: userId,
-            p_source: "pos",
-            p_amount: totalAmount,
-            p_receipt_id: receipt.id,
-            p_description: `Loyverse POS receipt ${r.receipt_number || externalId}`,
-          });
-          pointsEarned = Number(pts ?? 0);
-          if (pointsEarned > 0) {
-            await supabase.from("vendx_pos_receipts").update({ points_earned: pointsEarned }).eq("id", receipt.id);
-          }
-        }
+        // Match customer (email/phone) + award points — idempotent per receipt
+        const { data: matchRes } = await supabase.rpc("match_and_award_pos_receipt", {
+          p_receipt_id: receipt.id,
+        });
 
-        results.push({ external_id: externalId, matched: !!userId, points: pointsEarned });
+        results.push({
+          external_id: externalId,
+          matched: Boolean((matchRes as any)?.matched),
+          points: Number((matchRes as any)?.points ?? 0),
+        });
       } catch (e: any) {
         console.error("receipt error", e);
         results.push({ error: e?.message ?? String(e) });
