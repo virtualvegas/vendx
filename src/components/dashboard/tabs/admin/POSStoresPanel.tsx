@@ -370,11 +370,17 @@ const POSStoresPanel = () => {
       </Dialog>
 
       <Dialog open={remoteOpen} onOpenChange={setRemoteOpen}>
-        <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
           <DialogHeader><DialogTitle>Registers in your PayPal Zettle account</DialogTitle></DialogHeader>
           <p className="text-sm text-muted-foreground">
-            Pulled live from your POS account. Link each register you want tracked here.
+            Pulled live from PayPal Zettle. Each one shows its recent sales so you can tell them apart —
+            rename it to something you'll recognize, then link it.
           </p>
+          <Input
+            placeholder="Search registers by name, place, or ID"
+            value={remoteSearch}
+            onChange={(e) => setRemoteSearch(e.target.value)}
+          />
           {remoteLoading ? (
             <p className="text-muted-foreground py-6 text-center">Loading registers...</p>
           ) : remoteError ? (
@@ -386,27 +392,62 @@ const POSStoresPanel = () => {
             <p className="text-muted-foreground py-6 text-center">No registers found on the account.</p>
           ) : (
             <div className="space-y-2">
-              {remote.map((r) => (
-                <div key={`${r.kind}-${r.id}`} className="flex items-center justify-between gap-3 rounded-md border p-3">
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium truncate">{r.name}</span>
-                      <Badge variant="outline" className="text-xs">{r.kind === "device" ? "Register" : "Store"}</Badge>
-                      {!r.activated && <Badge variant="secondary" className="text-xs">Inactive</Badge>}
+              {remote
+                .filter((r) => {
+                  const q = remoteSearch.trim().toLowerCase();
+                  if (!q) return true;
+                  return [r.name, r.store_name, r.id, r.linked_name, ...(r.sample_items || [])]
+                    .filter(Boolean).join(" ").toLowerCase().includes(q);
+                })
+                .map((r) => (
+                <div key={`${r.kind}-${r.id}`} className="rounded-md border p-3 space-y-2">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0 space-y-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-medium truncate">{r.linked_name || r.name}</span>
+                        <Badge variant="outline" className="text-xs">{r.kind === "store" ? "Store" : "Register"}</Badge>
+                        {!r.activated && <Badge variant="secondary" className="text-xs">Inactive</Badge>}
+                        {r.receipts > 0 && (
+                          <Badge variant="secondary" className="text-xs">
+                            {r.receipts} sales · ${r.total.toFixed(2)}
+                          </Badge>
+                        )}
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        {[
+                          r.store_name,
+                          r.address,
+                          r.last_sale_at ? `Last sale ${new Date(r.last_sale_at).toLocaleString()}` : "No sales received yet",
+                          r.last_receipt_number ? `Receipt #${r.last_receipt_number}` : null,
+                        ].filter(Boolean).join(" · ")}
+                      </div>
+                      {r.sample_items?.length > 0 && (
+                        <div className="text-xs text-muted-foreground truncate">
+                          Recently sold: {r.sample_items.join(", ")}
+                        </div>
+                      )}
+                      <div className="text-[11px] text-muted-foreground/70 font-mono truncate">ID {r.id}</div>
                     </div>
-                    <div className="text-xs text-muted-foreground truncate">
-                      {[r.store_name, r.address, r.receipts ? `${r.receipts} sales here` : null].filter(Boolean).join(" · ") || "No sales yet"}
-                    </div>
+                    {r.linked ? (
+                      <Badge className="shrink-0 gap-1"><CheckCircle2 className="w-3 h-3" /> Linked</Badge>
+                    ) : null}
                   </div>
-                  {r.linked ? (
-                    <Badge className="shrink-0 gap-1"><CheckCircle2 className="w-3 h-3" /> Linked</Badge>
-                  ) : (
-                    <Button size="sm" className="shrink-0" onClick={() => linkRemote(r)}>Link</Button>
-                  )}
+                  <div className="flex items-center gap-2">
+                    <Input
+                      className="h-8"
+                      value={remoteNames[r.id] ?? r.name}
+                      onChange={(e) => setRemoteNames({ ...remoteNames, [r.id]: e.target.value })}
+                      placeholder="Name this register (e.g. Front Counter — Main Store)"
+                    />
+                    <Button size="sm" className="shrink-0" onClick={() => linkRemote(r)}>
+                      {r.linked ? "Update" : "Link"}
+                    </Button>
+                  </div>
                 </div>
               ))}
             </div>
           )}
+
           <DialogFooter>
             <Button variant="outline" onClick={() => setRemoteOpen(false)}>Done</Button>
           </DialogFooter>
