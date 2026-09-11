@@ -109,7 +109,7 @@ const POSStoresPanel = () => {
     setSaving(true);
     try {
       const payload: any = {
-        source: editing.source || "loyverse",
+        source: editing.source || "paypal_zettle",
         pos_store_id: editing.pos_store_id,
         display_name: editing.display_name,
         location_id: editing.location_id || null,
@@ -128,11 +128,10 @@ const POSStoresPanel = () => {
         : await supabase.from("vendx_pos_stores").upsert(payload, { onConflict: "source,pos_store_id" });
       if (error) throw error;
 
-      // Backfill existing receipts that share this pos_store_id
+      // Backfill existing receipts that share this register ID (any feed source)
       await supabase
         .from("vendx_pos_receipts")
         .update({ location_id: payload.location_id, stand_id: payload.stand_id })
-        .eq("source", payload.source)
         .eq("pos_store_id", payload.pos_store_id);
 
       toast.success("POS store saved");
@@ -230,7 +229,7 @@ const POSStoresPanel = () => {
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <Label>Source</Label>
-                <Select value={editing.source || "loyverse"} onValueChange={(v) => setEditing({ ...editing, source: v })}>
+                <Select value={editing.source || "paypal_zettle"} onValueChange={(v) => setEditing({ ...editing, source: v })}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     {SOURCES.map((s) => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}
