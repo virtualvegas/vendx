@@ -143,7 +143,7 @@ serve(async (req) => {
               user_id: userId,
               external_id: String(externalId),
               receipt_number: r.receipt_number || null,
-              source: "loyverse",
+              source: "paypal_zettle",
               store_name: r.store_id || null,
               pos_store_id: posStoreId,
               location_id: locationId,
