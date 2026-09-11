@@ -56,7 +56,7 @@ const POSFinancePanel = () => {
 
   const load = async () => {
     const [{ data: c }, { data: a }, { data: inc }, { data: exp }] = await Promise.all([
-      supabase.from("vendx_pos_revenue_config").select("*").in("source", ["paypal_zettle", "loyverse"]).maybeSingle(),
+      supabase.from("vendx_pos_revenue_config").select("*").eq("source", "paypal_zettle").maybeSingle(),
       supabase.from("finance_accounts").select("id,name").eq("is_active", true).order("name"),
       supabase
         .from("finance_income")

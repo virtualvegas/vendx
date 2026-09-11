@@ -1,216 +1,146 @@
-// PayPal Zettle POS sync — polls receipts via API token every few minutes
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { fetchZettlePurchases, minorUnits, purchaseId, purchaseRegisterId, type ZettlePurchase } from "../_shared/zettle.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
+const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), {
+  status,
+  headers: { ...corsHeaders, "Content-Type": "application/json" },
+});
 
-function normalizePhone(p?: string | null) {
-  if (!p) return null;
-  const digits = p.replace(/\D/g, "");
-  return digits.length >= 7 ? digits.slice(-10) : null;
+async function savePurchase(supabase: any, purchase: ZettlePurchase) {
+  const externalId = purchaseId(purchase);
+  if (!externalId) return { skipped: "missing purchase ID" };
+
+  const { data: existing } = await supabase.from("vendx_pos_receipts")
+    .select("id").eq("external_id", externalId).maybeSingle();
+  if (existing) return { external_id: externalId, duplicate: true };
+
+  const products = Array.isArray(purchase.products) ? purchase.products : [];
+  const payments = Array.isArray(purchase.payments) ? purchase.payments : [];
+  const totalAmount = minorUnits(purchase.amount);
+  const taxTotal = minorUnits(purchase.vatAmount);
+  const discountTotal = products.reduce((sum, item: any) => sum + minorUnits(item.discountAmount), 0);
+  const tipTotal = payments.reduce((sum, payment: any) => sum + minorUnits(payment.tipAmount), 0);
+  const posStoreId = purchaseRegisterId(purchase);
+
+  let locationId: string | null = null;
+  let standId: string | null = null;
+  let storeName: string | null = null;
+  if (posStoreId) {
+    const { data: mapping } = await supabase.from("vendx_pos_stores")
+      .select("display_name, location_id, stand_id")
+      .eq("source", "paypal_zettle")
+      .eq("pos_store_id", posStoreId)
+      .eq("is_active", true)
+      .maybeSingle();
+    locationId = mapping?.location_id || null;
+    standId = mapping?.stand_id || null;
+    storeName = mapping?.display_name || null;
+  }
+
+  const paymentMethod = payments.length
+    ? String((payments[0] as any).type || (payments[0] as any).paymentType || "Zettle")
+    : "Zettle";
+  const receiptNumber = purchase.purchaseNumber ?? purchase.globalPurchaseNumber ?? null;
+  const { data: receipt, error } = await supabase.from("vendx_pos_receipts").insert({
+    user_id: null,
+    external_id: externalId,
+    receipt_number: receiptNumber == null ? null : String(receiptNumber),
+    source: "paypal_zettle",
+    store_name: storeName,
+    pos_store_id: posStoreId,
+    location_id: locationId,
+    stand_id: standId,
+    pos_customer_id: null,
+    pos_customer_email: null,
+    pos_customer_phone: null,
+    pos_customer_name: null,
+    matched_by: null,
+    subtotal: totalAmount - taxTotal,
+    tax_total: taxTotal,
+    discount_total: discountTotal,
+    tip_total: tipTotal,
+    total_amount: totalAmount,
+    currency: typeof purchase.currency === "string" ? purchase.currency : "USD",
+    payment_method: paymentMethod,
+    receipt_date: typeof purchase.timestamp === "string" ? purchase.timestamp : new Date().toISOString(),
+    raw_payload: purchase,
+  }).select("id").single();
+  if (error) throw error;
+
+  if (products.length) {
+    const { error: itemError } = await supabase.from("vendx_pos_receipt_items").insert(
+      products.map((item: any) => {
+        const quantity = Number(item.quantity ?? 1);
+        const lineTotal = minorUnits(item.amount ?? item.grossValue ?? item.totalAmount);
+        return {
+          receipt_id: receipt.id,
+          item_name: item.name || item.productName || "Zettle item",
+          sku: item.sku || item.variantUuid || null,
+          quantity,
+          unit_price: quantity ? lineTotal / quantity : lineTotal,
+          line_total: lineTotal,
+        };
+      }),
+    );
+    if (itemError) throw itemError;
+  }
+
+  const { data: matchResult } = await supabase.rpc("match_and_award_pos_receipt", { p_receipt_id: receipt.id });
+  return {
+    external_id: externalId,
+    matched: Boolean(matchResult?.matched),
+    points: Number(matchResult?.points ?? 0),
+  };
 }
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
-
-  const supabase = createClient(
-    Deno.env.get("SUPABASE_URL")!,
-    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-  );
-
-  const token = (Deno.env.get("PAYPAL_ZETTLE_ACCESS_TOKEN") || Deno.env.get("LOYVERSE_ACCESS_TOKEN"));
-  if (!token) {
-    return new Response(JSON.stringify({ error: "PAYPAL_ZETTLE_ACCESS_TOKEN not set" }), {
-      status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
-  }
+  const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 
   try {
-    // Load last sync cursor
-    const { data: cursorRow } = await supabase
-      .from("vendx_integration_state")
-      .select("value")
-      .in("key", ["zettle_last_sync", "loyverse_last_sync"])
-      .limit(1)
-      .maybeSingle();
-
-    const since = cursorRow?.value
-      || new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(); // default: last 24h on first run
-
-    // Allow manual override via body { since: ISO, limit: number }
-    let bodyOverride: any = {};
-    try { bodyOverride = await req.json(); } catch { /* noop */ }
-    const sinceParam = bodyOverride.since || since;
-    const limit = Math.min(Number(bodyOverride.limit ?? 250), 250);
-
-    const results: any[] = [];
-    let cursor: string | undefined = undefined;
-    let newestDate = sinceParam;
+    const { data: state } = await supabase.from("vendx_integration_state")
+      .select("value").eq("key", "zettle_last_sync").maybeSingle();
+    let body: Record<string, unknown> = {};
+    try { body = await req.json(); } catch { /* no body */ }
+    const startDate = typeof body.since === "string"
+      ? body.since
+      : state?.value || new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+    const endDate = typeof body.until === "string" ? body.until : new Date().toISOString();
+    const limit = Math.min(Math.max(Number(body.limit ?? 100), 1), 1000);
+    const results: unknown[] = [];
+    let lastPurchaseHash: string | undefined;
     let pages = 0;
+    let newestDate = startDate;
 
     do {
-      const url = new URL("https://api.loyverse.com/v1.0/receipts");
-      url.searchParams.set("created_at_min", sinceParam);
-      url.searchParams.set("limit", String(limit));
-      if (cursor) url.searchParams.set("cursor", cursor);
-
-      const resp = await fetch(url.toString(), {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (!resp.ok) {
-        const txt = await resp.text();
-        throw new Error(`PayPal Zettle API ${resp.status}: ${txt}`);
-      }
-      const data = await resp.json();
-      const receipts: any[] = data.receipts || [];
-      cursor = data.cursor;
-      pages++;
-
-      for (const r of receipts) {
+      const page = await fetchZettlePurchases({ startDate, endDate, limit, lastPurchaseHash });
+      pages += 1;
+      for (const purchase of page.purchases) {
         try {
-          const externalId = r.receipt_number || r.id;
-          if (!externalId) { results.push({ skipped: "no id" }); continue; }
-
-          // Track newest receipt timestamp for cursor advance
-          const rDate = r.created_at || r.receipt_date;
-          if (rDate && rDate > newestDate) newestDate = rDate;
-
-          // Skip refunds
-          if (r.receipt_type && String(r.receipt_type).toUpperCase() !== "SALE") {
-            results.push({ external_id: externalId, skipped: r.receipt_type });
-            continue;
-          }
-
-          // Idempotency
-          const { data: existing } = await supabase
-            .from("vendx_pos_receipts").select("id")
-            .eq("external_id", String(externalId)).maybeSingle();
-          if (existing) { results.push({ external_id: externalId, duplicate: true }); continue; }
-
-          // Customer lookup — PayPal Zettle returns customer_id; fetch details if present
-          let email: string | null = null;
-          let phoneRaw: string | null = null;
-          let customerName: string | null = null;
-          if (r.customer_id) {
-            try {
-              const cResp = await fetch(`https://api.loyverse.com/v1.0/customers/${r.customer_id}`, {
-                headers: { Authorization: `Bearer ${token}` },
-              });
-              if (cResp.ok) {
-                const c = await cResp.json();
-                email = c.email || null;
-                phoneRaw = c.phone_number || null;
-                customerName = c.name || null;
-              }
-            } catch { /* ignore */ }
-          }
-
-          // Customer matching happens server-side after insert (email + phone, idempotent points)
-          const userId: string | null = null;
-          const matchedBy: string | null = null;
-
-
-          // Totals — PayPal Zettle fields
-          const subtotal = Number(r.total_money ?? 0) - Number(r.total_tax ?? 0);
-          const taxTotal = Number(r.total_tax ?? 0);
-          const discountTotal = Number(r.total_discount ?? 0);
-          const tipTotal = Number(r.tip ?? 0);
-          const totalAmount = Number(r.total_money ?? (subtotal + taxTotal + tipTotal - discountTotal));
-          const paymentMethod = Array.isArray(r.payments) && r.payments[0]
-            ? (r.payments[0].name || r.payments[0].type || null) : null;
-
-          // Resolve POS store mapping → location / stand
-          const posStoreId: string | null = r.store_id || null;
-          let locationId: string | null = null;
-          let standId: string | null = null;
-          if (posStoreId) {
-            // Register mapping is matched on register/store ID regardless of feed source
-            const { data: storeMap } = await supabase
-              .from("vendx_pos_stores")
-              .select("location_id, stand_id")
-              .eq("pos_store_id", posStoreId)
-              .eq("is_active", true)
-              .limit(1)
-              .maybeSingle();
-            locationId = storeMap?.location_id || null;
-            standId = storeMap?.stand_id || null;
-          }
-
-          const { data: receipt, error: insErr } = await supabase
-            .from("vendx_pos_receipts").insert({
-              user_id: userId,
-              external_id: String(externalId),
-              receipt_number: r.receipt_number || null,
-              source: "paypal_zettle",
-              store_name: r.store_id || null,
-              pos_store_id: posStoreId,
-              location_id: locationId,
-              stand_id: standId,
-              pos_customer_id: r.customer_id || null,
-              pos_customer_email: email,
-              pos_customer_phone: phoneRaw,
-              pos_customer_name: customerName,
-              matched_by: matchedBy,
-              subtotal, tax_total: taxTotal, discount_total: discountTotal, tip_total: tipTotal,
-              total_amount: totalAmount,
-              currency: r.currency || "USD",
-              payment_method: paymentMethod,
-              receipt_date: r.receipt_date || r.created_at || new Date().toISOString(),
-              raw_payload: r,
-            }).select().single();
-          if (insErr) throw insErr;
-
-          // Line items
-          const items = Array.isArray(r.line_items) ? r.line_items : [];
-          if (items.length) {
-            await supabase.from("vendx_pos_receipt_items").insert(
-              items.map((it: any) => ({
-                receipt_id: receipt.id,
-                item_name: it.item_name || it.name || "Item",
-                sku: it.sku || it.variant_sku || null,
-                quantity: Number(it.quantity ?? 1),
-                unit_price: Number(it.price ?? 0),
-                line_total: Number(it.total_money ?? (Number(it.price ?? 0) * Number(it.quantity ?? 1))),
-              }))
-            );
-          }
-
-          // Match customer (email/phone) + award points — idempotent per receipt
-          const { data: matchRes } = await supabase.rpc("match_and_award_pos_receipt", {
-            p_receipt_id: receipt.id,
-          });
-          const pointsEarned = Number((matchRes as any)?.points ?? 0);
-
-          results.push({
-            external_id: externalId,
-            matched: Boolean((matchRes as any)?.matched),
-            points: pointsEarned,
-          });
-        } catch (e: any) {
-          console.error("receipt error", e);
-          results.push({ error: e?.message ?? String(e) });
+          results.push(await savePurchase(supabase, purchase));
+          if (typeof purchase.timestamp === "string" && purchase.timestamp > newestDate) newestDate = purchase.timestamp;
+        } catch (error: any) {
+          console.error("Zettle purchase import failed", error);
+          results.push({ external_id: purchaseId(purchase), error: error?.message || "Import failed" });
         }
       }
-    } while (cursor && pages < 10); // safety cap
+      lastPurchaseHash = page.lastPurchaseHash;
+      if (!page.purchases.length) break;
+    } while (lastPurchaseHash && pages < 10);
 
-    // Advance cursor (bump 1ms to avoid re-fetching the same boundary record)
-    const nextSince = new Date(new Date(newestDate).getTime() + 1).toISOString();
     await supabase.from("vendx_integration_state").upsert({
       key: "zettle_last_sync",
-      value: nextSince,
+      value: newestDate,
       updated_at: new Date().toISOString(),
     });
-
-    return new Response(JSON.stringify({
-      ok: true, processed: results.length, pages, since: sinceParam, next_since: nextSince, results,
-    }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-  } catch (err: any) {
-    console.error("zettle-sync error", err);
-    return new Response(JSON.stringify({ error: err?.message ?? "Sync error" }), {
-      status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return json({ ok: true, processed: results.length, pages, since: startDate, next_since: newestDate, results });
+  } catch (error: any) {
+    console.error("zettle-sync error", error);
+    return json({ error: error?.message || "Zettle sync failed" }, 500);
   }
 });

@@ -3,6 +3,7 @@
 // otherwise falls back to the connected register feed API token.
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { fetchZettlePurchases, purchaseRegisterId, purchaseRegisterName } from "../_shared/zettle.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -31,24 +32,6 @@ type Register = {
   last_receipt_number: string | null;
   sample_items: string[];
 };
-
-async function zettleToken(clientId: string, apiKey: string) {
-  const body = new URLSearchParams({
-    grant_type: "urn:ietf:params:oauth:grant-type:jwt-bearer",
-    client_id: clientId,
-    assertion: apiKey,
-  });
-  const resp = await fetch("https://oauth.zettle.com/token", {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body,
-  });
-  if (!resp.ok) {
-    throw new Error(`Zettle sign-in failed (${resp.status}): ${(await resp.text()).slice(0, 200)}`);
-  }
-  const j = await resp.json();
-  return j.access_token as string;
-}
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -152,131 +135,53 @@ serve(async (req) => {
     };
   };
 
-  const zettleClientId = Deno.env.get("PAYPAL_ZETTLE_CLIENT_ID");
-  const zettleApiKey = Deno.env.get("PAYPAL_ZETTLE_API_KEY");
-  const feedToken = Deno.env.get("PAYPAL_ZETTLE_ACCESS_TOKEN") || Deno.env.get("LOYVERSE_ACCESS_TOKEN");
-
   try {
-    let registers: Register[] = [];
-    let provider = "";
-
-    if (zettleClientId && zettleApiKey) {
-      // ---- native PayPal Zettle ----
-      provider = "zettle";
-      const token = await zettleToken(zettleClientId, zettleApiKey);
-      const headers = { Authorization: `Bearer ${token}` };
-
-      let orgName: string | null = null;
-      try {
-        const meResp = await fetch("https://oauth.zettle.com/users/me", { headers });
-        if (meResp.ok) {
-          const me = await meResp.json();
-          orgName = me?.organizationName || me?.name || null;
-        }
-      } catch { /* ignore */ }
-
-      // Zettle has no register directory endpoint; registers are the till users/devices
-      // that appear on purchases, so derive them from recent purchases.
-      const purchasesResp = await fetch(
-        "https://purchase.izettle.com/purchases/v2?limit=500&descending=true",
-        { headers }
-      );
-      if (!purchasesResp.ok) {
-        throw new Error(
-          `Zettle API error (${purchasesResp.status}): ${(await purchasesResp.text()).slice(0, 200)}`
-        );
+    const page = await fetchZettlePurchases({
+      startDate: new Date(Date.now() - 90 * 86400000).toISOString(),
+      endDate: new Date().toISOString(),
+      limit: 1000,
+    });
+    const discovered = new Map<string, { count: number; last: string | null; name: string | null }>();
+    for (const purchase of page.purchases) {
+      const id = purchaseRegisterId(purchase);
+      if (!id) continue;
+      const current = discovered.get(id) || { count: 0, last: null, name: purchaseRegisterName(purchase) };
+      current.count += 1;
+      current.name = current.name || purchaseRegisterName(purchase);
+      if (typeof purchase.timestamp === "string" && (!current.last || purchase.timestamp > current.last)) {
+        current.last = purchase.timestamp;
       }
-      const pj = await purchasesResp.json();
-      const purchases: any[] = pj.purchases || [];
-
-      const byRegister = new Map<string, { name: string; count: number; total: number; last: string | null }>();
-      for (const p of purchases) {
-        const id = String(p.userId ?? p.userDisplayName ?? "unknown");
-        const name = p.userDisplayName || `Register ${id}`;
-        const cur = byRegister.get(id) || { name, count: 0, total: 0, last: null };
-        cur.count += 1;
-        cur.total += Number(p.amount || 0) / 100;
-        const t = p.timestamp || null;
-        if (t && (!cur.last || t > cur.last)) cur.last = t;
-        byRegister.set(id, cur);
-      }
-
-      registers = Array.from(byRegister.entries()).map(([id, v]) =>
-        decorate({
-          kind: "register",
-          id,
-          name: v.name,
-          store_id: null,
-          store_name: orgName,
-          address: v.last ? `Zettle activity: ${v.count} sales, last ${new Date(v.last).toLocaleDateString()}` : null,
-          activated: true,
-        })
-      );
-    } else if (feedToken) {
-      // ---- connected register feed (Zettle sales arriving through the linked POS account) ----
-      provider = "connected_feed";
-      const headers = { Authorization: `Bearer ${feedToken}` };
-      const [storesResp, devicesResp] = await Promise.all([
-        fetch("https://api.loyverse.com/v1.0/stores?limit=250", { headers }),
-        fetch("https://api.loyverse.com/v1.0/pos_devices?limit=250", { headers }),
-      ]);
-      if (!storesResp.ok) {
-        const t = await storesResp.text();
-        return json({ error: `POS API error (${storesResp.status}): ${t.slice(0, 300)}` }, 502);
-      }
-      const storesJson = await storesResp.json();
-      const devicesJson = devicesResp.ok ? await devicesResp.json() : { pos_devices: [] };
-      const stores: any[] = storesJson.stores || [];
-      const devices: any[] = devicesJson.pos_devices || [];
-      const storeName = (id: string) => stores.find((s) => s.id === id)?.name || null;
-
-      registers = [
-        ...stores.map((s) =>
-          decorate({
-            kind: "store",
-            id: String(s.id),
-            name: s.name || `Store ${String(s.id).slice(0, 8)}`,
-            store_id: String(s.id),
-            store_name: s.name || null,
-            address: s.address || null,
-            activated: true,
-          })
-        ),
-        ...devices.map((d) =>
-          decorate({
-            kind: "device",
-            id: String(d.id),
-            name: d.name || `Register ${String(d.id).slice(0, 8)}`,
-            store_id: d.store_id ? String(d.store_id) : null,
-            store_name: d.store_id ? storeName(String(d.store_id)) : null,
-            address: null,
-            activated: d.activated !== false,
-          })
-        ),
-      ];
-    } else {
-      return json({ error: "No PayPal Zettle credentials are configured." }, 500);
+      discovered.set(id, current);
     }
 
-    // Registers that only exist in our sales history (never returned by the API)
-    const known = new Set(registers.map((r) => r.id));
-    stats.forEach((s, id) => {
+    const registers: Register[] = Array.from(discovered.entries()).map(([id, activity]) =>
+      decorate({
+        kind: "register",
+        id,
+        name: linkedMap.get(id) || activity.name || `Zettle register ${id.slice(0, 8)}`,
+        store_id: null,
+        store_name: null,
+        address: activity.last ? `Last Zettle sale ${new Date(activity.last).toLocaleDateString()}` : null,
+        activated: true,
+      })
+    );
+
+    const known = new Set(registers.map((register) => register.id));
+    stats.forEach((stat, id) => {
       if (known.has(id)) return;
-      registers.push(
-        decorate({
-          kind: "register",
-          id,
-          name: linkedMap.get(id) || s.store_name || `Register ${id.slice(0, 8)}`,
-          store_id: null,
-          store_name: s.store_name,
-          address: null,
-          activated: true,
-        })
-      );
+      registers.push(decorate({
+        kind: "register",
+        id,
+        name: linkedMap.get(id) || stat.store_name || `Zettle source ${id}`,
+        store_id: null,
+        store_name: stat.store_name,
+        address: null,
+        activated: true,
+      }));
     });
 
     registers.sort((a, b) => b.receipts - a.receipts || a.name.localeCompare(b.name));
-    return json({ provider, registers });
+    return json({ provider: "zettle", registers });
   } catch (e: any) {
     return json({ error: e?.message || "Failed to load registers" }, 500);
   }
