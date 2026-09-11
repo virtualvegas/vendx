@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Store, Plus, RefreshCw, Pencil, Trash2, Link as LinkIcon } from "lucide-react";
+import { Store, Plus, RefreshCw, Pencil, Trash2, Link as LinkIcon, Cloud, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 
 interface PosStore {
@@ -54,6 +54,58 @@ const POSStoresPanel = () => {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Partial<PosStore>>(blank);
   const [saving, setSaving] = useState(false);
+
+  // Live registers pulled straight from the POS account with the API key
+  const [remoteOpen, setRemoteOpen] = useState(false);
+  const [remoteLoading, setRemoteLoading] = useState(false);
+  const [remoteError, setRemoteError] = useState<string | null>(null);
+  const [remote, setRemote] = useState<Array<{
+    kind: string; id: string; name: string; store_name: string | null;
+    address: string | null; activated: boolean; linked: boolean; receipts: number;
+  }>>([]);
+
+  const fetchRemote = async () => {
+    setRemoteLoading(true);
+    setRemoteError(null);
+    try {
+      const { data, error } = await supabase.functions.invoke("pos-registers-list", { body: {} });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+      setRemote(((data as any)?.registers || []).map((r: any) => ({
+        ...r,
+        linked: r.linked || stores.some((s) => s.pos_store_id === r.id),
+      })));
+    } catch (e: any) {
+      setRemoteError(e?.message || "Could not reach the POS account");
+    } finally {
+      setRemoteLoading(false);
+    }
+  };
+
+  const openRemote = async () => {
+    setRemoteOpen(true);
+    await fetchRemote();
+  };
+
+  const linkRemote = async (r: { id: string; name: string; store_name: string | null }) => {
+    try {
+      const { error } = await supabase.from("vendx_pos_stores").upsert(
+        {
+          source: "paypal_zettle",
+          pos_store_id: r.id,
+          display_name: r.name || r.store_name || `Register ${r.id.slice(0, 8)}`,
+          is_active: true,
+        },
+        { onConflict: "source,pos_store_id" }
+      );
+      if (error) throw error;
+      toast.success(`Linked ${r.name}`);
+      setRemote((prev) => prev.map((x) => (x.id === r.id ? { ...x, linked: true } : x)));
+      await load();
+    } catch (e: any) {
+      toast.error(e?.message || "Link failed");
+    }
+  };
 
   const load = async () => {
     setLoading(true);
