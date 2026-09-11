@@ -5,7 +5,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Receipt, Search, RefreshCw, DollarSign, Settings } from "lucide-react";
+import { Receipt, Search, RefreshCw, DollarSign, Settings, UserCheck } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -53,6 +53,11 @@ const POSReceiptsPanel = () => {
     return y.toISOString().slice(0, 10);
   });
 
+  const [rematching, setRematching] = useState(false);
+  const [linkQuery, setLinkQuery] = useState("");
+  const [linkResults, setLinkResults] = useState<Array<{ id: string; full_name: string | null; email: string | null; phone: string | null }>>([]);
+  const [linking, setLinking] = useState(false);
+
   const [configOpen, setConfigOpen] = useState(false);
   const [accounts, setAccounts] = useState<Array<{ id: string; name: string }>>([]);
   const [config, setConfig] = useState<any>(null);
@@ -71,18 +76,18 @@ const POSReceiptsPanel = () => {
   const loadConfig = async () => {
     const [{ data: accs }, { data: cfg }] = await Promise.all([
       supabase.from("finance_accounts").select("id,name").eq("is_active", true).order("name"),
-      supabase.from("vendx_pos_revenue_config").select("*").eq("source", "loyverse").maybeSingle(),
+      supabase.from("vendx_pos_revenue_config").select("*").eq("source", "paypal_zettle").maybeSingle(),
     ]);
     setAccounts((accs as any) || []);
-    setConfig(cfg || { source: "loyverse", display_name: "Loyverse POS", revenue_category: "pos_revenue", expense_category: "cogs", payment_method: "pos", cogs_payment_method: "internal" });
+    setConfig(cfg || { source: "paypal_zettle", display_name: "PayPal Zettle POS", revenue_category: "pos_revenue", expense_category: "cogs", payment_method: "pos", cogs_payment_method: "internal" });
   };
 
   const saveConfig = async () => {
     setSavingConfig(true);
     try {
       const payload = {
-        source: "loyverse",
-        display_name: config.display_name || "Loyverse POS",
+        source: "paypal_zettle",
+        display_name: config.display_name || "PayPal Zettle POS",
         deposit_account_id: config.deposit_account_id || null,
         expense_account_id: config.expense_account_id || null,
         revenue_category: config.revenue_category || "pos_revenue",
@@ -144,8 +149,59 @@ const POSReceiptsPanel = () => {
     }
   };
 
+  const handleRematch = async () => {
+    setRematching(true);
+    try {
+      const { data, error } = await supabase.rpc("rematch_pos_receipts", { p_limit: 500 });
+      if (error) throw error;
+      const res = data as any;
+      toast.success(`Checked ${res?.scanned ?? 0} receipt(s) · matched ${res?.matched ?? 0} · ${res?.points ?? 0} points awarded`);
+      await loadReceipts();
+    } catch (e: any) {
+      toast.error(e?.message || "Re-match failed");
+    } finally {
+      setRematching(false);
+    }
+  };
+
+  const searchCustomers = async (q: string) => {
+    setLinkQuery(q);
+    if (q.trim().length < 2) { setLinkResults([]); return; }
+    const { data } = await supabase
+      .from("profiles")
+      .select("id, full_name, email, phone")
+      .or(`email.ilike.%${q}%,full_name.ilike.%${q}%,phone.ilike.%${q}%`)
+      .limit(8);
+    setLinkResults((data as any) || []);
+  };
+
+  const linkCustomer = async (userId: string) => {
+    if (!selected) return;
+    setLinking(true);
+    try {
+      const { data, error } = await supabase.rpc("match_and_award_pos_receipt", {
+        p_receipt_id: selected.id,
+        p_user_id: userId,
+        p_matched_by: "manual",
+      });
+      if (error) throw error;
+      const res = data as any;
+      toast.success(res?.points > 0 ? `Linked · +${res.points} points awarded` : "Linked to customer");
+      setLinkQuery("");
+      setLinkResults([]);
+      setSelected(null);
+      await loadReceipts();
+    } catch (e: any) {
+      toast.error(e?.message || "Link failed");
+    } finally {
+      setLinking(false);
+    }
+  };
+
   const openReceipt = async (r: POSReceipt) => {
     setSelected(r);
+    setLinkQuery("");
+    setLinkResults([]);
     const { data } = await supabase
       .from("vendx_pos_receipt_items")
       .select("*")
@@ -166,16 +222,21 @@ const POSReceiptsPanel = () => {
         <div className="flex items-start justify-between gap-3 flex-wrap">
           <div>
             <CardTitle className="flex items-center gap-2">
-              <Receipt className="w-5 h-5" /> POS Receipts (Loyverse)
+              <Receipt className="w-5 h-5" /> POS Receipts (PayPal Zettle)
             </CardTitle>
             <p className="text-sm text-muted-foreground mt-1">
               Auto-syncs every 5 min. Daily revenue + COGS posts to Finance at 2am UTC (or trigger manually for any date).
+              Receipts match to customers by email or phone — open a receipt to link one manually.
             </p>
           </div>
           <div className="flex flex-col gap-2 items-end">
             <div className="flex items-center gap-2">
               <Button onClick={() => setConfigOpen(true)} size="sm" variant="outline">
                 <Settings className="w-4 h-4 mr-2" /> Configure
+              </Button>
+              <Button onClick={handleRematch} disabled={rematching} size="sm" variant="outline">
+                <UserCheck className={`w-4 h-4 mr-2 ${rematching ? "animate-pulse" : ""}`} />
+                {rematching ? "Matching..." : "Re-match Customers"}
               </Button>
               <Button onClick={handleSyncNow} disabled={syncing} size="sm">
                 <RefreshCw className={`w-4 h-4 mr-2 ${syncing ? "animate-spin" : ""}`} />
@@ -203,7 +264,7 @@ const POSReceiptsPanel = () => {
       </CardHeader>
       <CardContent className="overflow-x-auto">
         {loading ? <p className="text-muted-foreground">Loading...</p> : filtered.length === 0 ? (
-          <p className="text-center py-8 text-muted-foreground">No POS receipts yet. Click "Sync Now" to pull from Loyverse.</p>
+          <p className="text-center py-8 text-muted-foreground">No POS receipts yet. Click "Sync Now" to pull from PayPal Zettle.</p>
         ) : (
           <Table>
             <TableHeader>
@@ -276,10 +337,45 @@ const POSReceiptsPanel = () => {
                   <div className="flex justify-between text-primary font-medium"><span>Points earned</span><span>+{selected.points_earned} pts</span></div>
                 )}
               </div>
+
+              <div className="border-t pt-3 space-y-2">
+                <Label className="flex items-center gap-2">
+                  <UserCheck className="w-4 h-4" />
+                  {selected.user_id ? "Linked customer" : "Link this sale to a customer"}
+                </Label>
+                {selected.user_id ? (
+                  <p className="text-sm text-muted-foreground">
+                    Matched by {selected.matched_by || "manual"}. Points are only awarded once per receipt.
+                  </p>
+                ) : (
+                  <>
+                    <Input
+                      placeholder="Search by name, email or phone..."
+                      value={linkQuery}
+                      onChange={(e) => searchCustomers(e.target.value)}
+                    />
+                    <div className="space-y-1">
+                      {linkResults.map((p) => (
+                        <div key={p.id} className="flex items-center justify-between gap-3 rounded-md border p-2">
+                          <div className="text-sm min-w-0">
+                            <div className="truncate">{p.full_name || "Unnamed"}</div>
+                            <div className="text-xs text-muted-foreground truncate">{p.email || p.phone || "—"}</div>
+                          </div>
+                          <Button size="sm" disabled={linking} onClick={() => linkCustomer(p.id)}>Link</Button>
+                        </div>
+                      ))}
+                      {linkQuery.length >= 2 && linkResults.length === 0 && (
+                        <p className="text-xs text-muted-foreground">No matching customers.</p>
+                      )}
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
           )}
         </DialogContent>
       </Dialog>
+
 
       <Dialog open={configOpen} onOpenChange={setConfigOpen}>
         <DialogContent className="max-w-lg">
@@ -289,7 +385,7 @@ const POSReceiptsPanel = () => {
           {config && (
             <div className="space-y-3">
               <p className="text-xs text-muted-foreground">
-                Controls where Loyverse daily revenue is deposited and where COGS is paid from when posted to Finance.
+                Controls where PayPal Zettle daily revenue is deposited and where COGS is paid from when posted to Finance.
               </p>
               <div className="space-y-1.5">
                 <Label>Deposit Account (revenue)</Label>

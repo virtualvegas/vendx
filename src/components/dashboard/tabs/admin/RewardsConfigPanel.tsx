@@ -79,7 +79,7 @@ const RewardsConfigPanel = () => {
           <Button variant="outline" size="sm" onClick={load}><RotateCcw className="w-4 h-4 mr-1" />Refresh</Button>
         </CardTitle>
         <p className="text-sm text-muted-foreground">
-          Configure how many points customers earn per dollar by source, with multipliers per tier. Loyverse POS uses the "pos" row.
+          Configure how many points customers earn per dollar by source, with multipliers per tier. PayPal Zettle POS uses the "pos" row.
         </p>
       </CardHeader>
       <CardContent className="overflow-x-auto">

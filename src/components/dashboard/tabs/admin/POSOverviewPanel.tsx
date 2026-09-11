@@ -128,7 +128,7 @@ const POSOverviewPanel = () => {
                 <CreditCard className="w-5 h-5" /> PayPal Zettle POS
               </CardTitle>
               <p className="text-sm text-muted-foreground mt-1">
-                All in-person sales in one place. Sales flow in through the connected Loyverse register feed, so each
+                All in-person sales in one place. Sales flow in through the connected PayPal Zettle register feed, so each
                 sale is counted only once.
               </p>
               <p className="text-xs text-muted-foreground mt-1">

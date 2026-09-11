@@ -69,24 +69,26 @@ serve(async (req) => {
           .maybeSingle();
         if (existing) { results.push({ external_id: externalId, duplicate: true }); continue; }
 
-        // Customer match
+        // Customer details — matching happens server-side after insert
         const email = r.customer?.email || r.customer_email || null;
         const phoneRaw = r.customer?.phone_number || r.customer_phone || null;
-        const phoneNorm = normalizePhone(phoneRaw);
-        let userId: string | null = null;
-        let matchedBy: string | null = null;
 
-        if (email) {
-          const { data: byEmail } = await supabase
-            .from("profiles").select("id").ilike("email", email).maybeSingle();
-          if (byEmail?.id) { userId = byEmail.id; matchedBy = "email"; }
+        // Register mapping (matched on register/store ID regardless of feed source)
+        const posStoreId: string | null = r.store_id || r.pos_store_id || null;
+        let locationId: string | null = null;
+        let standId: string | null = null;
+        if (posStoreId) {
+          const { data: storeMap } = await supabase
+            .from("vendx_pos_stores")
+            .select("location_id, stand_id")
+            .eq("pos_store_id", String(posStoreId))
+            .eq("is_active", true)
+            .limit(1)
+            .maybeSingle();
+          locationId = storeMap?.location_id || null;
+          standId = storeMap?.stand_id || null;
         }
-        if (!userId && phoneNorm) {
-          const { data: profs } = await supabase
-            .from("profiles").select("id, phone");
-          const match = profs?.find((p: any) => normalizePhone(p.phone) === phoneNorm);
-          if (match) { userId = match.id; matchedBy = "phone"; }
-        }
+
 
         // Totals
         const subtotal = Number(r.total_money ?? r.subtotal ?? 0) - Number(r.total_tax ?? 0);
@@ -100,16 +102,19 @@ serve(async (req) => {
         // Insert receipt
         const { data: receipt, error: insErr } = await supabase
           .from("vendx_pos_receipts").insert({
-            user_id: userId,
+            user_id: null,
             external_id: String(externalId),
             receipt_number: r.receipt_number || null,
-            source: "loyverse",
+            source: "paypal_zettle",
             store_name: r.store_name || r.store_id || null,
+            pos_store_id: posStoreId ? String(posStoreId) : null,
+            location_id: locationId,
+            stand_id: standId,
             pos_customer_id: r.customer?.id || r.customer_id || null,
             pos_customer_email: email,
             pos_customer_phone: phoneRaw,
             pos_customer_name: r.customer?.name || r.customer_name || null,
-            matched_by: matchedBy,
+            matched_by: null,
             subtotal, tax_total: taxTotal, discount_total: discountTotal, tip_total: tipTotal,
             total_amount: totalAmount,
             currency: r.currency || "USD",
@@ -134,23 +139,16 @@ serve(async (req) => {
           );
         }
 
-        // Award points (uses pos config + tier multiplier)
-        let pointsEarned = 0;
-        if (userId && totalAmount > 0) {
-          const { data: pts } = await supabase.rpc("award_pos_points", {
-            p_user_id: userId,
-            p_source: "pos",
-            p_amount: totalAmount,
-            p_receipt_id: receipt.id,
-            p_description: `Loyverse POS receipt ${r.receipt_number || externalId}`,
-          });
-          pointsEarned = Number(pts ?? 0);
-          if (pointsEarned > 0) {
-            await supabase.from("vendx_pos_receipts").update({ points_earned: pointsEarned }).eq("id", receipt.id);
-          }
-        }
+        // Match customer (email/phone) + award points — idempotent per receipt
+        const { data: matchRes } = await supabase.rpc("match_and_award_pos_receipt", {
+          p_receipt_id: receipt.id,
+        });
 
-        results.push({ external_id: externalId, matched: !!userId, points: pointsEarned });
+        results.push({
+          external_id: externalId,
+          matched: Boolean((matchRes as any)?.matched),
+          points: Number((matchRes as any)?.points ?? 0),
+        });
       } catch (e: any) {
         console.error("receipt error", e);
         results.push({ error: e?.message ?? String(e) });

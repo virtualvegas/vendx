@@ -11338,6 +11338,14 @@ export type Database = {
         }
         Returns: string
       }
+      match_and_award_pos_receipt: {
+        Args: {
+          p_matched_by?: string
+          p_receipt_id: string
+          p_user_id?: string
+        }
+        Returns: Json
+      }
       merchant_pay_with_wallet: {
         Args: { p_session_token: string; p_user_id: string }
         Returns: {
@@ -11356,6 +11364,7 @@ export type Database = {
         Args: { p_keep_id: string; p_merge_id: string }
         Returns: string
       }
+      normalize_phone_digits: { Args: { p: string }; Returns: string }
       process_ticket_redemption: {
         Args: {
           p_location_id?: string
@@ -11386,6 +11395,7 @@ export type Database = {
           transaction_id: string
         }[]
       }
+      rematch_pos_receipts: { Args: { p_limit?: number }; Returns: Json }
       rotate_external_stream_api_key: {
         Args: { p_stream_id: string }
         Returns: string

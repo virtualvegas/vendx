@@ -27,7 +27,7 @@ interface Cfg {
 }
 
 const blank: Cfg = {
-  source: "loyverse",
+  source: "paypal_zettle",
   display_name: "PayPal Zettle POS",
   deposit_account_id: null,
   expense_account_id: null,
@@ -56,7 +56,7 @@ const POSFinancePanel = () => {
 
   const load = async () => {
     const [{ data: c }, { data: a }, { data: inc }, { data: exp }] = await Promise.all([
-      supabase.from("vendx_pos_revenue_config").select("*").eq("source", "loyverse").maybeSingle(),
+      supabase.from("vendx_pos_revenue_config").select("*").in("source", ["paypal_zettle", "loyverse"]).maybeSingle(),
       supabase.from("finance_accounts").select("id,name").eq("is_active", true).order("name"),
       supabase
         .from("finance_income")
@@ -82,7 +82,7 @@ const POSFinancePanel = () => {
   const save = async () => {
     setSaving(true);
     try {
-      const payload = { ...cfg, source: "loyverse" };
+      const payload = { ...cfg, source: "paypal_zettle" };
       delete (payload as any).id;
       const { error } = cfg.id
         ? await supabase.from("vendx_pos_revenue_config").update(payload).eq("id", cfg.id)

@@ -107,21 +107,10 @@ serve(async (req) => {
             } catch { /* ignore */ }
           }
 
-          // Match customer
-          const phoneNorm = normalizePhone(phoneRaw);
-          let userId: string | null = null;
-          let matchedBy: string | null = null;
+          // Customer matching happens server-side after insert (email + phone, idempotent points)
+          const userId: string | null = null;
+          const matchedBy: string | null = null;
 
-          if (email) {
-            const { data: byEmail } = await supabase
-              .from("profiles").select("id").ilike("email", email).maybeSingle();
-            if (byEmail?.id) { userId = byEmail.id; matchedBy = "email"; }
-          }
-          if (!userId && phoneNorm) {
-            const { data: profs } = await supabase.from("profiles").select("id, phone");
-            const match = profs?.find((p: any) => normalizePhone(p.phone) === phoneNorm);
-            if (match) { userId = match.id; matchedBy = "phone"; }
-          }
 
           // Totals — Loyverse fields
           const subtotal = Number(r.total_money ?? 0) - Number(r.total_tax ?? 0);
@@ -137,11 +126,13 @@ serve(async (req) => {
           let locationId: string | null = null;
           let standId: string | null = null;
           if (posStoreId) {
+            // Register mapping is matched on register/store ID regardless of feed source
             const { data: storeMap } = await supabase
               .from("vendx_pos_stores")
               .select("location_id, stand_id")
-              .eq("source", "loyverse")
               .eq("pos_store_id", posStoreId)
+              .eq("is_active", true)
+              .limit(1)
               .maybeSingle();
             locationId = storeMap?.location_id || null;
             standId = storeMap?.stand_id || null;
@@ -152,7 +143,7 @@ serve(async (req) => {
               user_id: userId,
               external_id: String(externalId),
               receipt_number: r.receipt_number || null,
-              source: "loyverse",
+              source: "paypal_zettle",
               store_name: r.store_id || null,
               pos_store_id: posStoreId,
               location_id: locationId,
@@ -186,23 +177,17 @@ serve(async (req) => {
             );
           }
 
-          // Award points
-          let pointsEarned = 0;
-          if (userId && totalAmount > 0) {
-            const { data: pts } = await supabase.rpc("award_pos_points", {
-              p_user_id: userId,
-              p_source: "pos",
-              p_amount: totalAmount,
-              p_receipt_id: receipt.id,
-              p_description: `Loyverse POS receipt ${r.receipt_number || externalId}`,
-            });
-            pointsEarned = Number(pts ?? 0);
-            if (pointsEarned > 0) {
-              await supabase.from("vendx_pos_receipts").update({ points_earned: pointsEarned }).eq("id", receipt.id);
-            }
-          }
+          // Match customer (email/phone) + award points — idempotent per receipt
+          const { data: matchRes } = await supabase.rpc("match_and_award_pos_receipt", {
+            p_receipt_id: receipt.id,
+          });
+          const pointsEarned = Number((matchRes as any)?.points ?? 0);
 
-          results.push({ external_id: externalId, matched: !!userId, points: pointsEarned });
+          results.push({
+            external_id: externalId,
+            matched: Boolean((matchRes as any)?.matched),
+            points: pointsEarned,
+          });
         } catch (e: any) {
           console.error("receipt error", e);
           results.push({ error: e?.message ?? String(e) });

@@ -86,7 +86,7 @@ const CustomerRewards = () => {
     },
   });
 
-  // POS receipts (Loyverse)
+  // POS receipts (PayPal Zettle)
   const { data: posReceipts } = useQuery({
     queryKey: ["customer-pos-receipts"],
     queryFn: async () => {
