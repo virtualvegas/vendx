@@ -45,7 +45,7 @@ serve(async (req) => {
     const { data: cfg } = await supabase
       .from("vendx_pos_revenue_config")
       .select("*")
-      .in("source", ["paypal_zettle", "loyverse"])
+      .eq("source", "paypal_zettle")
       .maybeSingle();
 
     const gDeposit: string | null = cfg?.deposit_account_id ?? null;
@@ -61,7 +61,7 @@ serve(async (req) => {
     const { data: storeRows } = await supabase
       .from("vendx_pos_stores")
       .select("*")
-      .in("source", ["paypal_zettle", "loyverse"]);
+      .eq("source", "paypal_zettle");
     const storeMap = new Map<string, any>();
     (storeRows || []).forEach((s: any) => storeMap.set(String(s.pos_store_id), s));
 
@@ -74,7 +74,7 @@ serve(async (req) => {
       const { data: receipts, error: rErr } = await supabase
         .from("vendx_pos_receipts")
         .select("id, total_amount, tax_total, discount_total, tip_total, raw_payload, pos_store_id, location_id, stand_id, store_name")
-        .in("source", ["paypal_zettle", "loyverse"])
+        .eq("source", "paypal_zettle")
         .gte("receipt_date", dayStart)
         .lte("receipt_date", dayEnd);
       if (rErr) throw rErr;
