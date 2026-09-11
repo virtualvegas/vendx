@@ -70,7 +70,6 @@ const POSStoresPanel = () => {
       supabase
         .from("vendx_pos_receipts")
         .select("pos_store_id, receipt_date")
-        .eq("source", "loyverse")
         .not("pos_store_id", "is", null)
         .order("receipt_date", { ascending: false })
         .limit(2000),
