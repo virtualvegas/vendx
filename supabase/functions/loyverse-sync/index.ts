@@ -126,11 +126,13 @@ serve(async (req) => {
           let locationId: string | null = null;
           let standId: string | null = null;
           if (posStoreId) {
+            // Register mapping is matched on register/store ID regardless of feed source
             const { data: storeMap } = await supabase
               .from("vendx_pos_stores")
               .select("location_id, stand_id")
-              .eq("source", "loyverse")
               .eq("pos_store_id", posStoreId)
+              .eq("is_active", true)
+              .limit(1)
               .maybeSingle();
             locationId = storeMap?.location_id || null;
             standId = storeMap?.stand_id || null;
