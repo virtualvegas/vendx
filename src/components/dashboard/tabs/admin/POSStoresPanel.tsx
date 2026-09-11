@@ -360,6 +360,50 @@ const POSStoresPanel = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <Dialog open={remoteOpen} onOpenChange={setRemoteOpen}>
+        <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
+          <DialogHeader><DialogTitle>Registers in your PayPal Zettle account</DialogTitle></DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            Pulled live from your POS account. Link each register you want tracked here.
+          </p>
+          {remoteLoading ? (
+            <p className="text-muted-foreground py-6 text-center">Loading registers...</p>
+          ) : remoteError ? (
+            <div className="space-y-3 py-4">
+              <p className="text-sm text-destructive">{remoteError}</p>
+              <Button size="sm" variant="outline" onClick={fetchRemote}>Try again</Button>
+            </div>
+          ) : remote.length === 0 ? (
+            <p className="text-muted-foreground py-6 text-center">No registers found on the account.</p>
+          ) : (
+            <div className="space-y-2">
+              {remote.map((r) => (
+                <div key={`${r.kind}-${r.id}`} className="flex items-center justify-between gap-3 rounded-md border p-3">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium truncate">{r.name}</span>
+                      <Badge variant="outline" className="text-xs">{r.kind === "device" ? "Register" : "Store"}</Badge>
+                      {!r.activated && <Badge variant="secondary" className="text-xs">Inactive</Badge>}
+                    </div>
+                    <div className="text-xs text-muted-foreground truncate">
+                      {[r.store_name, r.address, r.receipts ? `${r.receipts} sales here` : null].filter(Boolean).join(" · ") || "No sales yet"}
+                    </div>
+                  </div>
+                  {r.linked ? (
+                    <Badge className="shrink-0 gap-1"><CheckCircle2 className="w-3 h-3" /> Linked</Badge>
+                  ) : (
+                    <Button size="sm" className="shrink-0" onClick={() => linkRemote(r)}>Link</Button>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRemoteOpen(false)}>Done</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 };
