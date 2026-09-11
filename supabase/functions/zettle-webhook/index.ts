@@ -28,14 +28,14 @@ serve(async (req) => {
     const raw = await req.text();
 
     // Mandatory shared-secret verification
-    const expectedSecret = Deno.env.get("PAYPAL_ZETTLE_WEBHOOK_SECRET");
+    const expectedSecret = (Deno.env.get("PAYPAL_ZETTLE_WEBHOOK_SECRET") || Deno.env.get("LOYVERSE_WEBHOOK_SECRET"));
     if (!expectedSecret) {
       console.error("PayPal Zettle webhook: PAYPAL_ZETTLE_WEBHOOK_SECRET not configured");
       return new Response(JSON.stringify({ error: "Webhook not configured" }), {
         status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    const provided = req.headers.get("x-zettle-signature") || req.headers.get("authorization")?.replace("Bearer ", "");
+    const provided = req.headers.get("x-zettle-signature") || req.headers.get("x-loyverse-signature") || req.headers.get("authorization")?.replace("Bearer ", "");
     if (provided !== expectedSecret) {
       console.warn("PayPal Zettle webhook: invalid signature");
       return new Response(JSON.stringify({ error: "Unauthorized" }), {

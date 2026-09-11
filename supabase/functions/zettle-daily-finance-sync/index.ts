@@ -45,15 +45,15 @@ serve(async (req) => {
     const { data: cfg } = await supabase
       .from("vendx_pos_revenue_config")
       .select("*")
-      .in("source", ["paypal_zettle", "zettle"])
+      .in("source", ["paypal_zettle", "loyverse"])
       .maybeSingle();
 
     const gDeposit: string | null = cfg?.deposit_account_id ?? null;
     const gExpense: string | null = cfg?.expense_account_id ?? null;
     const gRevCat: string = cfg?.revenue_category ?? "pos_revenue";
-    const gRevSub: string = cfg?.revenue_subcategory ?? "zettle";
+    const gRevSub: string = cfg?.revenue_subcategory ?? "paypal_zettle";
     const gExpCat: string = cfg?.expense_category ?? "cogs";
-    const gExpSub: string = cfg?.expense_subcategory ?? "zettle";
+    const gExpSub: string = cfg?.expense_subcategory ?? "paypal_zettle";
     const gPay: string = cfg?.payment_method ?? "pos";
     const gCogsPay: string = cfg?.cogs_payment_method ?? "internal";
 
@@ -61,7 +61,7 @@ serve(async (req) => {
     const { data: storeRows } = await supabase
       .from("vendx_pos_stores")
       .select("*")
-      .in("source", ["paypal_zettle", "zettle"]);
+      .in("source", ["paypal_zettle", "loyverse"]);
     const storeMap = new Map<string, any>();
     (storeRows || []).forEach((s: any) => storeMap.set(String(s.pos_store_id), s));
 
@@ -74,7 +74,7 @@ serve(async (req) => {
       const { data: receipts, error: rErr } = await supabase
         .from("vendx_pos_receipts")
         .select("id, total_amount, tax_total, discount_total, tip_total, raw_payload, pos_store_id, location_id, stand_id, store_name")
-        .in("source", ["paypal_zettle", "zettle"])
+        .in("source", ["paypal_zettle", "loyverse"])
         .gte("receipt_date", dayStart)
         .lte("receipt_date", dayEnd);
       if (rErr) throw rErr;
@@ -91,11 +91,14 @@ serve(async (req) => {
       const incomePrefix = `zettle_daily_${date}`;
       const expensePrefix = `zettle_cogs_${date}`;
 
+      const legacyIncomePrefix = `loyverse_daily_${date}`;
+      const legacyExpensePrefix = `loyverse_cogs_${date}`;
+
       const { data: existingIncome } = await supabase
         .from("finance_income")
         .select("id, external_reference")
-        .eq("reference_type", "zettle_daily_revenue")
-        .like("external_reference", `${incomePrefix}%`);
+        .in("reference_type", ["zettle_daily_revenue", "loyverse_daily_revenue"])
+        .or(`external_reference.like.${incomePrefix}%,external_reference.like.${legacyIncomePrefix}%`);
       if (existingIncome?.length) {
         const ids = existingIncome.map((x: any) => x.id);
         await supabase.from("finance_account_transactions").delete()
@@ -105,7 +108,7 @@ serve(async (req) => {
       const { data: existingExpense } = await supabase
         .from("finance_expenses")
         .select("id, external_reference")
-        .like("external_reference", `${expensePrefix}%`);
+        .or(`external_reference.like.${expensePrefix}%,external_reference.like.${legacyExpensePrefix}%`);
       if (existingExpense?.length) {
         const ids = existingExpense.map((x: any) => x.id);
         await supabase.from("finance_account_transactions").delete()

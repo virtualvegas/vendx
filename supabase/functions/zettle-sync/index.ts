@@ -21,7 +21,7 @@ serve(async (req) => {
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
   );
 
-  const token = Deno.env.get("PAYPAL_ZETTLE_ACCESS_TOKEN");
+  const token = (Deno.env.get("PAYPAL_ZETTLE_ACCESS_TOKEN") || Deno.env.get("LOYVERSE_ACCESS_TOKEN"));
   if (!token) {
     return new Response(JSON.stringify({ error: "PAYPAL_ZETTLE_ACCESS_TOKEN not set" }), {
       status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -33,7 +33,8 @@ serve(async (req) => {
     const { data: cursorRow } = await supabase
       .from("vendx_integration_state")
       .select("value")
-      .eq("key", "zettle_last_sync")
+      .in("key", ["zettle_last_sync", "loyverse_last_sync"])
+      .limit(1)
       .maybeSingle();
 
     const since = cursorRow?.value
