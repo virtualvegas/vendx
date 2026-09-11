@@ -28,6 +28,11 @@ interface PosStore {
   notes: string | null;
 }
 
+const SOURCES = [
+  { value: "loyverse", label: "PayPal Zettle (connected register feed)" },
+  { value: "paypal_zettle", label: "PayPal Zettle (direct)" },
+];
+
 const blank: Partial<PosStore> = {
   source: "loyverse",
   pos_store_id: "",
@@ -65,7 +70,6 @@ const POSStoresPanel = () => {
       supabase
         .from("vendx_pos_receipts")
         .select("pos_store_id, receipt_date")
-        .eq("source", "loyverse")
         .not("pos_store_id", "is", null)
         .order("receipt_date", { ascending: false })
         .limit(2000),
@@ -157,9 +161,10 @@ const POSStoresPanel = () => {
       <CardHeader>
         <div className="flex items-start justify-between gap-3 flex-wrap">
           <div>
-            <CardTitle className="flex items-center gap-2"><Store className="w-5 h-5" /> POS Store Assignments</CardTitle>
+            <CardTitle className="flex items-center gap-2"><Store className="w-5 h-5" /> PayPal Zettle Registers</CardTitle>
             <p className="text-sm text-muted-foreground mt-1">
-              Map each external POS store (e.g. a Loyverse register) to a location and/or stand. Daily revenue will still post as POS revenue, but attribution and per-store accounts will follow this mapping.
+              Map each PayPal Zettle register to a location and/or stand. Sales still post once as POS revenue, but
+              attribution and per-register accounts follow this mapping.
             </p>
           </div>
           <div className="flex gap-2">
@@ -226,11 +231,16 @@ const POSStoresPanel = () => {
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <Label>Source</Label>
-                <Input value={editing.source || "loyverse"} onChange={(e) => setEditing({ ...editing, source: e.target.value })} />
+                <Select value={editing.source || "loyverse"} onValueChange={(v) => setEditing({ ...editing, source: v })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {SOURCES.map((s) => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-y-1.5">
                 <Label>POS Store ID *</Label>
-                <Input value={editing.pos_store_id || ""} onChange={(e) => setEditing({ ...editing, pos_store_id: e.target.value })} placeholder="e.g. Loyverse store_id" />
+                <Input value={editing.pos_store_id || ""} onChange={(e) => setEditing({ ...editing, pos_store_id: e.target.value })} placeholder="Register / store ID from PayPal Zettle" />
               </div>
             </div>
             <div className="space-y-1.5">

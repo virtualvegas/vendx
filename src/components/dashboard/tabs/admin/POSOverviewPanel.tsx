@@ -38,11 +38,12 @@ const POSOverviewPanel = () => {
   const [syncing, setSyncing] = useState(false);
   const [lastSync, setLastSync] = useState<string | null>(null);
   const [storeNames, setStoreNames] = useState<Record<string, string>>({});
+  const [postedTotal, setPostedTotal] = useState(0);
 
   const load = async () => {
     setLoading(true);
     const since = new Date(Date.now() - Number(range) * 24 * 60 * 60 * 1000).toISOString();
-    const [{ data }, { data: state }, { data: stores }] = await Promise.all([
+    const [{ data }, { data: state }, { data: stores }, { data: incomeRows }] = await Promise.all([
       supabase
         .from("vendx_pos_receipts")
         .select("id,total_amount,tax_total,tip_total,discount_total,payment_method,store_name,pos_store_id,user_id,points_earned,receipt_date")
@@ -50,8 +51,14 @@ const POSOverviewPanel = () => {
         .order("receipt_date", { ascending: false }),
       supabase.from("vendx_integration_state").select("value").eq("key", "loyverse_last_sync").maybeSingle(),
       supabase.from("vendx_pos_stores").select("pos_store_id,display_name"),
+      supabase
+        .from("finance_income")
+        .select("amount")
+        .eq("reference_type", "loyverse_daily_revenue")
+        .gte("income_date", since.slice(0, 10)),
     ]);
     setRows((data as Row[]) || []);
+    setPostedTotal(((incomeRows as any[]) || []).reduce((s, r) => s + Number(r.amount || 0), 0));
     setLastSync((state as any)?.value ?? null);
     const map: Record<string, string> = {};
     (stores || []).forEach((s: any) => { map[String(s.pos_store_id)] = s.display_name; });
@@ -108,6 +115,7 @@ const POSOverviewPanel = () => {
     { label: "Net Revenue", value: money(stats.net), icon: TrendingUp, sub: `${money(stats.tax)} tax collected` },
     { label: "Average Ticket", value: money(stats.avg), icon: Receipt, sub: `${money(stats.tips)} tips` },
     { label: "Matched Customers", value: `${stats.matched}/${stats.count}`, icon: Users, sub: `${stats.points} points awarded` },
+    { label: "Posted to Finance", value: money(postedTotal), icon: DollarSign, sub: "shown on the financial tabs" },
   ];
 
   return (
