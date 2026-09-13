@@ -239,7 +239,7 @@ const QuestsPage = () => {
       user_id: user.id,
       quest_id: quest.id,
       node_id: node.id,
-      status: shouldCompleteImmediately ? "completed" : "in_progress",
+      status: "in_progress",
       checkin_latitude: userLocation?.lat,
       checkin_longitude: userLocation?.lng,
       verified_via: "gps",
