@@ -194,7 +194,7 @@ export const useWalletHierarchy = () => {
 
       if (destError) throw destError;
 
-      // Record transactions
+      // Record debit directly (allowed) and credit via guarded RPC (credit inserts are blocked)
       const { error: txError } = await supabase.from("wallet_transactions").insert([
         {
           wallet_id: isToChild ? parentWallet.id : childWallet.id,
@@ -204,17 +204,18 @@ export const useWalletHierarchy = () => {
             ? `Transfer to ${childWallet.child_name}` 
             : `Reclaimed from ${childWallet.child_name}`,
         },
-        {
-          wallet_id: isToChild ? childWallet.id : parentWallet.id,
-          amount: amount,
-          transaction_type: isToChild ? "transfer_in" : "reclaim_in",
-          description: isToChild 
-            ? "Transfer from parent wallet" 
-            : `Reclaimed from ${childWallet.child_name}`,
-        },
       ]);
-
       if (txError) throw txError;
+
+      const { error: creditError } = await supabase.rpc("wallet_log_credit" as any, {
+        p_wallet_id: isToChild ? childWallet.id : parentWallet.id,
+        p_amount: amount,
+        p_type: isToChild ? "transfer_in" : "reclaim_in",
+        p_description: isToChild
+          ? "Transfer from parent wallet"
+          : `Reclaimed by ${childWallet.child_name}'s parent`,
+      } as any);
+      if (creditError) throw creditError;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["parent-wallet"] });

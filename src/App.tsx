@@ -64,6 +64,7 @@ import SsoDocsPage from "./pages/SsoDocsPage";
 import PartnerApiDocsPage from "./pages/PartnerApiDocsPage";
 import PartnerProductPage from "./pages/PartnerProductPage";
 import EventRentalsPage from "./pages/EventRentalsPage";
+import FinancialsWidgetPage from "./pages/FinancialsWidgetPage";
 
 const queryClient = new QueryClient();
 
@@ -94,6 +95,7 @@ const App = () => (
           <BrowserRouter>
             <Routes>
               <Route path="/" element={<Index />} />
+              <Route path="/widget/financials" element={<FinancialsWidgetPage />} />
               <Route path="/about" element={<AboutPage />} />
               <Route path="/business" element={<BusinessPage />} />
               <Route path="/divisions" element={<DivisionsPage />} />

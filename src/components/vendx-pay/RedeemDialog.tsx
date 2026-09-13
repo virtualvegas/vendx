@@ -203,12 +203,12 @@ const RedeemDialog = ({ open, onOpenChange, reward, userPoints, onSuccess }: Red
             .update({ balance: wallet.balance + reward.credit_amount })
             .eq("id", wallet.id);
 
-          await supabase.from("wallet_transactions").insert({
-            wallet_id: wallet.id,
-            amount: reward.credit_amount,
-            transaction_type: "reward_credit",
-            description: `Reward: ${reward.name}`,
-          });
+          await supabase.rpc("wallet_log_credit" as any, {
+            p_wallet_id: wallet.id,
+            p_amount: reward.credit_amount,
+            p_type: "reward_credit",
+            p_description: `Reward: ${reward.name}`,
+          } as any);
         }
       }
 
