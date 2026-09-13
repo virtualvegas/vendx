@@ -64,6 +64,7 @@ import SsoDocsPage from "./pages/SsoDocsPage";
 import PartnerApiDocsPage from "./pages/PartnerApiDocsPage";
 import PartnerProductPage from "./pages/PartnerProductPage";
 import EventRentalsPage from "./pages/EventRentalsPage";
+import FinancialsWidgetPage from "./pages/FinancialsWidgetPage";
 
 const queryClient = new QueryClient();
 
