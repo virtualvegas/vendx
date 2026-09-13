@@ -95,6 +95,7 @@ const App = () => (
           <BrowserRouter>
             <Routes>
               <Route path="/" element={<Index />} />
+              <Route path="/widget/financials" element={<FinancialsWidgetPage />} />
               <Route path="/about" element={<AboutPage />} />
               <Route path="/business" element={<BusinessPage />} />
               <Route path="/divisions" element={<DivisionsPage />} />
