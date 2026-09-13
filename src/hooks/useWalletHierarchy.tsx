@@ -216,8 +216,6 @@ export const useWalletHierarchy = () => {
           : `Reclaimed by ${childWallet.child_name}'s parent`,
       } as any);
       if (creditError) throw creditError;
-
-      if (txError) throw txError;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["parent-wallet"] });
