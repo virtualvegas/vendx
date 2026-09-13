@@ -222,18 +222,25 @@ export async function completeQuest(
       })
       .eq("user_id", userId);
   } else {
+    // Inserts are restricted to zeroed defaults (security policy); apply earned values via update
     await supabase.from("quest_player_progress").insert({
       user_id: userId,
-      total_xp: xpReward,
-      current_level: newLevel,
-      quests_completed: 1,
-      nodes_discovered: nodeId ? 1 : 0,
-      current_streak: 1,
-      longest_streak: 1,
       last_quest_date: today.toISOString().split("T")[0],
-      total_credits_earned: creditsReward,
-      total_points_earned: pointsReward,
     });
+    await supabase
+      .from("quest_player_progress")
+      .update({
+        total_xp: xpReward,
+        current_level: newLevel,
+        quests_completed: 1,
+        nodes_discovered: nodeId ? 1 : 0,
+        current_streak: 1,
+        longest_streak: 1,
+        total_credits_earned: creditsReward,
+        total_points_earned: pointsReward,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("user_id", userId);
   }
 
   // 3. Update node discovery count if applicable
@@ -366,13 +373,13 @@ export async function claimQuestRewards(
         .update({ balance: (Number(wallet.balance) || 0) + creditsEarned })
         .eq("id", wallet.id);
 
-      // Log transaction
-      await supabase.from("wallet_transactions").insert({
-        wallet_id: wallet.id,
-        amount: creditsEarned,
-        transaction_type: "quest_reward",
-        description: "Quest reward",
-      });
+      // Log credit via guarded RPC (direct credit inserts are blocked)
+      await supabase.rpc("wallet_log_credit" as any, {
+        p_wallet_id: wallet.id,
+        p_amount: creditsEarned,
+        p_type: "quest_reward",
+        p_description: "Quest reward",
+      } as any);
     }
 
   // Add points if any
@@ -766,12 +773,12 @@ export async function checkAndAwardChainBonus(
           .update({ balance: (Number(wallet.balance) || 0) + bonusCredits })
           .eq("id", wallet.id);
 
-        await supabase.from("wallet_transactions").insert({
-          wallet_id: wallet.id,
-          amount: bonusCredits,
-          transaction_type: "chain_bonus",
-          description: `Chain bonus: ${chain.name}`,
-        });
+        await supabase.rpc("wallet_log_credit" as any, {
+          p_wallet_id: wallet.id,
+          p_amount: bonusCredits,
+          p_type: "chain_bonus",
+          p_description: `Chain bonus: ${chain.name}`,
+        } as any);
       }
     }
 
