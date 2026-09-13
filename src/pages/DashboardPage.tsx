@@ -192,23 +192,31 @@ const DashboardPage = () => {
   };
 
   useEffect(() => {
+    let hydrated = false;
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
+        // Ignore token refresh churn: only react to real session changes.
+        if (event === "TOKEN_REFRESHED" && !session) return;
 
-        if (!session) {
-          navigate("/auth");
+        setSession(session);
+        setUser((prev) => (prev?.id === session?.user?.id ? prev : session?.user ?? null));
+
+        // Only leave the dashboard on an explicit sign-out, not on a
+        // transient null while the session is still being restored.
+        if (!session && hydrated) {
+          navigate("/auth", { replace: true });
         }
       }
     );
 
     supabase.auth.getSession().then(({ data: { session } }) => {
+      hydrated = true;
       setSession(session);
-      setUser(session?.user ?? null);
+      setUser((prev) => (prev?.id === session?.user?.id ? prev : session?.user ?? null));
 
       if (!session) {
-        navigate("/auth");
+        navigate("/auth", { replace: true });
       }
     });
 

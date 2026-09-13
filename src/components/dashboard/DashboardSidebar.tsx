@@ -320,8 +320,20 @@ const DashboardSidebar = ({
   };
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
-    navigate("/");
+    try {
+      // Clear the session everywhere, but never let a stale/expired token
+      // block the sign-out from completing.
+      await supabase.auth.signOut({ scope: "global" });
+    } catch {
+      try {
+        await supabase.auth.signOut({ scope: "local" });
+      } catch {
+        /* ignore - we redirect regardless */
+      }
+    }
+    // Full reload so no dashboard state or in-flight query can bounce the
+    // user to /auth mid-redirect.
+    window.location.replace("/");
   };
 
   // Filter groups that have accessible tabs
