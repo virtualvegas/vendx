@@ -11381,6 +11381,32 @@ export type Database = {
           success: boolean
         }[]
       }
+      quest_claim_chain_bonus: {
+        Args: { p_chain_id: string }
+        Returns: {
+          awarded: boolean
+          bonus_credits: number
+          bonus_xp: number
+          chain_name: string
+        }[]
+      }
+      quest_claim_daily_challenges: {
+        Args: never
+        Returns: {
+          challenges_completed: string[]
+          total_bonus_xp: number
+        }[]
+      }
+      quest_finalize_completion: {
+        Args: { p_completion_id: string }
+        Returns: {
+          credits_earned: number
+          leveled_up: boolean
+          new_level: number
+          points_earned: number
+          xp_earned: number
+        }[]
+      }
       redeem_tickets: {
         Args: {
           p_amount: number
