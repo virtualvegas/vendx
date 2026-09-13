@@ -11420,6 +11420,15 @@ export type Database = {
         Args: { _session_id: string; _suggestion_id: string }
         Returns: number
       }
+      wallet_log_credit: {
+        Args: {
+          p_amount: number
+          p_description?: string
+          p_type: string
+          p_wallet_id: string
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       app_role:
