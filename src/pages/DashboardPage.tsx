@@ -204,7 +204,7 @@ const DashboardPage = () => {
 
         // Only leave the dashboard on an explicit sign-out, not on a
         // transient null while the session is still being restored.
-        if (!session && hydrated && (event === "SIGNED_OUT" || event === "USER_DELETED")) {
+        if (!session && hydrated) {
           navigate("/auth", { replace: true });
         }
       }
