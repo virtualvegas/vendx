@@ -14,9 +14,17 @@ const money = (n: number) =>
 const localDate = (d: Date) =>
   `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 
+const ALLOWED_ROLES = [
+  "super_admin",
+  "global_operations_manager",
+  "finance_accounting",
+  "regional_manager",
+];
+
 const FinancialsWidgetPage = () => {
   useSEO({ title: "VendX Live Financials", description: "Live revenue, sales, and pending payments." });
   const [user, setUser] = useState<any>(undefined);
+  const [allowed, setAllowed] = useState<boolean | undefined>(undefined);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setUser(data.user ?? null));
@@ -24,9 +32,36 @@ const FinancialsWidgetPage = () => {
     return () => sub.subscription.unsubscribe();
   }, []);
 
+  // Only privileged staff may view financials
+  useEffect(() => {
+    if (user === undefined) return;
+    if (!user) { setAllowed(false); return; }
+    let active = true;
+    supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", user.id)
+      .then(({ data }) => {
+        if (!active) return;
+        setAllowed((data || []).some((r: any) => ALLOWED_ROLES.includes(r.role)));
+      });
+    return () => { active = false; };
+  }, [user]);
+
+  // Use the dedicated financials manifest only for authorized staff,
+  // so customers installing the site get the normal VendX app instead.
+  useEffect(() => {
+    if (!allowed) return;
+    const link = document.querySelector<HTMLLinkElement>('link[rel="manifest"]');
+    if (!link) return;
+    const original = link.getAttribute("href");
+    link.setAttribute("href", "/widget-manifest.webmanifest");
+    return () => { if (original) link.setAttribute("href", original); };
+  }, [allowed]);
+
   const { data, isLoading, refetch, isFetching, dataUpdatedAt } = useQuery({
     queryKey: ["financials-widget"],
-    enabled: !!user,
+    enabled: !!user && allowed === true,
     refetchInterval: 30_000,
     queryFn: async () => {
       const now = new Date();
