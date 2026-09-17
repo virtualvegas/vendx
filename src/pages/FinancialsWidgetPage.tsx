@@ -116,7 +116,7 @@ const FinancialsWidgetPage = () => {
     },
   });
 
-  if (user === undefined) {
+  if (user === undefined || (user && allowed === undefined)) {
     return <div className="min-h-screen bg-background flex items-center justify-center text-muted-foreground">Loading…</div>;
   }
 
@@ -132,6 +132,23 @@ const FinancialsWidgetPage = () => {
       </div>
     );
   }
+
+  if (allowed === false) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-4 p-6 text-center">
+        <img src="/icons/icon-192.png" alt="VendX" className="w-16 h-16 rounded-2xl" />
+        <h1 className="text-xl font-bold">Restricted</h1>
+        <p className="text-sm text-muted-foreground max-w-xs">
+          This financials view is only available to VendX staff accounts.
+        </p>
+        <Button variant="outline" onClick={() => { window.location.href = "/"; }}>
+          Go to VendX
+        </Button>
+      </div>
+    );
+  }
+
+
 
   const cards = [
     { label: "Today", value: money(data?.today ?? 0), icon: DollarSign, color: "text-primary", glow: "glow-blue" },
