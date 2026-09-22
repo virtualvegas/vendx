@@ -7832,6 +7832,7 @@ export type Database = {
           address_line2: string | null
           admin_notes: string | null
           approx_game_count: number | null
+          artwork_paths: Json
           artwork_theme: string | null
           assigned_to: string | null
           budget_range: string | null
@@ -7842,6 +7843,7 @@ export type Database = {
           control_layout: string | null
           country: string | null
           created_at: string
+          customization: Json
           email: string
           finance_income_id: string | null
           financing_interest: boolean | null
@@ -7876,6 +7878,7 @@ export type Database = {
           address_line2?: string | null
           admin_notes?: string | null
           approx_game_count?: number | null
+          artwork_paths?: Json
           artwork_theme?: string | null
           assigned_to?: string | null
           budget_range?: string | null
@@ -7886,6 +7889,7 @@ export type Database = {
           control_layout?: string | null
           country?: string | null
           created_at?: string
+          customization?: Json
           email: string
           finance_income_id?: string | null
           financing_interest?: boolean | null
@@ -7920,6 +7924,7 @@ export type Database = {
           address_line2?: string | null
           admin_notes?: string | null
           approx_game_count?: number | null
+          artwork_paths?: Json
           artwork_theme?: string | null
           assigned_to?: string | null
           budget_range?: string | null
@@ -7930,6 +7935,7 @@ export type Database = {
           control_layout?: string | null
           country?: string | null
           created_at?: string
+          customization?: Json
           email?: string
           finance_income_id?: string | null
           financing_interest?: boolean | null
@@ -11441,6 +11447,10 @@ export type Database = {
       rotate_vendx_sso_app_secret: {
         Args: { p_app_id: string }
         Returns: string
+      }
+      set_news_category_subscriptions: {
+        Args: { p_category_ids?: string[]; p_email: string }
+        Returns: undefined
       }
       upvote_ecovend_suggestion: {
         Args: { _session_id: string; _suggestion_id: string }

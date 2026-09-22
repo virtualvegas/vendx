@@ -5,7 +5,8 @@ import { supabase } from "@/integrations/supabase/client";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import StarField from "@/components/StarField";
-import CabinetPreview from "@/components/arcade/CabinetPreview";
+import CabinetPreview, { type CabinetCustomization } from "@/components/arcade/CabinetPreview";
+import ArcadeArtworkUploader, { type ArtworkPaths, type ArtworkPreviews } from "@/components/arcade/ArcadeArtworkUploader";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,17 +21,22 @@ import {
 } from "@/components/ui/select";
 import {
   Gamepad2, Cpu, Sparkles, ArrowRight, ArrowLeft, CheckCircle2, Joystick,
-  Monitor, Wallet, Truck, Boxes,
+  Monitor, Wallet, Truck, Boxes, Palette, Settings2, ImagePlus,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useSEO } from "@/hooks/useSEO";
 
 const CABINET_STYLES = [
   { v: "upright", l: "Upright", d: "Classic stand-up arcade" },
-  { v: "cocktail", l: "Cocktail", d: "Sit-down tabletop" },
-  { v: "pedestal", l: "Pedestal", d: "Slim modern base" },
+  { v: "deluxe_upright", l: "Deluxe Upright", d: "Deeper premium cabinet" },
   { v: "bartop", l: "Bartop", d: "Countertop mini" },
-  { v: "sit_down", l: "Sit-Down", d: "Racing / cockpit" },
+  { v: "cocktail", l: "Cocktail", d: "Sit-down tabletop" },
+  { v: "pedestal", l: "Pedestal", d: "Open-screen setup" },
+  { v: "wall_mount", l: "Wall Mount", d: "Space-saving cabinet" },
+  { v: "four_player", l: "4-Player", d: "Wide party control deck" },
+  { v: "racing", l: "Racing Cockpit", d: "Seat, wheel and pedals" },
+  { v: "sit_down", l: "Japanese Sit-Down", d: "Low seated play" },
+  { v: "virtual_pinball", l: "Virtual Pinball", d: "Digital playfield cabinet" },
 ];
 const SIZES = [
   { v: "full", l: "Full Size", d: "~68\" tall" },
@@ -56,11 +62,25 @@ const PLATFORMS = [
 
 const STEPS = [
   { key: "cabinet", label: "Cabinet", icon: Boxes },
-  { key: "controls", label: "Controls & Display", icon: Joystick },
+  { key: "appearance", label: "Appearance", icon: Palette },
+  { key: "controls", label: "Controls", icon: Joystick },
+  { key: "hardware", label: "Hardware", icon: Settings2 },
   { key: "games", label: "Games", icon: Gamepad2 },
   { key: "budget", label: "Budget", icon: Wallet },
   { key: "contact", label: "Delivery", icon: Truck },
 ];
+
+const DEFAULT_CUSTOMIZATION: CabinetCustomization = {
+  bodyColor: "#172033", trimColor: "#12bde8", buttonColor: "#39e58c", joystickColor: "#39e58c",
+  finish: "satin", monitorOrientation: "landscape", screenTreatment: "gloss", marqueeType: "led",
+  speakerLayout: "stereo", feet: "levelers", coinDoor: true, accessibleControls: false,
+  joystickStyle: "competition", buttonLayout: "six", steeringWheel: false, pedals: false,
+  flightStick: false, dancePads: false, pinballButtons: false, usbPorts: true,
+  computerTier: "performance", storage: "1tb", connectivity: "wifi_ethernet", bluetooth: true,
+  lighting: "marquee", cooling: "quiet_fans", audio: "premium_stereo",
+};
+const COLORS = ["#172033", "#f2f4f7", "#d6263d", "#1261a8", "#13a878", "#e3a62f", "#7b42c3", "#171717"];
+const CHOICE = (value: string, label?: string) => ({ v: value, l: label || value.replace(/_/g, " ") });
 
 const empty = {
   full_name: "", email: "", phone: "",
@@ -78,6 +98,9 @@ const CustomArcadeRequestPage = () => {
   const [form, setForm] = useState({ ...empty });
   const [platforms, setPlatforms] = useState<string[]>([]);
   const [step, setStep] = useState(0);
+  const [customization, setCustomization] = useState<CabinetCustomization>({ ...DEFAULT_CUSTOMIZATION });
+  const [artwork, setArtwork] = useState<ArtworkPreviews>({});
+  const [artworkPaths, setArtworkPaths] = useState<ArtworkPaths>({});
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState<string | null>(null);
 
@@ -137,6 +160,8 @@ const CustomArcadeRequestPage = () => {
       target_delivery_date: form.target_delivery_date || null,
       reference_product_id: form.reference_product_id || null,
       user_id: u.user?.id ?? null,
+      customization,
+      artwork_paths: artworkPaths,
     };
     const { data, error } = await supabase
       .from("vendx_custom_arcade_requests")
@@ -307,6 +332,24 @@ const CustomArcadeRequestPage = () => {
               )}
 
               {step === 1 && (
+                <div className="space-y-6">
+                  <Section title="Materials & Color" icon={Palette}>
+                    <ColorChoice label="Cabinet body" value={customization.bodyColor} onChange={bodyColor => setCustomization({ ...customization, bodyColor })} />
+                    <ColorChoice label="Trim & T-molding" value={customization.trimColor} onChange={trimColor => setCustomization({ ...customization, trimColor })} />
+                    <div className="grid sm:grid-cols-2 gap-4 mt-5">
+                      <Field label="Finish"><ChoiceSelect value={customization.finish} options={[CHOICE("satin"), CHOICE("matte"), CHOICE("gloss"), CHOICE("woodgrain"), CHOICE("metallic")]} onChange={finish => setCustomization({ ...customization, finish })} /></Field>
+                      <Field label="Marquee"><ChoiceSelect value={customization.marqueeType} options={[CHOICE("led", "LED backlit"), CHOICE("edge_lit", "Edge lit"), CHOICE("unlit"), CHOICE("digital", "Digital display")]} onChange={marqueeType => setCustomization({ ...customization, marqueeType })} /></Field>
+                    </div>
+                  </Section>
+                  <Section title="Custom Artwork" icon={ImagePlus}>
+                    <p className="mb-4 text-sm text-muted-foreground">Upload each surface separately. Your images appear on the cabinet as soon as they finish uploading.</p>
+                    <ArcadeArtworkUploader previews={artwork} paths={artworkPaths} onChange={(nextArtwork, nextPaths) => { setArtwork(nextArtwork); setArtworkPaths(nextPaths); }} />
+                    <Field label="Artwork direction" className="mt-5"><Input placeholder="Theme, characters, logos, colors, or notes for our designer" value={form.artwork_theme} onChange={e => setForm({ ...form, artwork_theme: e.target.value })} /></Field>
+                  </Section>
+                </div>
+              )}
+
+              {step === 2 && (
                 <Section title="Controls & Display" icon={Monitor}>
                   <Label className="mb-2 block">Control layout</Label>
                   <OptionGrid
@@ -335,10 +378,37 @@ const CustomArcadeRequestPage = () => {
                     <AddOn label="Spinner" desc="Arkanoid, Tempest" v={form.spinner} on={v => setForm({ ...form, spinner: v })} />
                     <AddOn label="Light Gun" desc="Time Crisis, Duck Hunt" v={form.light_gun} on={v => setForm({ ...form, light_gun: v })} />
                   </div>
+                  <div className="grid sm:grid-cols-2 gap-4 mt-6">
+                    <Field label="Joystick style"><ChoiceSelect value={customization.joystickStyle} options={[CHOICE("competition"), CHOICE("bat_top"), CHOICE("ball_top"), CHOICE("magnetic"), CHOICE("analog")]} onChange={joystickStyle => setCustomization({ ...customization, joystickStyle })} /></Field>
+                    <Field label="Button layout"><ChoiceSelect value={customization.buttonLayout} options={[CHOICE("four", "4 button"), CHOICE("six", "6 button"), CHOICE("eight", "8 button"), CHOICE("custom")]} onChange={buttonLayout => setCustomization({ ...customization, buttonLayout })} /></Field>
+                    <Field label="Monitor orientation"><ChoiceSelect value={customization.monitorOrientation} options={[CHOICE("landscape"), CHOICE("portrait"), CHOICE("rotating")]} onChange={monitorOrientation => setCustomization({ ...customization, monitorOrientation })} /></Field>
+                    <Field label="Screen glass"><ChoiceSelect value={customization.screenTreatment} options={[CHOICE("gloss"), CHOICE("matte"), CHOICE("tempered", "Tempered glass"), CHOICE("touch", "Touchscreen")]} onChange={screenTreatment => setCustomization({ ...customization, screenTreatment })} /></Field>
+                  </div>
+                  <div className="grid sm:grid-cols-2 gap-3 mt-5">
+                    {[["steeringWheel","Steering wheel"],["pedals","Pedals"],["flightStick","Flight stick"],["dancePads","Dance pads"],["pinballButtons","Pinball side buttons"],["accessibleControls","Accessible controls"]].map(([key,label]) => <AddOn key={key} label={label} v={Boolean(customization[key as keyof CabinetCustomization])} on={value => setCustomization({ ...customization, [key]: value })} />)}
+                  </div>
                 </Section>
               )}
 
-              {step === 2 && (
+              {step === 3 && (
+                <Section title="Hardware & Build" icon={Cpu}>
+                  <div className="grid sm:grid-cols-2 gap-4">
+                    <Field label="Computer"><ChoiceSelect value={customization.computerTier} options={[CHOICE("classic", "Classic systems"), CHOICE("performance"), CHOICE("enthusiast", "High-end PC")]} onChange={computerTier => setCustomization({ ...customization, computerTier })} /></Field>
+                    <Field label="Storage"><ChoiceSelect value={customization.storage} options={[CHOICE("512gb", "512 GB"), CHOICE("1tb", "1 TB"), CHOICE("2tb", "2 TB"), CHOICE("4tb", "4 TB")]} onChange={storage => setCustomization({ ...customization, storage })} /></Field>
+                    <Field label="Audio"><ChoiceSelect value={customization.audio} options={[CHOICE("standard_stereo", "Standard stereo"), CHOICE("premium_stereo", "Premium stereo"), CHOICE("2.1_subwoofer", "2.1 + subwoofer"), CHOICE("surround")]} onChange={audio => setCustomization({ ...customization, audio })} /></Field>
+                    <Field label="Lighting"><ChoiceSelect value={customization.lighting} options={[CHOICE("none"), CHOICE("marquee"), CHOICE("controls", "Lit controls"), CHOICE("full_rgb", "Full RGB package")]} onChange={lighting => setCustomization({ ...customization, lighting })} /></Field>
+                    <Field label="Cooling"><ChoiceSelect value={customization.cooling} options={[CHOICE("standard"), CHOICE("quiet_fans", "Quiet fans"), CHOICE("high_flow", "High airflow")]} onChange={cooling => setCustomization({ ...customization, cooling })} /></Field>
+                    <Field label="Base"><ChoiceSelect value={customization.feet} options={[CHOICE("levelers"), CHOICE("casters", "Locking casters"), CHOICE("fixed_plinth", "Fixed plinth")]} onChange={feet => setCustomization({ ...customization, feet })} /></Field>
+                  </div>
+                  <div className="grid sm:grid-cols-3 gap-3 mt-5">
+                    <AddOn label="Coin door" v={customization.coinDoor} on={coinDoor => setCustomization({ ...customization, coinDoor })} />
+                    <AddOn label="Bluetooth" v={customization.bluetooth} on={bluetooth => setCustomization({ ...customization, bluetooth })} />
+                    <AddOn label="Front USB ports" v={customization.usbPorts} on={usbPorts => setCustomization({ ...customization, usbPorts })} />
+                  </div>
+                </Section>
+              )}
+
+              {step === 4 && (
                 <Section title="Games & Software" icon={Gamepad2}>
                   <Label className="mb-2 block">Preferred platforms</Label>
                   <div className="flex flex-wrap gap-2 mb-6">
@@ -370,7 +440,7 @@ const CustomArcadeRequestPage = () => {
                 </Section>
               )}
 
-              {step === 3 && (
+              {step === 5 && (
                 <Section title="Budget, Timeline & Extras" icon={Wallet}>
                   <Label className="mb-2 block">Budget range</Label>
                   <div className="grid sm:grid-cols-2 gap-3">
@@ -401,7 +471,7 @@ const CustomArcadeRequestPage = () => {
                 </Section>
               )}
 
-              {step === 4 && (
+              {step === 6 && (
                 <Section title="Contact & Delivery" icon={Truck}>
                   <Grid2>
                     <Field label="Full name *"><Input required value={form.full_name} onChange={e => setForm({ ...form, full_name: e.target.value })} /></Field>
@@ -551,6 +621,14 @@ const Field = ({ label, children, className }: { label: string; children: React.
     <Label className="mb-1.5 block">{label}</Label>
     {children}
   </div>
+);
+
+const ChoiceSelect = ({ value, options, onChange }: { value: string; options: { v: string; l: string }[]; onChange: (value: string) => void }) => (
+  <Select value={value} onValueChange={onChange}><SelectTrigger className="capitalize"><SelectValue /></SelectTrigger><SelectContent>{options.map(option => <SelectItem key={option.v} value={option.v} className="capitalize">{option.l}</SelectItem>)}</SelectContent></Select>
+);
+
+const ColorChoice = ({ label, value, onChange }: { label: string; value: string; onChange: (value: string) => void }) => (
+  <div className="mt-4"><Label className="mb-2 block">{label}</Label><div className="flex flex-wrap items-center gap-2">{COLORS.map(color => <button key={color} type="button" aria-label={`${label} ${color}`} onClick={() => onChange(color)} className={cn("h-9 w-9 rounded-full border-2 transition-transform hover:scale-105", value === color ? "border-primary ring-2 ring-primary/30" : "border-border")} style={{ backgroundColor: color }} />)}<Input type="color" value={value} onChange={event => onChange(event.target.value)} className="h-9 w-12 cursor-pointer p-1" aria-label={`Custom ${label.toLowerCase()}`} /></div></div>
 );
 
 export default CustomArcadeRequestPage;

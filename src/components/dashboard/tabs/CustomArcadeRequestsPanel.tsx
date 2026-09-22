@@ -14,6 +14,7 @@ import {
 import { Gamepad2, Eye, Trash2, Plus, Wrench, CheckCircle2, UserCheck } from "lucide-react";
 import { SearchableSelect } from "@/components/ui/searchable-select";
 import CustomBuildInvoices from "./custom-arcade/CustomBuildInvoices";
+import CustomBuildArtwork from "./custom-arcade/CustomBuildArtwork";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { formatDisplayDate } from "@/lib/dateUtils";
@@ -38,6 +39,7 @@ const BLANK = {
   online_play: false, in_home_setup: false, financing_interest: false,
   budget_range: "", target_delivery_date: "", additional_notes: "",
   status: "new", admin_notes: "", quoted_price: "",
+  customization: {}, artwork_paths: {},
 };
 
 const CustomArcadeRequestsPanel = () => {
@@ -365,6 +367,20 @@ const CustomArcadeRequestsPanel = () => {
                 <Info label="Budget" v={editing.budget_range} />
                 <Info label="Target delivery" v={editing.target_delivery_date} />
               </div>
+              {editing.customization && Object.keys(editing.customization).length > 0 && (
+                <div className="border-t pt-3">
+                  <div className="text-xs text-muted-foreground mb-2">Detailed build specification</div>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                    {Object.entries(editing.customization).map(([key, value]) => (
+                      <div key={key} className="rounded-md border border-border bg-muted/30 p-2">
+                        <div className="text-[11px] capitalize text-muted-foreground">{key.replace(/([A-Z])/g, " $1").replace(/_/g, " ")}</div>
+                        <div className="text-xs font-medium capitalize">{typeof value === "boolean" ? (value ? "Yes" : "No") : String(value).replace(/_/g, " ")}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              <CustomBuildArtwork paths={editing.artwork_paths} />
               {editing.preferred_games && (
                 <div className="text-sm">
                   <div className="text-muted-foreground mb-1">Must-have games / notes</div>
