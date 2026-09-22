@@ -28,9 +28,9 @@ type View = "perspective" | "front" | "side";
 type ProfilePoint = [number, number];
 
 const VIEWS: Record<View, [number, number, number]> = {
-  perspective: [6.8, 4.35, 8.2],
-  front: [0, 3.15, 9.2],
-  side: [9.2, 3.15, 0],
+  perspective: [7.55, 4.4, 9.1],
+  front: [0, 3.05, 10.4],
+  side: [10.4, 3.05, 0],
 };
 
 const DEFAULT_PROFILE: ProfilePoint[] = [
@@ -117,19 +117,20 @@ function FinishMaterial({ color, finish = "satin" }: { color: string; finish?: s
 function SideTrim({ width, profile, color }: { width: number; profile: ProfilePoint[]; color: string }) {
   return (
     <>
-      {[-1, 1].map(side => {
-        const curve = new THREE.CatmullRomCurve3(
-          [...profile, profile[0]].map(([z, y]) => new THREE.Vector3(side * (width / 2 + 0.025), y, z)),
-          false,
-          "centripetal",
-        );
+      {[-1, 1].flatMap(side => profile.map(([z, y], index) => {
+        const [nextZ, nextY] = profile[(index + 1) % profile.length];
+        const start = new THREE.Vector3(side * (width / 2 + 0.022), y, z);
+        const end = new THREE.Vector3(side * (width / 2 + 0.022), nextY, nextZ);
+        const midpoint = start.clone().add(end).multiplyScalar(0.5);
+        const length = start.distanceTo(end);
+        const quaternion = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), end.clone().sub(start).normalize());
         return (
-          <mesh key={side} castShadow>
-            <tubeGeometry args={[curve, 72, 0.035, 8, false]} />
-            <meshStandardMaterial color={color} roughness={0.34} metalness={0.12} />
+          <mesh key={`${side}-${index}`} position={midpoint} quaternion={quaternion} castShadow>
+            <cylinderGeometry args={[0.021, 0.021, length, 8]} />
+            <meshStandardMaterial color={color} roughness={0.38} metalness={0.16} />
           </mesh>
         );
-      })}
+      }))}
     </>
   );
 }
