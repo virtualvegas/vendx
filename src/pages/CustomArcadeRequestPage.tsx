@@ -378,10 +378,37 @@ const CustomArcadeRequestPage = () => {
                     <AddOn label="Spinner" desc="Arkanoid, Tempest" v={form.spinner} on={v => setForm({ ...form, spinner: v })} />
                     <AddOn label="Light Gun" desc="Time Crisis, Duck Hunt" v={form.light_gun} on={v => setForm({ ...form, light_gun: v })} />
                   </div>
+                  <div className="grid sm:grid-cols-2 gap-4 mt-6">
+                    <Field label="Joystick style"><ChoiceSelect value={customization.joystickStyle} options={[CHOICE("competition"), CHOICE("bat_top"), CHOICE("ball_top"), CHOICE("magnetic"), CHOICE("analog")]} onChange={joystickStyle => setCustomization({ ...customization, joystickStyle })} /></Field>
+                    <Field label="Button layout"><ChoiceSelect value={customization.buttonLayout} options={[CHOICE("four", "4 button"), CHOICE("six", "6 button"), CHOICE("eight", "8 button"), CHOICE("custom")]} onChange={buttonLayout => setCustomization({ ...customization, buttonLayout })} /></Field>
+                    <Field label="Monitor orientation"><ChoiceSelect value={customization.monitorOrientation} options={[CHOICE("landscape"), CHOICE("portrait"), CHOICE("rotating")]} onChange={monitorOrientation => setCustomization({ ...customization, monitorOrientation })} /></Field>
+                    <Field label="Screen glass"><ChoiceSelect value={customization.screenTreatment} options={[CHOICE("gloss"), CHOICE("matte"), CHOICE("tempered", "Tempered glass"), CHOICE("touch", "Touchscreen")]} onChange={screenTreatment => setCustomization({ ...customization, screenTreatment })} /></Field>
+                  </div>
+                  <div className="grid sm:grid-cols-2 gap-3 mt-5">
+                    {[["steeringWheel","Steering wheel"],["pedals","Pedals"],["flightStick","Flight stick"],["dancePads","Dance pads"],["pinballButtons","Pinball side buttons"],["accessibleControls","Accessible controls"]].map(([key,label]) => <AddOn key={key} label={label} v={Boolean(customization[key as keyof CabinetCustomization])} on={value => setCustomization({ ...customization, [key]: value })} />)}
+                  </div>
                 </Section>
               )}
 
-              {step === 2 && (
+              {step === 3 && (
+                <Section title="Hardware & Build" icon={Cpu}>
+                  <div className="grid sm:grid-cols-2 gap-4">
+                    <Field label="Computer"><ChoiceSelect value={customization.computerTier} options={[CHOICE("classic", "Classic systems"), CHOICE("performance"), CHOICE("enthusiast", "High-end PC")]} onChange={computerTier => setCustomization({ ...customization, computerTier })} /></Field>
+                    <Field label="Storage"><ChoiceSelect value={customization.storage} options={[CHOICE("512gb", "512 GB"), CHOICE("1tb", "1 TB"), CHOICE("2tb", "2 TB"), CHOICE("4tb", "4 TB")]} onChange={storage => setCustomization({ ...customization, storage })} /></Field>
+                    <Field label="Audio"><ChoiceSelect value={customization.audio} options={[CHOICE("standard_stereo", "Standard stereo"), CHOICE("premium_stereo", "Premium stereo"), CHOICE("2.1_subwoofer", "2.1 + subwoofer"), CHOICE("surround")]} onChange={audio => setCustomization({ ...customization, audio })} /></Field>
+                    <Field label="Lighting"><ChoiceSelect value={customization.lighting} options={[CHOICE("none"), CHOICE("marquee"), CHOICE("controls", "Lit controls"), CHOICE("full_rgb", "Full RGB package")]} onChange={lighting => setCustomization({ ...customization, lighting })} /></Field>
+                    <Field label="Cooling"><ChoiceSelect value={customization.cooling} options={[CHOICE("standard"), CHOICE("quiet_fans", "Quiet fans"), CHOICE("high_flow", "High airflow")]} onChange={cooling => setCustomization({ ...customization, cooling })} /></Field>
+                    <Field label="Base"><ChoiceSelect value={customization.feet} options={[CHOICE("levelers"), CHOICE("casters", "Locking casters"), CHOICE("fixed_plinth", "Fixed plinth")]} onChange={feet => setCustomization({ ...customization, feet })} /></Field>
+                  </div>
+                  <div className="grid sm:grid-cols-3 gap-3 mt-5">
+                    <AddOn label="Coin door" v={customization.coinDoor} on={coinDoor => setCustomization({ ...customization, coinDoor })} />
+                    <AddOn label="Bluetooth" v={customization.bluetooth} on={bluetooth => setCustomization({ ...customization, bluetooth })} />
+                    <AddOn label="Front USB ports" v={customization.usbPorts} on={usbPorts => setCustomization({ ...customization, usbPorts })} />
+                  </div>
+                </Section>
+              )}
+
+              {step === 4 && (
                 <Section title="Games & Software" icon={Gamepad2}>
                   <Label className="mb-2 block">Preferred platforms</Label>
                   <div className="flex flex-wrap gap-2 mb-6">

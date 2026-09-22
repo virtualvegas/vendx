@@ -79,24 +79,24 @@ function ArcadeCabinet({ style, size, monitor, controls, trackball, spinner, lig
         <planeGeometry args={[monitorWidth, screenHeight]} /><meshPhysicalMaterial color="#07111e" emissive="#0b73a4" emissiveIntensity={.26} roughness={customization.screenTreatment === "matte" ? .52 : .08} clearcoat={.8} />
       </mesh>
       {artwork.screen && <ArtPanel url={artwork.screen} position={isCocktail ? [0, bodyHeight + .071, 0] : [0, bodyHeight - 1.65, depth / 2 + .085]} rotation={isCocktail ? [-Math.PI / 2, 0, 0] : [0, 0, 0]} scale={[monitorWidth * .94, screenHeight * .92, 1]} />}
-      <RoundedBox args={[width + (wide ? .4 : .12), .3, depth + .42]} radius={.1} position={[0, isCocktail ? bodyHeight + .16 : bodyHeight - 2.55, depth * .12]} rotation={[-.09,0,0]} castShadow><meshStandardMaterial color={trimColor} roughness=.35 /></RoundedBox>
+      <RoundedBox args={[width + (wide ? .4 : .12), .3, depth + .42]} radius={.1} position={[0, isCocktail ? bodyHeight + .16 : bodyHeight - 2.55, depth * .12]} rotation={[-.09,0,0]} castShadow><meshStandardMaterial color={trimColor} roughness={.35} /></RoundedBox>
       {artwork.controlPanel && <ArtPanel url={artwork.controlPanel} position={[0, isCocktail ? bodyHeight + .322 : bodyHeight - 2.385, depth * .12]} rotation={[-Math.PI/2-.09,0,0]} scale={[width * .92, depth * .75, 1]} />}
       {Array.from({ length: players }).map((_, index) => {
         const x = (index - (players - 1) / 2) * (wide ? .65 : .82);
         return <group key={index} position={[x, isCocktail ? bodyHeight + .36 : bodyHeight - 2.25, depth * .13]}>
-          <mesh castShadow><cylinderGeometry args={[.09,.09,.38,18]} /><meshStandardMaterial color={customization.joystickColor || controlColor} metalness=.35 /></mesh>
-          <mesh position={[0,.23,0]} castShadow><sphereGeometry args={[.16,18,18]} /><meshStandardMaterial color={customization.joystickColor || controlColor} roughness=.28 /></mesh>
-          {[0,.18,.36].map((dx, i) => <mesh key={i} position={[.24 + dx,.03,.12]} rotation={[Math.PI/2,0,0]}><cylinderGeometry args={[.075,.075,.05,16]} /><meshStandardMaterial color={controlColor} emissive={controlColor} emissiveIntensity=.2 /></mesh>)}
+          <mesh castShadow><cylinderGeometry args={[.09,.09,.38,18]} /><meshStandardMaterial color={customization.joystickColor || controlColor} metalness={.35} /></mesh>
+          <mesh position={[0,.23,0]} castShadow><sphereGeometry args={[.16,18,18]} /><meshStandardMaterial color={customization.joystickColor || controlColor} roughness={.28} /></mesh>
+          {[0,.18,.36].map((dx, i) => <mesh key={i} position={[.24 + dx,.03,.12]} rotation={[Math.PI/2,0,0]}><cylinderGeometry args={[.075,.075,.05,16]} /><meshStandardMaterial color={controlColor} emissive={controlColor} emissiveIntensity={.2} /></mesh>)}
         </group>;
       })}
-      {trackball && <mesh position={[0, isCocktail ? bodyHeight + .39 : bodyHeight - 2.2, depth * .32]}><sphereGeometry args={[.19,24,24]} /><meshPhysicalMaterial color="#d5e8ef" roughness=.2 metalness=.2 /></mesh>}
-      {spinner && <mesh position={[width*.3, isCocktail ? bodyHeight + .4 : bodyHeight - 2.2, depth*.36]}><cylinderGeometry args={[.12,.12,.18,20]} /><meshStandardMaterial color="#c9d0d8" metalness=.8 roughness=.2 /></mesh>}
+      {trackball && <mesh position={[0, isCocktail ? bodyHeight + .39 : bodyHeight - 2.2, depth * .32]}><sphereGeometry args={[.19,24,24]} /><meshPhysicalMaterial color="#d5e8ef" roughness={.2} metalness={.2} /></mesh>}
+      {spinner && <mesh position={[width*.3, isCocktail ? bodyHeight + .4 : bodyHeight - 2.2, depth*.36]}><cylinderGeometry args={[.12,.12,.18,20]} /><meshStandardMaterial color="#c9d0d8" metalness={.8} roughness={.2} /></mesh>}
       {lightGun && <group position={[-width*.34,bodyHeight-2.15,depth*.66]} rotation={[0,0,-.18]}><mesh><boxGeometry args={[.4,.18,.16]} /><meshStandardMaterial color={controlColor} /></mesh><mesh position={[.1,-.18,0]} rotation={[0,0,-.35]}><boxGeometry args={[.12,.35,.13]} /><meshStandardMaterial color="#151922" /></mesh></group>}
-      {customization.coinDoor !== false && !isCocktail && <group position={[0,1.25,depth/2+.08]}><mesh><boxGeometry args={[.62,.9,.08]} /><meshStandardMaterial color="#11151b" metalness=.72 roughness=.3 /></mesh>{[-.18,.18].map(x => <mesh key={x} position={[x,.18,.055]}><boxGeometry args={[.14,.27,.05]} /><meshStandardMaterial color="#b9c1c9" metalness=.9 /></mesh>)}</group>}
+      {customization.coinDoor !== false && !isCocktail && <group position={[0,1.25,depth/2+.08]}><mesh><boxGeometry args={[.62,.9,.08]} /><meshStandardMaterial color="#11151b" metalness={.72} roughness={.3} /></mesh>{[-.18,.18].map(x => <mesh key={x} position={[x,.18,.055]}><boxGeometry args={[.14,.27,.05]} /><meshStandardMaterial color="#b9c1c9" metalness={.9} /></mesh>)}</group>}
       {artwork.front && <ArtPanel url={artwork.front} position={[0,1.35,depth/2+.13]} scale={[width*.86,1.65,1]} />}
       {artwork.leftSide && <ArtPanel url={artwork.leftSide} position={[-width/2-.006,y,0]} rotation={[0,-Math.PI/2,0]} scale={[depth*.9,bodyHeight*.88,1]} />}
       {artwork.rightSide && <ArtPanel url={artwork.rightSide} position={[width/2+.006,y,0]} rotation={[0,Math.PI/2,0]} scale={[depth*.9,bodyHeight*.88,1]} />}
-      {customization.feet === "casters" && [-1,1].flatMap(x => [-1,1].map(z => <mesh key={`${x}-${z}`} position={[x*width*.35,-.08,z*depth*.32]} rotation={[Math.PI/2,0,0]}><torusGeometry args={[.1,.04,10,20]} /><meshStandardMaterial color="#20262f" metalness=.7 /></mesh>))}
+      {customization.feet === "casters" && [-1,1].flatMap(x => [-1,1].map(z => <mesh key={`${x}-${z}`} position={[x*width*.35,-.08,z*depth*.32]} rotation={[Math.PI/2,0,0]}><torusGeometry args={[.1,.04,10,20]} /><meshStandardMaterial color="#20262f" metalness={.7} /></mesh>))}
     </group>
   );
 }
@@ -119,8 +119,8 @@ export default function CabinetPreview(props: Props) {
         <directionalLight position={[5,8,6]} intensity={2.2} castShadow shadow-mapSize={[1024,1024]} />
         <spotLight position={[-5,7,4]} intensity={1.6} angle={.5} penumbra={.8} color="#82dfff" />
         <Suspense fallback={null}><ArcadeCabinet {...props} /></Suspense>
-        <mesh rotation-x={-Math.PI/2} position={[0,-.2,0]} receiveShadow><circleGeometry args={[7,64]} /><meshStandardMaterial color="#101722" roughness=.82 metalness=.08 /></mesh>
-        <ContactShadows position={[0,-.18,0]} opacity=.52 scale={9} blur={2.5} far={7} />
+        <mesh rotation-x={-Math.PI/2} position={[0,-.2,0]} receiveShadow><circleGeometry args={[7,64]} /><meshStandardMaterial color="#101722" roughness={.82} metalness={.08} /></mesh>
+        <ContactShadows position={[0,-.18,0]} opacity={.52} scale={9} blur={2.5} far={7} />
         <Environment resolution={128}><Lightformer intensity={2.4} position={[0,7,-4]} scale={[8,3,1]} /><Lightformer intensity={1.4} color="#5dd8ff" position={[-5,2,1]} rotation-y={Math.PI/2} scale={[5,2,1]} /></Environment>
         <CameraView view={view} reset={reset} />
         <OrbitControls makeDefault target={[0,2.2,0]} minDistance={5} maxDistance={12} minPolarAngle={.45} maxPolarAngle={Math.PI/2.05} enablePan={false} />
