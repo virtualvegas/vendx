@@ -114,6 +114,69 @@ function FinishMaterial({ color, finish = "satin" }: { color: string; finish?: s
   );
 }
 
+function useProductTexture(kind: "screen" | "marquee", accent: string) {
+  const texture = useMemo(() => {
+    const canvas = document.createElement("canvas");
+    canvas.width = kind === "screen" ? 768 : 1024;
+    canvas.height = kind === "screen" ? 432 : 256;
+    const context = canvas.getContext("2d");
+    if (context) {
+      if (kind === "screen") {
+        const gradient = context.createLinearGradient(0, 0, canvas.width, canvas.height);
+        gradient.addColorStop(0, "#071018");
+        gradient.addColorStop(0.55, "#0b1c27");
+        gradient.addColorStop(1, "#05080d");
+        context.fillStyle = gradient;
+        context.fillRect(0, 0, canvas.width, canvas.height);
+        context.strokeStyle = `${accent}55`;
+        context.lineWidth = 2;
+        for (let x = 0; x < canvas.width; x += 48) { context.beginPath(); context.moveTo(x, 0); context.lineTo(x, canvas.height); context.stroke(); }
+        for (let y = 0; y < canvas.height; y += 48) { context.beginPath(); context.moveTo(0, y); context.lineTo(canvas.width, y); context.stroke(); }
+        context.textAlign = "center";
+        context.fillStyle = "#e7f2f5";
+        context.font = "700 58px Arial";
+        context.fillText("VENDX ARCADE", canvas.width / 2, 190);
+        context.fillStyle = accent;
+        context.font = "500 22px Arial";
+        context.fillText("SYSTEM READY", canvas.width / 2, 240);
+        context.fillStyle = "#73818a";
+        context.font = "16px Arial";
+        context.fillText("PRESS START", canvas.width / 2, 295);
+      } else {
+        context.fillStyle = "#eef3f4";
+        context.fillRect(0, 0, canvas.width, canvas.height);
+        const glow = context.createLinearGradient(0, 0, canvas.width, 0);
+        glow.addColorStop(0, "#15191e"); glow.addColorStop(0.5, accent); glow.addColorStop(1, "#15191e");
+        context.fillStyle = glow;
+        context.fillRect(0, canvas.height - 17, canvas.width, 17);
+        context.textAlign = "center";
+        context.fillStyle = "#11161b";
+        context.font = "800 94px Arial";
+        context.fillText("VENDX", canvas.width / 2, 122);
+        context.fillStyle = "#4c5962";
+        context.font = "500 28px Arial";
+        context.fillText("CUSTOM ARCADE SYSTEM", canvas.width / 2, 174);
+      }
+    }
+    const result = new THREE.CanvasTexture(canvas);
+    result.colorSpace = THREE.SRGBColorSpace;
+    result.anisotropy = 8;
+    return result;
+  }, [kind, accent]);
+  useEffect(() => () => texture.dispose(), [texture]);
+  return texture;
+}
+
+function ProductPanel({ kind, accent, position, scale }: { kind: "screen" | "marquee"; accent: string; position: [number, number, number]; scale: [number, number] }) {
+  const texture = useProductTexture(kind, accent);
+  return (
+    <mesh position={position} renderOrder={2}>
+      <planeGeometry args={scale} />
+      <meshPhysicalMaterial map={texture} emissiveMap={texture} emissive="#ffffff" emissiveIntensity={kind === "screen" ? 0.18 : 0.08} roughness={0.3} />
+    </mesh>
+  );
+}
+
 function SideTrim({ width, profile, color }: { width: number; profile: ProfilePoint[]; color: string }) {
   return (
     <>
@@ -154,6 +217,7 @@ function Screen({ width, height, position, rotation = [0, 0, 0], treatment, artw
           clearcoatRoughness={0.08}
         />
       </mesh>
+      {!artwork && <ProductPanel kind="screen" accent="#25c7e9" position={[0, 0, 0.078]} scale={[width * 0.98, height * 0.98]} />}
       {artwork && <ArtPanel url={artwork} position={[0, 0, 0.078]} scale={[width * 0.98, height * 0.98]} />}
       <mesh position={[0, -height / 2 - 0.075, 0.075]}>
         <boxGeometry args={[0.22, 0.018, 0.01]} />
@@ -275,6 +339,7 @@ function UprightCabinet({ style, size, monitor, controls, trackball, spinner, li
         <RoundedBox args={[width - 0.38, 0.48, 0.025]} radius={0.02} position={[0, 0, 0.074]}>
           <meshPhysicalMaterial color="#e7edf0" roughness={0.35} transmission={customization.marqueeType === "unlit" ? 0 : 0.12} emissive={trimColor} emissiveIntensity={customization.marqueeType === "unlit" ? 0 : 0.22} />
         </RoundedBox>
+        {!artwork.marquee && <ProductPanel kind="marquee" accent={trimColor} position={[0, 0, 0.09]} scale={[width - 0.46, 0.43]} />}
         {artwork.marquee && <ArtPanel url={artwork.marquee} position={[0, 0, 0.09]} scale={[width - 0.46, 0.43]} />}
       </group>
 
