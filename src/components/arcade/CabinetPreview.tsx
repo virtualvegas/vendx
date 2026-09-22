@@ -101,7 +101,7 @@ function FrontCabinet({ props }: { props: Props }) {
           <div className="absolute inset-[9%] overflow-hidden rounded-sm border border-border bg-background"><UploadedArt src={props.artwork?.marquee} alt="Backbox artwork" /><span className={cn("absolute inset-0 flex items-center justify-center text-xs font-bold uppercase", props.artwork?.marquee && "hidden")}>VendX Pinball</span></div>
         </div>
         <div className="absolute left-[9%] top-[31%] h-[39%] w-[82%] origin-top -skew-y-6 rounded-sm border-4 shadow-xl" style={{ backgroundColor: body, borderColor: trim }}>
-          <div className="absolute inset-[6%] overflow-hidden rounded-sm border border-border bg-background"><UploadedArt src={props.artwork?.screen} alt="Playfield artwork" /><DefaultScreen accent={trim} theme={props.theme} /></div>
+          <div className="absolute inset-[6%] overflow-hidden rounded-sm border border-border bg-background">{props.artwork?.screen ? <UploadedArt src={props.artwork.screen} alt="Playfield artwork" /> : <DefaultScreen accent={trim} theme={props.theme} />}</div>
         </div>
         {[18, 78].map(left => <div key={left} className="absolute top-[66%] h-[31%] w-[4%] bg-muted-foreground" style={{ left: `${left}%` }} />)}
       </div>
@@ -112,7 +112,7 @@ function FrontCabinet({ props }: { props: Props }) {
     return (
       <div className="relative h-[88%] w-[80%]" style={{ transform: `scale(${scale})`, transformOrigin: "bottom center" }}>
         <div className="absolute left-[18%] top-0 h-[58%] w-[64%] rounded-t-md border-4 shadow-xl" style={{ backgroundColor: body, borderColor: trim }}>
-          <div className="absolute left-[9%] top-[9%] h-[43%] w-[82%] overflow-hidden rounded-sm border-4 border-background bg-background"><UploadedArt src={props.artwork?.screen} alt="Screen graphic" /><DefaultScreen accent={trim} theme={props.theme} /></div>
+          <div className="absolute left-[9%] top-[9%] h-[43%] w-[82%] overflow-hidden rounded-sm border-4 border-background bg-background">{props.artwork?.screen ? <UploadedArt src={props.artwork.screen} alt="Screen graphic" /> : <DefaultScreen accent={trim} theme={props.theme} />}</div>
           <div className="absolute left-1/2 top-[61%] h-16 w-16 -translate-x-1/2 rounded-full border-[7px] border-background"><div className="absolute left-1/2 top-1/2 h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full" style={{ backgroundColor: trim }} /></div>
         </div>
         <div className="absolute bottom-[7%] left-[12%] h-[27%] w-[76%] rounded-md border-4 shadow-xl" style={{ backgroundColor: body, borderColor: trim }} />
