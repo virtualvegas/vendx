@@ -51,15 +51,10 @@ const NewsletterCategorySubscribe = ({ categories }: { categories: Category[] })
         subscriberId = inserted.id;
       }
 
-      // Wipe prior category prefs and re-insert
-      await supabase.from("news_category_subscriptions").delete().eq("subscriber_id", subscriberId);
-
-      const rows =
-        selected.length === 0
-          ? [{ subscriber_id: subscriberId, category_id: null }]
-          : selected.map((cid) => ({ subscriber_id: subscriberId!, category_id: cid }));
-
-      const { error: subErr } = await supabase.from("news_category_subscriptions").insert(rows);
+      const { error: subErr } = await supabase.rpc("set_news_category_subscriptions", {
+        p_email: trimmed,
+        p_category_ids: selected,
+      });
       if (subErr) throw subErr;
 
       toast.success("Subscribed — you'll hear from us when new stories drop.");
