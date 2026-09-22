@@ -534,6 +534,8 @@ const CustomArcadeRequestPage = () => {
                     spinner={form.spinner}
                     lightGun={form.light_gun}
                     theme={form.artwork_theme}
+                     customization={customization}
+                     artwork={artwork}
                   />
                   <dl className="mt-4 space-y-2 text-sm">
                     <Row k="Size" v={SIZES.find(s => s.v === form.cabinet_size)?.l} />
