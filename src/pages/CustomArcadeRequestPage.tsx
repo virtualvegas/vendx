@@ -80,7 +80,7 @@ const DEFAULT_CUSTOMIZATION: CabinetCustomization = {
   lighting: "marquee", cooling: "quiet_fans", audio: "premium_stereo",
 };
 const COLORS = ["#172033", "#f2f4f7", "#d6263d", "#1261a8", "#13a878", "#e3a62f", "#7b42c3", "#171717"];
-const CHOICE = (value: string, label?: string) => ({ v: value, l: label || value.replaceAll("_", " ") });
+const CHOICE = (value: string, label?: string) => ({ v: value, l: label || value.replace(/_/g, " ") });
 
 const empty = {
   full_name: "", email: "", phone: "",
