@@ -55,23 +55,23 @@ function Controls({ props, width = "78%" }: { props: Props; width?: string }) {
   const joystickColor = props.customization?.joystickColor || buttonColor;
 
   return (
-    <div className="absolute left-1/2 top-[62%] flex h-[10%] -translate-x-1/2 items-center justify-around rounded-sm border border-border/60 bg-background/80 px-1 shadow-md" style={{ width }}>
+    <div className="absolute left-1/2 top-[56%] z-20 flex h-[14%] -translate-x-1/2 items-center justify-around px-3" style={{ width }}>
       {Array.from({ length: players }).map((_, player) => (
-        <div key={player} className="flex min-w-0 items-center gap-1">
-          <div className="relative h-5 w-3 shrink-0">
-            <div className="absolute bottom-0 left-1/2 h-2 w-2 -translate-x-1/2 rounded-full border border-border bg-muted" />
-            <div className="absolute bottom-1.5 left-1/2 h-3 w-px -translate-x-1/2 bg-muted-foreground" />
-            <div className="absolute left-1/2 top-0 h-2 w-2 -translate-x-1/2 rounded-full" style={{ backgroundColor: joystickColor }} />
+        <div key={player} className="flex min-w-0 items-center gap-2">
+          <div className="relative h-8 w-5 shrink-0">
+            <div className="absolute bottom-0 left-1/2 h-2.5 w-4 -translate-x-1/2 rounded-full border border-border bg-background shadow-inner" />
+            <div className="absolute bottom-1.5 left-1/2 h-5 w-1 -translate-x-1/2 rounded-full bg-muted-foreground" />
+            <div className="absolute left-1/2 top-0 h-3.5 w-3.5 -translate-x-1/2 rounded-full border border-foreground/20 shadow-md" style={{ backgroundColor: joystickColor }} />
           </div>
-          <div className="grid grid-cols-3 gap-0.5">
+          <div className="grid grid-cols-3 gap-1">
             {Array.from({ length: Math.min(buttonCount, 6) }).map((__, index) => (
-              <span key={index} className="h-1.5 w-1.5 rounded-full border border-background/30" style={{ backgroundColor: buttonColor }} />
+              <span key={index} className="h-2.5 w-2.5 rounded-full border border-foreground/20 shadow-sm" style={{ backgroundColor: buttonColor }} />
             ))}
           </div>
         </div>
       ))}
-      {props.trackball && <span className="h-3 w-3 rounded-full border border-border bg-muted-foreground" title="Trackball" />}
-      {props.spinner && <span className="h-3 w-2 rounded-sm border border-border bg-muted" title="Spinner" />}
+      {props.trackball && <span className="h-6 w-6 rounded-full border-2 border-border bg-muted-foreground shadow-inner" title="Trackball" />}
+      {props.spinner && <span className="h-5 w-4 rounded-full border-2 border-border bg-muted shadow-md" title="Spinner" />}
     </div>
   );
 }
@@ -86,13 +86,6 @@ function FrontCabinet({ props }: { props: Props }) {
   const isRacing = props.style === "racing";
   const screenPortrait = custom.monitorOrientation === "portrait";
   const scale = SIZE_SCALE[props.size] || 1;
-  const shape = props.style === "bartop"
-    ? "polygon(10% 0,90% 0,96% 28%,87% 100%,13% 100%,4% 28%)"
-    : props.style === "pedestal"
-      ? "polygon(12% 0,88% 0,96% 22%,73% 34%,68% 100%,32% 100%,27% 34%,4% 22%)"
-      : props.style === "wall_mount"
-        ? "polygon(8% 0,92% 0,98% 24%,88% 100%,12% 100%,2% 24%)"
-        : "polygon(8% 0,92% 0,98% 14%,90% 100%,10% 100%,2% 14%)";
 
   if (isPinball) {
     return (
@@ -123,34 +116,56 @@ function FrontCabinet({ props }: { props: Props }) {
   }
 
   return (
-    <div className={cn("relative transition-transform duration-300", wide ? "h-[88%] w-[82%]" : short ? "h-[75%] w-[62%]" : "h-[88%] w-[62%]")} style={{ transform: `scale(${scale})`, transformOrigin: "bottom center" }}>
-      <div className="absolute inset-0 overflow-hidden shadow-2xl transition-colors duration-300" style={{ backgroundColor: body, clipPath: shape }}>
-        <div className="absolute inset-x-[7%] top-[2%] h-[12%] overflow-hidden rounded-sm border-[3px] transition-colors" style={{ borderColor: trim, boxShadow: custom.marqueeType !== "unlit" ? `0 0 16px ${trim}` : undefined }}>
-          <UploadedArt src={props.artwork?.marquee} alt="Marquee artwork" />
-          {!props.artwork?.marquee && <div className="flex h-full items-center justify-center bg-background/90 text-xs font-black uppercase text-foreground">{props.theme || "VendX Arcade"}</div>}
-        </div>
-        <div className={cn("absolute left-1/2 top-[18%] -translate-x-1/2 overflow-hidden rounded-sm border-[5px] border-background bg-background", screenPortrait ? "h-[34%] w-[40%]" : "h-[29%] w-[72%]")}>
-          {props.artwork?.screen ? <UploadedArt src={props.artwork.screen} alt="Screen artwork" /> : <DefaultScreen accent={trim} theme={props.theme} />}
-          {custom.screenTreatment === "gloss" && <div className="pointer-events-none absolute inset-y-0 left-[12%] w-[18%] -skew-x-12 bg-foreground/5" />}
-        </div>
-        <div className="absolute inset-x-[10%] top-[51%] h-[5%] rounded-sm bg-background/80">
-          <div className="flex h-full items-center justify-around">{Array.from({ length: custom.speakerLayout === "mono" ? 1 : 2 }).map((_, i) => <span key={i} className="h-3 w-8 rounded-full border border-border bg-muted" />)}</div>
-        </div>
-        <div className="absolute inset-x-[6%] top-[58%] h-[17%] -skew-y-3 overflow-hidden rounded-sm border-[3px] transition-colors" style={{ backgroundColor: body, borderColor: trim }}>
-          <UploadedArt src={props.artwork?.controlPanel} alt="Control deck artwork" />
-        </div>
-        <Controls props={props} width={wide ? "88%" : "76%"} />
-        {props.artwork?.front && <div className="absolute bottom-[7%] left-[13%] h-[18%] w-[74%] overflow-hidden rounded-sm"><UploadedArt src={props.artwork.front} alt="Kickplate artwork" /></div>}
-        {custom.coinDoor !== false && props.style !== "bartop" && props.style !== "wall_mount" && (
-          <div className="absolute bottom-[8%] left-1/2 h-[15%] w-[27%] -translate-x-1/2 rounded-sm border border-muted-foreground bg-background/90 p-1">
-            <div className="flex h-full justify-around">{[0, 1].map(i => <span key={i} className="mt-1 h-5 w-2 rounded-sm border border-muted-foreground bg-muted" />)}</div>
+    <div className={cn("relative transition-transform duration-300", wide ? "h-[94%] w-[88%]" : short ? "h-[82%] w-[72%]" : "h-[94%] w-[72%]")} style={{ transform: `scale(${scale})`, transformOrigin: "bottom center" }}>
+      <div className="absolute -inset-x-[5%] bottom-0 top-[3%] rounded-md shadow-2xl brightness-75" style={{ backgroundColor: body }} />
+      <div className="absolute -left-[5%] bottom-[2%] top-[7%] w-[8%] -skew-y-1 rounded-l-sm border-r border-border shadow-inner brightness-75" style={{ backgroundColor: body }} />
+      <div className="absolute -right-[5%] bottom-[2%] top-[7%] w-[8%] skew-y-1 rounded-r-sm border-l border-border shadow-inner brightness-75" style={{ backgroundColor: body }} />
+
+      <div className="absolute inset-x-0 bottom-0 top-0 overflow-hidden rounded-b-md shadow-2xl" style={{ backgroundColor: body }}>
+        <div className="relative h-[14%] overflow-hidden border-b-4 bg-background p-[5%] transition-colors" style={{ borderColor: trim }}>
+          <div className="relative flex h-full items-center justify-center overflow-hidden rounded-sm border border-border bg-muted shadow-inner" style={{ boxShadow: custom.marqueeType !== "unlit" ? `0 0 18px ${trim}` : undefined }}>
+            <UploadedArt src={props.artwork?.marquee} alt="Marquee artwork" />
+            {!props.artwork?.marquee && <span className="absolute text-xs font-black uppercase text-foreground">{props.theme || "VendX Arcade Pro"}</span>}
           </div>
-        )}
-        {custom.usbPorts && <div className="absolute bottom-[27%] right-[14%] flex gap-1"><span className="h-1.5 w-3 bg-muted-foreground" /><span className="h-1.5 w-3 bg-muted-foreground" /></div>}
+          <div className="absolute inset-x-[10%] top-0 h-0.5 opacity-70" style={{ backgroundColor: trim }} />
+        </div>
+
+        <div className="relative h-[39%] border-b-4 bg-background p-[8%]" style={{ borderColor: body }}>
+          <div className={cn("relative mx-auto flex h-full items-center justify-center overflow-hidden rounded-sm border-[7px] border-muted bg-background shadow-inner", screenPortrait ? "w-[55%]" : "w-full")}>
+            {props.artwork?.screen ? <UploadedArt src={props.artwork.screen} alt="Screen artwork" /> : <DefaultScreen accent={trim} theme={props.theme} />}
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-tr from-transparent via-foreground/5 to-transparent" />
+            {custom.screenTreatment === "gloss" && <div className="pointer-events-none absolute -top-1/2 left-[18%] h-[190%] w-[16%] -rotate-12 bg-foreground/5" />}
+          </div>
+          <div className="absolute inset-x-[12%] bottom-1 flex justify-around">
+            {Array.from({ length: custom.speakerLayout === "mono" ? 1 : 2 }).map((_, i) => <span key={i} className="h-1.5 w-12 rounded-full border border-border bg-muted shadow-inner" />)}
+          </div>
+        </div>
+
+        <div className="relative h-[18%] border-b-[6px] shadow-xl brightness-90" style={{ backgroundColor: body, borderColor: trim }}>
+          <div className="absolute inset-0 bg-gradient-to-b from-foreground/10 to-transparent" />
+          {props.artwork?.controlPanel && <div className="absolute inset-0 overflow-hidden opacity-80"><UploadedArt src={props.artwork.controlPanel} alt="Control deck artwork" /></div>}
+          <Controls props={props} width={wide ? "94%" : "88%"} />
+          <div className="absolute inset-x-[14%] bottom-[10%] flex justify-center gap-8 opacity-60"><span className="h-1.5 w-8 rounded-full bg-background" /><span className="h-1.5 w-8 rounded-full bg-background" /></div>
+        </div>
+
+        <div className="relative flex h-[29%] flex-col items-center overflow-hidden pt-[7%] brightness-75" style={{ backgroundColor: body }}>
+          {props.artwork?.front && <div className="absolute inset-0 opacity-70"><UploadedArt src={props.artwork.front} alt="Kickplate artwork" /></div>}
+          {custom.coinDoor !== false && props.style !== "bartop" && props.style !== "wall_mount" && (
+            <div className="relative z-10 flex h-[58%] w-[31%] flex-col items-center rounded-sm border-2 border-border bg-muted p-2 shadow-xl">
+              <div className="flex h-[55%] w-full items-center justify-around rounded-sm border border-border bg-background shadow-inner">
+                {[0, 1].map(i => <span key={i} className="h-6 w-2 rounded-sm border border-muted-foreground bg-muted"><span className="mx-auto mt-1 block h-0.5 w-1" style={{ backgroundColor: trim }} /></span>)}
+              </div>
+              <div className="mt-auto h-2 w-[65%] rounded-full bg-background shadow-inner" />
+            </div>
+          )}
+          {custom.usbPorts && <div className="relative z-10 mt-2 flex gap-2"><span className="h-1.5 w-4 rounded-sm bg-muted-foreground" /><span className="h-1.5 w-4 rounded-sm bg-muted-foreground" /></div>}
+        </div>
       </div>
-      <div className="absolute inset-y-0 left-0 w-[3px] transition-colors" style={{ backgroundColor: trim, boxShadow: custom.lighting === "full_rgb" ? `0 0 14px ${trim}` : undefined }} />
-      <div className="absolute inset-y-0 right-0 w-[3px] transition-colors" style={{ backgroundColor: trim, boxShadow: custom.lighting === "full_rgb" ? `0 0 14px ${trim}` : undefined }} />
-      {props.lightGun && <div className="absolute right-[-4%] top-[61%] h-4 w-12 -rotate-12 rounded-sm" style={{ backgroundColor: custom.buttonColor || trim }} />}
+
+      <div className="absolute inset-y-0 left-0 w-1 transition-colors" style={{ backgroundColor: trim, boxShadow: custom.lighting === "full_rgb" ? `0 0 14px ${trim}` : undefined }} />
+      <div className="absolute inset-y-0 right-0 w-1 transition-colors" style={{ backgroundColor: trim, boxShadow: custom.lighting === "full_rgb" ? `0 0 14px ${trim}` : undefined }} />
+      <div className="absolute -bottom-2 left-[10%] right-[10%] h-3 rounded-full opacity-30 blur-md" style={{ backgroundColor: trim }} />
+      {props.lightGun && <div className="absolute right-[-8%] top-[55%] h-5 w-14 -rotate-12 rounded-sm border border-border shadow-lg" style={{ backgroundColor: custom.buttonColor || trim }} />}
     </div>
   );
 }
@@ -166,17 +181,23 @@ function SideCabinet({ props, side }: { props: Props; side: "leftSide" | "rightS
       ? "polygon(10% 0,86% 0,100% 18%,78% 100%,8% 100%,0 18%)"
       : "polygon(5% 0,82% 0,100% 13%,71% 30%,76% 100%,10% 100%,16% 40%,0 22%)";
   return (
-    <div className="relative h-[88%] w-[54%] drop-shadow-2xl" style={{ transform: `scale(${SIZE_SCALE[props.size] || 1})`, transformOrigin: "bottom center" }}>
-      <div className="absolute inset-0 overflow-hidden border-[4px] transition-colors duration-300" style={{ backgroundColor: body, borderColor: trim, clipPath: shape }}>
-        {art ? <UploadedArt src={art} alt={`${side === "leftSide" ? "Left" : "Right"} side artwork`} /> : (
-          <div className="flex h-full flex-col items-center justify-center px-6 text-center">
-            <Image className="mb-3 h-9 w-9 text-muted-foreground" />
-            <span className="text-xs font-bold uppercase text-foreground">{side === "leftSide" ? "Left" : "Right"} side</span>
-            <span className="mt-1 text-[10px] text-muted-foreground">Upload artwork to fill this panel</span>
-          </div>
-        )}
-        <div className="absolute right-[8%] top-[17%] h-[18%] w-[8%] rounded-sm bg-background/70" />
+    <div className="relative h-[91%] w-[58%] drop-shadow-2xl" style={{ transform: `scale(${SIZE_SCALE[props.size] || 1})`, transformOrigin: "bottom center" }}>
+      <div className="absolute -inset-2 opacity-70 blur-sm" style={{ backgroundColor: trim, clipPath: shape }} />
+      <div className="absolute inset-0 overflow-hidden border-[5px] transition-colors duration-300" style={{ backgroundColor: body, borderColor: trim, clipPath: shape }}>
+        <div className="absolute inset-[7%] overflow-hidden border border-foreground/10 shadow-inner" style={{ clipPath: shape }}>
+          {art ? <UploadedArt src={art} alt={`${side === "leftSide" ? "Left" : "Right"} side artwork`} /> : (
+            <div className="flex h-full flex-col items-center justify-center bg-background/20 px-6 text-center">
+              <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full border border-foreground/20 bg-background/20"><Image className="h-6 w-6 text-foreground/60" /></div>
+              <span className="text-xs font-bold uppercase text-foreground">{side === "leftSide" ? "Left" : "Right"} panel</span>
+              <span className="mt-1 max-w-28 text-[10px] leading-relaxed text-foreground/60">Artwork will be fitted inside this trim line</span>
+            </div>
+          )}
+        </div>
+        <div className="absolute right-[7%] top-[16%] h-[18%] w-[9%] rounded-sm border border-border bg-background shadow-inner" />
+        <div className="absolute inset-y-[8%] left-[3%] w-0.5 bg-foreground/20" />
+        <div className="absolute inset-x-[12%] bottom-[4%] h-1 rounded-full bg-background/60" />
       </div>
+      <div className="absolute -bottom-2 left-[12%] right-[12%] h-3 rounded-full opacity-30 blur-md" style={{ backgroundColor: trim }} />
     </div>
   );
 }
