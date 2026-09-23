@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import StarField from "@/components/StarField";
-import CabinetPreview, { type CabinetCustomization } from "@/components/arcade/CabinetPreview";
+import type { CabinetCustomization } from "@/components/arcade/CabinetPreview";
 import ArcadeArtworkUploader, { type ArtworkPaths, type ArtworkPreviews } from "@/components/arcade/ArcadeArtworkUploader";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -190,7 +190,7 @@ const CustomArcadeRequestPage = () => {
               <h1 className="text-3xl font-bold mb-2">Request Received</h1>
               <p className="text-muted-foreground mb-2">Reference: <span className="font-mono text-foreground">{done}</span></p>
               <p className="text-muted-foreground mb-6">
-                Our arcade build team will review your specs and reach out within 1–2 business days with a personalized quote.
+                Our artists will review your specs and send you free custom concept designs. Once you choose one, we'll confirm the details and begin order creation — every custom build takes 4–6 weeks.
               </p>
               <div className="flex gap-2 justify-center">
                 <Link to="/store?category=arcade_sales"><Button variant="outline">Browse Prebuilt Machines</Button></Link>
@@ -515,29 +515,36 @@ const CustomArcadeRequestPage = () => {
               </div>
             </div>
 
-            {/* Live preview */}
+            {/* How it works */}
             <aside className="lg:sticky lg:top-24 space-y-4">
               <Card className="bg-card/60 border-primary/30 overflow-hidden">
                 <CardContent className="p-4">
-                  <div className="flex items-center justify-between mb-3">
-                    <h3 className="text-sm font-bold uppercase tracking-wider text-primary">Live Preview</h3>
-                    <Badge variant="outline" className="text-[10px] capitalize">
-                      {CABINET_STYLES.find(c => c.v === form.cabinet_style)?.l}
-                    </Badge>
-                  </div>
-                  <CabinetPreview
-                    style={form.cabinet_style}
-                    size={form.cabinet_size}
-                    monitor={form.monitor_size}
-                    controls={form.control_layout}
-                    trackball={form.trackball}
-                    spinner={form.spinner}
-                    lightGun={form.light_gun}
-                    theme={form.artwork_theme}
-                     customization={customization}
-                     artwork={artwork}
-                  />
-                  <dl className="mt-4 space-y-2 text-sm">
+                  <h3 className="text-sm font-bold uppercase tracking-wider text-primary mb-4">How It Works</h3>
+                  <ol className="space-y-4">
+                    {[
+                      { n: 1, t: "Submit your specs", d: "Fill out this builder with your style, controls, colors, and artwork ideas." },
+                      { n: 2, t: "Get free concept designs", d: "Our artists will design custom concepts for your machine and send them to you — completely free." },
+                      { n: 3, t: "Choose your favorite", d: "Pick the concept you love and we'll finalize the details with you." },
+                      { n: 4, t: "We build your machine", d: "Once confirmed, order creation begins. Every custom build takes 4–6 weeks." },
+                    ].map(s => (
+                      <li key={s.n} className="flex gap-3">
+                        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/15 border border-primary/40 text-primary text-xs font-bold">
+                          {s.n}
+                        </span>
+                        <div>
+                          <p className="text-sm font-semibold">{s.t}</p>
+                          <p className="text-xs text-muted-foreground mt-0.5">{s.d}</p>
+                        </div>
+                      </li>
+                    ))}
+                  </ol>
+                </CardContent>
+              </Card>
+              <Card className="bg-card/60 border-border/50 overflow-hidden">
+                <CardContent className="p-4">
+                  <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground mb-3">Your Specs</h3>
+                  <dl className="space-y-2 text-sm">
+                    <Row k="Style" v={CABINET_STYLES.find(c => c.v === form.cabinet_style)?.l} />
                     <Row k="Size" v={SIZES.find(s => s.v === form.cabinet_size)?.l} />
                     <Row k="Controls" v={CONTROLS.find(c => c.v === form.control_layout)?.l} />
                     <Row k="Monitor" v={`${form.monitor_size}"`} />
@@ -549,7 +556,7 @@ const CustomArcadeRequestPage = () => {
                 </CardContent>
               </Card>
               <p className="text-xs text-muted-foreground text-center px-2">
-                Preview is illustrative. Final build specs are confirmed in your quote.
+                No payment due now. Final design and pricing are confirmed with you before the build starts.
               </p>
             </aside>
           </form>
