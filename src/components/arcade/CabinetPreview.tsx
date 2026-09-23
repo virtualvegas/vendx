@@ -117,9 +117,9 @@ function FrontCabinet({ props }: { props: Props }) {
 
   return (
     <div className={cn("relative transition-transform duration-300", wide ? "h-[94%] w-[88%]" : short ? "h-[82%] w-[72%]" : "h-[94%] w-[72%]")} style={{ transform: `scale(${scale})`, transformOrigin: "bottom center" }}>
-      <div className="absolute -inset-x-[5%] bottom-0 top-[3%] rounded-md bg-muted shadow-2xl" />
-      <div className="absolute -left-[5%] bottom-[2%] top-[7%] w-[8%] -skew-y-1 rounded-l-sm border-r border-border bg-muted shadow-inner" />
-      <div className="absolute -right-[5%] bottom-[2%] top-[7%] w-[8%] skew-y-1 rounded-r-sm border-l border-border bg-muted shadow-inner" />
+      <div className="absolute -inset-x-[5%] bottom-0 top-[3%] rounded-md shadow-2xl brightness-75" style={{ backgroundColor: body }} />
+      <div className="absolute -left-[5%] bottom-[2%] top-[7%] w-[8%] -skew-y-1 rounded-l-sm border-r border-border shadow-inner brightness-75" style={{ backgroundColor: body }} />
+      <div className="absolute -right-[5%] bottom-[2%] top-[7%] w-[8%] skew-y-1 rounded-r-sm border-l border-border shadow-inner brightness-75" style={{ backgroundColor: body }} />
 
       <div className="absolute inset-x-0 bottom-0 top-0 overflow-hidden rounded-b-md shadow-2xl" style={{ backgroundColor: body }}>
         <div className="relative h-[14%] overflow-hidden border-b-4 bg-background p-[5%] transition-colors" style={{ borderColor: trim }}>
@@ -141,14 +141,14 @@ function FrontCabinet({ props }: { props: Props }) {
           </div>
         </div>
 
-        <div className="relative h-[18%] border-b-[6px] bg-muted shadow-xl" style={{ borderColor: trim }}>
+        <div className="relative h-[18%] border-b-[6px] shadow-xl brightness-90" style={{ backgroundColor: body, borderColor: trim }}>
           <div className="absolute inset-0 bg-gradient-to-b from-foreground/10 to-transparent" />
           {props.artwork?.controlPanel && <div className="absolute inset-0 overflow-hidden opacity-80"><UploadedArt src={props.artwork.controlPanel} alt="Control deck artwork" /></div>}
           <Controls props={props} width={wide ? "94%" : "88%"} />
           <div className="absolute inset-x-[14%] bottom-[10%] flex justify-center gap-8 opacity-60"><span className="h-1.5 w-8 rounded-full bg-background" /><span className="h-1.5 w-8 rounded-full bg-background" /></div>
         </div>
 
-        <div className="relative flex h-[29%] flex-col items-center overflow-hidden bg-background pt-[7%]">
+        <div className="relative flex h-[29%] flex-col items-center overflow-hidden pt-[7%] brightness-75" style={{ backgroundColor: body }}>
           {props.artwork?.front && <div className="absolute inset-0 opacity-70"><UploadedArt src={props.artwork.front} alt="Kickplate artwork" /></div>}
           {custom.coinDoor !== false && props.style !== "bartop" && props.style !== "wall_mount" && (
             <div className="relative z-10 flex h-[58%] w-[31%] flex-col items-center rounded-sm border-2 border-border bg-muted p-2 shadow-xl">
@@ -181,17 +181,23 @@ function SideCabinet({ props, side }: { props: Props; side: "leftSide" | "rightS
       ? "polygon(10% 0,86% 0,100% 18%,78% 100%,8% 100%,0 18%)"
       : "polygon(5% 0,82% 0,100% 13%,71% 30%,76% 100%,10% 100%,16% 40%,0 22%)";
   return (
-    <div className="relative h-[88%] w-[54%] drop-shadow-2xl" style={{ transform: `scale(${SIZE_SCALE[props.size] || 1})`, transformOrigin: "bottom center" }}>
-      <div className="absolute inset-0 overflow-hidden border-[4px] transition-colors duration-300" style={{ backgroundColor: body, borderColor: trim, clipPath: shape }}>
-        {art ? <UploadedArt src={art} alt={`${side === "leftSide" ? "Left" : "Right"} side artwork`} /> : (
-          <div className="flex h-full flex-col items-center justify-center px-6 text-center">
-            <Image className="mb-3 h-9 w-9 text-muted-foreground" />
-            <span className="text-xs font-bold uppercase text-foreground">{side === "leftSide" ? "Left" : "Right"} side</span>
-            <span className="mt-1 text-[10px] text-muted-foreground">Upload artwork to fill this panel</span>
-          </div>
-        )}
-        <div className="absolute right-[8%] top-[17%] h-[18%] w-[8%] rounded-sm bg-background/70" />
+    <div className="relative h-[91%] w-[58%] drop-shadow-2xl" style={{ transform: `scale(${SIZE_SCALE[props.size] || 1})`, transformOrigin: "bottom center" }}>
+      <div className="absolute -inset-2 opacity-70 blur-sm" style={{ backgroundColor: trim, clipPath: shape }} />
+      <div className="absolute inset-0 overflow-hidden border-[5px] transition-colors duration-300" style={{ backgroundColor: body, borderColor: trim, clipPath: shape }}>
+        <div className="absolute inset-[7%] overflow-hidden border border-foreground/10 shadow-inner" style={{ clipPath: shape }}>
+          {art ? <UploadedArt src={art} alt={`${side === "leftSide" ? "Left" : "Right"} side artwork`} /> : (
+            <div className="flex h-full flex-col items-center justify-center bg-background/20 px-6 text-center">
+              <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full border border-foreground/20 bg-background/20"><Image className="h-6 w-6 text-foreground/60" /></div>
+              <span className="text-xs font-bold uppercase text-foreground">{side === "leftSide" ? "Left" : "Right"} panel</span>
+              <span className="mt-1 max-w-28 text-[10px] leading-relaxed text-foreground/60">Artwork will be fitted inside this trim line</span>
+            </div>
+          )}
+        </div>
+        <div className="absolute right-[7%] top-[16%] h-[18%] w-[9%] rounded-sm border border-border bg-background shadow-inner" />
+        <div className="absolute inset-y-[8%] left-[3%] w-0.5 bg-foreground/20" />
+        <div className="absolute inset-x-[12%] bottom-[4%] h-1 rounded-full bg-background/60" />
       </div>
+      <div className="absolute -bottom-2 left-[12%] right-[12%] h-3 rounded-full opacity-30 blur-md" style={{ backgroundColor: trim }} />
     </div>
   );
 }
