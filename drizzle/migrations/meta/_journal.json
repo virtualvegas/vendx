@@ -8,6 +8,13 @@
       "when": 1790102531763,
       "tag": "0000_expand_custom_arcade_builder_and_secure_news_subscriptions",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1790355772267,
+      "tag": "0001_custom_arcade_builder_config_and_quotes",
+      "breakpoints": true
     }
   ]
 }
