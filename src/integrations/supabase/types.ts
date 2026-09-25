@@ -1091,6 +1091,93 @@ export type Database = {
           },
         ]
       }
+      email_send_log: {
+        Row: {
+          created_at: string
+          error_message: string | null
+          id: string
+          message_id: string | null
+          metadata: Json | null
+          recipient_email: string
+          status: string
+          template_name: string
+        }
+        Insert: {
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          message_id?: string | null
+          metadata?: Json | null
+          recipient_email: string
+          status: string
+          template_name: string
+        }
+        Update: {
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          message_id?: string | null
+          metadata?: Json | null
+          recipient_email?: string
+          status?: string
+          template_name?: string
+        }
+        Relationships: []
+      }
+      email_send_state: {
+        Row: {
+          auth_email_ttl_minutes: number
+          batch_size: number
+          id: number
+          retry_after_until: string | null
+          send_delay_ms: number
+          transactional_email_ttl_minutes: number
+          updated_at: string
+        }
+        Insert: {
+          auth_email_ttl_minutes?: number
+          batch_size?: number
+          id?: number
+          retry_after_until?: string | null
+          send_delay_ms?: number
+          transactional_email_ttl_minutes?: number
+          updated_at?: string
+        }
+        Update: {
+          auth_email_ttl_minutes?: number
+          batch_size?: number
+          id?: number
+          retry_after_until?: string | null
+          send_delay_ms?: number
+          transactional_email_ttl_minutes?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      email_unsubscribe_tokens: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          token: string
+          used_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          token: string
+          used_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          token?: string
+          used_at?: string | null
+        }
+        Relationships: []
+      }
       event_machine_assignments: {
         Row: {
           assigned_at: string
@@ -7361,6 +7448,30 @@ export type Database = {
           },
         ]
       }
+      suppressed_emails: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          metadata: Json | null
+          reason: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          metadata?: Json | null
+          reason: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          metadata?: Json | null
+          reason?: string
+        }
+        Relationships: []
+      }
       synced_transactions: {
         Row: {
           amount: number
@@ -7708,6 +7819,48 @@ export type Database = {
         }
         Relationships: []
       }
+      vendx_arcade_builder_styles: {
+        Row: {
+          created_at: string
+          description: string | null
+          featured_product_ids: string[]
+          id: string
+          is_active: boolean
+          label: string
+          option_groups: Json
+          sizes: Json
+          sort_order: number
+          style_key: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          featured_product_ids?: string[]
+          id?: string
+          is_active?: boolean
+          label: string
+          option_groups?: Json
+          sizes?: Json
+          sort_order?: number
+          style_key: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          featured_product_ids?: string[]
+          id?: string
+          is_active?: boolean
+          label?: string
+          option_groups?: Json
+          sizes?: Json
+          sort_order?: number
+          style_key?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       vendx_brand_links: {
         Row: {
           badge: string | null
@@ -7827,6 +7980,7 @@ export type Database = {
       }
       vendx_custom_arcade_requests: {
         Row: {
+          access_token: string
           additional_notes: string | null
           address_line1: string | null
           address_line2: string | null
@@ -7840,9 +7994,13 @@ export type Database = {
           cabinet_style: string | null
           city: string | null
           client_id: string | null
+          concept_image_path: string | null
           control_layout: string | null
           country: string | null
           created_at: string
+          customer_responded_at: string | null
+          customer_response: string | null
+          customer_response_note: string | null
           customization: Json
           email: string
           finance_income_id: string | null
@@ -7860,6 +8018,8 @@ export type Database = {
           postal_code: string | null
           preferred_games: string | null
           preferred_platforms: string[] | null
+          quote_message: string | null
+          quote_sent_at: string | null
           quoted_at: string | null
           quoted_price: number | null
           reference_product_id: string | null
@@ -7873,6 +8033,7 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          access_token?: string
           additional_notes?: string | null
           address_line1?: string | null
           address_line2?: string | null
@@ -7886,9 +8047,13 @@ export type Database = {
           cabinet_style?: string | null
           city?: string | null
           client_id?: string | null
+          concept_image_path?: string | null
           control_layout?: string | null
           country?: string | null
           created_at?: string
+          customer_responded_at?: string | null
+          customer_response?: string | null
+          customer_response_note?: string | null
           customization?: Json
           email: string
           finance_income_id?: string | null
@@ -7906,6 +8071,8 @@ export type Database = {
           postal_code?: string | null
           preferred_games?: string | null
           preferred_platforms?: string[] | null
+          quote_message?: string | null
+          quote_sent_at?: string | null
           quoted_at?: string | null
           quoted_price?: number | null
           reference_product_id?: string | null
@@ -7919,6 +8086,7 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          access_token?: string
           additional_notes?: string | null
           address_line1?: string | null
           address_line2?: string | null
@@ -7932,9 +8100,13 @@ export type Database = {
           cabinet_style?: string | null
           city?: string | null
           client_id?: string | null
+          concept_image_path?: string | null
           control_layout?: string | null
           country?: string | null
           created_at?: string
+          customer_responded_at?: string | null
+          customer_response?: string | null
+          customer_response_note?: string | null
           customization?: Json
           email?: string
           finance_income_id?: string | null
@@ -7952,6 +8124,8 @@ export type Database = {
           postal_code?: string | null
           preferred_games?: string | null
           preferred_platforms?: string[] | null
+          quote_message?: string | null
+          quote_sent_at?: string | null
           quoted_at?: string | null
           quoted_price?: number | null
           reference_product_id?: string | null
@@ -11142,6 +11316,15 @@ export type Database = {
           client_secret: string
         }[]
       }
+      delete_email: {
+        Args: { message_id: number; queue_name: string }
+        Returns: boolean
+      }
+      email_queue_dispatch: { Args: never; Returns: undefined }
+      enqueue_email: {
+        Args: { payload: Json; queue_name: string }
+        Returns: number
+      }
       generate_due_external_service_tickets: { Args: never; Returns: number }
       generate_external_stream_api_key: {
         Args: never
@@ -11370,6 +11553,15 @@ export type Database = {
         Args: { p_keep_id: string; p_merge_id: string }
         Returns: string
       }
+      move_to_dlq: {
+        Args: {
+          dlq_name: string
+          message_id: number
+          payload: Json
+          source_queue: string
+        }
+        Returns: number
+      }
       normalize_phone_digits: { Args: { p: string }; Returns: string }
       process_ticket_redemption: {
         Args: {
@@ -11411,6 +11603,14 @@ export type Database = {
           new_level: number
           points_earned: number
           xp_earned: number
+        }[]
+      }
+      read_email_batch: {
+        Args: { batch_size: number; queue_name: string; vt: number }
+        Returns: {
+          message: Json
+          msg_id: number
+          read_ct: number
         }[]
       }
       redeem_tickets: {
