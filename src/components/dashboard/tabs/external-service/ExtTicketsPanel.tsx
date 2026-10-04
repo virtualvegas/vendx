@@ -36,10 +36,17 @@ const ExtTicketsPanel = () => {
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
   const [detailId, setDetailId] = useState<string | null>(null);
+  const [selected, setSelected] = useState<string[]>([]);
+  const [mergeOpen, setMergeOpen] = useState(false);
+  const [mergeTarget, setMergeTarget] = useState("");
 
   const { data: techs = [] } = useQuery({
     queryKey: ["ext-tech-filter"],
-    queryFn: async () => (await supabase.from("profiles").select("id,full_name,email").order("full_name")).data || [],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("list_ext_service_technicians" as any);
+      if (error) console.error("tech list error:", error);
+      return (data as any[]) || [];
+    },
   });
 
   const { data: clients = [] } = useQuery({
@@ -67,7 +74,7 @@ const ExtTicketsPanel = () => {
     queryKey: ["ext-tickets", statusFilter, techFilter, fromDate, toDate, techs],
     queryFn: async () => {
       let q = supabase.from("vendx_external_service_tickets" as any)
-        .select("*, client:vendx_external_clients(company_name,contact_name), location:vendx_external_locations(name), machine:vendx_external_machines(asset_label)")
+        .select("*, client:vendx_external_clients(company_name,contact_name), location:vendx_external_locations(name), machine:vendx_external_machines(asset_label), ticket_machines:vendx_external_service_ticket_machines(machine_id, machine:vendx_external_machines(asset_label))")
         .order("scheduled_date", { ascending: true, nullsFirst: false })
         .order("created_at", { ascending: false });
       if (statusFilter !== "all") q = q.eq("status", statusFilter);
@@ -82,17 +89,51 @@ const ExtTicketsPanel = () => {
   });
   if (ticketsError) console.error("ext-tickets query error:", ticketsError);
 
+  const machineLabels = (t: any): string[] => {
+    const labels = (t.ticket_machines || []).map((m: any) => m.machine?.asset_label).filter(Boolean);
+    if (labels.length === 0 && t.machine?.asset_label) labels.push(t.machine.asset_label);
+    return labels;
+  };
+
   const save = async () => {
     if (!form.subject) { toast.error("Subject required"); return; }
-    const payload: any = { ...form };
-    delete payload.client; delete payload.location; delete payload.machine;
+    const machineIds: string[] = form.machine_ids || [];
+    const payload: any = { ...form, machine_id: machineIds[0] || null };
+    delete payload.client; delete payload.location; delete payload.machine; delete payload.technician;
+    delete payload.ticket_machines; delete payload.machine_ids;
     ["client_id","location_id","machine_id","scheduled_date"].forEach(k => { if (!payload[k]) payload[k] = null; });
     const id = payload.id; delete payload.id;
-    const { error } = id
-      ? await supabase.from("vendx_external_service_tickets" as any).update(payload).eq("id", id)
-      : await supabase.from("vendx_external_service_tickets" as any).insert(payload);
-    if (error) { toast.error(error.message); return; }
+    const res = id
+      ? await supabase.from("vendx_external_service_tickets" as any).update(payload).eq("id", id).select("id").single()
+      : await supabase.from("vendx_external_service_tickets" as any).insert(payload).select("id").single();
+    if (res.error) { toast.error(res.error.message); return; }
+    const ticketId = (res.data as any).id;
+    const tm = supabase.from("vendx_external_service_ticket_machines" as any);
+    if (machineIds.length) {
+      await tm.delete().eq("ticket_id", ticketId).not("machine_id", "in", `(${machineIds.join(",")})`);
+      const { error: e2 } = await supabase.from("vendx_external_service_ticket_machines" as any)
+        .upsert(machineIds.map(m => ({ ticket_id: ticketId, machine_id: m })), { onConflict: "ticket_id,machine_id", ignoreDuplicates: true });
+      if (e2) toast.error(e2.message);
+    } else {
+      await tm.delete().eq("ticket_id", ticketId);
+    }
     toast.success("Saved"); setOpen(false); setForm(empty);
+    qc.invalidateQueries({ queryKey: ["ext-tickets"] });
+  };
+
+  const toggleSel = (id: string) => setSelected(s => s.includes(id) ? s.filter(x => x !== id) : [...s, id]);
+  const selectedTickets = (tickets as any[]).filter(t => selected.includes(t.id));
+  const sameSite = selectedTickets.length >= 2 && !!selectedTickets[0].location_id &&
+    selectedTickets.every(t => t.location_id === selectedTickets[0].location_id);
+
+  const doMerge = async () => {
+    if (!mergeTarget) return;
+    const { error } = await supabase.rpc("merge_ext_service_tickets" as any, {
+      _target: mergeTarget, _sources: selected.filter(id => id !== mergeTarget),
+    });
+    if (error) { toast.error(error.message); return; }
+    toast.success("Tickets merged");
+    setMergeOpen(false); setSelected([]);
     qc.invalidateQueries({ queryKey: ["ext-tickets"] });
   };
 
