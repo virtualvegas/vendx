@@ -68,10 +68,21 @@ const ExtTicketDetailDialog = ({ ticketId, open, onOpenChange }: Props) => {
   const { data: techs = [] } = useQuery({
     queryKey: ["ext-techs"],
     queryFn: async () => {
-      const { data } = await supabase.from("profiles").select("id,full_name,email").order("full_name");
-      return data || [];
+      const { data, error } = await supabase.rpc("list_ext_service_technicians" as any);
+      if (error) console.error("tech list error:", error);
+      return (data as any[]) || [];
     },
     enabled: open,
+  });
+
+  const { data: ticketMachines = [] } = useQuery({
+    queryKey: ["ext-ticket-machines", ticketId],
+    queryFn: async () => {
+      const { data } = await supabase.from("vendx_external_service_ticket_machines" as any)
+        .select("id, issue, status, machine:vendx_external_machines(asset_label, make, model)").eq("ticket_id", ticketId);
+      return (data as any[]) || [];
+    },
+    enabled: !!ticketId && open,
   });
 
   const { data: schedules = [] } = useQuery({
@@ -265,6 +276,19 @@ const ExtTicketDetailDialog = ({ ticketId, open, onOpenChange }: Props) => {
             </div>
             {t.original_scheduled_date && t.original_scheduled_date !== t.scheduled_date && (
               <p className="text-xs text-muted-foreground">Originally scheduled: {formatDisplayDate(t.original_scheduled_date)}</p>
+            )}
+            {ticketMachines.length > 0 && (
+              <div>
+                <Label className="text-xs">Machines on this ticket ({ticketMachines.length})</Label>
+                <div className="grid gap-1 mt-1">
+                  {ticketMachines.map((m: any) => (
+                    <div key={m.id} className="text-xs bg-muted/40 rounded p-2 flex justify-between gap-2">
+                      <span className="font-medium">{m.machine?.asset_label}{m.machine?.make ? ` · ${[m.machine.make, m.machine.model].filter(Boolean).join(" ")}` : ""}</span>
+                      {m.issue && <span className="text-muted-foreground truncate">{m.issue}</span>}
+                    </div>
+                  ))}
+                </div>
+              </div>
             )}
             <div>
               <Label className="text-xs">Assigned technician</Label>

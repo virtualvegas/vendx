@@ -15,6 +15,13 @@
       "when": 1790355772267,
       "tag": "0001_custom_arcade_builder_config_and_quotes",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1791123025902,
+      "tag": "0002_ext_ticket_multi_machine_merge",
+      "breakpoints": true
     }
   ]
 }
