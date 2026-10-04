@@ -8723,6 +8723,48 @@ export type Database = {
           },
         ]
       }
+      vendx_external_service_ticket_machines: {
+        Row: {
+          created_at: string
+          id: string
+          issue: string | null
+          machine_id: string
+          status: string
+          ticket_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          issue?: string | null
+          machine_id: string
+          status?: string
+          ticket_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          issue?: string | null
+          machine_id?: string
+          status?: string
+          ticket_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendx_external_service_ticket_machines_machine_id_fkey"
+            columns: ["machine_id"]
+            isOneToOne: false
+            referencedRelation: "vendx_external_machines"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendx_external_service_ticket_machines_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "vendx_external_service_tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vendx_external_service_ticket_updates: {
         Row: {
           author_id: string | null
@@ -8794,6 +8836,7 @@ export type Database = {
           labor_hours: number | null
           location_id: string | null
           machine_id: string | null
+          merged_into_ticket_id: string | null
           original_scheduled_date: string | null
           parent_ticket_id: string | null
           parts_cost: number | null
@@ -8844,6 +8887,7 @@ export type Database = {
           labor_hours?: number | null
           location_id?: string | null
           machine_id?: string | null
+          merged_into_ticket_id?: string | null
           original_scheduled_date?: string | null
           parent_ticket_id?: string | null
           parts_cost?: number | null
@@ -8894,6 +8938,7 @@ export type Database = {
           labor_hours?: number | null
           location_id?: string | null
           machine_id?: string | null
+          merged_into_ticket_id?: string | null
           original_scheduled_date?: string | null
           parent_ticket_id?: string | null
           parts_cost?: number | null
@@ -8935,6 +8980,13 @@ export type Database = {
             columns: ["machine_id"]
             isOneToOne: false
             referencedRelation: "vendx_external_machines"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendx_external_service_tickets_merged_into_ticket_id_fkey"
+            columns: ["merged_into_ticket_id"]
+            isOneToOne: false
+            referencedRelation: "vendx_external_service_tickets"
             referencedColumns: ["id"]
           },
           {
@@ -11489,6 +11541,14 @@ export type Database = {
           upvotes: number
         }[]
       }
+      list_ext_service_technicians: {
+        Args: never
+        Returns: {
+          email: string
+          full_name: string
+          id: string
+        }[]
+      }
       list_sold_machines_with_stats: {
         Args: never
         Returns: {
@@ -11544,6 +11604,10 @@ export type Database = {
           session_id: string
           success: boolean
         }[]
+      }
+      merge_ext_service_tickets: {
+        Args: { _sources: string[]; _target: string }
+        Returns: undefined
       }
       merge_finance_expense: {
         Args: { p_keep_id: string; p_merge_id: string }
