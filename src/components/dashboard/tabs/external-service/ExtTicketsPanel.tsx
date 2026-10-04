@@ -9,7 +9,8 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { SearchableSelect } from "@/components/ui/searchable-select";
 import { Badge } from "@/components/ui/badge";
-import { Plus, ExternalLink, FileText, Calendar, User } from "lucide-react";
+import { Plus, ExternalLink, FileText, Calendar, User, Merge, X } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import ExtTicketDetailDialog from "./ExtTicketDetailDialog";
 import { formatDisplayDate } from "@/lib/dateUtils";
@@ -171,33 +172,53 @@ const ExtTicketsPanel = () => {
             <Button size="sm" variant="ghost" onClick={() => { setFromDate(""); setToDate(""); setTechFilter("all"); setStatusFilter("all"); }}>Reset</Button>
           )}
         </div>
-        <Button onClick={() => { setForm(empty); setOpen(true); }}>
-          <Plus className="w-4 h-4 mr-2" /> New Ticket
-        </Button>
+        <div className="flex gap-2">
+          {selected.length > 0 && (
+            <>
+              <Button variant="ghost" size="sm" onClick={() => setSelected([])}>Clear ({selected.length})</Button>
+              <Button variant="outline" disabled={!sameSite} title={sameSite ? "" : "Select 2+ tickets at the same site"}
+                onClick={() => { setMergeTarget(selectedTickets[selectedTickets.length - 1]?.id || ""); setMergeOpen(true); }}>
+                <Merge className="w-4 h-4 mr-2" /> Merge {selected.length}
+              </Button>
+            </>
+          )}
+          <Button onClick={() => { setForm(empty); setOpen(true); }}>
+            <Plus className="w-4 h-4 mr-2" /> New Ticket
+          </Button>
+        </div>
       </div>
+      {selected.length > 0 && !sameSite && (
+        <p className="text-xs text-muted-foreground">Only tickets at the same site can be merged.</p>
+      )}
       {isLoading ? <p className="text-muted-foreground">Loading...</p> :
         tickets.length === 0 ? <p className="text-muted-foreground">No tickets match filters.</p> :
         <div className="grid gap-3">
           {tickets.map((t: any) => (
-            <Card key={t.id} className="p-4 hover:border-primary/40 transition cursor-pointer" onClick={() => setDetailId(t.id)}>
+            <Card key={t.id} className={`p-4 hover:border-primary/40 transition cursor-pointer ${selected.includes(t.id) ? "border-primary" : ""}`} onClick={() => setDetailId(t.id)}>
               <div className="flex justify-between items-start gap-2 flex-wrap">
+                <div onClick={e => e.stopPropagation()} className="pt-1">
+                  <Checkbox checked={selected.includes(t.id)} onCheckedChange={() => toggleSel(t.id)}
+                    disabled={!!t.merged_into_ticket_id} aria-label={`Select ticket ${t.ticket_number}`} />
+                </div>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="font-mono text-xs">{t.ticket_number}</span>
                     <Badge variant={(statusColors[t.status] as any) || "outline"}>{t.status}</Badge>
                     <Badge variant="outline">{t.priority}</Badge>
                     <Badge variant="outline">{t.source}</Badge>
+                    {machineLabels(t).length > 1 && <Badge variant="secondary">{machineLabels(t).length} machines</Badge>}
+                    {t.merged_into_ticket_id && <Badge variant="outline">merged</Badge>}
                     {t.reschedule_count > 0 && <Badge variant="secondary" className="text-[10px]">{t.reschedule_count}× resched</Badge>}
                   </div>
                   <h3 className="font-semibold mt-1">{t.subject}</h3>
                   <p className="text-sm text-muted-foreground">
                     {t.client?.company_name || t.client?.contact_name || t.intake_company_name || "(unassigned)"}
                     {t.location?.name && ` · ${t.location.name}`}
-                    {t.machine?.asset_label && ` · ${t.machine.asset_label}`}
+                    {machineLabels(t).length > 0 && ` · ${machineLabels(t).join(", ")}`}
                   </p>
                   <div className="flex flex-wrap gap-3 mt-1 text-xs text-muted-foreground">
                     {t.scheduled_date && <span className="flex items-center gap-1"><Calendar className="w-3 h-3" /> {formatDisplayDate(t.scheduled_date)}{t.scheduled_time ? ` @ ${t.scheduled_time.slice(0,5)}` : ""}</span>}
-                    {t.technician && <span className="flex items-center gap-1"><User className="w-3 h-3" /> {t.technician.full_name || t.technician.email}</span>}
+                    {t.assigned_technician_id && <span className="flex items-center gap-1"><User className="w-3 h-3" /> {t.technician ? (t.technician.full_name || t.technician.email) : "Assigned"}</span>}
                     {(t.labor_cost || t.parts_cost) && <span>${(Number(t.labor_cost||0) + Number(t.parts_cost||0)).toFixed(2)}</span>}
                   </div>
                   {t.description && <p className="text-sm mt-2 line-clamp-2">{t.description}</p>}
@@ -206,7 +227,11 @@ const ExtTicketsPanel = () => {
                   <Button size="sm" variant="ghost" onClick={() => setDetailId(t.id)}>
                     <ExternalLink className="w-4 h-4 mr-1" /> Open
                   </Button>
-                  <Button size="sm" variant="ghost" onClick={() => { setForm({ ...t, scheduled_date: t.scheduled_date || "" }); setOpen(true); }}>
+                  <Button size="sm" variant="ghost" onClick={() => {
+                    const ids = (t.ticket_machines || []).map((m: any) => m.machine_id);
+                    if (ids.length === 0 && t.machine_id) ids.push(t.machine_id);
+                    setForm({ ...t, scheduled_date: t.scheduled_date || "", machine_ids: ids }); setOpen(true);
+                  }}>
                     Edit
                   </Button>
                   {t.status !== "invoiced" && t.client_id && (
@@ -221,13 +246,30 @@ const ExtTicketsPanel = () => {
         </div>
       }
 
+      <Dialog open={mergeOpen} onOpenChange={setMergeOpen}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Merge {selected.length} tickets</DialogTitle></DialogHeader>
+          <p className="text-sm text-muted-foreground">Pick the ticket to keep. Machines, notes, activity and follow-ups from the others move into it, and the others are closed as merged.</p>
+          <div>
+            <Label>Keep ticket</Label>
+            <SearchableSelect value={mergeTarget} onValueChange={setMergeTarget}
+              options={selectedTickets.map((t: any) => ({ value: t.id, label: `${t.ticket_number} — ${t.subject}` }))}
+              placeholder="Select ticket" searchPlaceholder="Search..." />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setMergeOpen(false)}>Cancel</Button>
+            <Button onClick={doMerge} disabled={!mergeTarget}>Merge</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader><DialogTitle>{form.id ? `Ticket ${form.ticket_number || ""}` : "New Ticket"}</DialogTitle></DialogHeader>
           <div className="grid gap-3 md:grid-cols-2">
             <div>
               <Label>Client</Label>
-              <SearchableSelect value={form.client_id || ""} onValueChange={v => setForm({ ...form, client_id: v, location_id: "", machine_id: "" })}
+              <SearchableSelect value={form.client_id || ""} onValueChange={v => setForm({ ...form, client_id: v, location_id: "", machine_id: "", machine_ids: [] })}
                 options={[{ value: "", label: "— (intake / unassigned)" }, ...clients.map((c: any) => ({ value: c.id, label: c.company_name || c.contact_name || "Residential Client" }))]}
                 placeholder="Select client" searchPlaceholder="Search..." />
             </div>
@@ -243,11 +285,24 @@ const ExtTicketsPanel = () => {
                 options={[{ value: "", label: "—" }, ...locations.map((l: any) => ({ value: l.id, label: l.name }))]}
                 placeholder="Optional site" searchPlaceholder="Search..." />
             </div>
-            <div>
-              <Label>Machine</Label>
-              <SearchableSelect value={form.machine_id || ""} onValueChange={v => setForm({ ...form, machine_id: v })}
-                options={[{ value: "", label: "—" }, ...machines.map((m: any) => ({ value: m.id, label: m.asset_label }))]}
-                placeholder="Optional machine" searchPlaceholder="Search..." />
+            <div className="md:col-span-2">
+              <Label>Machines ({(form.machine_ids || []).length} selected)</Label>
+              <SearchableSelect value="" onValueChange={v => { if (v && !(form.machine_ids || []).includes(v)) setForm({ ...form, machine_ids: [...(form.machine_ids || []), v] }); }}
+                options={machines.filter((m: any) => !(form.machine_ids || []).includes(m.id)).map((m: any) => ({ value: m.id, label: m.asset_label }))}
+                placeholder={form.client_id ? "Add a machine..." : "Select a client first"} searchPlaceholder="Search machines..." />
+              {(form.machine_ids || []).length > 0 && (
+                <div className="flex flex-wrap gap-1 mt-2">
+                  {(form.machine_ids as string[]).map(id => {
+                    const m: any = machines.find((x: any) => x.id === id);
+                    return (
+                      <Badge key={id} variant="secondary" className="gap-1">
+                        {m?.asset_label || "Machine"}
+                        <button type="button" aria-label="Remove machine" onClick={() => setForm({ ...form, machine_ids: form.machine_ids.filter((x: string) => x !== id) })}><X className="w-3 h-3" /></button>
+                      </Badge>
+                    );
+                  })}
+                </div>
+              )}
             </div>
             <div>
               <Label>Priority</Label>
