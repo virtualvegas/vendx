@@ -61,6 +61,7 @@ import BusinessCardPage from "./pages/BusinessCardPage";
 import StaffDirectoryPage from "./pages/StaffDirectoryPage";
 import SsoAuthorizePage from "./pages/SsoAuthorizePage";
 import SsoDocsPage from "./pages/SsoDocsPage";
+import EmployeeApiDocsPage from "./pages/EmployeeApiDocsPage";
 import PartnerApiDocsPage from "./pages/PartnerApiDocsPage";
 import PartnerProductPage from "./pages/PartnerProductPage";
 import EventRentalsPage from "./pages/EventRentalsPage";
@@ -154,6 +155,7 @@ const App = () => (
               <Route path="/c/:slug" element={<BusinessCardPage />} />
               <Route path="/sso/authorize" element={<SsoAuthorizePage />} />
               <Route path="/developers/sso" element={<SsoDocsPage />} />
+              <Route path="/developers/employee-api" element={<EmployeeApiDocsPage />} />
               <Route path="/api/partners" element={<PartnerApiDocsPage />} />
               <Route path="/developers/partners" element={<PartnerApiDocsPage />} />
               <Route path="/event-rentals" element={<EventRentalsPage />} />

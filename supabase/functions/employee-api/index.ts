@@ -131,7 +131,7 @@ Deno.serve(async (req) => {
         await routeAllowed(id);
         const [{ data: route }, { data: stops }] = await Promise.all([
           db.from("service_routes").select("*").eq("id", id).single(),
-          db.from("route_stops").select("*, location:locations(id,name,address,city,state), machine:vendx_machines(id,name,machine_code)")
+          db.from("route_stops").select("*, location:locations(id,name,address,city), machine:vendx_machines(id,name,machine_code)")
             .eq("route_id", id).order("day_number").order("stop_order"),
         ]);
         return json({ data: { ...route, stops } });
