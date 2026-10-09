@@ -12,7 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { useToast } from "@/hooks/use-toast";
 import { Plus, RefreshCw, Trash2, Copy, ShieldCheck, ExternalLink } from "lucide-react";
 
-const ALL_SCOPES = ["profile", "email", "wallet:read", "rewards:read", "tickets:read", "roles:read", "divisions:read"];
+const ALL_SCOPES = ["profile", "email", "wallet:read", "rewards:read", "tickets:read", "roles:read", "divisions:read", "ops:routes", "ops:collections", "ops:tickets"];
 
 interface SsoApp {
   id: string;
