@@ -15,6 +15,9 @@ const SCOPE_LABELS: Record<string, string> = {
   "tickets:read": "Your arcade ticket balance",
   "roles:read": "Your VendX roles",
   "divisions:read": "Your assigned divisions",
+  "ops:routes": "View and update your service routes and stops",
+  "ops:collections": "Record cash collections and view location earnings",
+  "ops:tickets": "Create, view and update service requests and tickets",
 };
 
 interface AppInfo {

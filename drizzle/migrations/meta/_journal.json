@@ -22,6 +22,13 @@
       "when": 1791123025902,
       "tag": "0002_ext_ticket_multi_machine_merge",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1791573033153,
+      "tag": "0003_tighten_public_policies",
+      "breakpoints": true
     }
   ]
 }
