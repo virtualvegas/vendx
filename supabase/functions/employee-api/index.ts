@@ -111,6 +111,50 @@ Deno.serve(async (req) => {
     // ---------- me ----------
     if (res === "me" && m === "GET") return json({ id: uid, name, email: profile?.email, roles, is_manager: isMgr, scopes });
 
+    // ---------- sync: everything created/changed in VendX since a timestamp ----------
+    // Portal polls GET /sync?since=<ISO> and stores `next_since` for the next call.
+    if (res === "sync" && m === "GET") {
+      const since = url.searchParams.get("since") ?? new Date(Date.now() - 864e5).toISOString();
+      if (isNaN(Date.parse(since))) throw new HttpErr(400, "invalid_since");
+      const now = new Date().toISOString();
+      const out: Record<string, unknown> = { since, next_since: now };
+      if (scopes.includes("ops:routes")) {
+        let r = db.from("service_routes").select("*").gt("updated_at", since).limit(limit);
+        if (!isMgr) r = r.eq("assigned_to", uid);
+        const { data: routes } = await r;
+        out.routes = routes ?? [];
+        let s = db.from("route_stops").select("*, route:service_routes!inner(assigned_to)").gt("updated_at", since).limit(limit);
+        if (!isMgr) s = s.eq("route.assigned_to", uid);
+        const { data: stops } = await s;
+        out.stops = (stops ?? []).map(({ route, ...x }: any) => x);
+      }
+      if (scopes.includes("ops:collections")) {
+        let c = db.from("revenue_collections").select("*").gt("updated_at", since).limit(limit);
+        if (!isMgr) c = c.eq("collected_by", uid);
+        out.collections = (await c).data ?? [];
+      }
+      if (scopes.includes("ops:tickets")) {
+        let t = db.from("support_tickets").select("*").gt("updated_at", since).limit(limit);
+        if (!isMgr) t = t.or(`assigned_to.eq.${uid},assigned_to.is.null`);
+        out.service_requests = (await t).data ?? [];
+        let e = db.from("vendx_external_service_tickets").select("*").gt("updated_at", since).limit(limit);
+        if (!isMgr) e = e.or(`assigned_technician_id.eq.${uid},assigned_technician_id.is.null`);
+        out.service_tickets = (await e).data ?? [];
+        let rq = db.from("support_ticket_responses").select("*").gt("created_at", since).limit(limit);
+        let uq = db.from("vendx_external_service_ticket_updates").select("*").gt("created_at", since).limit(limit);
+        if (!isMgr) {
+          const srIds = (out.service_requests as any[]).map((x) => x.id);
+          const stIds = (out.service_tickets as any[]).map((x) => x.id);
+          rq = rq.in("ticket_id", srIds.length ? srIds : ["00000000-0000-0000-0000-000000000000"]);
+          uq = uq.in("ticket_id", stIds.length ? stIds : ["00000000-0000-0000-0000-000000000000"]);
+        }
+        out.service_request_responses = (await rq).data ?? [];
+        out.service_ticket_updates = (await uq).data ?? [];
+      }
+      return json(out);
+    }
+    const updatedSince = url.searchParams.get("updated_since");
+
     // ---------- routes ----------
     const routeAllowed = async (routeId: string) => {
       const { data: r } = await db.from("service_routes").select("id, assigned_to").eq("id", routeId).maybeSingle();
