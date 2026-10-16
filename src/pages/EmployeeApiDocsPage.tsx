@@ -8,6 +8,7 @@ const base = "https://xbbnodpvfvxtbffziuvr.supabase.co/functions/v1/employee-api
 
 const endpoints: { m: string; p: string; s: string; d: string }[] = [
   { m: "GET", p: "/me", s: "any", d: "Signed-in employee, roles, manager flag and granted scopes." },
+  { m: "GET", p: "/sync?since=<ISO time>", s: "any", d: "Two-way sync: everything created or changed in VendX since the time (routes, stops, collections, service requests, service tickets, notes). Save next_since and pass it on the next poll (e.g. every 30s). VendX is the main record; write back with the POST/PATCH endpoints." },
   { m: "GET", p: "/routes?status=&mine=true", s: "ops:routes", d: "Routes. Operators only get routes assigned to them." },
   { m: "GET", p: "/routes/:id", s: "ops:routes", d: "Route with all stops, locations and machines." },
   { m: "PATCH", p: "/routes/:id", s: "ops:routes", d: "Update route status (active, in_progress, completed, paused)." },
