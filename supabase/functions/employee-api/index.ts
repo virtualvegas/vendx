@@ -140,8 +140,16 @@ Deno.serve(async (req) => {
         let e = db.from("vendx_external_service_tickets").select("*").gt("updated_at", since).limit(limit);
         if (!isMgr) e = e.or(`assigned_technician_id.eq.${uid},assigned_technician_id.is.null`);
         out.service_tickets = (await e).data ?? [];
-        out.service_request_responses = (await db.from("support_ticket_responses").select("*").gt("created_at", since).limit(limit)).data ?? [];
-        out.service_ticket_updates = (await db.from("vendx_external_service_ticket_updates").select("*").gt("created_at", since).limit(limit)).data ?? [];
+        let rq = db.from("support_ticket_responses").select("*").gt("created_at", since).limit(limit);
+        let uq = db.from("vendx_external_service_ticket_updates").select("*").gt("created_at", since).limit(limit);
+        if (!isMgr) {
+          const srIds = (out.service_requests as any[]).map((x) => x.id);
+          const stIds = (out.service_tickets as any[]).map((x) => x.id);
+          rq = rq.in("ticket_id", srIds.length ? srIds : ["00000000-0000-0000-0000-000000000000"]);
+          uq = uq.in("ticket_id", stIds.length ? stIds : ["00000000-0000-0000-0000-000000000000"]);
+        }
+        out.service_request_responses = (await rq).data ?? [];
+        out.service_ticket_updates = (await uq).data ?? [];
       }
       return json(out);
     }
