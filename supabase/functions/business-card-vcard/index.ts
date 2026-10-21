@@ -30,51 +30,22 @@ Deno.serve(async (req) => {
 
     const c = data as Record<string, any>;
     const company = c.company_name || "VendX Global Corporation";
-    const divNames = (c.divisions || []).map((d: any) => d.name).join(", ");
-    const orgParts = [company];
-    if (c.department) orgParts.push(c.department);
-    else if (divNames) orgParts.push(divNames);
 
     const name = String(c.full_name || "").trim();
     const parts = name.split(/\s+/);
     const last = parts.length > 1 ? parts.pop()! : "";
     const first = parts.join(" ");
 
-    let photoLine = "";
-    if (c.avatar_url) {
-      try {
-        const res = await fetch(c.avatar_url);
-        if (res.ok) {
-          const buf = new Uint8Array(await res.arrayBuffer());
-          if (buf.byteLength < 700_000) {
-            const type = (res.headers.get("content-type") || "image/jpeg").includes("png")
-              ? "PNG"
-              : "JPEG";
-            let binary = "";
-            for (let i = 0; i < buf.length; i++) binary += String.fromCharCode(buf[i]);
-            photoLine = `PHOTO;ENCODING=b;TYPE=${type}:${btoa(binary)}`;
-          }
-        }
-      } catch (_) {
-        // photo is optional
-      }
-    }
-
+    // Only name, phone, email, company and title.
     const lines = [
       "BEGIN:VCARD",
       "VERSION:3.0",
       `N:${esc(last)};${esc(first)};;;`,
       `FN:${esc(name)}`,
-      c.job_title ? `TITLE:${esc(c.job_title)}` : "",
-      `ORG:${orgParts.map(esc).join(";")}`,
-      divNames ? `CATEGORIES:${esc(divNames)}` : "",
-      c.email ? `EMAIL;TYPE=INTERNET,WORK:${c.email}` : "",
-      c.phone ? `TEL;TYPE=WORK,VOICE:${c.phone}` : "",
-      c.website_url ? `URL:${c.website_url}` : "",
-      c.linkedin_url ? `X-SOCIALPROFILE;TYPE=linkedin:${c.linkedin_url}` : "",
-      photoLine,
-      c.bio ? `NOTE:${esc(String(c.bio))}` : "",
-      `REV:${new Date().toISOString()}`,
+      `ORG:${esc(company)}`,
+      c.job_title ? `TITLE:${esc(String(c.job_title))}` : "",
+      c.phone ? `TEL;TYPE=CELL:${c.phone}` : "",
+      c.email ? `EMAIL;TYPE=INTERNET:${c.email}` : "",
       "END:VCARD",
     ].filter(Boolean);
 

@@ -15,33 +15,23 @@ export interface VCardInput {
 
 const esc = (v: string) => v.replace(/\\/g, "\\\\").replace(/,/g, "\\,").replace(/;/g, "\\;").replace(/\n/g, "\\n");
 
-export function buildVCard(c: VCardInput, photoUrl?: string): string {
+export function buildVCard(c: VCardInput, _photoUrl?: string): string {
   const company = c.company_name || "VendX Global Corporation";
-  const divNames = (c.divisions || []).map((d) => d.name).join(", ");
-  const orgParts = [company];
-  if (c.department) orgParts.push(c.department);
-  else if (divNames) orgParts.push(divNames);
-
   const name = (c.full_name || "").trim();
   const parts = name.split(/\s+/);
   const last = parts.length > 1 ? parts.pop()! : "";
   const first = parts.join(" ");
 
+  // Only name, phone, email, company and title.
   const lines = [
     "BEGIN:VCARD",
     "VERSION:3.0",
     `N:${esc(last)};${esc(first)};;;`,
     `FN:${esc(name)}`,
+    `ORG:${esc(company)}`,
     c.job_title ? `TITLE:${esc(c.job_title)}` : "",
-    `ORG:${orgParts.map(esc).join(";")}`,
-    divNames ? `CATEGORIES:${esc(divNames)}` : "",
-    c.email ? `EMAIL;TYPE=INTERNET,WORK:${c.email}` : "",
-    c.phone ? `TEL;TYPE=WORK,VOICE:${c.phone}` : "",
-    c.website_url ? `URL:${c.website_url}` : "",
-    c.linkedin_url ? `X-SOCIALPROFILE;TYPE=linkedin:${c.linkedin_url}` : "",
-    photoUrl ? `PHOTO;VALUE=URI:${photoUrl}` : "",
-    c.bio ? `NOTE:${esc(c.bio)}` : "",
-    `REV:${new Date().toISOString()}`,
+    c.phone ? `TEL;TYPE=CELL:${c.phone}` : "",
+    c.email ? `EMAIL;TYPE=INTERNET:${c.email}` : "",
     "END:VCARD",
   ].filter(Boolean);
   return lines.join("\r\n");
