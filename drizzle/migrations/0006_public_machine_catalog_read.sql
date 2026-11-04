@@ -1,0 +1,2 @@
+GRANT SELECT ON public.vendx_franchise_catalog_items TO anon;
+CREATE POLICY "Public can view active machines" ON public.vendx_franchise_catalog_items FOR SELECT TO anon USING (is_active AND item_type = 'machine');

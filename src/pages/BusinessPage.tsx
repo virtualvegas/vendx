@@ -37,6 +37,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
+import MachineCatalog from "@/components/business/MachineCatalog";
 
 // Icon mapping for dynamic icons
 const iconMap: Record<string, any> = {
@@ -335,6 +336,8 @@ const BusinessPage = () => {
           </div>
         </div>
       </section>
+
+      <MachineCatalog />
 
       {/* Benefits Section */}
       <section className="py-24 relative bg-card/30">
