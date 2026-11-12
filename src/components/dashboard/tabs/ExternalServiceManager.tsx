@@ -12,6 +12,7 @@ import ExtInvoicesPanel from "./external-service/ExtInvoicesPanel";
 import ExtPackagesPanel from "./external-service/ExtPackagesPanel";
 import ExtSoldMachinesPanel from "./external-service/ExtSoldMachinesPanel";
 import ExtSchedulesPanel from "./external-service/ExtSchedulesPanel";
+import CalendarSyncButton from "@/components/dashboard/CalendarSyncButton";
 
 const ExternalServiceManager = () => {
   const [tab, setTab] = useState("tickets");
@@ -51,6 +52,7 @@ const ExternalServiceManager = () => {
             Servicing client-owned machines &amp; the units VendX sold or built. Track clients, machines, manuals, service history, and invoiced labor/parts in one place.
           </p>
         </div>
+        <CalendarSyncButton />
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-6 gap-2">

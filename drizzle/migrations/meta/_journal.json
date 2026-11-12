@@ -50,6 +50,13 @@
       "when": 1793762211667,
       "tag": "0006_public_machine_catalog_read",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1794499980824,
+      "tag": "0007_employee_calendar_feeds",
+      "breakpoints": true
     }
   ]
 }
