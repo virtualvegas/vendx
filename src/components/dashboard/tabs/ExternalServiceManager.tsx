@@ -52,6 +52,7 @@ const ExternalServiceManager = () => {
             Servicing client-owned machines &amp; the units VendX sold or built. Track clients, machines, manuals, service history, and invoiced labor/parts in one place.
           </p>
         </div>
+        <CalendarSyncButton />
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-6 gap-2">

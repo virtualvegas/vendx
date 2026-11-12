@@ -403,6 +403,7 @@ const ServiceTech = () => {
             {isOnline ? <Wifi className="w-3 h-3 mr-1" /> : <WifiOff className="w-3 h-3 mr-1" />}
             {isOnline ? "Online" : "Offline"}
           </Badge>
+          <CalendarSyncButton />
           <Button variant="outline" size="sm" onClick={() => refetch()}>
             <RefreshCw className="w-4 h-4" />
           </Button>
