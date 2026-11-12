@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import { buildServiceCalendar } from "./ics.ts";
+import { buildServiceCalendar } from "../supabase/functions/calendar-feed/ics.ts";
 
 const ME = "11111111-1111-1111-1111-111111111111";
 const OTHER = "22222222-2222-2222-2222-222222222222";
