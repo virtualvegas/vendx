@@ -12,6 +12,7 @@ import ExtInvoicesPanel from "./external-service/ExtInvoicesPanel";
 import ExtPackagesPanel from "./external-service/ExtPackagesPanel";
 import ExtSoldMachinesPanel from "./external-service/ExtSoldMachinesPanel";
 import ExtSchedulesPanel from "./external-service/ExtSchedulesPanel";
+import CalendarSyncButton from "@/components/dashboard/CalendarSyncButton";
 
 const ExternalServiceManager = () => {
   const [tab, setTab] = useState("tickets");

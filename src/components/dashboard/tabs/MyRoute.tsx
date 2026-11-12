@@ -15,6 +15,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
+import CalendarSyncButton from "@/components/dashboard/CalendarSyncButton";
 import { 
   MapPin, Clock, CheckCircle, Navigation, Package, 
   RefreshCw, User, Calendar, AlertTriangle, Monitor,
