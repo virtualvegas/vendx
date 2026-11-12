@@ -7915,6 +7915,38 @@ export type Database = {
         }
         Relationships: []
       }
+      vendx_calendar_feeds: {
+        Row: {
+          created_at: string
+          feed_token: string
+          last_used_at: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          feed_token?: string
+          last_used_at?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          feed_token?: string
+          last_used_at?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendx_calendar_feeds_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vendx_catalog_partners: {
         Row: {
           allowed_outbound_categories: string[] | null
@@ -11428,6 +11460,7 @@ export type Database = {
         }[]
       }
       get_machine_api_key: { Args: { p_machine_id: string }; Returns: string }
+      get_my_calendar_feed: { Args: never; Returns: string }
       get_my_franchise_id: { Args: never; Returns: string }
       get_my_office_id: { Args: never; Returns: string }
       get_my_warehouse_id: { Args: never; Returns: string }
@@ -11696,6 +11729,7 @@ export type Database = {
         Args: { p_stream_id: string }
         Returns: string
       }
+      rotate_my_calendar_feed: { Args: never; Returns: string }
       rotate_vendx_catalog_partner_api_key: {
         Args: { p_partner_id: string }
         Returns: string
